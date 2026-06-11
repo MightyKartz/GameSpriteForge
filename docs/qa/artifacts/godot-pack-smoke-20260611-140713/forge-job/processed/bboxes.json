@@ -1,0 +1,138 @@
+[
+  {
+    "frame": "frame_00001.png",
+    "width": 64,
+    "height": 64,
+    "bbox": {
+      "left": 4,
+      "top": 8,
+      "right": 59,
+      "bottom": 57,
+      "width": 56,
+      "height": 50,
+      "centerX": 32.0,
+      "centerY": 33.0,
+      "bottomY": 57,
+      "alphaCoverage": 0.17041016
+    }
+  },
+  {
+    "frame": "frame_00002.png",
+    "width": 64,
+    "height": 64,
+    "bbox": {
+      "left": 4,
+      "top": 8,
+      "right": 59,
+      "bottom": 57,
+      "width": 56,
+      "height": 50,
+      "centerX": 32.0,
+      "centerY": 33.0,
+      "bottomY": 57,
+      "alphaCoverage": 0.16699219
+    }
+  },
+  {
+    "frame": "frame_00003.png",
+    "width": 64,
+    "height": 64,
+    "bbox": {
+      "left": 4,
+      "top": 8,
+      "right": 59,
+      "bottom": 57,
+      "width": 56,
+      "height": 50,
+      "centerX": 32.0,
+      "centerY": 33.0,
+      "bottomY": 57,
+      "alphaCoverage": 0.17041016
+    }
+  },
+  {
+    "frame": "frame_00004.png",
+    "width": 64,
+    "height": 64,
+    "bbox": {
+      "left": 4,
+      "top": 8,
+      "right": 59,
+      "bottom": 57,
+      "width": 56,
+      "height": 50,
+      "centerX": 32.0,
+      "centerY": 33.0,
+      "bottomY": 57,
+      "alphaCoverage": 0.17041016
+    }
+  },
+  {
+    "frame": "frame_00005.png",
+    "width": 64,
+    "height": 64,
+    "bbox": {
+      "left": 4,
+      "top": 8,
+      "right": 59,
+      "bottom": 57,
+      "width": 56,
+      "height": 50,
+      "centerX": 32.0,
+      "centerY": 33.0,
+      "bottomY": 57,
+      "alphaCoverage": 0.17041016
+    }
+  },
+  {
+    "frame": "frame_00006.png",
+    "width": 64,
+    "height": 64,
+    "bbox": {
+      "left": 4,
+      "top": 8,
+      "right": 59,
+      "bottom": 57,
+      "width": 56,
+      "height": 50,
+      "centerX": 32.0,
+      "centerY": 33.0,
+      "bottomY": 57,
+      "alphaCoverage": 0.16699219
+    }
+  },
+  {
+    "frame": "frame_00007.png",
+    "width": 64,
+    "height": 64,
+    "bbox": {
+      "left": 4,
+      "top": 8,
+      "right": 59,
+      "bottom": 57,
+      "width": 56,
+      "height": 50,
+      "centerX": 32.0,
+      "centerY": 33.0,
+      "bottomY": 57,
+      "alphaCoverage": 0.17041016
+    }
+  },
+  {
+    "frame": "frame_00008.png",
+    "width": 64,
+    "height": 64,
+    "bbox": {
+      "left": 4,
+      "top": 8,
+      "right": 59,
+      "bottom": 57,
+      "width": 56,
+      "height": 50,
+      "centerX": 32.0,
+      "centerY": 33.0,
+      "bottomY": 57,
+      "alphaCoverage": 0.17041016
+    }
+  }
+]

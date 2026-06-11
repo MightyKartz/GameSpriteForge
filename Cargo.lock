@@ -395,6 +395,7 @@ dependencies = [
  "dirs-next",
  "gif 0.13.3",
  "image",
+ "pack",
  "serde",
  "serde_json",
  "temp-env",

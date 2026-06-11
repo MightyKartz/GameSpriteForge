@@ -1,0 +1,43 @@
+{
+  "engine": "godot",
+  "format": "AnimatedSprite2D SpriteFrames helper",
+  "importSteps": [
+    "Copy every texture listed in this helper's spriteFrames.textures into the Godot project.",
+    "Create a SpriteFrames resource for AnimatedSprite2D.",
+    "Use the listed animation frames and FPS from this helper."
+  ],
+  "spriteFrames": {
+    "anchor": {
+      "type": "feet",
+      "x": 44.0,
+      "y": 72.0
+    },
+    "animations": [
+      {
+        "fps": 12.0,
+        "frames": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "loop": true,
+        "name": "walk"
+      }
+    ],
+    "atlas": "assets/atlas.json",
+    "columns": 4,
+    "frameHeight": 88,
+    "frameWidth": 88,
+    "manifest": "assets/manifest.json",
+    "rows": 2,
+    "texture": "assets/sprite_sheet.png",
+    "textures": [
+      "assets/sprite_sheet.png"
+    ]
+  }
+}

@@ -4,7 +4,7 @@
 
 Game Sprite Forge is a local macOS workbench for turning video clips, PNG frame sequences, sprite sheets, and `.gsfpack` folders into game-ready 2D sprite animation assets.
 
-The first test version focuses on an import-first, local-only pipeline: choose source media, inspect frames, remove or normalize backgrounds, run quality checks, export a sprite asset pack, and validate the exported pack by re-importing it. It does not require cloud services, accounts, AI provider setup, marketplace flows, or online registries.
+The current test version focuses on an import-first, local-only pipeline: choose source media, extract a controlled frame set, inspect frames, remove or normalize backgrounds, run quality checks, export a sprite asset pack, generate a Godot helper project, and validate the exported pack by re-importing it. It does not require cloud services, accounts, AI provider setup, marketplace flows, or online registries.
 
 ## Project Introduction
 
@@ -18,31 +18,36 @@ The app helps with:
 - normalizing frames to a stable canvas and foot anchor;
 - checking quality signals such as bounds, loops, alpha edges, and frame consistency;
 - exporting PNG frames, sprite sheets, manifests, atlas data, preview material, and `.gsfpack` packages;
+- exporting a minimal Godot project helper for a generated pack;
 - validating exported packs through local re-import.
 
 ## Current Test Release
 
-The first public test release is intended for macOS Apple Silicon.
+The current public test release is intended for macOS Apple Silicon.
 
-Download it from the [GitHub Releases](https://github.com/MightyKartz/GameSpriteForge/releases) page.
+Download the latest pre-release from the [GitHub Releases](https://github.com/MightyKartz/GameSpriteForge/releases) page.
 
-Release asset:
+Current test tag:
 
 ```text
-Game.Sprite.Forge_0.1.0_aarch64.dmg
+v0.1.0-test.2
 ```
 
-The release is a test build. Expect rough edges, but the core local import -> process -> quality -> export -> validate loop is implemented.
+The release is a test build. Expect rough edges, but the core local import -> extract -> process -> quality -> export -> Godot helper -> validate loop is implemented.
 
 ## Features
 
 - Local-first macOS desktop app built with Tauri, React, TypeScript, and Rust.
 - Video intake through `ffmpeg`/`ffprobe`.
+- Target-frame extraction controls, including a 24-frame flow for short animation clips.
 - PNG sequence import with multiline path support.
 - Sprite sheet import with fixed-grid and transparent-gutter splitting.
 - `.gsfpack` import, export, validation, and re-import.
+- Stage-aware workbench UI with one primary next action per workflow stage.
+- Timeline evidence for target frames, actual frames, selected range, sampling interval, loop range, and selected frame.
+- Preview modes for raw, normalized, inspection, and export review states.
 - Quality report panel with actionable recovery paths.
-- Godot helper sample for importing Forge output.
+- Godot project helper export for testing Forge output inside Godot.
 - Source-level guard scripts and real UI QA evidence for release hardening.
 
 ## Repository Layout

@@ -1,22 +1,31 @@
 import { Scissors, SkipForward, TimerReset } from "lucide-react";
 import type { ExtractFramesResult, VideoProbe } from "../tauriCommands";
 import type { TFunction } from "../i18n";
+import {
+  estimateSelectedFrames,
+  keepEveryForTargetFrames,
+  type FrameSelectionMode,
+} from "../videoSegment";
 
 type VideoSegmentPanelProps = {
   disabled?: boolean;
   endTimeSeconds: number;
   extractResult: ExtractFramesResult | null;
+  frameSelectionMode: FrameSelectionMode;
   keepEveryNFrames: number;
   loopEndFrame: number;
   loopStartFrame: number;
   onEndTimeChange: (value: number) => void;
   onExtract: () => void;
+  onFrameSelectionModeChange: (value: FrameSelectionMode) => void;
   onKeepEveryChange: (value: number) => void;
   onLoopEndFrameChange: (value: number) => void;
   onLoopStartFrameChange: (value: number) => void;
   onStartTimeChange: (value: number) => void;
+  onTargetFrameCountChange: (value: number) => void;
   probe: VideoProbe | null;
   startTimeSeconds: number;
+  targetFrameCount: number;
   t: TFunction;
 };
 
@@ -24,17 +33,21 @@ export function VideoSegmentPanel({
   disabled = false,
   endTimeSeconds,
   extractResult,
+  frameSelectionMode,
   keepEveryNFrames,
   loopEndFrame,
   loopStartFrame,
   onEndTimeChange,
   onExtract,
+  onFrameSelectionModeChange,
   onKeepEveryChange,
   onLoopEndFrameChange,
   onLoopStartFrameChange,
   onStartTimeChange,
+  onTargetFrameCountChange,
   probe,
   startTimeSeconds,
+  targetFrameCount,
   t,
 }: VideoSegmentPanelProps) {
   const frameCount = extractResult?.frames.length ?? probe?.frameCountEstimate ?? 0;
@@ -42,7 +55,9 @@ export function VideoSegmentPanel({
   const duration = probe?.durationSeconds ?? Math.max(0, endTimeSeconds - startTimeSeconds);
   const sourceFrameCount = Math.max(0, Math.round(probe?.frameCountEstimate ?? frameCount));
   const selectedDuration = Math.max(0, endTimeSeconds - startTimeSeconds);
-  const estimatedSelectionFrames = estimateSelectedFrames(selectedDuration, fps, keepEveryNFrames, frameCount);
+  const targetDerivedKeepEvery = keepEveryForTargetFrames(selectedDuration, fps, targetFrameCount, frameCount);
+  const effectiveKeepEvery = frameSelectionMode === "target_frames" ? targetDerivedKeepEvery : keepEveryNFrames;
+  const estimatedSelectionFrames = estimateSelectedFrames(selectedDuration, fps, effectiveKeepEvery, frameCount);
   const firstSecondEnd = Math.min(Math.max(duration, 0.1), 1);
   const activeRangeStart = duration > 0 ? clampPercent((startTimeSeconds / duration) * 100) : 0;
   const activeRangeEnd = duration > 0 ? clampPercent((endTimeSeconds / duration) * 100) : 100;
@@ -56,12 +71,43 @@ export function VideoSegmentPanel({
     if (preset === "firstSecond") {
       onStartTimeChange(0);
       onEndTimeChange(firstSecondEnd);
+      syncTargetInterval(0, firstSecondEnd, targetFrameCount);
       return;
     }
     if (preset === "full") {
       onStartTimeChange(0);
-      onEndTimeChange(Math.max(0.1, duration));
+      const nextEnd = Math.max(0.1, duration);
+      onEndTimeChange(nextEnd);
+      syncTargetInterval(0, nextEnd, targetFrameCount);
     }
+  }
+
+  function applyStartTime(value: number) {
+    onStartTimeChange(value);
+    syncTargetInterval(value, endTimeSeconds, targetFrameCount);
+  }
+
+  function applyEndTime(value: number) {
+    onEndTimeChange(value);
+    syncTargetInterval(startTimeSeconds, value, targetFrameCount);
+  }
+
+  function applyTargetFrameCount(value: number) {
+    onFrameSelectionModeChange("target_frames");
+    onTargetFrameCountChange(value);
+    syncTargetInterval(startTimeSeconds, endTimeSeconds, value);
+  }
+
+  function applyManualInterval(value: number) {
+    onFrameSelectionModeChange("manual_interval");
+    onKeepEveryChange(value);
+  }
+
+  function syncTargetInterval(nextStart: number, nextEnd: number, nextTarget: number) {
+    if (frameSelectionMode !== "target_frames") {
+      return;
+    }
+    onKeepEveryChange(keepEveryForTargetFrames(Math.max(0, nextEnd - nextStart), fps, nextTarget, frameCount));
   }
 
   const panelBody = (
@@ -131,7 +177,7 @@ export function VideoSegmentPanel({
             <input
               disabled={disabled}
               min={0}
-              onChange={(event) => onStartTimeChange(numberValue(event.target.value, startTimeSeconds, 0))}
+              onChange={(event) => applyStartTime(numberValue(event.target.value, startTimeSeconds, 0))}
               step={0.1}
               type="number"
               value={startTimeSeconds}
@@ -145,7 +191,7 @@ export function VideoSegmentPanel({
             <input
               disabled={disabled}
               min={0.1}
-              onChange={(event) => onEndTimeChange(numberValue(event.target.value, endTimeSeconds, 0.1))}
+              onChange={(event) => applyEndTime(numberValue(event.target.value, endTimeSeconds, 0.1))}
               step={0.1}
               type="number"
               value={endTimeSeconds}
@@ -155,6 +201,28 @@ export function VideoSegmentPanel({
 
         <p className="segment-estimate">{t("segment.estimatedSelection", { count: estimatedSelectionFrames })}</p>
 
+        <div className="segment-target-controls" role="group" aria-label={t("segment.frameSelection")}>
+          {[12, 24].map((count) => (
+            <button
+              className={frameSelectionMode === "target_frames" && targetFrameCount === count ? "active" : ""}
+              disabled={disabled}
+              key={count}
+              onClick={() => applyTargetFrameCount(count)}
+              type="button"
+            >
+              {t("segment.targetFramesValue", { count })}
+            </button>
+          ))}
+          <button
+            className={frameSelectionMode === "manual_interval" ? "active" : ""}
+            disabled={disabled}
+            onClick={() => onFrameSelectionModeChange("manual_interval")}
+            type="button"
+          >
+            {t("segment.manualInterval")}
+          </button>
+        </div>
+
         <label className="segment-interval-field">
           <span>{t("segment.interval")}</span>
           <span className="segment-interval-control">
@@ -162,14 +230,26 @@ export function VideoSegmentPanel({
             <input
               disabled={disabled}
               min={1}
-              onChange={(event) => onKeepEveryChange(numberValue(event.target.value, keepEveryNFrames, 1))}
+              onChange={(event) => applyManualInterval(numberValue(event.target.value, effectiveKeepEvery, 1))}
               step={1}
               type="number"
-              value={keepEveryNFrames}
+              value={effectiveKeepEvery}
             />
-            <small>{t("segment.everyValue", { count: keepEveryNFrames })}</small>
+            <small>{t("segment.everyValue", { count: effectiveKeepEvery })}</small>
           </span>
         </label>
+        <p className="segment-extraction-rationale">
+          {frameSelectionMode === "target_frames"
+            ? t("segment.extractionRationaleTarget", {
+                count: estimatedSelectionFrames,
+                every: effectiveKeepEvery,
+                target: targetFrameCount,
+              })
+            : t("segment.extractionRationaleManual", {
+                count: estimatedSelectionFrames,
+                every: effectiveKeepEvery,
+              })}
+        </p>
 
         <details className="segment-advanced-settings">
           <summary>
@@ -214,7 +294,7 @@ export function VideoSegmentPanel({
         </button>
         <small>
           {t("segment.extractActionMeta", {
-            count: keepEveryNFrames,
+            count: effectiveKeepEvery,
             end: formatTimestamp(endTimeSeconds),
             start: formatTimestamp(startTimeSeconds),
           })}
@@ -261,13 +341,6 @@ function clampPercent(value: number) {
     return 0;
   }
   return Math.max(0, Math.min(100, value));
-}
-
-function estimateSelectedFrames(selectedDuration: number, fps: number, keepEveryNFrames: number, fallback: number) {
-  if (fps > 0 && selectedDuration > 0) {
-    return Math.max(1, Math.round((selectedDuration * fps) / Math.max(1, keepEveryNFrames)));
-  }
-  return Math.max(0, Math.round(fallback));
 }
 
 function formatDuration(seconds: number) {

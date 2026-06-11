@@ -3,7 +3,19 @@ import type { ExtractFramesResult, NormalizeFramesResult } from "../tauriCommand
 import { usePreviewImage } from "../hooks/usePreviewImage";
 import type { TFunction } from "../i18n";
 
+type TimelineEvidence = {
+  actualFrameCount: number;
+  endTimeSeconds: number;
+  loopEndFrame: number | null;
+  loopStartFrame: number | null;
+  samplingInterval: number;
+  selectedFrameIndex: number;
+  startTimeSeconds: number;
+  targetFrameCount: number | null;
+};
+
 type FrameTimelineProps = {
+  evidence?: TimelineEvidence | null;
   extractResult: ExtractFramesResult | null;
   frameCount: number;
   framePaths: string[];
@@ -15,6 +27,7 @@ type FrameTimelineProps = {
 };
 
 export function FrameTimeline({
+  evidence = null,
   extractResult,
   frameCount,
   framePaths,
@@ -48,6 +61,34 @@ export function FrameTimeline({
           </span>
         ) : null}
       </div>
+      {hasTimelineFrames && evidence ? (
+        <div className="timeline-evidence-strip" aria-label={t("timeline.evidence.title")}>
+          <span>
+            <strong>{t("timeline.evidence.target")}</strong>
+            {evidence.targetFrameCount ?? t("timeline.evidence.auto")}
+          </span>
+          <span>
+            <strong>{t("timeline.evidence.actual")}</strong>
+            {evidence.actualFrameCount}
+          </span>
+          <span>
+            <strong>{t("timeline.evidence.range")}</strong>
+            {formatTimelineSeconds(evidence.startTimeSeconds)} - {formatTimelineSeconds(evidence.endTimeSeconds)}
+          </span>
+          <span>
+            <strong>{t("timeline.evidence.sample")}</strong>
+            {t("timeline.evidence.everyN", { count: evidence.samplingInterval })}
+          </span>
+          <span>
+            <strong>{t("timeline.evidence.loop")}</strong>
+            {evidence.loopStartFrame && evidence.loopEndFrame ? `${evidence.loopStartFrame}-${evidence.loopEndFrame}` : "--"}
+          </span>
+          <span>
+            <strong>{t("timeline.evidence.selected")}</strong>
+            {evidence.selectedFrameIndex + 1}
+          </span>
+        </div>
+      ) : null}
       <div className="timeline-ruler">
         <span className="ruler-label">{t("timeline.animations")}</span>
         {rulerValues.length ? rulerValues.map((value) => (
@@ -124,6 +165,10 @@ function FrameThumb({
       {src ? <img alt="" src={src} /> : <span aria-hidden="true" className="green-box-thumb-placeholder" />}
     </button>
   );
+}
+
+function formatTimelineSeconds(value: number) {
+  return `${Math.max(0, value).toFixed(2)}s`;
 }
 
 function timelineMarks(frameCount: number) {

@@ -5,7 +5,7 @@ import { CanvasPreview } from "../components/CanvasPreview";
 import { FrameTimeline } from "../components/FrameTimeline";
 import { QualityInspector } from "../components/QualityInspector";
 import { ExportPanel, type ExportReadinessItem } from "../components/ExportPanel";
-import { hasLiveWorkbenchData } from "../forgeViewModel";
+import { deriveWorkbenchStage, hasLiveWorkbenchData, type WorkbenchStage } from "../forgeViewModel";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -17,6 +17,7 @@ import {
   PackageCheck,
   PlayCircle,
   Settings as SettingsIcon,
+  type LucideIcon,
   Wrench,
 } from "lucide-react";
 import { APP_VERSION } from "../appMetadata";
@@ -31,6 +32,7 @@ import {
   checkFfmpeg,
   computeQualityReport,
   defaultChromaParameters,
+  exportGodotProject,
   exportPack,
   extractFrames,
   importFrames,
@@ -50,6 +52,7 @@ import {
   type ExportPackOutput,
   type ExtractFramesResult,
   type FootAnchor,
+  type GodotProjectExportOutput,
   type JobRecord,
   type LoopFrameRange,
   type LocalSettings,
@@ -60,6 +63,7 @@ import {
 } from "../tauriCommands";
 import { usePreviewImage } from "../hooks/usePreviewImage";
 import type { TFunction, TranslationKey } from "../i18n";
+import { keepEveryForTargetFrames, type FrameSelectionMode } from "../videoSegment";
 import { useEffect, useMemo, useState } from "react";
 
 type ForgeRouteProps = {
@@ -170,6 +174,8 @@ export function ForgeRoute({
   const [startTimeSeconds, setStartTimeSeconds] = useState(0);
   const [endTimeSeconds, setEndTimeSeconds] = useState(1);
   const [keepEveryNFrames, setKeepEveryNFrames] = useState(1);
+  const [frameSelectionMode, setFrameSelectionMode] = useState<FrameSelectionMode>("target_frames");
+  const [targetFrameCount, setTargetFrameCount] = useState(24);
   const [job, setJob] = useState<JobRecord | null>(null);
   const [workingSourcePath, setWorkingSourcePath] = useState<string | null>(null);
   const [activeSourceName, setActiveSourceName] = useState(t("source.noSource"));
@@ -181,6 +187,7 @@ export function ForgeRoute({
   const [normalizeResult, setNormalizeResult] = useState<NormalizeFramesResult | null>(null);
   const [qualityReport, setQualityReport] = useState<QualityReport | null>(null);
   const [exportOutput, setExportOutput] = useState<ExportPackOutput | null>(null);
+  const [godotExportOutput, setGodotExportOutput] = useState<GodotProjectExportOutput | null>(null);
   const [packSummary, setPackSummary] = useState<PackSummary | null>(null);
   const [selectedFrameIndex, setSelectedFrameIndex] = useState(0);
   const [chromaParameters, setChromaParameters] = useState(defaultChromaParameters);
@@ -191,6 +198,7 @@ export function ForgeRoute({
     message: t("status.readyLocalImport"),
   });
   const [isRunning, setIsRunning] = useState(false);
+  const [previewInspectionEnabled, setPreviewInspectionEnabled] = useState(true);
 
   const timelineFramePaths = normalizeResult?.frames.map((frame) => frame.path) ?? extractResult?.frames ?? [];
   const selectedFramePath = timelineFramePaths[selectedFrameIndex] ?? previewResult?.processedPath ?? packPreviewPath ?? null;
@@ -213,15 +221,65 @@ export function ForgeRoute({
   const liveFrameCount = normalizeResult?.frames.length ?? extractResult?.frames.length ?? null;
   const frameCount = liveFrameCount ?? sourceFrameCount ?? 0;
   const hasOutputFolder = Boolean(settings.defaultOutputFolder.trim());
+  const selectedDuration = Math.max(0, endTimeSeconds - startTimeSeconds);
+  const activeKeepEveryNFrames = frameSelectionMode === "target_frames"
+    ? keepEveryForTargetFrames(selectedDuration, probe?.fps ?? 0, targetFrameCount, frameCount)
+    : keepEveryNFrames;
+  const selectedNormalizedFrame = normalizeResult?.frames[selectedFrameIndex] ?? null;
+  const previewMode = exportOutput && activeWorkflow === "Export"
+    ? "export"
+    : normalizeResult
+    ? previewInspectionEnabled
+      ? "inspection"
+      : "normalized"
+    : extractResult
+      ? "raw"
+      : exportOutput
+        ? "export"
+        : "empty";
+  const selectedOverlay = previewInspectionEnabled && selectedNormalizedFrame
+    ? {
+        anchor: selectedNormalizedFrame.anchor,
+        bbox: selectedNormalizedFrame.bbox,
+        size: selectedNormalizedFrame.size,
+      }
+    : null;
   const canExport = Boolean(
     job && normalizeResult?.frames.length && qualityReport && qualityReport.verdict !== "blocked" && hasOutputFolder,
   );
   const canExtractFrames = Boolean(job?.source_kind === "import_video" && probe);
   const canProcessAndQuality = Boolean(extractResult || (job?.source_kind === "import_video" && probe));
+  const canProcessCurrentFrames = Boolean(extractResult?.frames.length);
   const sourcePendingExtraction = Boolean(job?.source_kind === "import_video" && probe && !extractResult && !normalizeResult);
   const framesPendingQuality = Boolean(extractResult?.frames.length && !normalizeResult && !qualityReport);
-  const headerQualityStatus = qualityReport ? "checked" : canProcessAndQuality ? "readyToCheck" : "pending";
   const hasSelectedSource = Boolean(job || workingSourcePath || probe);
+  const workbenchStage = deriveWorkbenchStage({
+    canExport,
+    extractFrameCount: extractResult?.frames.length ?? 0,
+    hasExport: Boolean(exportOutput),
+    hasGodotProject: Boolean(godotExportOutput),
+    hasLiveFrames,
+    hasQualityReport: Boolean(qualityReport),
+    hasSelectedSource,
+    hasValidation: Boolean(exportOutput && packSummary),
+    isRunning,
+    normalizeFrameCount: normalizeResult?.frames.length ?? 0,
+    qualityVerdict: qualityReport?.verdict ?? null,
+    sourcePendingExtraction,
+  });
+  const showExportPanel = workbenchStage === "export_ready"
+    || workbenchStage === "exported_unvalidated"
+    || workbenchStage === "validated"
+    || workbenchStage === "godot_project_ready"
+    || activeWorkflow === "Export";
+  const showQualityInspector = workbenchStage === "quality_ready"
+    || workbenchStage === "export_ready"
+    || workbenchStage === "exported_unvalidated"
+    || workbenchStage === "validated"
+    || workbenchStage === "godot_project_ready"
+    || workbenchStage === "blocked";
+  const showStageActionPanel = !showExportPanel;
+  const headerQualityStatus = qualityReport ? "checked" : canProcessAndQuality ? "readyToCheck" : "pending";
   const showSideImportPanel = Boolean(
     hasSelectedSource || sourcePath.trim() || frameSequenceInput.trim() || spriteSheetPath.trim() || gsfpackPath.trim(),
   );
@@ -422,7 +480,7 @@ export function ForgeRoute({
       }
 
       const commandPressed = event.metaKey || event.ctrlKey;
-      if (commandPressed && event.key === "Enter" && canProcessAndQuality && !isRunning) {
+      if (commandPressed && event.key === "Enter" && canProcessCurrentFrames && !isRunning) {
         event.preventDefault();
         void handleProcessAndQuality();
         return;
@@ -657,6 +715,19 @@ export function ForgeRoute({
     });
   }
 
+  async function handleExportGodotProject() {
+    await runStep(t("status.exportingGodotProject"), async () => {
+      const output = requireValue(exportOutput, "export a pack first");
+      const godotOutput = await exportGodotProject({
+        outputDir: output.exportDir,
+        packDir: output.packDir,
+        projectName: packName,
+      });
+      setGodotExportOutput(godotOutput);
+      return t("status.exportedGodotProject", { name: fileName(godotOutput.projectDir) });
+    });
+  }
+
   async function handleValidateExport() {
     await runStep(t("status.validatingReimport"), async () => {
       const output = requireValue(exportOutput, "export a pack first");
@@ -747,6 +818,7 @@ export function ForgeRoute({
     setNormalizeResult(null);
     setQualityReport(null);
     setExportOutput(null);
+    setGodotExportOutput(null);
     setPackSummary(null);
     setPackPreviewPath(null);
     setActiveSourceName(`${paths.length} PNG frames`);
@@ -788,6 +860,7 @@ export function ForgeRoute({
     setNormalizeResult(null);
     setQualityReport(null);
     setExportOutput(null);
+    setGodotExportOutput(null);
     setPackSummary(null);
     setPackPreviewPath(null);
     setActiveSourceName(fileName(originalPath));
@@ -808,6 +881,7 @@ export function ForgeRoute({
     setNormalizeResult(null);
     setQualityReport(null);
     setExportOutput(null);
+    setGodotExportOutput(null);
     setPackSummary(summary);
     setPackPreviewPath(imported.previewGifPath);
     setPackName(summary.name);
@@ -839,6 +913,7 @@ export function ForgeRoute({
     setNormalizeResult(null);
     setQualityReport(null);
     setExportOutput(null);
+    setGodotExportOutput(null);
     setPackSummary(null);
     setPackPreviewPath(null);
     setActiveSourceName(fileName(path));
@@ -854,7 +929,7 @@ export function ForgeRoute({
       settings,
       startTimeSeconds,
       Math.max(endTimeSeconds, startTimeSeconds + 0.1),
-      keepEveryNFrames,
+      activeKeepEveryNFrames,
     );
     setExtractResult(result);
     resetLoopRange(result.frames.length);
@@ -863,6 +938,7 @@ export function ForgeRoute({
     setNormalizeResult(null);
     setQualityReport(null);
     setExportOutput(null);
+    setGodotExportOutput(null);
     setPackPreviewPath(null);
     return result;
   }
@@ -892,6 +968,7 @@ export function ForgeRoute({
     setSelectedFrameIndex(0);
     setQualityReport(report);
     setExportOutput(null);
+    setGodotExportOutput(null);
     setPackSummary(null);
     setPackPreviewPath(null);
     return { normalizeResult: normalized, qualityReport: report };
@@ -931,6 +1008,7 @@ export function ForgeRoute({
       sourceName: metadataOverride.sourceName ?? activeSourceName,
     });
     setExportOutput(output);
+    setGodotExportOutput(null);
     setGsfpackPath(output.packDir);
     setPackSummary(null);
     return output;
@@ -1057,17 +1135,21 @@ export function ForgeRoute({
             disabled={isRunning || !canExtractFrames}
             endTimeSeconds={endTimeSeconds}
             extractResult={extractResult}
+            frameSelectionMode={frameSelectionMode}
             keepEveryNFrames={keepEveryNFrames}
             loopEndFrame={loopEndFrame}
             loopStartFrame={loopStartFrame}
             onEndTimeChange={setEndTimeSeconds}
             onExtract={handleExtractFrames}
+            onFrameSelectionModeChange={setFrameSelectionMode}
             onKeepEveryChange={setKeepEveryNFrames}
             onLoopEndFrameChange={(value) => setLoopEndFrame(Math.max(value, loopStartFrame))}
             onLoopStartFrameChange={(value) => setLoopStartFrame(Math.min(value, loopEndFrame))}
             onStartTimeChange={setStartTimeSeconds}
+            onTargetFrameCountChange={setTargetFrameCount}
             probe={probe}
             startTimeSeconds={startTimeSeconds}
+            targetFrameCount={targetFrameCount}
             t={t}
           />
         ) : null}
@@ -1127,7 +1209,11 @@ export function ForgeRoute({
             <CanvasPreview
               bboxLabel={canvasFrameTag}
               framePath={selectedFramePath}
+              inspectionEnabled={previewInspectionEnabled}
+              onInspectionToggle={normalizeResult ? setPreviewInspectionEnabled : undefined}
+              overlay={selectedOverlay}
               placeholderMode={hasSelectedSource && !hasLiveFrames ? "sourcePending" : "empty"}
+              previewMode={previewMode}
               t={t}
             />
           )}
@@ -1185,6 +1271,16 @@ export function ForgeRoute({
           </div>
         </aside>
         <FrameTimeline
+          evidence={hasLiveFrames ? {
+            actualFrameCount: timelineFramePaths.length,
+            endTimeSeconds,
+            loopEndFrame: activeLoopRange ? activeLoopRange.endIndex + 1 : null,
+            loopStartFrame: activeLoopRange ? activeLoopRange.startIndex + 1 : null,
+            samplingInterval: activeKeepEveryNFrames,
+            selectedFrameIndex,
+            startTimeSeconds,
+            targetFrameCount: frameSelectionMode === "target_frames" ? targetFrameCount : null,
+          } : null}
           extractResult={extractResult}
           frameCount={frameCount}
           framePaths={timelineFramePaths}
@@ -1220,56 +1316,79 @@ export function ForgeRoute({
       </section>
 
       <aside className={inspectorPanelClassName}>
-        <QualityInspector
-          canProcessAndQuality={canProcessAndQuality}
-          compact={Boolean(qualityReport && (canExport || exportOutput || activeWorkflow === "Export"))}
-          disabled={isRunning}
-          framesPendingQuality={framesPendingQuality}
-          onOpenAnchor={() => onWorkflowChange("Anchor")}
-          onOpenBackground={() => onWorkflowChange("Background")}
-          onOpenFrames={() => onWorkflowChange("Frames")}
-          onOpenSheet={() => onWorkflowChange("Sheet")}
-          onProcess={handleProcessAndQuality}
-          onRunSample={handleRunFullPipeline}
-          report={qualityReport}
-          sourcePendingExtraction={sourcePendingExtraction}
-          t={t}
-        />
-        <ExportPanel
-          allowMultiSheet={allowMultiSheet}
-          animationName={animationName}
-          canExport={canExport}
-          creatorName={creatorName}
-          disabled={isRunning}
-          exportOutput={exportOutput}
-          framesPendingQuality={framesPendingQuality}
-          licenseType={licenseType}
-          loopAnimation={loopAnimation}
-          onAnimationNameChange={setAnimationName}
-          onAllowMultiSheetChange={setAllowMultiSheet}
-          onChooseOutputFolder={onChooseOutputFolder}
-          onCreatorNameChange={setCreatorName}
-          onExport={handleExportPack}
-          onLicenseTypeChange={setLicenseType}
-          onLoopAnimationChange={setLoopAnimation}
-          onOpenExportFolder={handleOpenExportsFolder}
-          onPackNameChange={setPackName}
-          onSheetColumnsChange={setSheetColumns}
-          onSheetMarginChange={setSheetMarginPx}
-          onSheetPaddingChange={setSheetPaddingPx}
-          onValidate={handleValidateExport}
-          outputFolder={settings.defaultOutputFolder}
-          packName={packName}
-          packSummary={packSummary}
-          readinessItems={exportReadiness}
-          sheetColumns={sheetColumns}
-          sheetMarginPx={sheetMarginPx}
-          sheetPaddingPx={sheetPaddingPx}
-          hasSource={Boolean(job)}
-          pendingQualityFrameCount={frameCount}
-          sourcePendingExtraction={sourcePendingExtraction}
-          t={t}
-        />
+        {showStageActionPanel ? (
+          <StageActionPanel
+            canExtractFrames={canExtractFrames}
+            canProcessAndQuality={canProcessAndQuality}
+            disabled={isRunning}
+            frameCount={frameCount}
+            hasOutputFolder={hasOutputFolder}
+            onChooseOutputFolder={onChooseOutputFolder}
+            onChooseSource={sourcePath.trim() ? handleImportVideo : handleChooseVideoAndImport}
+            onExtract={handleExtractFrames}
+            onOpenSettings={onOpenSettings}
+            onProcess={handleProcessAndQuality}
+            stage={workbenchStage}
+            sourceName={activeSourceName}
+            t={t}
+          />
+        ) : null}
+        {showQualityInspector ? (
+          <QualityInspector
+            canProcessAndQuality={canProcessAndQuality}
+            compact={Boolean(qualityReport && (canExport || exportOutput || activeWorkflow === "Export"))}
+            disabled={isRunning}
+            framesPendingQuality={framesPendingQuality}
+            onOpenAnchor={() => onWorkflowChange("Anchor")}
+            onOpenBackground={() => onWorkflowChange("Background")}
+            onOpenFrames={() => onWorkflowChange("Frames")}
+            onOpenSheet={() => onWorkflowChange("Sheet")}
+            onProcess={handleProcessAndQuality}
+            onRunSample={handleRunFullPipeline}
+            report={qualityReport}
+            sourcePendingExtraction={sourcePendingExtraction}
+            t={t}
+          />
+        ) : null}
+        {showExportPanel ? (
+          <ExportPanel
+            allowMultiSheet={allowMultiSheet}
+            animationName={animationName}
+            canExport={canExport}
+            creatorName={creatorName}
+            disabled={isRunning}
+            exportOutput={exportOutput}
+            framesPendingQuality={framesPendingQuality}
+            godotExportOutput={godotExportOutput}
+            licenseType={licenseType}
+            loopAnimation={loopAnimation}
+            onAnimationNameChange={setAnimationName}
+            onAllowMultiSheetChange={setAllowMultiSheet}
+            onChooseOutputFolder={onChooseOutputFolder}
+            onCreatorNameChange={setCreatorName}
+            onExport={handleExportPack}
+            onExportGodotProject={handleExportGodotProject}
+            onLicenseTypeChange={setLicenseType}
+            onLoopAnimationChange={setLoopAnimation}
+            onOpenExportFolder={handleOpenExportsFolder}
+            onPackNameChange={setPackName}
+            onSheetColumnsChange={setSheetColumns}
+            onSheetMarginChange={setSheetMarginPx}
+            onSheetPaddingChange={setSheetPaddingPx}
+            onValidate={handleValidateExport}
+            outputFolder={settings.defaultOutputFolder}
+            packName={packName}
+            packSummary={packSummary}
+            readinessItems={exportReadiness}
+            sheetColumns={sheetColumns}
+            sheetMarginPx={sheetMarginPx}
+            sheetPaddingPx={sheetPaddingPx}
+            hasSource={Boolean(job)}
+            pendingQualityFrameCount={frameCount}
+            sourcePendingExtraction={sourcePendingExtraction}
+            t={t}
+          />
+        ) : null}
       </aside>
 
       <footer className="status-bar">
@@ -1282,27 +1401,10 @@ export function ForgeRoute({
               <small>{packSummary ? t("footer.validated") : t("footer.validationPending")}</small>
             </div>
           ) : (
-            <>
-              <button className="status-action" disabled={isRunning} onClick={handleCheckFfmpeg} type="button">
-                {t("pipeline.checkFfmpeg")}
-              </button>
-              <button
-                className="status-action"
-                disabled={isRunning || !canExtractFrames}
-                onClick={handleExtractFrames}
-                type="button"
-              >
-                {t("pipeline.extractFrames")}
-              </button>
-              <button
-                className="status-action primary"
-                disabled={isRunning || !canProcessAndQuality}
-                onClick={handleProcessAndQuality}
-                type="button"
-              >
-                {t("pipeline.processQuality")}
-              </button>
-            </>
+            <div className={`footer-stage-status stage-${workbenchStage}`} role="status">
+              <span>{t("workflowStage.footerLabel")}</span>
+              <strong>{t(workbenchStageLabelKey(workbenchStage))}</strong>
+            </div>
           )}
         </div>
         <div className="pipeline-steps" aria-label={t("pipeline.steps")}>
@@ -1413,6 +1515,180 @@ function WorkflowFocusPanel({
       </div>
     </section>
   );
+}
+
+function StageActionPanel({
+  canExtractFrames,
+  canProcessAndQuality,
+  disabled,
+  frameCount,
+  hasOutputFolder,
+  onChooseOutputFolder,
+  onChooseSource,
+  onExtract,
+  onOpenSettings,
+  onProcess,
+  sourceName,
+  stage,
+  t,
+}: {
+  canExtractFrames: boolean;
+  canProcessAndQuality: boolean;
+  disabled: boolean;
+  frameCount: number;
+  hasOutputFolder: boolean;
+  onChooseOutputFolder: () => void | Promise<void>;
+  onChooseSource: () => void | Promise<void>;
+  onExtract: () => void | Promise<void>;
+  onOpenSettings: () => void;
+  onProcess: () => void | Promise<void>;
+  sourceName: string;
+  stage: WorkbenchStage;
+  t: TFunction;
+}) {
+  const action = stageActionFor(stage, {
+    canExtractFrames,
+    canProcessAndQuality,
+    disabled,
+    hasOutputFolder,
+    onChooseOutputFolder,
+    onChooseSource,
+    onExtract,
+    onOpenSettings,
+    onProcess,
+    t,
+  });
+  const StageIcon = action.icon;
+  const detail = t(workbenchStageDetailKey(stage), { count: frameCount, source: sourceName });
+
+  return (
+    <section className={`stage-action-panel stage-${stage}`} aria-label={t("workflowStage.panelTitle")}>
+      <div className="stage-action-head">
+        <span>{t("workflowStage.panelTitle")}</span>
+        <strong>{t(workbenchStageLabelKey(stage))}</strong>
+      </div>
+      <p>{detail}</p>
+      <button
+        className="stage-primary-action"
+        disabled={action.disabled}
+        onClick={() => {
+          void action.onClick();
+        }}
+        type="button"
+      >
+        <StageIcon size={18} />
+        {action.label}
+      </button>
+      {stage === "source_selected" || stage === "frames_ready" || stage === "processed_ready" ? (
+        <div className="stage-evidence-list" aria-label={t("workflowStage.evidence")}>
+          <span>{t("workflowStage.source", { source: sourceName })}</span>
+          <span>{t("workflowStage.frames", { count: frameCount })}</span>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function stageActionFor(
+  stage: WorkbenchStage,
+  context: {
+    canExtractFrames: boolean;
+    canProcessAndQuality: boolean;
+    disabled: boolean;
+    hasOutputFolder: boolean;
+    onChooseOutputFolder: () => void | Promise<void>;
+    onChooseSource: () => void | Promise<void>;
+    onExtract: () => void | Promise<void>;
+    onOpenSettings: () => void;
+    onProcess: () => void | Promise<void>;
+    t: TFunction;
+  },
+): { disabled: boolean; icon: LucideIcon; label: string; onClick: () => void | Promise<void> } {
+  if (stage === "empty") {
+    return {
+      disabled: context.disabled,
+      icon: Film,
+      label: context.t("workflowStage.action.chooseSource"),
+      onClick: context.onChooseSource,
+    };
+  }
+
+  if (stage === "source_selected") {
+    return {
+      disabled: context.disabled || !context.canExtractFrames,
+      icon: Images,
+      label: context.t("pipeline.extractFrames"),
+      onClick: context.onExtract,
+    };
+  }
+
+  if (stage === "quality_ready" && !context.hasOutputFolder) {
+    return {
+      disabled: context.disabled,
+      icon: SettingsIcon,
+      label: context.t("workflowStage.action.chooseOutput"),
+      onClick: context.onChooseOutputFolder,
+    };
+  }
+
+  if (stage === "blocked") {
+    return {
+      disabled: context.disabled || !context.canProcessAndQuality,
+      icon: AlertTriangle,
+      label: context.t("workflowStage.action.fixQuality"),
+      onClick: context.onProcess,
+    };
+  }
+
+  if (stage === "running") {
+    return {
+      disabled: true,
+      icon: Wrench,
+      label: context.t("workflowStage.action.running"),
+      onClick: context.onOpenSettings,
+    };
+  }
+
+  return {
+    disabled: context.disabled || !context.canProcessAndQuality,
+    icon: Wrench,
+    label: context.t("pipeline.processQuality"),
+    onClick: context.onProcess,
+  };
+}
+
+function workbenchStageLabelKey(stage: WorkbenchStage): TranslationKey {
+  const keys: Record<WorkbenchStage, TranslationKey> = {
+    blocked: "workflowStage.blocked",
+    empty: "workflowStage.empty",
+    export_ready: "workflowStage.exportReady",
+    exported_unvalidated: "workflowStage.exportedUnvalidated",
+    frames_ready: "workflowStage.framesReady",
+    godot_project_ready: "workflowStage.godotProjectReady",
+    processed_ready: "workflowStage.processedReady",
+    quality_ready: "workflowStage.qualityReady",
+    running: "workflowStage.running",
+    source_selected: "workflowStage.sourceSelected",
+    validated: "workflowStage.validated",
+  };
+  return keys[stage];
+}
+
+function workbenchStageDetailKey(stage: WorkbenchStage): TranslationKey {
+  const keys: Record<WorkbenchStage, TranslationKey> = {
+    blocked: "workflowStage.detail.blocked",
+    empty: "workflowStage.detail.empty",
+    export_ready: "workflowStage.detail.exportReady",
+    exported_unvalidated: "workflowStage.detail.exportedUnvalidated",
+    frames_ready: "workflowStage.detail.framesReady",
+    godot_project_ready: "workflowStage.detail.godotProjectReady",
+    processed_ready: "workflowStage.detail.processedReady",
+    quality_ready: "workflowStage.detail.qualityReady",
+    running: "workflowStage.detail.running",
+    source_selected: "workflowStage.detail.sourceSelected",
+    validated: "workflowStage.detail.validated",
+  };
+  return keys[stage];
 }
 
 function ImportLauncher({

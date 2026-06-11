@@ -377,6 +377,16 @@ fn export_pack(
 }
 
 #[tauri::command]
+fn export_godot_project(
+    mut params: forge_core::export::GodotProjectExportParams,
+) -> Result<forge_core::export::GodotProjectExportOutput, String> {
+    params.output_dir = normalize_user_export_directory(&params.output_dir)?;
+    forge_pack::read_pack_summary(&params.pack_dir).map_err(|error| error.to_string())?;
+    forge_pack::validate_pack_layout(&params.pack_dir).map_err(|error| error.to_string())?;
+    forge_core::export::export_godot_project(params).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
 fn import_gsfpack(path: String) -> Result<ImportGsfpackJobResult, String> {
     let imported = forge_pack::import_pack(Path::new(&path)).map_err(|error| error.to_string())?;
     let job = create_import_job(forge_core::job::types::SourceKind::ImportGsfpack)?;
@@ -531,6 +541,7 @@ pub fn run() {
             normalize_frames,
             compute_quality_report,
             export_pack,
+            export_godot_project,
             import_gsfpack,
             validate_gsfpack,
             read_preview_image,

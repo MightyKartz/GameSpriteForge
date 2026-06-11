@@ -206,6 +206,85 @@ GIF/WebP utility import/export
 RPG Maker and additional engine presets
 ```
 
+### Slice 7: Godot Export And Video Intake Hardening
+
+Goal: make exported Forge packs directly usable in Godot and make video frame-count and character-position correctness visible in the local app.
+
+Reference:
+
+```text
+docs/architecture/godot-export-video-intake-hardening.md
+docs/superpowers/plans/2026-06-11-forge-godot-export-video-intake-hardening.md
+docs/qa/godot-pack-smoke-2026-06-11.md
+docs/qa/godot-export-video-intake-hardening-2026-06-11.md
+```
+
+Entry criteria:
+
+```text
+Godot smoke evidence confirms a generated .gsfpack can become SpriteFrames and AnimatedSprite2D
+video segment UI already shows estimated frame count before extraction
+quality report includes bbox drift, anchor drift, loop match, and cell-boundary safety
+```
+
+Deliverables:
+
+```text
+Completed 2026-06-11:
+one-click Godot project export from a completed pack
+repeatable npm smoke:godot command
+target frame-count controls for video extraction
+preview overlays for bbox, foot anchor, and character center
+export result copy that reports Godot readiness
+```
+
+Follow-up evidence:
+
+```text
+Record real installed-app click-through evidence for the new Godot export button after the next app build.
+```
+
+### Slice 8: UI/UX Workflow Focus
+
+Goal: reduce decision cost in the local workbench by making each stage expose
+one primary action, a stage-aware right rail, clearer timeline extraction
+evidence, and more readable inspection overlays.
+
+Reference:
+
+```text
+docs/architecture/forge-ui-ux-workflow-focus.md
+docs/qa/forge-ui-ux-review-2026-06-11.md
+docs/superpowers/plans/2026-06-11-forge-ui-ux-workflow-focus.md
+```
+
+Entry criteria:
+
+```text
+Godot export and video intake hardening is installed locally for manual testing
+the local import -> extract -> process -> quality -> export path remains green
+screenshots identify the current density and hierarchy issues
+```
+
+Deliverables:
+
+```text
+canonical workbench stage model
+single primary CTA per stage
+stage-aware right rail
+timeline extraction evidence summary
+preview mode labels and inspection overlay control
+progressive disclosure for advanced export metadata
+accessibility and contrast pass for the workbench
+real installed-app screenshots and QA notes
+```
+
+Non-goal:
+
+```text
+Do not add new media-processing features or product surfaces in this slice.
+```
+
 ## Explicit Non-Goals For The Next Slice
 
 ```text

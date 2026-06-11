@@ -1,0 +1,73 @@
+{
+  "image": "sprite_sheet.png",
+  "frameWidth": 88,
+  "frameHeight": 88,
+  "columns": 4,
+  "rows": 2,
+  "frames": [
+    {
+      "index": 0,
+      "name": "frame_001.png",
+      "x": 2,
+      "y": 2,
+      "width": 88,
+      "height": 88
+    },
+    {
+      "index": 1,
+      "name": "frame_002.png",
+      "x": 92,
+      "y": 2,
+      "width": 88,
+      "height": 88
+    },
+    {
+      "index": 2,
+      "name": "frame_003.png",
+      "x": 182,
+      "y": 2,
+      "width": 88,
+      "height": 88
+    },
+    {
+      "index": 3,
+      "name": "frame_004.png",
+      "x": 272,
+      "y": 2,
+      "width": 88,
+      "height": 88
+    },
+    {
+      "index": 4,
+      "name": "frame_005.png",
+      "x": 2,
+      "y": 92,
+      "width": 88,
+      "height": 88
+    },
+    {
+      "index": 5,
+      "name": "frame_006.png",
+      "x": 92,
+      "y": 92,
+      "width": 88,
+      "height": 88
+    },
+    {
+      "index": 6,
+      "name": "frame_007.png",
+      "x": 182,
+      "y": 92,
+      "width": 88,
+      "height": 88
+    },
+    {
+      "index": 7,
+      "name": "frame_008.png",
+      "x": 272,
+      "y": 92,
+      "width": 88,
+      "height": 88
+    }
+  ]
+}

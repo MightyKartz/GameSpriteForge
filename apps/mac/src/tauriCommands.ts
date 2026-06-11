@@ -145,6 +145,13 @@ export type ExportPackOutput = {
   packDir: string;
 };
 
+export type GodotProjectExportOutput = {
+  projectDir: string;
+  importScriptPath: string;
+  projectFilePath: string;
+  readmePath: string;
+};
+
 export type PackSummary = {
   id: string;
   name: string;
@@ -393,6 +400,20 @@ export function exportPack(args: {
         anchor,
         qualityReport: args.qualityReport,
       },
+    },
+  });
+}
+
+export function exportGodotProject(args: {
+  packDir: string;
+  outputDir: string;
+  projectName: string;
+}) {
+  return invoke<GodotProjectExportOutput>("export_godot_project", {
+    params: {
+      packDir: args.packDir,
+      outputDir: args.outputDir,
+      projectName: args.projectName,
     },
   });
 }

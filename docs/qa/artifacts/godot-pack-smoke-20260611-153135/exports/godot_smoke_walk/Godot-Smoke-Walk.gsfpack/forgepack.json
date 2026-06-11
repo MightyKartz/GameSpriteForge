@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "godot-smoke-walk",
+  "name": "Godot Smoke Walk",
+  "version": "0.1.0",
+  "createdAt": "2026-06-11T07:31:39.854643Z",
+  "creator": {
+    "name": "Game Sprite Forge"
+  },
+  "license": {
+    "type": "private"
+  },
+  "source": {
+    "kind": "import_sprite_sheet",
+    "name": "forge-walk-sheet.png",
+    "metadata": {}
+  },
+  "animations": [
+    {
+      "name": "walk",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "fps": 12.0,
+      "loop": true
+    }
+  ],
+  "assets": {
+    "frames": "assets/frames",
+    "spriteSheet": "assets/sprite_sheet.png",
+    "atlas": "assets/atlas.json",
+    "manifest": "assets/manifest.json",
+    "godotHelper": "assets/godot_import.json",
+    "qualityReport": "quality-report.json"
+  },
+  "previews": {
+    "gif": "previews/preview.gif"
+  }
+}

@@ -20,5 +20,6 @@ thiserror = "1"
 uuid = { version = "1", features = ["v4", "serde"] }
 
 [dev-dependencies]
+forge_pack = { package = "pack", path = "../pack" }
 temp-env = "0.3"
 tempfile = "3"

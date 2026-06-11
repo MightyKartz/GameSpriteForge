@@ -1,0 +1,16 @@
+{
+  "verdict": "game_ready",
+  "metrics": {
+    "bboxBottomDriftPx": 0.0,
+    "bboxCenterXDriftPx": 0.0,
+    "bboxCenterYDriftPx": 0.0,
+    "bboxWidthVariationPx": 0.0,
+    "alphaCoverageAvg": 0.16955566,
+    "loopMatchScore": 1.0,
+    "frameCount": 8,
+    "frameSizeConsistent": true,
+    "cellBoundarySafe": true
+  },
+  "recommendations": [],
+  "notes": []
+}

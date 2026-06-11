@@ -1,6 +1,6 @@
-import { FolderOpen, PackageCheck, Scissors, Upload } from "lucide-react";
+import { FolderOpen, Gamepad2, PackageCheck, Scissors, Upload } from "lucide-react";
 import { useState } from "react";
-import type { ExportPackOutput, PackSummary } from "../tauriCommands";
+import type { ExportPackOutput, GodotProjectExportOutput, PackSummary } from "../tauriCommands";
 import { exportTargets } from "../forgeViewModel";
 import type { TFunction } from "../i18n";
 
@@ -18,6 +18,7 @@ type ExportPanelProps = {
   disabled?: boolean;
   exportOutput: ExportPackOutput | null;
   framesPendingQuality: boolean;
+  godotExportOutput: GodotProjectExportOutput | null;
   hasSource: boolean;
   sourcePendingExtraction: boolean;
   licenseType: string;
@@ -26,6 +27,7 @@ type ExportPanelProps = {
   onAllowMultiSheetChange: (value: boolean) => void;
   onCreatorNameChange: (value: string) => void;
   onExport: () => void;
+  onExportGodotProject: () => void;
   onLicenseTypeChange: (value: string) => void;
   onLoopAnimationChange: (value: boolean) => void;
   onChooseOutputFolder: () => void | Promise<void>;
@@ -54,6 +56,7 @@ export function ExportPanel({
   disabled = false,
   exportOutput,
   framesPendingQuality,
+  godotExportOutput,
   hasSource,
   sourcePendingExtraction,
   licenseType,
@@ -62,6 +65,7 @@ export function ExportPanel({
   onAllowMultiSheetChange,
   onCreatorNameChange,
   onExport,
+  onExportGodotProject,
   onLicenseTypeChange,
   onLoopAnimationChange,
   onChooseOutputFolder,
@@ -180,6 +184,10 @@ export function ExportPanel({
       <button className="secondary-button preview-export" disabled={disabled || !canExport} onClick={onExport} type="button">
         <Upload size={17} />
         {t("export.reexportPack")}
+      </button>
+      <button className="secondary-button preview-export" disabled={disabled || !exportOutput} onClick={onExportGodotProject} type="button">
+        <Gamepad2 size={17} />
+        {t("export.exportGodotProject")}
       </button>
     </div>
   ) : (
@@ -383,6 +391,19 @@ export function ExportPanel({
           <p className="export-path">{t("export.outputFrames", { count: exportOutput.framePaths.length })}</p>
           <p className="export-path">{t("export.outputSpriteSheets", { count: exportOutput.spriteSheetPaths.length })}</p>
           <p className="export-path">{t("export.outputGodotHelper", { path: exportOutput.godotHelperPath })}</p>
+        </div>
+      ) : null}
+      {exportOutput ? (
+        <div className={["godot-export-card", godotExportOutput ? "ready" : ""].filter(Boolean).join(" ")} role="status">
+          <span>
+            <Gamepad2 size={16} />
+            <strong>{godotExportOutput ? t("export.godotReady") : t("export.godotPending")}</strong>
+          </span>
+          <small>
+            {godotExportOutput
+              ? t("export.godotProjectPath", { path: godotExportOutput.projectDir })
+              : t("export.godotPendingDetail")}
+          </small>
         </div>
       ) : null}
       {packSummary ? (
