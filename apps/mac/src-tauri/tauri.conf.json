@@ -1,0 +1,52 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Game Sprite Forge",
+  "mainBinaryName": "Game Sprite Forge",
+  "version": "0.1.0",
+  "identifier": "dev.gamespriteforge.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://127.0.0.1:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "url": "index.html",
+        "title": "Game Sprite Forge",
+        "width": 1440,
+        "height": 960,
+        "minWidth": 1120,
+        "minHeight": 760,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self' tauri: tauri://localhost customprotocol: asset: http://tauri.localhost https://tauri.localhost; connect-src 'self' ipc: tauri: tauri://localhost http://ipc.localhost https://ipc.localhost; img-src 'self' tauri: tauri://localhost customprotocol: asset: http://asset.localhost https://asset.localhost data:; style-src 'self' 'unsafe-inline' tauri: tauri://localhost customprotocol: http://tauri.localhost https://tauri.localhost; script-src 'self' 'unsafe-inline' tauri: tauri://localhost customprotocol: http://tauri.localhost https://tauri.localhost; object-src 'none'; base-uri 'none'; frame-src 'none'"
+    }
+  },
+  "plugins": {
+    "shell": {
+      "open": "^(file:|/|https?://).+"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg"],
+    "icon": ["icons/icon.png"],
+    "category": "DeveloperTool",
+    "resources": {
+      "../../../examples/inputs/green-box-character.mp4": "examples/inputs/green-box-character.mp4"
+    },
+    "shortDescription": "Local 2D sprite animation asset workbench",
+    "longDescription": "A local macOS workbench that turns video and frame sources into game-ready 2D sprite animation assets.",
+    "macOS": {
+      "signingIdentity": "Developer ID Application: Ka Yan (J6P96F432P)",
+      "hardenedRuntime": true,
+      "entitlements": "Entitlements.plist",
+      "infoPlist": "Info.plist"
+    }
+  }
+}

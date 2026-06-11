@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/quality-report.schema.json",
+  "title": "Game Sprite Forge Quality Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdict", "metrics", "recommendations"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "game_ready",
+        "needs_cleanup",
+        "prototype_usable",
+        "blocked"
+      ]
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bboxBottomDriftPx",
+        "bboxCenterXDriftPx",
+        "bboxCenterYDriftPx",
+        "bboxWidthVariationPx",
+        "alphaCoverageAvg",
+        "loopMatchScore",
+        "frameCount",
+        "frameSizeConsistent",
+        "cellBoundarySafe"
+      ],
+      "properties": {
+        "bboxBottomDriftPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bboxCenterXDriftPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bboxCenterYDriftPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bboxWidthVariationPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "alphaCoverageAvg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "loopMatchScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "frameCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "frameSizeConsistent": {
+          "type": "boolean"
+        },
+        "cellBoundarySafe": {
+          "type": "boolean"
+        }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "adjust_anchor",
+          "trim_loop_range",
+          "increase_chroma_threshold",
+          "reduce_chroma_threshold",
+          "use_shorter_clip",
+          "increase_canvas_margin"
+        ]
+      }
+    }
+  }
+}

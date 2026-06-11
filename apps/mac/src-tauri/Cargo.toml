@@ -1,0 +1,28 @@
+[package]
+name = "game-sprite-forge-mac"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+name = "game_sprite_forge_mac_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+base64 = "0.22"
+forge_core = { package = "core", path = "../../../packages/core" }
+forge_pack = { package = "pack", path = "../../../packages/pack" }
+image = { version = "0.25", default-features = false, features = ["gif", "jpeg", "png"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-shell = "2"
+thiserror = "1"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dev-dependencies]
+tempfile = "3"

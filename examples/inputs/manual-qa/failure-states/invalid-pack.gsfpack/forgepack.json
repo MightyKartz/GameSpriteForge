@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "invalid-manual-qa-pack",
+  "name": "Invalid Manual QA Pack",
+  "version": "0.1.0",
+  "createdAt": "2026-06-05T00:00:00Z",
+  "creator": {
+    "name": "Game Sprite Forge QA"
+  },
+  "license": {
+    "type": "private"
+  },
+  "source": {
+    "kind": "import_frames",
+    "name": "invalid fixture"
+  },
+  "animations": [
+    {
+      "name": "walk",
+      "frames": [
+        0
+      ],
+      "fps": 12,
+      "loop": true
+    }
+  ],
+  "assets": {
+    "frames": "assets/frames",
+    "spriteSheet": "assets/sprite_sheet.png",
+    "atlas": "assets/atlas.json",
+    "manifest": "assets/manifest.json",
+    "qualityReport": "quality-report.json"
+  },
+  "previews": {
+    "gif": "previews/preview.gif"
+  }
+}

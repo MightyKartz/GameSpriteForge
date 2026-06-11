@@ -1,0 +1,29 @@
+.DS_Store
+*.log
+*.tmp
+*.bak
+
+# Local dependency and build output
+node_modules/
+target/
+dist/
+**/dist/
+apps/mac/smoke-output/
+**/.godot/
+
+# Local machine/tool state
+.cargo/
+.impeccable/
+.local-install-archive/
+.playwright-mcp/
+
+# Generated or archived assets not meant for Git history
+generated-assets/
+outputs/
+release-candidates/
+*.dmg
+*.zip
+*.app/
+
+# Large transient QA screenshots; keep curated QA notes and artifacts instead.
+docs/qa/screenshots/

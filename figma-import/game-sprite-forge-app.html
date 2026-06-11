@@ -1,0 +1,1521 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1568, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Game Sprite Forge - App UI Mockup</title>
+  <style>
+    :root {
+      --bg: #0b1014;
+      --bg-deep: #070b0e;
+      --panel: #11181d;
+      --panel-2: #151d23;
+      --panel-3: #1b252c;
+      --line: #25323a;
+      --line-soft: rgba(139, 166, 180, 0.16);
+      --text: #dce5ea;
+      --muted: #8f9ba3;
+      --faint: #5f6e76;
+      --cyan: #16c6f4;
+      --cyan-soft: rgba(22, 198, 244, 0.16);
+      --blue: #2f90d8;
+      --green: #35c85a;
+      --amber: #f6ab22;
+      --pink: #e64796;
+      --violet: #9657d9;
+      --button: #202a31;
+      --button-hover: #25323a;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 1568px;
+      min-height: 1003px;
+      background: #050708;
+      color: var(--text);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      width: 1568px;
+      height: 1003px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 122px 182px 844px 420px;
+      grid-template-rows: 56px 524px 380px 43px;
+      background:
+        linear-gradient(180deg, rgba(31, 44, 52, 0.38), transparent 240px),
+        var(--bg);
+      border: 1px solid #2d3941;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .topbar {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      display: grid;
+      grid-template-columns: 304px 844px 420px;
+      border-bottom: 1px solid #202b32;
+      background: linear-gradient(180deg, #131b20, #0d1317);
+    }
+
+    .brand-zone,
+    .project-zone,
+    .action-zone {
+      height: 56px;
+      display: flex;
+      align-items: center;
+    }
+
+    .brand-zone {
+      gap: 18px;
+      padding: 0 18px;
+      border-right: 1px solid #202b32;
+    }
+
+    .traffic {
+      display: flex;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    }
+
+    .dot.red { background: #ff6258; }
+    .dot.yellow { background: #ffc43d; }
+    .dot.green { background: #35c95a; }
+
+    .brand {
+      font-size: 15px;
+      font-weight: 650;
+      color: #e6edf0;
+      white-space: nowrap;
+    }
+
+    .project-zone {
+      justify-content: space-between;
+      padding: 0 22px 0 26px;
+      border-right: 1px solid #202b32;
+    }
+
+    .project-name {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 210px;
+      font-size: 16px;
+      font-weight: 650;
+    }
+
+    .caret {
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid #96a3aa;
+    }
+
+    .dirty {
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 560;
+    }
+
+    .step-tabs {
+      display: flex;
+      align-items: center;
+      height: 36px;
+      padding: 0 4px;
+      border-radius: 7px;
+      background: #1c252b;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    }
+
+    .step-tab {
+      height: 30px;
+      min-width: 78px;
+      padding: 0 14px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #9ca9b0;
+      font-size: 13px;
+      cursor: default;
+    }
+
+    .step-tab.active {
+      color: #eaf8fd;
+      background: linear-gradient(180deg, #176d8a, #124e66);
+      box-shadow: inset 0 0 0 1px rgba(58, 219, 255, 0.18);
+    }
+
+    .action-zone {
+      justify-content: space-between;
+      padding: 0 14px 0 18px;
+    }
+
+    .action-stack {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .mini-action {
+      display: grid;
+      gap: 2px;
+      justify-items: center;
+      color: #b7c1c8;
+      font-size: 10px;
+      min-width: 38px;
+    }
+
+    .mini-icon {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      color: #c8d2d8;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .quality-ok .mini-icon {
+      color: var(--green);
+    }
+
+    .more {
+      width: 28px;
+      height: 28px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #b8c3ca;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .left-nav {
+      grid-column: 1;
+      grid-row: 2;
+      border-right: 1px solid #202b32;
+      background: linear-gradient(180deg, #0f171b, #0b1115);
+      padding: 11px 8px;
+    }
+
+    .nav-item {
+      height: 39px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      padding: 0 10px;
+      border-radius: 6px;
+      color: #aab5bb;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .nav-icon {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      color: #c9d4da;
+      font-size: 16px;
+    }
+
+    .nav-item.active {
+      color: #e7fbff;
+      background: linear-gradient(90deg, rgba(22, 198, 244, 0.22), rgba(255, 255, 255, 0.04));
+      box-shadow: inset 3px 0 0 var(--cyan);
+    }
+
+    .nav-item.active .nav-icon {
+      color: var(--cyan);
+    }
+
+    .pack-panel {
+      grid-column: 2;
+      grid-row: 2;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #202b32;
+      background: #0f1519;
+    }
+
+    .panel-title {
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      border-bottom: 1px solid #1f2a31;
+      color: #9aa6ad;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .icon-button {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: #adb9bf;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .pack-list {
+      padding: 8px 6px 10px;
+      overflow: hidden;
+    }
+
+    .pack-card {
+      height: 57px;
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr) 18px;
+      gap: 8px;
+      align-items: center;
+      padding: 6px;
+      margin-bottom: 5px;
+      border: 1px solid #24323a;
+      border-radius: 7px;
+      background: linear-gradient(180deg, #162026, #11181d);
+      color: var(--text);
+    }
+
+    .pack-card.selected {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 1px rgba(22, 198, 244, 0.12), inset 0 0 0 1px rgba(22, 198, 244, 0.08);
+    }
+
+    .thumb {
+      width: 42px;
+      height: 42px;
+      overflow: hidden;
+      border-radius: 6px;
+      border: 1px solid #2b3a43;
+      background:
+        linear-gradient(135deg, rgba(22, 198, 244, 0.12), transparent 45%),
+        #10171c;
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(1.12);
+      filter: hue-rotate(var(--hue, 0deg)) saturate(var(--sat, 1)) brightness(var(--bri, 0.86));
+    }
+
+    .pack-info {
+      min-width: 0;
+    }
+
+    .pack-name {
+      overflow: hidden;
+      color: #e0e9ee;
+      font-size: 11px;
+      font-weight: 610;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .version {
+      display: inline-block;
+      margin-top: 5px;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: #202b32;
+      color: #a9b4bb;
+      font-size: 10px;
+    }
+
+    .state-dot {
+      width: 13px;
+      height: 13px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--green);
+      color: #071108;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .stage {
+      grid-column: 3;
+      grid-row: 2;
+      display: grid;
+      grid-template-rows: 38px 440px 46px;
+      min-width: 0;
+      border-right: 1px solid #202b32;
+      background: #0d1317;
+    }
+
+    .stage-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 38px;
+      padding: 0 10px 0 12px;
+      border-bottom: 1px solid #202b32;
+      background: linear-gradient(180deg, #151d22, #11181d);
+    }
+
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tool {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: #afbbc2;
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .tool.active {
+      color: #f4fbff;
+      border-color: var(--cyan);
+      background: rgba(22, 198, 244, 0.15);
+      box-shadow: 0 0 0 1px rgba(22, 198, 244, 0.09);
+    }
+
+    .sep {
+      width: 1px;
+      height: 24px;
+      background: #29363e;
+      margin: 0 3px;
+    }
+
+    .zoom-chip,
+    .toggle-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      padding: 0 9px;
+      border: 1px solid #27343c;
+      border-radius: 5px;
+      background: #151e24;
+      color: #c6d0d6;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .zoom-label {
+      color: #687982;
+      font-size: 11px;
+    }
+
+    .toggle {
+      width: 24px;
+      height: 13px;
+      position: relative;
+      border-radius: 999px;
+      background: #1fa9dd;
+    }
+
+    .toggle::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #e6f8ff;
+    }
+
+    .canvas {
+      position: relative;
+      overflow: hidden;
+      background-color: #202528;
+      background-image:
+        linear-gradient(45deg, rgba(0, 0, 0, 0.22) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(0, 0, 0, 0.22) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.22) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.22) 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+    }
+
+    .sprite-object {
+      position: absolute;
+      left: 266px;
+      top: 54px;
+      width: 430px;
+      height: 390px;
+      background-image: url("./assets/hero-knight-crop.png");
+      background-size: cover;
+      background-position: center;
+      filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.32));
+    }
+
+    .foot-line {
+      position: absolute;
+      left: 174px;
+      right: 132px;
+      top: 402px;
+      height: 1px;
+      background: var(--cyan);
+      box-shadow: 0 0 0 1px rgba(22, 198, 244, 0.22);
+    }
+
+    .anchor-node {
+      position: absolute;
+      top: 395px;
+      width: 13px;
+      height: 13px;
+      border-radius: 2px;
+      background: var(--cyan);
+      transform: rotate(45deg);
+      box-shadow: 0 0 0 2px rgba(8, 14, 18, 0.95), 0 0 11px rgba(22, 198, 244, 0.55);
+    }
+
+    .anchor-node.left { left: 169px; }
+    .anchor-node.right { right: 126px; }
+
+    .frame-tag {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      height: 25px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 8px;
+      border-radius: 5px;
+      background: rgba(10, 15, 18, 0.72);
+      color: #b5c1c7;
+      font-size: 12px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    }
+
+    .scrub {
+      display: grid;
+      grid-template-columns: 42px 1fr 42px;
+      align-items: center;
+      border-top: 1px solid #202b32;
+      background: #11181d;
+    }
+
+    .scrub-arrow {
+      display: grid;
+      place-items: center;
+      color: #aab7bd;
+      font-size: 22px;
+    }
+
+    .scrub-line {
+      position: relative;
+      height: 24px;
+    }
+
+    .scrub-line::before {
+      content: "";
+      position: absolute;
+      top: 12px;
+      left: 10px;
+      right: 10px;
+      height: 4px;
+      background-image: radial-gradient(circle, #58676f 2px, transparent 2px);
+      background-size: 11px 4px;
+      background-repeat: repeat-x;
+    }
+
+    .scrub-dot {
+      position: absolute;
+      top: 8px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--cyan);
+    }
+
+    .scrub-dot.blue { left: 12%; }
+    .scrub-dot.mid {
+      left: 51%;
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-bottom: 8px solid #1fbfe9;
+      border-radius: 0;
+      background: transparent;
+    }
+    .scrub-dot.pink { left: 63%; background: var(--pink); border-radius: 1px; }
+    .scrub-dot.end { right: 13%; }
+
+    .inspector {
+      grid-column: 4;
+      grid-row: 2 / 4;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(180deg, #11191e, #0d1317);
+    }
+
+    .inspector-tabs {
+      height: 50px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border-bottom: 1px solid #202b32;
+      background: #121a1f;
+    }
+
+    .inspector-tab {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      border-right: 1px solid #202b32;
+      color: #8e9ca4;
+      font-size: 12px;
+    }
+
+    .inspector-tab.active {
+      color: var(--cyan);
+      background: linear-gradient(180deg, rgba(22, 198, 244, 0.09), transparent);
+    }
+
+    .inspector-tab.active::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 2px;
+      background: var(--cyan);
+    }
+
+    .inspector-scroll {
+      flex: 1;
+      padding: 14px 14px 0;
+      overflow: hidden;
+    }
+
+    .report-card {
+      margin-bottom: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.035);
+      border-radius: 7px;
+      background: rgba(8, 13, 16, 0.32);
+      overflow: hidden;
+    }
+
+    .quality-row {
+      height: 42px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 28px 86px 52px;
+      align-items: center;
+      padding: 0 12px;
+      border-bottom: 1px solid #1c272e;
+      font-size: 12px;
+    }
+
+    .quality-row:last-child {
+      border-bottom: 0;
+    }
+
+    .quality-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #d2dde3;
+    }
+
+    .status-icon {
+      width: 17px;
+      height: 17px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #071108;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .status-icon.ok { background: var(--green); }
+    .status-icon.warn {
+      background: transparent;
+      color: var(--amber);
+      font-size: 17px;
+    }
+
+    .status-text {
+      color: var(--green);
+      font-size: 12px;
+    }
+
+    .status-text.warn {
+      color: var(--amber);
+      font-weight: 620;
+    }
+
+    .metric {
+      justify-self: end;
+      color: #a6b2b8;
+      font-size: 12px;
+    }
+
+    .section-label {
+      margin: 0 0 9px 2px;
+      color: #99a7af;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .details {
+      padding: 12px;
+      color: #c9d4da;
+      font-size: 12px;
+    }
+
+    .details-title {
+      height: 25px;
+      border-bottom: 1px solid #253139;
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 640;
+    }
+
+    .detail-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 30px;
+      color: #b6c1c7;
+    }
+
+    .bullet {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--amber);
+    }
+
+    .linkish {
+      color: var(--cyan);
+    }
+
+    .export-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin-bottom: 18px;
+    }
+
+    .target {
+      height: 82px;
+      display: grid;
+      place-items: center;
+      gap: 5px;
+      border: 1px solid #27343c;
+      border-radius: 7px;
+      background: linear-gradient(180deg, #161f25, #11181d);
+      color: #b9c5cb;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .target.selected {
+      border-color: var(--cyan);
+      box-shadow: inset 0 0 0 1px rgba(22, 198, 244, 0.11);
+    }
+
+    .target-icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      color: #dbe8ee;
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .target-icon.godot { color: #59ace2; }
+    .target-icon.phaser { color: #d58b85; }
+    .target-icon.gm { color: #62db6c; }
+
+    .format-row {
+      display: grid;
+      grid-template-columns: 126px 1fr 38px;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 16px;
+      color: #a9b5bb;
+      font-size: 12px;
+    }
+
+    .select-like {
+      height: 33px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      border: 1px solid #27343c;
+      border-radius: 6px;
+      background: #131b20;
+      color: #c5d0d6;
+    }
+
+    .primary-button,
+    .ghost-button {
+      width: 100%;
+      height: 53px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 11px;
+      border-radius: 7px;
+      font-size: 16px;
+    }
+
+    .primary-button {
+      border: 0;
+      background: linear-gradient(180deg, #35c64a, #28ad3b);
+      color: white;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 12px 28px rgba(48, 183, 64, 0.18);
+    }
+
+    .ghost-button {
+      margin-top: 12px;
+      border: 1px solid #27343c;
+      background: #141c21;
+      color: #c0cbd1;
+    }
+
+    .inspector-foot {
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-top: 1px solid #202b32;
+      color: #86949c;
+      font-size: 10px;
+    }
+
+    .open-folder {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--cyan);
+      font-size: 11px;
+    }
+
+    .lower {
+      grid-column: 1 / 4;
+      grid-row: 3;
+      display: grid;
+      grid-template-columns: 150px 694px 304px;
+      border-top: 1px solid #202b32;
+      border-right: 1px solid #202b32;
+      background: #0f1519;
+    }
+
+    .asset-panel {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #202b32;
+      background: linear-gradient(180deg, #121a1f, #0d1317);
+    }
+
+    .asset-title {
+      height: 37px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 11px;
+      border-bottom: 1px solid #202b32;
+      color: #9daab1;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .asset-card {
+      height: 72px;
+      margin: 6px 7px 0;
+      padding: 11px 9px;
+      border: 1px solid #1f2a31;
+      border-radius: 6px;
+      background: rgba(20, 28, 33, 0.72);
+    }
+
+    .asset-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #d9e2e7;
+      font-size: 12px;
+    }
+
+    .asset-meta {
+      margin-left: 20px;
+      margin-top: 5px;
+      color: #9da9b0;
+      font-size: 11px;
+    }
+
+    .asset-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--pink);
+    }
+
+    .asset-color.blue { background: #2ba8e5; }
+    .asset-color.violet { background: var(--violet); }
+
+    .timeline {
+      display: grid;
+      grid-template-rows: 37px 48px 74px 74px 74px 73px;
+      min-width: 0;
+      border-right: 1px solid #202b32;
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px) 136px 0 / 34px 100%,
+        #11181d;
+    }
+
+    .timeline-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      border-bottom: 1px solid #202b32;
+    }
+
+    .small-square {
+      width: 23px;
+      height: 23px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #2b3941;
+      border-radius: 5px;
+      background: #151e24;
+      color: #b6c2c8;
+      font-size: 15px;
+    }
+
+    .ruler {
+      display: grid;
+      grid-template-columns: 136px repeat(7, 1fr);
+      align-items: end;
+      padding: 0 18px 8px 12px;
+      color: #91a0a8;
+      font-size: 11px;
+      border-bottom: 1px solid #202b32;
+      background:
+        repeating-linear-gradient(90deg, transparent 0 8px, rgba(255, 255, 255, 0.09) 8px 9px, transparent 9px 17px);
+      background-position: 136px bottom;
+      background-size: 119px 14px;
+      background-repeat: repeat-x;
+    }
+
+    .ruler-label {
+      align-self: center;
+      color: #a2afb6;
+      text-transform: uppercase;
+    }
+
+    .track {
+      position: relative;
+      display: grid;
+      grid-template-columns: 136px 1fr;
+      border-bottom: 1px solid #202b32;
+    }
+
+    .track-info {
+      padding: 10px 8px 0 12px;
+      color: #d4dee4;
+      font-size: 12px;
+    }
+
+    .track-info .sub {
+      margin-top: 5px;
+      color: #9aa7ae;
+      font-size: 11px;
+    }
+
+    .track-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .track-bar {
+      position: absolute;
+      left: 136px;
+      right: 24px;
+      top: 11px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(230, 71, 150, 0.5);
+    }
+
+    .track.walk .track-bar {
+      background: rgba(47, 144, 216, 0.55);
+    }
+
+    .track.attack .track-bar {
+      right: 162px;
+      background: rgba(150, 87, 217, 0.58);
+    }
+
+    .bar-label {
+      position: absolute;
+      top: 2px;
+      left: 8px;
+      color: #f4faff;
+      font-size: 11px;
+    }
+
+    .bar-end {
+      position: absolute;
+      top: 2px;
+      right: 8px;
+      color: #f4faff;
+      font-size: 11px;
+    }
+
+    .frames {
+      grid-column: 2;
+      display: flex;
+      align-items: end;
+      gap: 6px;
+      padding: 34px 14px 8px 10px;
+      overflow: hidden;
+    }
+
+    .frame {
+      width: 26px;
+      height: 28px;
+      flex: 0 0 auto;
+      border-radius: 3px;
+      background-image: url("./assets/hero-knight-crop.png");
+      background-size: 58px auto;
+      background-position: center 34%;
+      filter: hue-rotate(var(--hue, 0deg)) brightness(var(--bri, 0.9));
+      border-bottom: 3px solid var(--green);
+      opacity: 0.96;
+    }
+
+    .track.walk .frame {
+      height: 23px;
+      border-bottom-color: var(--cyan);
+      transform: translateY(calc(var(--n, 0) * 1px));
+    }
+
+    .track.attack .frame {
+      height: 30px;
+      border-bottom-color: var(--amber);
+      background-position: 52% 50%;
+    }
+
+    .playhead {
+      position: absolute;
+      left: 235px;
+      top: 28px;
+      bottom: 0;
+      width: 2px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.28);
+      z-index: 5;
+    }
+
+    .playhead::before {
+      content: "12";
+      position: absolute;
+      left: -12px;
+      top: -24px;
+      min-width: 25px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 5px;
+      background: #8c3d68;
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .transport {
+      height: 73px;
+      display: grid;
+      grid-template-columns: 186px 120px 82px 1fr;
+      align-items: center;
+      gap: 16px;
+      padding: 0 18px;
+      color: #aab6bc;
+      font-size: 12px;
+    }
+
+    .transport-icons {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-size: 18px;
+      color: #b9c4ca;
+    }
+
+    .input-chip {
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 9px;
+      border: 1px solid #27343c;
+      border-radius: 5px;
+      background: #10171c;
+      color: #cbd5da;
+    }
+
+    .slider {
+      height: 1px;
+      position: relative;
+      background: #718189;
+    }
+
+    .slider::before,
+    .slider::after {
+      content: "";
+      position: absolute;
+      top: -3px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      border: 1px solid #9aa8af;
+      background: #11181d;
+    }
+
+    .slider::before { left: 36%; }
+    .slider::after { right: 28%; }
+
+    .sheet-preview {
+      display: grid;
+      grid-template-rows: 37px 1fr 39px;
+      background: #10171b;
+    }
+
+    .sheet-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 9px 0 12px;
+      border-bottom: 1px solid #202b32;
+      color: #9eabb2;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .sheet-size {
+      height: 25px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px;
+      border: 1px solid #28353d;
+      border-radius: 5px;
+      background: #141c21;
+      color: #c2cbd1;
+      font-size: 11px;
+      text-transform: none;
+    }
+
+    .sheet-image {
+      margin: 6px;
+      border: 1px solid var(--cyan);
+      background:
+        url("./assets/sprite-sheet-crop.png") center / cover no-repeat,
+        #1e2427;
+      box-shadow: inset 0 0 0 1px rgba(22, 198, 244, 0.12);
+    }
+
+    .sheet-foot {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      align-items: center;
+      padding: 0 10px;
+      border-top: 1px solid #202b32;
+      color: #8c9aa2;
+      font-size: 11px;
+    }
+
+    .timeline-tabs {
+      position: absolute;
+      left: 166px;
+      bottom: 45px;
+      display: flex;
+      height: 32px;
+      background: #11181d;
+    }
+
+    .timeline-tab {
+      min-width: 86px;
+      padding: 9px 12px 0;
+      border-right: 1px solid #25323a;
+      color: #8e9ca4;
+      font-size: 12px;
+    }
+
+    .timeline-tab.active {
+      color: var(--cyan);
+      box-shadow: inset 0 -2px 0 var(--cyan);
+    }
+
+    .statusbar {
+      grid-column: 1 / -1;
+      grid-row: 4;
+      display: grid;
+      grid-template-columns: 1fr 520px 210px 80px;
+      align-items: center;
+      padding: 0 16px;
+      border-top: 1px solid #202b32;
+      background: #0d1317;
+      color: #7f8d95;
+      font-size: 10px;
+    }
+
+    .status-metrics {
+      display: flex;
+      justify-content: center;
+      gap: 26px;
+    }
+
+    .status-ok {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+      color: var(--green);
+      font-size: 12px;
+    }
+
+    .version-tag {
+      justify-self: end;
+      color: #87959c;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand-zone">
+        <div class="traffic" aria-hidden="true">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
+        <div class="brand">Game Sprite Forge</div>
+      </div>
+      <div class="project-zone">
+        <div class="project-name">
+          Hero Knight Pack
+          <span class="caret"></span>
+          <span class="dirty">• Unsaved</span>
+        </div>
+        <div class="step-tabs" aria-label="workflow steps">
+          <button class="step-tab">Import</button>
+          <button class="step-tab active">Frames</button>
+          <button class="step-tab">Background</button>
+          <button class="step-tab">Anchor</button>
+          <button class="step-tab">Sheet</button>
+          <button class="step-tab">Export</button>
+        </div>
+      </div>
+      <div class="action-zone">
+        <div class="action-stack">
+          <div class="mini-action"><span class="mini-icon">↶</span><span>Undo</span></div>
+          <div class="mini-action"><span class="mini-icon">↷</span><span>Redo</span></div>
+          <div class="mini-action"><span class="mini-icon">▣</span><span>Save</span></div>
+          <div class="mini-action quality-ok"><span class="mini-icon">✓</span><span>Quality Check</span></div>
+        </div>
+        <button class="more" aria-label="More">...</button>
+      </div>
+    </header>
+
+    <nav class="left-nav" aria-label="primary navigation">
+      <div class="nav-item"><span class="nav-icon">▧</span><span>Library</span></div>
+      <div class="nav-item active"><span class="nav-icon">✣</span><span>Forge</span></div>
+      <div class="nav-item"><span class="nav-icon">▰</span><span>Packs</span></div>
+      <div class="nav-item"><span class="nav-icon">▣</span><span>Marketplace</span></div>
+      <div class="nav-item"><span class="nav-icon">⇧</span><span>Exports</span></div>
+      <div class="nav-item"><span class="nav-icon">⚙</span><span>Settings</span></div>
+    </nav>
+
+    <aside class="pack-panel">
+      <div class="panel-title">
+        <span>Packs</span>
+        <button class="icon-button" aria-label="Add pack">＋</button>
+      </div>
+      <div class="pack-list">
+        <div class="pack-card selected">
+          <div class="thumb"><img src="./assets/hero-knight-crop.png" alt=""></div>
+          <div class="pack-info"><div class="pack-name">Hero Knight Pack</div><span class="version">v1.2.0</span></div>
+          <div class="state-dot">✓</div>
+        </div>
+        <div class="pack-card">
+          <div class="thumb"><img style="--hue:165deg;--sat:.35;--bri:.72" src="./assets/hero-knight-crop.png" alt=""></div>
+          <div class="pack-info"><div class="pack-name">Skeletal Warrior Pack</div><span class="version">v1.0.0</span></div>
+          <div class="state-dot">✓</div>
+        </div>
+        <div class="pack-card">
+          <div class="thumb"><img style="--hue:62deg;--sat:.78;--bri:.8" src="./assets/hero-knight-crop.png" alt=""></div>
+          <div class="pack-info"><div class="pack-name">Forest Archer Pack</div><span class="version">v1.1.0</span></div>
+          <div class="state-dot">✓</div>
+        </div>
+        <div class="pack-card">
+          <div class="thumb"><img style="--hue:244deg;--sat:.8;--bri:.82" src="./assets/hero-knight-crop.png" alt=""></div>
+          <div class="pack-info"><div class="pack-name">Mage Apprentice Pack</div><span class="version">v1.0.0</span></div>
+          <div class="state-dot">✓</div>
+        </div>
+        <div class="pack-card">
+          <div class="thumb"><img style="--hue:88deg;--sat:.65;--bri:.7" src="./assets/hero-knight-crop.png" alt=""></div>
+          <div class="pack-info"><div class="pack-name">Orc Grunt Pack</div><span class="version">v1.0.0</span></div>
+          <div class="state-dot">✓</div>
+        </div>
+        <div class="pack-card">
+          <div class="thumb"><img style="--hue:108deg;--sat:.45;--bri:.68" src="./assets/hero-knight-crop.png" alt=""></div>
+          <div class="pack-info"><div class="pack-name">Goblin Scout Pack</div><span class="version">v1.0.0</span></div>
+          <div class="state-dot">✓</div>
+        </div>
+        <div class="pack-card">
+          <div class="thumb"><img style="--hue:330deg;--sat:.62;--bri:.76" src="./assets/hero-knight-crop.png" alt=""></div>
+          <div class="pack-info"><div class="pack-name">Bandit Pack</div><span class="version">v1.0.0</span></div>
+          <div class="state-dot">✓</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="stage">
+      <div class="stage-tools">
+        <div class="tool-group">
+          <button class="tool active" aria-label="Select">↖</button>
+          <button class="tool" aria-label="Hand">☝</button>
+          <button class="tool" aria-label="Move">✥</button>
+          <span class="sep"></span>
+          <button class="tool" aria-label="Crop">⌗</button>
+          <button class="tool" aria-label="Bounds">⬚</button>
+          <span class="sep"></span>
+          <span class="zoom-label">⌕ Zoom</span>
+          <span class="zoom-chip">200% <span class="caret"></span></span>
+        </div>
+        <div class="tool-group">
+          <button class="tool" aria-label="Align left">▰</button>
+          <button class="tool" aria-label="Align center">▰</button>
+          <button class="tool" aria-label="Align right">▰</button>
+          <span class="sep"></span>
+          <button class="tool" aria-label="Top">▔</button>
+          <button class="tool" aria-label="Middle">✚</button>
+          <button class="tool" aria-label="Bottom">▁</button>
+          <span class="sep"></span>
+          <span class="toggle-label"><span class="toggle"></span> Pixel Preview</span>
+          <button class="tool" aria-label="Open">↗</button>
+        </div>
+      </div>
+      <div class="canvas">
+        <div class="sprite-object" aria-label="selected knight sprite"></div>
+        <div class="foot-line"></div>
+        <div class="anchor-node left"></div>
+        <div class="anchor-node right"></div>
+        <div class="frame-tag">Frame 12 / 64</div>
+      </div>
+      <div class="scrub">
+        <div class="scrub-arrow">‹</div>
+        <div class="scrub-line">
+          <span class="scrub-dot blue"></span>
+          <span class="scrub-dot mid"></span>
+          <span class="scrub-dot pink"></span>
+          <span class="scrub-dot end"></span>
+        </div>
+        <div class="scrub-arrow">›</div>
+      </div>
+    </main>
+
+    <aside class="inspector">
+      <div class="inspector-tabs">
+        <div class="inspector-tab active"><span>⌁</span> Quality Report</div>
+        <div class="inspector-tab"><span>ⓘ</span> Pack Metadata</div>
+        <div class="inspector-tab"><span>↪</span> Export Targets</div>
+      </div>
+      <div class="inspector-scroll">
+        <div class="report-card">
+          <div class="quality-row">
+            <div class="quality-name">BBox Stability</div><div class="status-icon ok">✓</div><div class="status-text">Stable</div><div class="metric">±1px</div>
+          </div>
+          <div class="quality-row">
+            <div class="quality-name">Background Removal</div><div class="status-icon ok">✓</div><div class="status-text">Clean</div><div class="metric">100%</div>
+          </div>
+          <div class="quality-row">
+            <div class="quality-name">Foot Anchor Drift</div><div class="status-icon warn">▲</div><div class="status-text warn">Minor</div><div class="metric">1.2px</div>
+          </div>
+          <div class="quality-row">
+            <div class="quality-name">Loop Match (Start/End)</div><div class="status-icon ok">✓</div><div class="status-text">Matched</div><div class="metric">0px</div>
+          </div>
+          <div class="quality-row">
+            <div class="quality-name">Alpha Edge Quality</div><div class="status-icon ok">✓</div><div class="status-text">Good</div><div class="metric">98%</div>
+          </div>
+          <div class="quality-row">
+            <div class="quality-name">Frame Consistency</div><div class="status-icon ok">✓</div><div class="status-text">Consistent</div><div class="metric">—</div>
+          </div>
+        </div>
+
+        <div class="report-card details">
+          <div class="section-label">Details</div>
+          <div class="details-title">Warnings&nbsp; (1)</div>
+          <div class="detail-line"><span class="bullet"></span><span>Foot anchor drift in: knight_walk (1.2px)</span></div>
+          <div class="linkish">Info&nbsp; (0)</div>
+        </div>
+
+        <div class="section-label">Export Targets</div>
+        <div class="export-grid">
+          <div class="target selected"><div class="target-icon">▧</div><div>PNG + JSON<br>Generic</div></div>
+          <div class="target"><div class="target-icon godot">☻</div><div>Godot 4</div></div>
+          <div class="target"><div class="target-icon">◈</div><div>Unity</div></div>
+          <div class="target"><div class="target-icon phaser">◌</div><div>Phaser 3</div></div>
+          <div class="target"><div class="target-icon">♢</div><div>Cocos Creator</div></div>
+          <div class="target"><div class="target-icon gm">◆</div><div>GameMaker</div></div>
+        </div>
+
+        <div class="format-row">
+          <div>Output Format</div>
+          <div class="select-like"><span>.gsfpack&nbsp; (Recommended)</span><span class="caret"></span></div>
+          <button class="icon-button" aria-label="Format settings">⚙</button>
+        </div>
+
+        <button class="primary-button"><span>⇧</span><span>Export Pack</span></button>
+        <button class="ghost-button"><span>▱</span><span>Preview Export</span></button>
+      </div>
+      <div class="inspector-foot">
+        <span>Last export: 2 days ago</span>
+        <span class="open-folder"><span class="state-dot">✓</span> Open Exports Folder</span>
+      </div>
+    </aside>
+
+    <section class="lower">
+      <aside class="asset-panel">
+        <div class="asset-title"><span>Active Assets</span><span>3</span></div>
+        <div class="asset-card">
+          <div class="asset-row"><span class="asset-color"></span><span>knight_idle</span><span style="margin-left:auto">⋮</span></div>
+          <div class="asset-meta">48 frames</div>
+        </div>
+        <div class="asset-card">
+          <div class="asset-row"><span class="asset-color blue"></span><span>knight_walk</span><span style="margin-left:auto">⋮</span></div>
+          <div class="asset-meta">64 frames</div>
+        </div>
+        <div class="asset-card">
+          <div class="asset-row"><span class="asset-color violet"></span><span>knight_attack_01</span><span style="margin-left:auto">⋮</span></div>
+          <div class="asset-meta">36 frames</div>
+        </div>
+      </aside>
+
+      <div class="timeline">
+        <div class="timeline-top">
+          <span class="small-square">＋</span>
+          <span class="small-square">≡</span>
+          <span class="small-square">▧</span>
+          <span class="sep"></span>
+          <span class="small-square">↶</span>
+        </div>
+        <div class="ruler">
+          <div class="ruler-label">Animations</div>
+          <div>1</div><div>10</div><div>20</div><div>30</div><div>40</div><div>50</div><div>64</div>
+        </div>
+        <div class="track idle">
+          <div class="playhead"></div>
+          <div class="track-info">
+            <div class="track-label"><span class="asset-color"></span><span>knight_idle</span></div>
+            <div class="sub">48 frames</div>
+          </div>
+          <div class="track-bar"><span class="bar-label">1</span><span class="bar-end">48</span></div>
+          <div class="frames">
+            <span class="frame"></span><span class="frame" style="--bri:.82"></span><span class="frame"></span><span class="frame" style="--bri:.76"></span><span class="frame"></span><span class="frame" style="--bri:.84"></span><span class="frame"></span><span class="frame" style="--bri:.8"></span><span class="frame"></span><span class="frame" style="--bri:.86"></span><span class="frame"></span><span class="frame" style="--bri:.78"></span><span class="frame"></span><span class="frame" style="--bri:.82"></span><span class="frame"></span><span class="frame" style="--bri:.78"></span><span class="frame"></span><span class="frame" style="--bri:.84"></span>
+          </div>
+        </div>
+        <div class="track walk">
+          <div class="track-info">
+            <div class="track-label"><span class="asset-color blue"></span><span>knight_walk</span></div>
+            <div class="sub">64 frames</div>
+          </div>
+          <div class="track-bar"><span class="bar-label">1</span><span class="bar-end">64</span></div>
+          <div class="frames">
+            <span class="frame" style="--n:0"></span><span class="frame" style="--n:2"></span><span class="frame" style="--n:3"></span><span class="frame" style="--n:1"></span><span class="frame" style="--n:-1"></span><span class="frame" style="--n:-2"></span><span class="frame" style="--n:-1"></span><span class="frame" style="--n:1"></span><span class="frame" style="--n:2"></span><span class="frame" style="--n:3"></span><span class="frame" style="--n:0"></span><span class="frame" style="--n:-2"></span><span class="frame" style="--n:-1"></span><span class="frame" style="--n:1"></span><span class="frame" style="--n:2"></span><span class="frame" style="--n:3"></span><span class="frame" style="--n:1"></span><span class="frame" style="--n:-1"></span>
+          </div>
+        </div>
+        <div class="track attack">
+          <div class="track-info">
+            <div class="track-label"><span class="asset-color violet"></span><span>knight_attack_01</span></div>
+            <div class="sub">36 frames</div>
+          </div>
+          <div class="track-bar"><span class="bar-label">1</span><span class="bar-end">36</span></div>
+          <div class="frames">
+            <span class="frame"></span><span class="frame" style="--hue:15deg"></span><span class="frame" style="--hue:25deg"></span><span class="frame"></span><span class="frame" style="--hue:10deg"></span><span class="frame" style="--hue:25deg"></span><span class="frame"></span><span class="frame" style="--hue:18deg"></span><span class="frame"></span><span class="frame" style="--hue:22deg"></span><span class="frame"></span><span class="frame" style="--hue:15deg"></span><span class="frame"></span><span class="frame" style="--hue:25deg"></span>
+          </div>
+        </div>
+        <div class="transport">
+          <div class="transport-icons"><span>‹‹</span><span>◀</span><span>▷</span><span>▶</span><span>››</span></div>
+          <div class="input-chip"><span>12 / 64</span><span class="caret"></span></div>
+          <div style="display:flex; align-items:center; gap:8px;"><span>FPS</span><div class="input-chip" style="width:61px;">12 <span class="caret"></span></div></div>
+          <div class="slider"></div>
+        </div>
+      </div>
+
+      <aside class="sheet-preview">
+        <div class="sheet-head">
+          <span>Sprite Sheet Preview</span>
+          <span class="sheet-size">2048x2048 <span class="caret"></span></span>
+          <span class="small-square">...</span>
+        </div>
+        <div class="sheet-image"></div>
+        <div class="sheet-foot">
+          <span>Size: 2048x2048</span>
+          <span>Margin: 2px</span>
+          <span>Padding: 2px</span>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="statusbar">
+      <div></div>
+      <div class="status-metrics">
+        <span>Frames: 148</span>
+        <span>Size: 2048x2048</span>
+        <span>FPS: 12</span>
+        <span>Duration: 12.3s</span>
+      </div>
+      <div class="status-ok"><span class="state-dot">✓</span><span>All checks passed</span></div>
+      <div class="version-tag">v1.2.0</div>
+    </footer>
+  </div>
+</body>
+</html>

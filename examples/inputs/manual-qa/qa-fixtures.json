@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "root": "examples/inputs/manual-qa",
+  "realShortVideo": {
+    "generated": false,
+    "requiredForTask6": true,
+    "note": "Supply a tester-selected real local .mp4, .mov, or .webm. Do not treat any generated fixture as the real short video."
+  },
+  "pngSequence": {
+    "directory": "examples/inputs/manual-qa/png-sequence",
+    "frameCount": 6,
+    "width": 96,
+    "height": 96,
+    "firstFrame": "examples/inputs/manual-qa/png-sequence/frame_001.png",
+    "lastFrame": "examples/inputs/manual-qa/png-sequence/frame_006.png"
+  },
+  "blockedQualitySingleFrame": {
+    "file": "examples/inputs/manual-qa/png-sequence/frame_001.png",
+    "expectedVerdict": "blocked",
+    "expectedNote": "frame_count_below_minimum",
+    "expectedExportState": "disabled"
+  },
+  "spriteSheet": {
+    "file": "examples/inputs/manual-qa/sprite-sheet/forge-walk-sheet.png",
+    "columns": 4,
+    "rows": 2,
+    "cellWidth": 64,
+    "cellHeight": 64,
+    "expectedFrames": 8,
+    "invalidGridForFailureCheck": {
+      "columns": 5,
+      "rows": 2,
+      "cellWidth": 64,
+      "cellHeight": 64,
+      "expectedError": "sprite sheet grid exceeds source image bounds"
+    }
+  },
+  "failureStates": {
+    "mixedSizeSequence": "examples/inputs/manual-qa/failure-states/mixed-size-sequence",
+    "corruptFrameSequence": "examples/inputs/manual-qa/failure-states/corrupt-frame-sequence",
+    "invalidGsfpack": "examples/inputs/manual-qa/failure-states/invalid-pack.gsfpack",
+    "notVideoFile": "examples/inputs/manual-qa/failure-states/not-video.txt"
+  }
+}
