@@ -2510,29 +2510,34 @@ body {
   z-index: 4;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px;
+  gap: 8px;
+  padding: 6px;
   border: 1px solid rgba(84, 104, 114, 0.42);
   border-radius: 6px;
   background: rgba(10, 15, 18, 0.78);
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
 }
 
+.canvas-preview[data-preview-processing-state="inspection"] .preview-mode-control {
+  border-color: rgba(242, 185, 75, 0.56);
+  background: rgba(25, 22, 15, 0.88);
+}
+
 .preview-mode-label {
-  padding-inline: 7px;
+  padding-inline: 8px;
   color: #d8e5ea;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
 }
 
 .preview-mode-control button {
-  min-height: 24px;
-  padding: 0 8px;
+  min-height: 28px;
+  padding: 0 10px;
   border: 1px solid rgba(74, 180, 199, 0.38);
   border-radius: 5px;
   background: rgba(19, 35, 43, 0.92);
   color: #aeefff;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -3002,6 +3007,16 @@ body {
   white-space: nowrap;
 }
 
+.timeline-evidence-item {
+  font-size: 12px;
+}
+
+.timeline-evidence-item[data-evidence="loop"] {
+  border-color: rgba(242, 185, 75, 0.42);
+  color: #f6d79c;
+  background: rgba(44, 32, 15, 0.72);
+}
+
 .timeline-evidence-strip strong {
   color: #deeaef;
   font-weight: 800;
@@ -3122,6 +3137,39 @@ body {
   padding: 20px 10px 6px;
 }
 
+.timeline-loop-markers {
+  position: absolute;
+  left: 0;
+  right: 22px;
+  top: 7px;
+  z-index: 2;
+  height: 24px;
+  pointer-events: none;
+}
+
+.timeline-loop-marker {
+  position: absolute;
+  left: var(--loop-position, 0%);
+  top: -17px;
+  max-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 4px;
+  background: rgba(17, 24, 29, 0.92);
+  color: #f4faff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.timeline-loop-marker.end {
+  transform: translateX(-100%);
+}
+
 .track-bar {
   position: absolute;
   left: 0;
@@ -3201,6 +3249,11 @@ body {
 .frame-cell.selected {
   outline: 1px solid rgba(255, 255, 255, 0.55);
   outline-offset: 2px;
+}
+
+.frame-cell[aria-current="true"] {
+  border-color: rgba(242, 185, 75, 0.8);
+  box-shadow: 0 0 0 2px rgba(242, 185, 75, 0.18);
 }
 
 .playhead {

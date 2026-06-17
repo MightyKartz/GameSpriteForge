@@ -117,6 +117,16 @@ type RunSummaryItem = {
   value: string;
 };
 
+type StageActionKey = "choose_output" | "extract" | "fix_quality" | "process" | "quality" | "running";
+
+type StageAction = {
+  disabled: boolean;
+  icon: LucideIcon;
+  key: StageActionKey;
+  label: string;
+  onClick: () => void | Promise<void>;
+};
+
 type ForgeWorkflow = "Import" | "Frames" | "Background" | "Anchor" | "Sheet" | "Export";
 const defaultPackName = "Untitled Sprite Pack";
 const bundledSamplePackName = "Green Box Character Pack";
@@ -1324,7 +1334,6 @@ export function ForgeRoute({
             frameCount={frameCount}
             hasOutputFolder={hasOutputFolder}
             onChooseOutputFolder={onChooseOutputFolder}
-            onChooseSource={sourcePath.trim() ? handleImportVideo : handleChooseVideoAndImport}
             onExtract={handleExtractFrames}
             onOpenSettings={onOpenSettings}
             onProcess={handleProcessAndQuality}
@@ -1524,7 +1533,6 @@ function StageActionPanel({
   frameCount,
   hasOutputFolder,
   onChooseOutputFolder,
-  onChooseSource,
   onExtract,
   onOpenSettings,
   onProcess,
@@ -1538,7 +1546,6 @@ function StageActionPanel({
   frameCount: number;
   hasOutputFolder: boolean;
   onChooseOutputFolder: () => void | Promise<void>;
-  onChooseSource: () => void | Promise<void>;
   onExtract: () => void | Promise<void>;
   onOpenSettings: () => void;
   onProcess: () => void | Promise<void>;
@@ -1552,37 +1559,47 @@ function StageActionPanel({
     disabled,
     hasOutputFolder,
     onChooseOutputFolder,
-    onChooseSource,
     onExtract,
     onOpenSettings,
     onProcess,
     t,
   });
-  const StageIcon = action.icon;
+  const StageIcon = action?.icon ?? Circle;
   const detail = t(workbenchStageDetailKey(stage), { count: frameCount, source: sourceName });
+  const stageLabel = t(workbenchStageLabelKey(stage));
 
   return (
-    <section className={`stage-action-panel stage-${stage}`} aria-label={t("workflowStage.panelTitle")}>
+    <section
+      aria-current="step"
+      aria-label={t("workflowStage.panelTitle")}
+      className={`stage-action-panel stage-${stage}`}
+      data-stage-next-action={action?.key ?? "import"}
+      data-workbench-stage={stage}
+    >
       <div className="stage-action-head">
         <span>{t("workflowStage.panelTitle")}</span>
-        <strong>{t(workbenchStageLabelKey(stage))}</strong>
+        <strong>{stageLabel}</strong>
       </div>
       <p>{detail}</p>
-      <button
-        className="stage-primary-action"
-        disabled={action.disabled}
-        onClick={() => {
-          void action.onClick();
-        }}
-        type="button"
-      >
-        <StageIcon size={18} />
-        {action.label}
-      </button>
+      {action ? (
+        <button
+          aria-label={`${stageLabel}: ${action.label}`}
+          className="stage-primary-action"
+          data-stage-primary-action={action.key}
+          disabled={action.disabled}
+          onClick={() => {
+            void action.onClick();
+          }}
+          type="button"
+        >
+          <StageIcon size={18} />
+          {action.label}
+        </button>
+      ) : null}
       {stage === "source_selected" || stage === "frames_ready" || stage === "processed_ready" ? (
-        <div className="stage-evidence-list" aria-label={t("workflowStage.evidence")}>
-          <span>{t("workflowStage.source", { source: sourceName })}</span>
-          <span>{t("workflowStage.frames", { count: frameCount })}</span>
+        <div className="stage-evidence-list" aria-label={t("workflowStage.evidence")} role="list">
+          <span role="listitem">{t("workflowStage.source", { source: sourceName })}</span>
+          <span role="listitem">{t("workflowStage.frames", { count: frameCount })}</span>
         </div>
       ) : null}
     </section>
@@ -1597,26 +1614,21 @@ function stageActionFor(
     disabled: boolean;
     hasOutputFolder: boolean;
     onChooseOutputFolder: () => void | Promise<void>;
-    onChooseSource: () => void | Promise<void>;
     onExtract: () => void | Promise<void>;
     onOpenSettings: () => void;
     onProcess: () => void | Promise<void>;
     t: TFunction;
   },
-): { disabled: boolean; icon: LucideIcon; label: string; onClick: () => void | Promise<void> } {
+): StageAction | null {
   if (stage === "empty") {
-    return {
-      disabled: context.disabled,
-      icon: Film,
-      label: context.t("workflowStage.action.chooseSource"),
-      onClick: context.onChooseSource,
-    };
+    return null;
   }
 
   if (stage === "source_selected") {
     return {
       disabled: context.disabled || !context.canExtractFrames,
       icon: Images,
+      key: "extract",
       label: context.t("pipeline.extractFrames"),
       onClick: context.onExtract,
     };
@@ -1626,6 +1638,7 @@ function stageActionFor(
     return {
       disabled: context.disabled,
       icon: SettingsIcon,
+      key: "choose_output",
       label: context.t("workflowStage.action.chooseOutput"),
       onClick: context.onChooseOutputFolder,
     };
@@ -1635,6 +1648,7 @@ function stageActionFor(
     return {
       disabled: context.disabled || !context.canProcessAndQuality,
       icon: AlertTriangle,
+      key: "fix_quality",
       label: context.t("workflowStage.action.fixQuality"),
       onClick: context.onProcess,
     };
@@ -1644,14 +1658,26 @@ function stageActionFor(
     return {
       disabled: true,
       icon: Wrench,
+      key: "running",
       label: context.t("workflowStage.action.running"),
       onClick: context.onOpenSettings,
+    };
+  }
+
+  if (stage === "processed_ready") {
+    return {
+      disabled: context.disabled || !context.canProcessAndQuality,
+      icon: Wrench,
+      key: "quality",
+      label: context.t("workflowStage.processedReady"),
+      onClick: context.onProcess,
     };
   }
 
   return {
     disabled: context.disabled || !context.canProcessAndQuality,
     icon: Wrench,
+    key: "process",
     label: context.t("pipeline.processQuality"),
     onClick: context.onProcess,
   };
