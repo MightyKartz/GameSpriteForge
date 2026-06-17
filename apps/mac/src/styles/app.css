@@ -15,6 +15,7 @@
   --amber: #f6ab22;
   --pink: #e64796;
   --violet: #9657d9;
+  --readable-small: 12px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", sans-serif;
   color: var(--text);
   background: #050708;
@@ -53,6 +54,12 @@ textarea:focus-visible,
 [tabindex]:focus-visible {
   outline: 2px solid rgba(22, 198, 244, 0.72);
   outline-offset: 2px;
+}
+
+.focus-evidence-ring {
+  outline: 2px solid rgba(22, 198, 244, 0.78);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(22, 198, 244, 0.12);
 }
 
 #root {
@@ -2982,6 +2989,7 @@ body {
     #11181d;
 }
 
+.timeline-density,
 .timeline-evidence-strip {
   min-height: 32px;
   display: flex;
@@ -2993,6 +3001,11 @@ body {
   overflow-x: auto;
 }
 
+.timeline-evidence-strip {
+  min-width: 0;
+}
+
+.timeline-density span,
 .timeline-evidence-strip span {
   min-height: 21px;
   display: inline-flex;
@@ -3005,6 +3018,14 @@ body {
   color: #a8b8c0;
   font-size: 10px;
   white-space: nowrap;
+}
+
+.timeline-selected-summary {
+  border-color: rgba(22, 198, 244, 0.36) !important;
+  background: rgba(21, 44, 54, 0.78) !important;
+  color: #d6f8ff !important;
+  font-size: var(--readable-small) !important;
+  font-weight: 800;
 }
 
 .timeline-evidence-item {
@@ -3423,6 +3444,13 @@ body {
     #10171c;
 }
 
+.stage-action-panel.stage-empty {
+  border-bottom-color: rgba(139, 166, 180, 0.12);
+  background:
+    linear-gradient(180deg, rgba(139, 166, 180, 0.05), transparent 44%),
+    #0d1418;
+}
+
 .stage-action-head {
   display: grid;
   gap: 4px;
@@ -3444,7 +3472,7 @@ body {
 .stage-action-panel p {
   margin: 0;
   color: #a3b3bb;
-  font-size: 12px;
+  font-size: var(--readable-small);
   line-height: 1.5;
 }
 
@@ -3480,7 +3508,8 @@ body {
   gap: 6px;
 }
 
-.stage-evidence-list span {
+.stage-evidence-list span,
+.stage-checklist span {
   min-width: 0;
   padding: 7px 8px;
   border: 1px solid #26343b;
@@ -3491,6 +3520,76 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.stage-checklist {
+  display: grid;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.stage-checklist span {
+  position: relative;
+  padding-left: 22px;
+  color: #a8b8c0;
+  font-size: var(--readable-small);
+}
+
+.stage-checklist span::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border: 1px solid #566973;
+  border-radius: 50%;
+  background: #172128;
+  transform: translateY(-50%);
+}
+
+.stage-checklist span[data-state="ready"] {
+  border-color: rgba(53, 200, 90, 0.28);
+  color: #c8f7d3;
+  background: rgba(21, 48, 31, 0.48);
+}
+
+.stage-checklist span[data-state="ready"]::before {
+  border-color: rgba(53, 200, 90, 0.72);
+  background: var(--green);
+}
+
+.stage-checklist span[data-state="complete"] {
+  border-color: rgba(22, 198, 244, 0.3);
+  color: #c4f2ff;
+  background: rgba(20, 48, 58, 0.48);
+}
+
+.stage-checklist span[data-state="complete"]::before {
+  border-color: rgba(22, 198, 244, 0.72);
+  background: var(--cyan);
+}
+
+.stage-checklist span[data-state="blocked"] {
+  border-color: rgba(246, 171, 34, 0.36);
+  color: #f4d6a0;
+  background: rgba(56, 39, 12, 0.52);
+}
+
+.stage-checklist span[data-state="blocked"]::before {
+  border-color: rgba(246, 171, 34, 0.78);
+  background: var(--amber);
+}
+
+.stage-checklist span[data-state="warning"] {
+  border-color: rgba(230, 71, 150, 0.36);
+  color: #f5b7d7;
+  background: rgba(62, 22, 43, 0.48);
+}
+
+.stage-checklist span[data-state="warning"]::before {
+  border-color: rgba(230, 71, 150, 0.72);
+  background: var(--pink);
 }
 
 .stage-action-panel.stage-blocked .stage-primary-action {

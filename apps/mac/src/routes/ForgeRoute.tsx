@@ -127,6 +127,15 @@ type StageAction = {
   onClick: () => void | Promise<void>;
 };
 
+type StageChecklistKey = "source" | "frames" | "quality" | "output";
+type StageChecklistState = "blocked" | "complete" | "pending" | "ready" | "warning";
+
+type StageChecklistItem = {
+  key: StageChecklistKey;
+  label: string;
+  state: StageChecklistState;
+};
+
 type ForgeWorkflow = "Import" | "Frames" | "Background" | "Anchor" | "Sheet" | "Export";
 const defaultPackName = "Untitled Sprite Pack";
 const bundledSamplePackName = "Green Box Character Pack";
@@ -1337,6 +1346,8 @@ export function ForgeRoute({
             onExtract={handleExtractFrames}
             onOpenSettings={onOpenSettings}
             onProcess={handleProcessAndQuality}
+            outputFolder={settings.defaultOutputFolder}
+            qualityReport={qualityReport}
             stage={workbenchStage}
             sourceName={activeSourceName}
             t={t}
@@ -1536,6 +1547,8 @@ function StageActionPanel({
   onExtract,
   onOpenSettings,
   onProcess,
+  outputFolder,
+  qualityReport,
   sourceName,
   stage,
   t,
@@ -1549,6 +1562,8 @@ function StageActionPanel({
   onExtract: () => void | Promise<void>;
   onOpenSettings: () => void;
   onProcess: () => void | Promise<void>;
+  outputFolder: string;
+  qualityReport: QualityReport | null;
   sourceName: string;
   stage: WorkbenchStage;
   t: TFunction;
@@ -1567,6 +1582,17 @@ function StageActionPanel({
   const StageIcon = action?.icon ?? Circle;
   const detail = t(workbenchStageDetailKey(stage), { count: frameCount, source: sourceName });
   const stageLabel = t(workbenchStageLabelKey(stage));
+  const stageChecklist = stageChecklistItems({
+    canExtractFrames,
+    canProcessAndQuality,
+    frameCount,
+    hasOutputFolder,
+    outputFolder,
+    qualityReport,
+    sourceName,
+    stage,
+    t,
+  });
 
   return (
     <section
@@ -1596,14 +1622,85 @@ function StageActionPanel({
           {action.label}
         </button>
       ) : null}
-      {stage === "source_selected" || stage === "frames_ready" || stage === "processed_ready" ? (
-        <div className="stage-evidence-list" aria-label={t("workflowStage.evidence")} role="list">
-          <span role="listitem">{t("workflowStage.source", { source: sourceName })}</span>
-          <span role="listitem">{t("workflowStage.frames", { count: frameCount })}</span>
-        </div>
-      ) : null}
+      <div className="stage-checklist" aria-label={t("workflowStage.evidence")} role="list">
+        {stageChecklist.map((item) => (
+          <span data-stage-check={item.key} data-state={item.state} key={item.key} role="listitem">
+            {item.label}
+          </span>
+        ))}
+      </div>
     </section>
   );
+}
+
+function stageChecklistItems({
+  canExtractFrames,
+  canProcessAndQuality,
+  frameCount,
+  hasOutputFolder,
+  outputFolder,
+  qualityReport,
+  sourceName,
+  stage,
+  t,
+}: {
+  canExtractFrames: boolean;
+  canProcessAndQuality: boolean;
+  frameCount: number;
+  hasOutputFolder: boolean;
+  outputFolder: string;
+  qualityReport: QualityReport | null;
+  sourceName: string;
+  stage: WorkbenchStage;
+  t: TFunction;
+}): StageChecklistItem[] {
+  const qualityStatus = qualityReport
+    ? qualityReport.verdict === "blocked"
+      ? t("quality.status.needsAttention")
+      : qualityReport.recommendations.length
+        ? t("quality.status.hasWarnings", { count: qualityReport.recommendations.length })
+        : t("quality.status.allPassed")
+    : canProcessAndQuality
+      ? t("quality.status.readyToCheck")
+      : t("quality.status.pending");
+
+  const qualityState: StageChecklistState = qualityReport
+    ? qualityReport.verdict === "blocked"
+      ? "blocked"
+      : qualityReport.recommendations.length || qualityReport.verdict === "needs_cleanup"
+        ? "warning"
+        : "complete"
+    : canProcessAndQuality
+      ? "ready"
+      : "pending";
+  const outputState: StageChecklistState = hasOutputFolder
+    ? "complete"
+    : stage === "quality_ready"
+      ? "blocked"
+      : "pending";
+
+  return [
+    {
+      key: "source",
+      label: t("workflowStage.source", { source: sourceName }),
+      state: stage === "empty" ? "pending" : "complete",
+    },
+    {
+      key: "frames",
+      label: t("workflowStage.frames", { count: frameCount }),
+      state: frameCount > 0 ? "complete" : canExtractFrames ? "ready" : "pending",
+    },
+    {
+      key: "quality",
+      label: `${t("summary.quality")}: ${qualityStatus}`,
+      state: qualityState,
+    },
+    {
+      key: "output",
+      label: `${t("export.readiness.outputFolder")}: ${hasOutputFolder ? outputFolder : t("export.readiness.chooseOutput")}`,
+      state: outputState,
+    },
+  ];
 }
 
 function stageActionFor(

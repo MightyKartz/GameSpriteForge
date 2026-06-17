@@ -96,17 +96,25 @@ assertContains(routeSource, "data-workbench-stage={stage}", "StageActionPanel mu
 assertContains(routeSource, "data-stage-next-action={action?.key ?? \"import\"}", "StageActionPanel must expose the next action even when the center CTA owns it.");
 assertContains(routeSource, "{action ? (", "StageActionPanel must avoid rendering a duplicate primary action for empty state.");
 assertNotContains(routeSource, "workflowStage.action.chooseSource", "Empty state must not duplicate the center import CTA in the right rail.");
+assertContains(routeSource, "stage-checklist", "StageActionPanel must expose a compact checklist structure.");
+assertContains(routeSource, "data-stage-check", "Stage checklist items must expose stable check keys.");
 
 assertContains(cssSource, ".stage-action-panel", "CSS must style the stage action panel.");
 assertContains(cssSource, ".stage-primary-action", "CSS must style the single stage primary action.");
+assertContains(cssSource, ".stage-action-panel.stage-empty", "Empty stage right rail must use a quieter explanatory treatment.");
 assertContains(cssSource, ".timeline-evidence-strip", "CSS must style timeline evidence.");
+assertContains(cssSource, ".timeline-density", "CSS must style the timeline density row.");
 assertContains(cssSource, ".timeline-evidence-item[data-evidence=\"loop\"]", "CSS must make loop evidence visually distinct.");
 assertContains(cssSource, ".timeline-loop-marker", "CSS must style loop start/end markers.");
 assertContains(cssSource, ".frame-cell[aria-current=\"true\"]", "CSS must expose selected frame state beyond color.");
 assertContains(cssSource, ".preview-mode-control", "CSS must style preview mode control.");
 assertContains(cssSource, ".canvas-preview[data-preview-processing-state=\"inspection\"] .preview-mode-control", "CSS must emphasize inspection mode state.");
+assertContains(cssSource, ".focus-evidence-ring", "CSS must provide a reusable strong focus evidence ring.");
+assertContains(cssSource, "--readable-small", "CSS must define a readable small text token.");
 assertContains(cssSource, "summary:focus-visible", "Global focus rings must include disclosure summaries.");
 assertContains(cssSource, "textarea:focus-visible", "Global focus rings must include textareas.");
+assertContains(frameTimelineSource, "timeline-density", "FrameTimeline must expose density metadata.");
+assertContains(frameTimelineSource, "timeline-selected-summary", "Selected timeline frame must have a readable summary.");
 
 assertContains(i18nSource, "workflowStage.panelTitle", "i18n must include stage panel copy.");
 assertContains(i18nSource, "timeline.evidence.target", "i18n must include timeline evidence copy.");

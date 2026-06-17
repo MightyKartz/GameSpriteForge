@@ -24,7 +24,7 @@ await mkdir(outputDir, { recursive: true });
 const preview = startPreview();
 
 try {
-  await waitForHttp(targetUrl, 15_000);
+  await waitForHttp(targetUrl, 30_000);
 
   const userDataDir = await mkdtemp(path.join(tmpdir(), "forge-chrome-"));
   const screenshotPath = path.join(
@@ -46,12 +46,15 @@ try {
   const source = await readBuiltSource();
   await writeFile(sourcePath, source);
 
+  const visibleText = await dumpVisibleText();
+  await writeFile(visibleTextPath, visibleText);
+
   if (mode === "responsive") {
     await captureResponsiveScreenshots(userDataDir);
   } else {
     await runChrome(
       [
-        "--headless=new",
+        "--headless=chrome",
         "--disable-gpu",
         "--no-first-run",
         `--user-data-dir=${userDataDir}`,
@@ -63,10 +66,7 @@ try {
     );
   }
 
-  const visibleText = await dumpVisibleText(userDataDir);
-  await writeFile(visibleTextPath, visibleText);
-
-  await rm(userDataDir, { recursive: true, force: true });
+  await rm(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   await assertScreenshot(screenshotPath);
   assertSource(source, mode, smokeLocale);
   assertVisibleText(visibleText, mode, smokeLocale);
@@ -274,7 +274,7 @@ async function captureResponsiveScreenshots(userDataDir) {
     );
     await runChrome(
       [
-        "--headless=new",
+        "--headless=chrome",
         "--disable-gpu",
         "--no-first-run",
         `--user-data-dir=${userDataDir}`,
@@ -295,18 +295,20 @@ async function assertScreenshot(screenshotPath) {
   }
 }
 
-async function dumpVisibleText(userDataDir) {
+async function dumpVisibleText() {
+  const userDataDir = await mkdtemp(path.join(tmpdir(), "forge-chrome-text-"));
   const port = 42000 + Math.floor(Math.random() * 1000);
   const child = spawn(
     chromePath,
     [
-      "--headless=new",
+      "--headless=chrome",
       "--disable-gpu",
       "--no-first-run",
+      "--remote-debugging-address=127.0.0.1",
       `--remote-debugging-port=${port}`,
       `--user-data-dir=${userDataDir}`,
       "--window-size=1568,1003",
-      targetUrl,
+      "about:blank",
     ],
     {
       cwd: root,
@@ -325,19 +327,36 @@ async function dumpVisibleText(userDataDir) {
     }
   } finally {
     child.kill("SIGKILL");
+    await rm(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }
 }
 
 async function waitForDebuggerUrl(port, timeoutMs) {
   const startedAt = Date.now();
+  let createdTarget = false;
   while (Date.now() - startedAt < timeoutMs) {
     try {
       const response = await fetch(`http://127.0.0.1:${port}/json/list`);
       if (response.ok) {
         const pages = await response.json();
-        const page = pages.find((item) => item.type === "page" && item.webSocketDebuggerUrl);
+        const page = pages.find((item) =>
+          item.type === "page" && item.url === targetUrl && item.webSocketDebuggerUrl
+        );
         if (page) {
           return page.webSocketDebuggerUrl;
+        }
+        if (!createdTarget) {
+          createdTarget = true;
+          const createResponse = await fetch(
+            `http://127.0.0.1:${port}/json/new?${encodeURIComponent(targetUrl)}`,
+            { method: "PUT" },
+          );
+          if (createResponse.ok) {
+            const createdPage = await createResponse.json();
+            if (createdPage.webSocketDebuggerUrl) {
+              return createdPage.webSocketDebuggerUrl;
+            }
+          }
         }
       }
     } catch {

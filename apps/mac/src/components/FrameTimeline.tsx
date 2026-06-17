@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useId, type CSSProperties } from "react";
 import type { ExtractFramesResult, NormalizeFramesResult } from "../tauriCommands";
 import { usePreviewImage } from "../hooks/usePreviewImage";
 import type { TFunction } from "../i18n";
@@ -31,6 +31,8 @@ type TimelineLoopMarkers = {
   start?: TimelineLoopMarker;
 };
 
+type TimelineDensity = "empty" | "fit" | "condensed" | "dense";
+
 type FrameTimelineProps = {
   evidence?: TimelineEvidence | null;
   extractResult: ExtractFramesResult | null;
@@ -54,38 +56,70 @@ export function FrameTimeline({
   state,
   t,
 }: FrameTimelineProps) {
+  const selectedSummaryId = useId();
   const frameLabel = normalizeResult ? t("timeline.normalized") : extractResult ? t("timeline.raw") : t("timeline.timeline");
   const hasTimelineFrames = state === "live" && framePaths.length > 0;
+  const visibleFrameCount = Math.max(1, Math.min(framePaths.length, 24));
+  const selectedFrameNumber = hasTimelineFrames
+    ? normalizeTimelineFrame(selectedFrameIndex + 1, frameCount) ?? 1
+    : selectedFrameIndex + 1;
+  const loopRangeSummary = hasTimelineFrames && evidence ? timelineLoopRangeSummary(evidence, frameCount) : null;
+  const selectedFrameIsVisible = hasTimelineFrames && selectedFrameIndex >= 0 && selectedFrameIndex < visibleFrameCount;
+  const density = timelineDensity(visibleFrameCount, frameCount);
   const renderedTracks = [
     {
       name: frameLabel,
       frames: frameCount,
       tone: "blue" as const,
-      visible: Math.max(1, Math.min(framePaths.length, 24)),
+      visible: visibleFrameCount,
       barLabel: String(frameCount),
     },
   ];
   const rulerValues = frameCount > 0 ? timelineMarks(frameCount) : [];
-  const selectedFrameNumber = selectedFrameIndex + 1;
-  const selectedSummary = hasTimelineFrames
+  const selectedInlineLabel = hasTimelineFrames
     ? t("timeline.selected", { count: frameCount, selected: selectedFrameNumber })
+    : "";
+  const selectedSummary = hasTimelineFrames
+    ? timelineSelectedSummary(selectedFrameNumber, visibleFrameCount, frameCount, loopRangeSummary, t)
     : "";
   const evidenceItems = hasTimelineFrames && evidence ? timelineEvidenceItems(evidence, t) : [];
   const loopMarkers = hasTimelineFrames && evidence ? timelineLoopMarkers(evidence, frameCount, t) : null;
+  const showEvidenceStrip = hasTimelineFrames || evidenceItems.length > 0;
 
   return (
-    <section className="timeline-panel">
+    <section
+      className="timeline-panel"
+      data-loop-range={loopRangeSummary ?? undefined}
+      data-selected-frame={hasTimelineFrames ? selectedFrameNumber : undefined}
+      data-selected-frame-visible={hasTimelineFrames ? String(selectedFrameIsVisible) : undefined}
+      data-timeline-density={density}
+      data-total-frames={frameCount}
+      data-visible-thumbnails={hasTimelineFrames ? visibleFrameCount : 0}
+    >
       <div className="timeline-top">
         <strong>{t("timeline.title")}</strong>
         <span>{frameCount > 0 ? t("assets.frames", { count: frameCount }) : t("timeline.noFrames")}</span>
         {hasTimelineFrames ? (
-          <span className="timeline-selected-inline">
-            {selectedSummary}
+          <span className="timeline-selected-inline" title={selectedSummary}>
+            {selectedInlineLabel}
           </span>
         ) : null}
       </div>
-      {evidenceItems.length ? (
-        <div className="timeline-evidence-strip" aria-label={t("timeline.evidence.title")} role="list">
+      {showEvidenceStrip ? (
+        <div className="timeline-density timeline-evidence-strip" aria-label={t("timeline.evidence.title")} role="list">
+          {hasTimelineFrames ? (
+            <span
+              className="timeline-selected-summary timeline-evidence-item"
+              data-density={density}
+              data-evidence="selected-summary"
+              data-selected-visible={String(selectedFrameIsVisible)}
+              id={selectedSummaryId}
+              role="listitem"
+              title={selectedSummary}
+            >
+              {selectedSummary}
+            </span>
+          ) : null}
           {evidenceItems.map((item) => (
             <span className="timeline-evidence-item" data-evidence={item.key} key={item.key} role="listitem">
               <strong>{item.label}</strong>
@@ -149,7 +183,12 @@ export function FrameTimeline({
                 <span>1</span>
                 <span>{track.barLabel}</span>
               </div>
-              <div className="frame-strip">
+              <div
+                className="frame-strip"
+                data-timeline-density={density}
+                data-total-frames={track.frames}
+                data-visible-thumbnails={track.visible}
+              >
                 {Array.from({ length: track.visible }, (_, index) => {
                   const frameNumber = index + 1;
                   const framePath = trackIndex === 0 ? framePaths[index] : undefined;
@@ -165,6 +204,7 @@ export function FrameTimeline({
                       isSelected={isSelected}
                       key={`${track.name}-${index}`}
                       onClick={() => onSelectFrame(index)}
+                      selectedSummaryId={isSelected ? selectedSummaryId : undefined}
                       selectedFrameLabel={selectedFrameLabel}
                       style={{ "--hue": `${trackIndex * 18 + index * 3}deg`, "--n": `${(index % 6) - 2}px` } as CSSProperties}
                     />
@@ -195,6 +235,7 @@ function FrameThumb({
   framePath,
   isSelected,
   onClick,
+  selectedSummaryId,
   selectedFrameLabel,
   style,
 }: {
@@ -204,6 +245,7 @@ function FrameThumb({
   framePath?: string;
   isSelected: boolean;
   onClick: () => void;
+  selectedSummaryId?: string;
   selectedFrameLabel: string;
   style: CSSProperties;
 }) {
@@ -212,6 +254,7 @@ function FrameThumb({
   return (
     <button
       aria-current={isSelected ? "true" : undefined}
+      aria-describedby={selectedSummaryId}
       aria-label={selectedFrameLabel}
       className={className}
       data-frame-index={frameIndex}
@@ -257,9 +300,51 @@ function timelineEvidenceItems(evidence: TimelineEvidence, t: TFunction): Timeli
     {
       key: "selected",
       label: t("timeline.evidence.selected"),
-      value: evidence.selectedFrameIndex + 1,
+      value: `${evidence.selectedFrameIndex + 1}/${evidence.actualFrameCount}`,
     },
   ];
+}
+
+function timelineSelectedSummary(
+  selectedFrameNumber: number,
+  visibleFrameCount: number,
+  frameCount: number,
+  loopRangeSummary: string | null,
+  t: TFunction,
+) {
+  const selected = t("timeline.selected", { count: frameCount, selected: selectedFrameNumber });
+  const visibleFrames = `${t("assets.frames", { count: visibleFrameCount })} / ${t("assets.frames", { count: frameCount })}`;
+  const loop = loopRangeSummary ? `${t("timeline.evidence.loop")} ${loopRangeSummary}` : null;
+
+  return [selected, visibleFrames, loop].filter(Boolean).join(" - ");
+}
+
+function timelineDensity(visibleFrameCount: number, frameCount: number): TimelineDensity {
+  if (frameCount <= 0) {
+    return "empty";
+  }
+
+  if (frameCount <= visibleFrameCount) {
+    return "fit";
+  }
+
+  const compression = frameCount / Math.max(1, visibleFrameCount);
+  if (compression >= 4) {
+    return "dense";
+  }
+
+  if (compression >= 2) {
+    return "condensed";
+  }
+
+  return "fit";
+}
+
+function timelineLoopRangeSummary(evidence: TimelineEvidence, frameCount: number) {
+  const startFrame = normalizeTimelineFrame(evidence.loopStartFrame, frameCount);
+  const endFrame = normalizeTimelineFrame(evidence.loopEndFrame, frameCount);
+
+  return startFrame !== null && endFrame !== null ? `${startFrame}-${endFrame}` : null;
 }
 
 function timelineLoopMarkers(evidence: TimelineEvidence, frameCount: number, t: TFunction): TimelineLoopMarkers | null {
