@@ -43,7 +43,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl --proto '=https' --tlsv1.2 -fLO https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors \
+            --retry-delay 5 --connect-timeout 30 --max-time 300 -fLO \
+            https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz
           printf '%s  %s\n' \
             '464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c' \
             'ffmpeg-8.1.2.tar.xz' | shasum -a 256 -c -
@@ -70,7 +72,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl --proto '=https' --tlsv1.2 -fL \
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors \
+            --retry-delay 5 --connect-timeout 30 --max-time 300 -fL \
             -o "${RUNNER_TEMP}/godot.zip" \
             https://github.com/godotengine/godot/releases/download/4.6.3-stable/Godot_v4.6.3-stable_macos.universal.zip
           mkdir -p "${RUNNER_TEMP}/godot-bin"
@@ -110,6 +113,8 @@ jobs:
           cp install.sh forge-installer.sh
 
       - name: Generate SBOM
+        env:
+          CARGO_NET_RETRY: "5"
         shell: bash
         run: |
           set -euo pipefail
