@@ -29,6 +29,36 @@ fn green_background_alpha_becomes_zero_and_white_foreground_stays_opaque() {
 }
 
 #[test]
+fn border_connected_gradient_green_is_removed_without_erasing_enclosed_green_details() {
+    let mut image = RgbaImage::from_fn(96, 96, |x, y| {
+        let green = 120 + ((x + y) % 80) as u8;
+        Rgba([8, green, 18, 255])
+    });
+    for y in 24..72 {
+        for x in 28..68 {
+            let outline = x == 28 || x == 67 || y == 24 || y == 71;
+            image.put_pixel(
+                x,
+                y,
+                if outline {
+                    Rgba([18, 14, 26, 255])
+                } else {
+                    Rgba([20, 90, 110, 255])
+                },
+            );
+        }
+    }
+    image.put_pixel(48, 48, Rgba([0, 200, 60, 255]));
+
+    let processed = apply_chroma_key(&image, &base_params()).unwrap();
+
+    assert_eq!(processed.get_pixel(2, 2)[3], 0);
+    assert_eq!(processed.get_pixel(90, 80)[3], 0);
+    assert_eq!(processed.get_pixel(40, 40)[3], 255);
+    assert_eq!(processed.get_pixel(48, 48)[3], 255);
+}
+
+#[test]
 fn manual_key_color_overrides_corner_sampling() {
     let mut image = RgbaImage::from_pixel(4, 4, Rgba([255, 0, 0, 255]));
     image.put_pixel(1, 1, Rgba([0, 255, 0, 255]));

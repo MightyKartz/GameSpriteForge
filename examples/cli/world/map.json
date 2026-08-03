@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1",
+  "kind": "map",
+  "id": "forest-village",
+  "name": "Forest Village",
+  "seed": 42,
+  "size": { "width": 64, "height": 48 },
+  "dependencies": {
+    "terrainSets": ["packs/forest-ground.gsfpack"],
+    "buildingKits": ["packs/forest-houses.gsfpack"],
+    "propSets": []
+  },
+  "regions": [
+    { "id": "spawn", "kind": "spawn", "x": 3, "y": 24 },
+    { "id": "village", "kind": "settlement", "x": 32, "y": 24 },
+    { "id": "exit", "kind": "exit", "x": 60, "y": 24 }
+  ],
+  "connections": [
+    { "from": "spawn", "to": "village", "width": 2 },
+    { "from": "village", "to": "exit", "width": 2 }
+  ],
+  "landmarks": [],
+  "requirements": {
+    "reachableExit": true,
+    "buildingCount": { "min": 4, "max": 8 },
+    "propDensity": 0.04
+  },
+  "license": "MIT"
+}

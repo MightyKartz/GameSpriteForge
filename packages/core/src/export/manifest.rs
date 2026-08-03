@@ -126,11 +126,30 @@ pub struct PackMetadataParams {
     pub license_type: String,
     pub source_kind: String,
     pub source_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_metadata: Option<serde_json::Value>,
     pub animation_name: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub animation_frames: Option<Vec<usize>>,
     pub fps: f32,
     pub loop_animation: bool,
+    pub anchor: FootAnchor,
+    pub quality_report: QualityReport,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CharacterPackMetadataParams {
+    pub id: String,
+    pub name: String,
+    pub version: String,
+    pub creator_name: String,
+    pub license_type: String,
+    pub source_kind: String,
+    pub source_name: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_metadata: Option<serde_json::Value>,
+    pub default_animation: String,
     pub anchor: FootAnchor,
     pub quality_report: QualityReport,
 }
@@ -180,6 +199,39 @@ pub fn engine_manifest(
     }
 }
 
+pub fn engine_manifest_for_animations(
+    name: String,
+    animations: Vec<ManifestAnimation>,
+    anchor: FootAnchor,
+    atlas: &Atlas,
+) -> EngineManifest {
+    EngineManifest {
+        name,
+        sheet: ManifestSheet {
+            image: "assets/sprite_sheet.png".to_string(),
+            images: atlas
+                .images
+                .iter()
+                .map(|image| format!("assets/{image}"))
+                .collect(),
+            frame_width: atlas.frame_width,
+            frame_height: atlas.frame_height,
+            columns: atlas.columns,
+            rows: atlas.rows,
+        },
+        animations,
+        anchor: ManifestAnchor {
+            anchor_type: if anchor.locked_by_user {
+                "custom".to_string()
+            } else {
+                "feet".to_string()
+            },
+            x: anchor.x,
+            y: anchor.y,
+        },
+    }
+}
+
 pub fn export_metadata(params: PackMetadataParams, atlas: &Atlas) -> ExportMetadata {
     let manifest = engine_manifest(
         params.name.clone(),
@@ -207,7 +259,58 @@ pub fn export_metadata(params: PackMetadataParams, atlas: &Atlas) -> ExportMetad
         source: PackSource {
             kind: params.source_kind,
             name: params.source_name,
-            metadata: serde_json::json!({}),
+            metadata: params
+                .source_metadata
+                .unwrap_or_else(|| serde_json::json!({})),
+        },
+        animations: manifest.animations.clone(),
+        assets: PackAssets {
+            frames: "assets/frames".to_string(),
+            sprite_sheet: "assets/sprite_sheet.png".to_string(),
+            atlas: "assets/atlas.json".to_string(),
+            manifest: "assets/manifest.json".to_string(),
+            godot_helper: Some("assets/godot_import.json".to_string()),
+            quality_report: "quality-report.json".to_string(),
+        },
+        previews: PackPreviews {
+            gif: "previews/preview.gif".to_string(),
+        },
+    };
+
+    ExportMetadata {
+        manifest,
+        forgepack,
+        quality_report: params.quality_report,
+    }
+}
+
+pub fn export_character_metadata(
+    params: CharacterPackMetadataParams,
+    animations: Vec<ManifestAnimation>,
+    atlas: &Atlas,
+) -> ExportMetadata {
+    let manifest =
+        engine_manifest_for_animations(params.name.clone(), animations, params.anchor, atlas);
+    let forgepack = ForgePackMetadata {
+        schema_version: SCHEMA_VERSION.to_string(),
+        id: params.id,
+        name: params.name,
+        version: params.version,
+        created_at: Utc::now(),
+        creator: PackCreator {
+            name: params.creator_name,
+        },
+        license: PackLicense {
+            license_type: params.license_type,
+            text: None,
+            url: None,
+        },
+        source: PackSource {
+            kind: params.source_kind,
+            name: params.source_name,
+            metadata: params.source_metadata.unwrap_or_else(
+                || serde_json::json!({ "defaultAnimation": params.default_animation }),
+            ),
         },
         animations: manifest.animations.clone(),
         assets: PackAssets {

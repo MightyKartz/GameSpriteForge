@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1",
+  "prompt": "compact jewel-tone pixel art with dark outlines",
+  "referenceImages": [],
+  "perspective": "topdown",
+  "lighting": "upper_left",
+  "outline": "dark",
+  "background": "transparent",
+  "sampling": "nearest",
+  "characterCanvasSize": 256,
+  "iconCanvasSize": 128,
+  "propCanvasSize": 256
+}

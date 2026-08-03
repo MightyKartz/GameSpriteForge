@@ -1,6 +1,7 @@
 use forge_core::frames::{FrameBbox, FrameSize};
 use forge_core::quality::{
-    compute_quality_report, compute_quality_report_with_loop_range, loop_match_score,
+    compute_quality_report, compute_quality_report_for_animation,
+    compute_quality_report_with_loop_range, loop_match_score, QualityRecommendationId,
     QualityVerdict,
 };
 
@@ -90,4 +91,22 @@ fn loop_range_uses_selected_start_and_end_without_changing_frame_count() {
         .recommendations
         .iter()
         .any(|recommendation| format!("{recommendation:?}") == "TrimLoopRange"));
+}
+
+#[test]
+fn non_looping_animation_does_not_receive_loop_cleanup_advice() {
+    let report = compute_quality_report_for_animation(
+        &[bbox(2.0, 2.0, 12.0, 14.0), bbox(45.0, 24.0, 62.0, 48.0)],
+        &sizes(2),
+        false,
+    );
+
+    assert_eq!(report.metrics.loop_match_score, 1.0);
+    assert!(!report
+        .recommendations
+        .contains(&QualityRecommendationId::TrimLoopRange));
+    assert!(report
+        .notes
+        .iter()
+        .any(|note| note == "non_looping_animation"));
 }

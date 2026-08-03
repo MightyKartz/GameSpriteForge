@@ -1,22 +1,27 @@
-use std::fs;
+use std::fs::{self, File, OpenOptions};
 use std::path::{Path, PathBuf};
 
 use chrono::Utc;
 use thiserror::Error;
 use uuid::Uuid;
 
-use super::types::{JobRecord, JobState, SourceKind};
+use super::types::{JobLifecycleState, JobOperationKind, JobRecord, JobState, SourceKind};
 
 const APP_SUPPORT_DIR: &str = "Game Sprite Forge";
 const JOBS_DIR: &str = "jobs";
 const JOB_JSON: &str = "job.json";
-const JOB_SUBDIRS: [&str; 6] = [
+const JOB_LOCK: &str = ".job.lock";
+pub const JOB_WORKSPACE_JSON: &str = "workspace.json";
+const JOB_SUBDIRS: [&str; 9] = [
     "source",
     "raw",
     "processed",
     "thumbs",
     "previews",
     "exports",
+    "logs",
+    "tools",
+    "backups",
 ];
 
 #[derive(Debug, Error)]
@@ -96,6 +101,22 @@ impl JobStore {
             updated_at: now,
             job_dir,
             error_summary: None,
+            asset_id: Some(Uuid::new_v4().to_string()),
+            parent_job_id: None,
+            operation_kind: JobOperationKind::LegacyPipeline,
+            lifecycle_state: JobLifecycleState::Idle,
+            progress: 0.0,
+            input_hash: None,
+            recipe_hash: None,
+            recipe: None,
+            repair: None,
+            steps: Vec::new(),
+            artifacts: Vec::new(),
+            error_code: None,
+            recoverable: false,
+            cancellation_requested: false,
+            worker_pid: None,
+            next_actions: Vec::new(),
         };
         self.write_record(&record)?;
         Ok(record)
@@ -106,12 +127,12 @@ impl JobStore {
         job_id: impl AsRef<str>,
         summary: impl Into<String>,
     ) -> Result<JobRecord, JobStoreError> {
-        let mut record = self.read_record(job_id.as_ref())?;
-        record.state = JobState::Failed;
-        record.updated_at = Utc::now();
-        record.error_summary = Some(summary.into());
-        self.write_record(&record)?;
-        Ok(record)
+        let summary = summary.into();
+        self.update_record(job_id.as_ref(), |record| {
+            record.state = JobState::Failed;
+            record.lifecycle_state = JobLifecycleState::Failed;
+            record.error_summary = Some(summary);
+        })
     }
 
     pub fn set_state(
@@ -119,14 +140,10 @@ impl JobStore {
         job_id: impl AsRef<str>,
         state: JobState,
     ) -> Result<JobRecord, JobStoreError> {
-        let mut record = self.read_record(job_id.as_ref())?;
-        record.state = state;
-        record.updated_at = Utc::now();
-        self.write_record(&record)?;
-        Ok(record)
+        self.update_record(job_id.as_ref(), |record| record.state = state)
     }
 
-    fn read_record(&self, job_id: &str) -> Result<JobRecord, JobStoreError> {
+    pub fn read_record(&self, job_id: &str) -> Result<JobRecord, JobStoreError> {
         let job_dir = self.job_dir(job_id)?;
         if !job_dir.exists() {
             return Err(JobStoreError::JobNotFound(job_id.to_owned()));
@@ -141,14 +158,96 @@ impl JobStore {
             .map_err(|source| JobStoreError::Deserialize { path, source })
     }
 
-    fn write_record(&self, record: &JobRecord) -> Result<(), JobStoreError> {
+    pub fn write_record(&self, record: &JobRecord) -> Result<(), JobStoreError> {
+        let _lock = self.lock_record(&record.job_dir)?;
+        self.write_record_unlocked(record)
+    }
+
+    fn write_record_unlocked(&self, record: &JobRecord) -> Result<(), JobStoreError> {
         let path = record.job_dir.join(JOB_JSON);
         let contents =
             serde_json::to_string_pretty(record).map_err(|source| JobStoreError::Serialize {
                 path: path.clone(),
                 source,
             })?;
-        fs::write(&path, contents).map_err(|source| JobStoreError::Io { path, source })
+        let temporary = record
+            .job_dir
+            .join(format!(".{JOB_JSON}.{}.tmp", Uuid::new_v4()));
+        fs::write(&temporary, contents).map_err(|source| JobStoreError::Io {
+            path: temporary.clone(),
+            source,
+        })?;
+        fs::rename(&temporary, &path).map_err(|source| JobStoreError::Io { path, source })
+    }
+
+    pub fn update_record<F>(&self, job_id: &str, update: F) -> Result<JobRecord, JobStoreError>
+    where
+        F: FnOnce(&mut JobRecord),
+    {
+        let job_dir = self.job_dir(job_id)?;
+        if !job_dir.is_dir() {
+            return Err(JobStoreError::JobNotFound(job_id.to_owned()));
+        }
+        let _lock = self.lock_record(&job_dir)?;
+        let mut record = self.read_record(job_id)?;
+        update(&mut record);
+        record.updated_at = Utc::now();
+        self.write_record_unlocked(&record)?;
+        Ok(record)
+    }
+
+    fn lock_record(&self, job_dir: &Path) -> Result<File, JobStoreError> {
+        let path = job_dir.join(JOB_LOCK);
+        let file = OpenOptions::new()
+            .create(true)
+            .read(true)
+            .write(true)
+            .truncate(false)
+            .open(&path)
+            .map_err(|source| JobStoreError::Io {
+                path: path.clone(),
+                source,
+            })?;
+        file.lock()
+            .map_err(|source| JobStoreError::Io { path, source })?;
+        Ok(file)
+    }
+
+    pub fn list_records(&self) -> Result<Vec<JobRecord>, JobStoreError> {
+        let mut records = Vec::new();
+        for entry in fs::read_dir(&self.root).map_err(|source| JobStoreError::Io {
+            path: self.root.clone(),
+            source,
+        })? {
+            let Ok(entry) = entry else {
+                continue;
+            };
+            let Some(job_id) = entry.file_name().to_str().map(str::to_owned) else {
+                continue;
+            };
+            if !entry.path().is_dir() || !is_filesystem_safe_job_id(&job_id) {
+                continue;
+            }
+            if let Ok(record) = self.read_record(&job_id) {
+                records.push(record);
+            }
+        }
+        records.sort_by_key(|record| std::cmp::Reverse(record.updated_at));
+        Ok(records)
+    }
+
+    pub fn request_cancellation(&self, job_id: &str) -> Result<JobRecord, JobStoreError> {
+        self.update_record(job_id, |record| {
+            record.cancellation_requested = true;
+            if !matches!(
+                record.lifecycle_state,
+                JobLifecycleState::Succeeded
+                    | JobLifecycleState::Failed
+                    | JobLifecycleState::Cancelled
+            ) {
+                record.next_actions = vec!["wait_for_cancellation".to_string()];
+            }
+        })
     }
 
     fn job_dir(&self, job_id: &str) -> Result<PathBuf, JobStoreError> {

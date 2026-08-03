@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/building-kit-spec.schema.json",
+  "title": "Forge Building Kit Spec V1/V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "id", "name", "prompt", "license"],
+  "properties": {
+    "schemaVersion": { "enum": ["1", "2"] },
+    "kind": { "const": "building_kit" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "prompt": { "type": "string", "minLength": 1, "maxLength": 4000 },
+    "environmentRevision": { "type": "string", "minLength": 1 },
+    "footprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minWidth", "maxWidth", "minHeight", "maxHeight"],
+      "properties": {
+        "minWidth": { "type": "integer", "minimum": 3, "maximum": 8 },
+        "maxWidth": { "type": "integer", "minimum": 3, "maximum": 8 },
+        "minHeight": { "type": "integer", "minimum": 3, "maximum": 6 },
+        "maxHeight": { "type": "integer", "minimum": 3, "maximum": 6 }
+      }
+    },
+    "variantCount": { "type": "integer", "minimum": 1, "maximum": 8 },
+    "imageModel": { "type": "string", "minLength": 1 },
+    "license": { "type": "string", "minLength": 1 }
+  }
+}

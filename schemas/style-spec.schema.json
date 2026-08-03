@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/style-spec.schema.json",
+  "title": "Forge Style Spec V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "prompt"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "prompt": { "type": "string", "minLength": 1, "maxLength": 4000 },
+    "referenceImages": { "type": "array", "maxItems": 3, "items": { "type": "string" } },
+    "perspective": { "type": "string", "minLength": 1 },
+    "lighting": { "type": "string", "minLength": 1 },
+    "outline": { "type": "string", "minLength": 1 },
+    "background": { "type": "string", "minLength": 1 },
+    "sampling": { "enum": ["nearest", "linear"] },
+    "characterCanvasSize": { "$ref": "#/$defs/canvas" },
+    "iconCanvasSize": { "$ref": "#/$defs/canvas" },
+    "propCanvasSize": { "$ref": "#/$defs/canvas" },
+    "imageModel": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "canvas": { "type": "integer", "enum": [64, 128, 256, 512] }
+  }
+}

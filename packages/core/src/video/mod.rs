@@ -3,10 +3,14 @@ pub mod ffmpeg;
 pub mod probe;
 pub mod sprite_sheet;
 
-pub use extract::{extract_frames, ExtractFramesParams, ExtractFramesResult};
+pub use extract::{
+    extract_candidate_frames, extract_frames, extract_sampled_frames, ExtractCandidateFramesParams,
+    ExtractCandidateFramesResult, ExtractFramesParams, ExtractFramesResult,
+    SampleVideoFramesParams,
+};
 pub use ffmpeg::{
-    find_in_path, resolve_binary, resolve_ffmpeg_paths, FfmpegPaths, FfmpegSearch,
-    FFMPEG_MISSING_CODE, FFMPEG_MISSING_MESSAGE,
+    find_in_path, resolve_binary, resolve_ffmpeg_paths, runtime_tool_directory, FfmpegPaths,
+    FfmpegSearch, FFMPEG_MISSING_CODE, FFMPEG_MISSING_MESSAGE,
 };
 pub use probe::{probe_video, ProbeVideoParams, VideoProbe};
 pub use sprite_sheet::{

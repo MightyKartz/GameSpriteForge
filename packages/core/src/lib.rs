@@ -1,7 +1,16 @@
+pub mod asset_project;
+pub mod automation;
+pub mod catalog;
+pub mod component;
 pub mod export;
 pub mod frames;
 pub mod job;
 pub mod matting;
 pub mod preview;
+pub mod project;
+pub mod provider;
 pub mod quality;
+pub mod subject;
 pub mod video;
+pub mod workflow_graph;
+pub mod world;

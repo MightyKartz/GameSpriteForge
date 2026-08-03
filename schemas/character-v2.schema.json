@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/character-v2.schema.json",
+  "title": "Forge Character Asset Spec V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "id", "name", "subject", "workflow", "license"],
+  "properties": {
+    "schemaVersion": { "const": "2" },
+    "kind": { "const": "character" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "revision"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+        "revision": { "type": "string", "pattern": "^[a-f0-9]{16}$" }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "enum": ["topdown", "topdown-keyframes"] },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "license": { "type": "string", "minLength": 1 }
+  }
+}

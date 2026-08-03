@@ -55,6 +55,25 @@ pub fn compute_quality_report(bboxes: &[FrameBbox], sizes: &[FrameSize]) -> Qual
     build_quality_report(bboxes, compute_quality_metrics(bboxes, sizes))
 }
 
+pub fn compute_quality_report_for_animation(
+    bboxes: &[FrameBbox],
+    sizes: &[FrameSize],
+    loop_animation: bool,
+) -> QualityReport {
+    let mut metrics = compute_quality_metrics(bboxes, sizes);
+    if !loop_animation {
+        metrics.loop_match_score = 1.0;
+    }
+    let mut report = build_quality_report(bboxes, metrics);
+    if !loop_animation {
+        report
+            .recommendations
+            .retain(|recommendation| *recommendation != QualityRecommendationId::TrimLoopRange);
+        report.notes.push("non_looping_animation".to_string());
+    }
+    report
+}
+
 pub fn compute_quality_report_with_loop_range(
     bboxes: &[FrameBbox],
     sizes: &[FrameSize],

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1",
+  "kind": "icon_set",
+  "id": "multi-failure-icons",
+  "name": "Multi Failure Retry Contract",
+  "items": [
+    {
+      "id": "bad-a",
+      "name": "Bad A",
+      "prompt": "[fixture:palette_drift] first deterministic hard palette failure"
+    },
+    {
+      "id": "good",
+      "name": "Good",
+      "prompt": "deterministic matching fixture icon"
+    },
+    {
+      "id": "bad-b",
+      "name": "Bad B",
+      "prompt": "[fixture:palette_drift] second deterministic hard palette failure"
+    }
+  ],
+  "license": "private"
+}

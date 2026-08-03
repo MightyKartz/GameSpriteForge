@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/terrain-set-spec.schema.json",
+  "title": "Forge Terrain Set Spec V1/V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "id", "name", "base", "overlay", "license"],
+  "properties": {
+    "schemaVersion": { "enum": ["1", "2"] },
+    "kind": { "const": "terrain_set" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "environmentRevision": { "type": "string", "minLength": 1 },
+    "base": { "$ref": "#/$defs/material" },
+    "overlay": { "$ref": "#/$defs/material" },
+    "materialSampleCount": { "type": "integer", "minimum": 1, "maximum": 2 },
+    "variantCount": { "type": "integer", "enum": [1, 4] },
+    "imageModel": { "type": "string", "minLength": 1 },
+    "license": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "prompt"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "prompt": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "walkable": { "type": "boolean" },
+        "collision": { "enum": ["none", "blocked"] }
+      }
+    }
+  }
+}

@@ -6,6 +6,10 @@
   "additionalProperties": false,
   "required": ["name", "sheet", "animations", "anchor"],
   "properties": {
+    "assetType": {
+      "type": "string",
+      "enum": ["animation", "character", "icon_set", "prop_set"]
+    },
     "name": {
       "type": "string",
       "minLength": 1
@@ -68,9 +72,36 @@
           "type": "number"
         }
       }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "frame", "texture"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "frame": { "type": "integer", "minimum": 0 },
+          "texture": { "type": "string", "minLength": 1 },
+          "provenance": { "$ref": "#/$defs/itemProvenance" }
+        }
+      }
     }
   },
   "$defs": {
+    "itemProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["providerId", "styleRevision", "attempt", "sha256"],
+      "properties": {
+        "providerId": { "type": "string", "minLength": 1 },
+        "styleRevision": { "type": "string", "minLength": 1 },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
     "animation": {
       "type": "object",
       "additionalProperties": false,

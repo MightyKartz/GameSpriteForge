@@ -103,6 +103,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             license_type: "private".to_string(),
             source_kind: "import_sprite_sheet".to_string(),
             source_name: Some("forge-walk-sheet.png".to_string()),
+            source_metadata: None,
             animation_name: "walk".to_string(),
             animation_frames: None,
             fps: 12.0,

@@ -59,7 +59,7 @@ pub struct PackSummary {
     pub preview_gif: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct PackInspectSummary {
     pub id: String,
@@ -71,22 +71,60 @@ pub struct PackInspectSummary {
     pub manifest_path: PathBuf,
     pub atlas_path: PathBuf,
     pub quality_report_path: PathBuf,
+    pub default_animation: String,
+    pub animations: Vec<PackAnimationSummary>,
+    pub asset_type: String,
+    pub items: Vec<PackItemSummary>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct PackItemSummary {
+    pub id: String,
+    pub name: String,
+    pub frame: usize,
+    pub texture: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PackAnimationSummary {
+    pub name: String,
+    pub frame_count: usize,
+    pub fps: f32,
+    #[serde(rename = "loop")]
+    pub loop_animation: bool,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct ForgePackJson {
+    schema_version: String,
+    #[serde(default)]
+    asset_type: Option<String>,
     id: String,
     name: String,
     version: String,
     previews: PackPreviews,
     assets: PackAssets,
+    #[serde(default)]
+    items: Vec<PackItem>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PackItem {
+    id: String,
+    texture: String,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct PackPreviews {
-    gif: String,
+    #[serde(default)]
+    gif: Option<String>,
+    #[serde(default)]
+    image: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -98,6 +136,13 @@ struct PackAssets {
     manifest: String,
     godot_helper: Option<String>,
     quality_report: String,
+    consistency_report: Option<String>,
+    terrain_manifest: Option<String>,
+    building_manifest: Option<String>,
+    map_manifest: Option<String>,
+    map_layout: Option<String>,
+    validation_report: Option<String>,
+    atlas_image: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -115,6 +160,13 @@ pub struct ImportedPack {
 pub fn validate_pack_layout(pack_path: &Path) -> Result<(), PackError> {
     require_pack_root_directory(pack_path)?;
 
+    require_regular_pack_file(pack_path, "forgepack.json")?;
+    let metadata: ForgePackJson =
+        serde_json::from_slice(&fs::read(pack_path.join("forgepack.json"))?)?;
+    if metadata.schema_version == "3.0.0" {
+        return validate_world_pack_layout(pack_path, &metadata);
+    }
+
     for relative in REQUIRED_FILES {
         if *relative == "assets/frames" {
             require_regular_pack_directory(pack_path, relative)?;
@@ -123,12 +175,10 @@ pub fn validate_pack_layout(pack_path: &Path) -> Result<(), PackError> {
         }
     }
 
-    let metadata: ForgePackJson =
-        serde_json::from_slice(&fs::read(pack_path.join("forgepack.json"))?)?;
     expect_asset_path(
         "previews.gif",
         "previews/preview.gif",
-        &metadata.previews.gif,
+        metadata.previews.gif.as_deref().unwrap_or_default(),
     )?;
     expect_asset_path(
         "assets.frames",
@@ -163,6 +213,32 @@ pub fn validate_pack_layout(pack_path: &Path) -> Result<(), PackError> {
         "quality-report.json",
         &metadata.assets.quality_report,
     )?;
+    if metadata.schema_version == "2.0.0" {
+        let consistency = metadata
+            .assets
+            .consistency_report
+            .as_deref()
+            .ok_or_else(|| PackError::MissingFile("assets.consistencyReport".into()))?;
+        expect_asset_path(
+            "assets.consistencyReport",
+            "consistency-report.json",
+            consistency,
+        )?;
+        require_regular_pack_file(pack_path, consistency)?;
+        if matches!(
+            metadata.asset_type.as_deref(),
+            Some("icon_set" | "prop_set")
+        ) {
+            if metadata.items.is_empty() {
+                return Err(PackError::MissingFile("items".into()));
+            }
+            for item in &metadata.items {
+                let expected = format!("assets/items/{}.png", item.id);
+                expect_asset_path("items.texture", &expected, &item.texture)?;
+                require_regular_pack_file(pack_path, &item.texture)?;
+            }
+        }
+    }
 
     if frame_pngs(pack_path)?.is_empty() {
         return Err(PackError::NoFrames);
@@ -196,14 +272,24 @@ pub fn validate_pack_layout(pack_path: &Path) -> Result<(), PackError> {
 pub fn import_pack(pack_path: &Path) -> Result<ImportedPack, PackError> {
     validate_pack_layout(pack_path)?;
     let summary = read_pack_summary(pack_path)?;
+    let metadata: ForgePackJson =
+        serde_json::from_slice(&fs::read(pack_path.join("forgepack.json"))?)?;
 
     Ok(ImportedPack {
         summary,
         root: pack_path.to_path_buf(),
-        frame_paths: frame_pngs(pack_path)?,
+        frame_paths: if metadata.schema_version == "3.0.0" {
+            vec![]
+        } else {
+            frame_pngs(pack_path)?
+        },
         forgepack: read_json(pack_path.join("forgepack.json"))?,
         manifest: read_json(pack_path.join("assets/manifest.json"))?,
-        atlas: read_json(pack_path.join("assets/atlas.json"))?,
+        atlas: if pack_path.join("assets/atlas.json").is_file() {
+            read_json(pack_path.join("assets/atlas.json"))?
+        } else {
+            serde_json::Value::Null
+        },
         quality_report: read_json(pack_path.join("quality-report.json"))?,
     })
 }
@@ -213,19 +299,80 @@ pub fn read_pack_summary(pack_path: &Path) -> Result<PackSummary, PackError> {
 
     let metadata: ForgePackJson =
         serde_json::from_slice(&fs::read(pack_path.join("forgepack.json"))?)?;
-    let frame_count = frame_pngs(pack_path)?.len();
+    let frame_count = if metadata.schema_version == "3.0.0" {
+        0
+    } else {
+        frame_pngs(pack_path)?.len()
+    };
+    let preview = metadata
+        .previews
+        .gif
+        .or(metadata.previews.image)
+        .unwrap_or_default();
 
     Ok(PackSummary {
         id: metadata.id,
         name: metadata.name,
         version: metadata.version,
         frame_count,
-        preview_gif: metadata.previews.gif,
+        preview_gif: preview,
     })
 }
 
 pub fn inspect_pack(pack_path: &Path) -> Result<PackInspectSummary, PackError> {
     let summary = read_pack_summary(pack_path)?;
+    let metadata: ForgePackJson =
+        serde_json::from_slice(&fs::read(pack_path.join("forgepack.json"))?)?;
+    let manifest = read_json(pack_path.join("assets/manifest.json"))?;
+    let animations = manifest
+        .get("animations")
+        .and_then(|value| value.as_array())
+        .into_iter()
+        .flatten()
+        .filter_map(|animation| {
+            Some(PackAnimationSummary {
+                name: animation.get("name")?.as_str()?.to_string(),
+                frame_count: animation.get("frames")?.as_array()?.len(),
+                fps: animation
+                    .get("fps")
+                    .and_then(|value| value.as_f64())
+                    .unwrap_or(12.0) as f32,
+                loop_animation: animation
+                    .get("loop")
+                    .and_then(|value| value.as_bool())
+                    .unwrap_or(true),
+            })
+        })
+        .collect::<Vec<_>>();
+    let asset_type = manifest
+        .get("assetType")
+        .and_then(|value| value.as_str())
+        .or(metadata.asset_type.as_deref())
+        .or_else(|| summary.name.is_empty().then_some("animation"))
+        .unwrap_or(if animations.len() > 1 {
+            "character"
+        } else {
+            "animation"
+        })
+        .to_string();
+    let items = manifest
+        .get("items")
+        .and_then(|value| value.as_array())
+        .into_iter()
+        .flatten()
+        .filter_map(|item| {
+            Some(PackItemSummary {
+                id: item.get("id")?.as_str()?.to_string(),
+                name: item.get("name")?.as_str()?.to_string(),
+                frame: item.get("frame")?.as_u64()? as usize,
+                texture: item.get("texture")?.as_str()?.to_string(),
+            })
+        })
+        .collect::<Vec<_>>();
+    let default_animation = animations
+        .first()
+        .map(|animation| animation.name.clone())
+        .unwrap_or_else(|| "idle".to_string());
 
     Ok(PackInspectSummary {
         id: summary.id,
@@ -235,9 +382,133 @@ pub fn inspect_pack(pack_path: &Path) -> Result<PackInspectSummary, PackError> {
         preview_gif: summary.preview_gif,
         root: pack_path.to_path_buf(),
         manifest_path: pack_path.join("assets/manifest.json"),
-        atlas_path: pack_path.join("assets/atlas.json"),
+        atlas_path: metadata
+            .assets
+            .atlas
+            .or(metadata.assets.atlas_image)
+            .map(|path| pack_path.join(path))
+            .unwrap_or_else(|| pack_path.join("assets/manifest.json")),
         quality_report_path: pack_path.join("quality-report.json"),
+        default_animation,
+        animations,
+        asset_type,
+        items,
     })
+}
+
+fn validate_world_pack_layout(pack_path: &Path, metadata: &ForgePackJson) -> Result<(), PackError> {
+    let asset_type = metadata
+        .asset_type
+        .as_deref()
+        .ok_or_else(|| PackError::MissingFile("assetType".into()))?;
+    if !matches!(asset_type, "terrain_set" | "building_kit" | "map") {
+        return Err(PackError::SchemaValidation {
+            document: "forgepack.json".into(),
+            message: format!("unsupported V3 assetType {asset_type}"),
+        });
+    }
+    expect_asset_path(
+        "assets.manifest",
+        "assets/manifest.json",
+        &metadata.assets.manifest,
+    )?;
+    require_regular_pack_file(pack_path, &metadata.assets.manifest)?;
+    expect_asset_path(
+        "assets.qualityReport",
+        "quality-report.json",
+        &metadata.assets.quality_report,
+    )?;
+    require_regular_pack_file(pack_path, &metadata.assets.quality_report)?;
+    let helper = metadata
+        .assets
+        .godot_helper
+        .as_deref()
+        .ok_or_else(|| PackError::MissingFile("assets.godotHelper".into()))?;
+    expect_asset_path("assets.godotHelper", "assets/godot_import.json", helper)?;
+    require_regular_pack_file(pack_path, helper)?;
+    let preview = metadata
+        .previews
+        .image
+        .as_deref()
+        .ok_or_else(|| PackError::MissingFile("previews.image".into()))?;
+    expect_asset_path("previews.image", "preview.png", preview)?;
+    require_regular_pack_file(pack_path, preview)?;
+
+    match asset_type {
+        "terrain_set" => {
+            let manifest = metadata
+                .assets
+                .terrain_manifest
+                .as_deref()
+                .ok_or_else(|| PackError::MissingFile("assets.terrainManifest".into()))?;
+            expect_asset_path(
+                "assets.terrainManifest",
+                "assets/terrain-manifest.json",
+                manifest,
+            )?;
+            require_regular_pack_file(pack_path, manifest)?;
+            let atlas = metadata
+                .assets
+                .atlas_image
+                .as_deref()
+                .ok_or_else(|| PackError::MissingFile("assets.atlasImage".into()))?;
+            expect_asset_path("assets.atlasImage", "assets/terrain-atlas.png", atlas)?;
+            require_regular_pack_file(pack_path, atlas)?;
+        }
+        "building_kit" => {
+            let manifest = metadata
+                .assets
+                .building_manifest
+                .as_deref()
+                .ok_or_else(|| PackError::MissingFile("assets.buildingManifest".into()))?;
+            expect_asset_path(
+                "assets.buildingManifest",
+                "assets/building-manifest.json",
+                manifest,
+            )?;
+            require_regular_pack_file(pack_path, manifest)?;
+            let atlas = metadata
+                .assets
+                .atlas_image
+                .as_deref()
+                .ok_or_else(|| PackError::MissingFile("assets.atlasImage".into()))?;
+            expect_asset_path("assets.atlasImage", "assets/building-atlas.png", atlas)?;
+            require_regular_pack_file(pack_path, atlas)?;
+        }
+        "map" => {
+            for (field, expected, actual) in [
+                (
+                    "assets.mapManifest",
+                    "assets/map-manifest.json",
+                    metadata.assets.map_manifest.as_deref(),
+                ),
+                (
+                    "assets.mapLayout",
+                    "assets/map-layout.json",
+                    metadata.assets.map_layout.as_deref(),
+                ),
+                (
+                    "assets.validationReport",
+                    "validation-report.json",
+                    metadata.assets.validation_report.as_deref(),
+                ),
+            ] {
+                let actual = actual.ok_or_else(|| PackError::MissingFile(field.into()))?;
+                expect_asset_path(field, expected, actual)?;
+                require_regular_pack_file(pack_path, actual)?;
+            }
+            require_regular_pack_directory(pack_path, "assets/dependencies")?;
+            require_regular_pack_directory(pack_path, "assets/runtime")?;
+        }
+        _ => unreachable!(),
+    }
+
+    validate_json_file(
+        pack_path.join("forgepack.json"),
+        "gsfpack.schema.json",
+        GSFPACK_SCHEMA,
+    )?;
+    Ok(())
 }
 
 fn expect_asset_path(field: &str, expected: &str, actual: &str) -> Result<(), PackError> {
