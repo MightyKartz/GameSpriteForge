@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1",
+  "profile": "character-v2-benchmark@1.0.0",
+  "benchmarkId": "character-v2-frozen-20x5-2026-08-03",
+  "manifestSha256": "23a6526b8aabe8671b08a3f7b5f109d7145163b923ca4bcb3311acb340c8b649",
+  "providerId": "fixture",
+  "startedAt": "2026-08-03T13:36:12.166896Z",
+  "finishedAt": "2026-08-03T13:39:04.216675Z",
+  "scope": {
+    "styles": 5,
+    "characters": 20,
+    "workflowResults": 40
+  },
+  "results": {
+    "gameReady": 40,
+    "validPacks": 40,
+    "erroneousPackExports": 0,
+    "providerRequests": 820,
+    "video": {
+      "successfulPacks": 20,
+      "successRate": 1.0,
+      "medianProviderRequests": 9,
+      "identityPassCount": 80,
+      "identitySampleCount": 80
+    },
+    "keyframes": {
+      "successfulPacks": 20,
+      "successRate": 1.0,
+      "medianProviderRequests": 32,
+      "identityPassCount": 640,
+      "identitySampleCount": 640
+    }
+  },
+  "gates": {
+    "frozenScope": "pass",
+    "keyframePackSuccess": "pass",
+    "providerRequestBudget": "pass",
+    "identityImprovement": "fail",
+    "hardDefectInterception": "not_evaluated",
+    "godotValidation": "not_evaluated"
+  },
+  "notes": [
+    "Fixture validates orchestration, deterministic cache isolation, Pack export, and gate mathematics; it is not evidence of real-model visual quality.",
+    "The fixture produces identical identity scores for both workflows, so the required ten-point keyframe identity improvement correctly fails.",
+    "A separate deterministically injected multiple-subject suite passed the hard-defect interception and zero-export gates.",
+    "A cold single-character keyframe calibration passed Pack validation and Godot 4.6.3 loading with 32 Provider requests and 32 of 32 identity samples passing."
+  ]
+}

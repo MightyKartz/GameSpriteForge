@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1",
+  "id": "character-v2-fixture-hard-defect-2026-08-03",
+  "styles": [
+    {
+      "id": "fixture-pixel",
+      "spec": {
+        "schemaVersion": "1",
+        "prompt": "deterministic fixture pixel art",
+        "referenceImages": [],
+        "perspective": "topdown",
+        "lighting": "upper_left",
+        "outline": "clean",
+        "background": "transparent",
+        "sampling": "nearest",
+        "characterCanvasSize": 256,
+        "iconCanvasSize": 128,
+        "propCanvasSize": 256
+      }
+    }
+  ],
+  "cases": [
+    {
+      "id": "fixture-multiple-subjects",
+      "styleId": "fixture-pixel",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "fixture-multiple-subjects",
+        "name": "Fixture Multiple Subjects",
+        "prompt": "an original test character",
+        "referenceImages": [],
+        "imageModel": "[fixture:hard_multiple_subjects]",
+        "license": "MIT"
+      },
+      "expectedHardDefect": true
+    }
+  ]
+}

@@ -76,7 +76,23 @@ impl FixtureProvider {
             Rgba([130, 60, 210, 255])
         };
         let articulated = keyframe_phase.is_some() || prompt.contains("canonical identity image");
-        if articulated {
+        if prompt.contains("[fixture:hard_multiple_subjects]") {
+            for offset in [16_u32, 54_u32] {
+                for y in 28..68 {
+                    for x in offset..(offset + 24) {
+                        image.put_pixel(x, y, color);
+                    }
+                }
+                for y in 68..84 {
+                    for x in offset..(offset + 8) {
+                        image.put_pixel(x, y, color);
+                    }
+                    for x in (offset + 16)..(offset + 24) {
+                        image.put_pixel(x, y, color);
+                    }
+                }
+            }
+        } else if articulated {
             for y in 28..68 {
                 for x in 34..62 {
                     image.put_pixel(x, y, color);
@@ -222,7 +238,12 @@ impl MediaGenerationProvider for FixtureProvider {
     ) -> Result<ProviderMedia, ProviderError> {
         self.usage.lock().unwrap().requests += 1;
         self.usage.lock().unwrap().generated_images += 1;
-        self.write_image(output_path, &request.prompt)
+        let prompt = format!(
+            "{} {}",
+            request.prompt,
+            request.model.as_deref().unwrap_or_default()
+        );
+        self.write_image(output_path, &prompt)
     }
 
     fn edit_image(
@@ -232,7 +253,12 @@ impl MediaGenerationProvider for FixtureProvider {
     ) -> Result<ProviderMedia, ProviderError> {
         self.usage.lock().unwrap().requests += 1;
         self.usage.lock().unwrap().generated_images += 1;
-        self.write_image(output_path, &request.prompt)
+        let prompt = format!(
+            "{} {}",
+            request.prompt,
+            request.model.as_deref().unwrap_or_default()
+        );
+        self.write_image(output_path, &prompt)
     }
 
     fn generate_video(

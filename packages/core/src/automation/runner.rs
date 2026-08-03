@@ -1803,6 +1803,8 @@ fn run_generate_keyframe_character_pack(
                 let parameters = serde_json::json!({
                     "workflow": "topdown-keyframes@2.0.0",
                     "poseProfile": "topdown-poses@1.0.0",
+                    "styleRevision": style.revision,
+                    "subjectRevision": subject.revision,
                     "action": action,
                     "frame": frame,
                     "attempt": attempt,
