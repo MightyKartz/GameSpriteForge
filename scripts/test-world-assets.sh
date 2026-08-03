@@ -6,6 +6,13 @@ FORGE_BIN="${ROOT_DIR}/target/debug/forge"
 TEST_ROOT="$(mktemp -d /tmp/forge-world-product.XXXXXX)"
 trap 'rm -rf "${TEST_ROOT}"' EXIT
 
+GODOT="${FORGE_GODOT_PATH:-/Applications/Godot.app/Contents/MacOS/Godot}"
+if [ ! -x "${GODOT}" ]; then
+	GODOT="$(command -v godot || command -v godot4 || true)"
+fi
+test -x "${GODOT}"
+export FORGE_GODOT_PATH="${GODOT}"
+
 export FORGE_JOB_STORE="${TEST_ROOT}/jobs"
 export FORGE_PLAN_STORE="${TEST_ROOT}/plans"
 
@@ -54,7 +61,7 @@ install_pack "${TERRAIN_PACK}" "addons/forge_assets/terrain"
 install_pack "${BUILDING_PACK}" "addons/forge_assets/buildings"
 install_pack "${MAP_PACK}" "addons/forge_assets/world"
 
-/Applications/Godot.app/Contents/MacOS/Godot \
+"${GODOT}" \
 	--headless \
 	--path "${TEST_ROOT}/godot" \
 	--script "${ROOT_DIR}/scripts/godot/verify_forge_world.gd" \

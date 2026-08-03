@@ -5875,6 +5875,11 @@ fn steps_for_operation(operation: &AutomationOperation) -> Vec<JobStepRecord> {
 }
 
 fn locate_godot() -> Option<PathBuf> {
+    if let Some(path) = std::env::var_os("FORGE_GODOT_PATH").map(PathBuf::from) {
+        if path.is_file() {
+            return Some(path);
+        }
+    }
     let candidates = [
         PathBuf::from("/Applications/Godot.app/Contents/MacOS/Godot"),
         PathBuf::from("/Applications/Godot_mono.app/Contents/MacOS/Godot"),

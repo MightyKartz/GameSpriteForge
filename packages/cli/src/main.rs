@@ -2394,6 +2394,11 @@ fn plan_store() -> Result<PlanStore, (String, String)> {
 }
 
 fn locate_godot() -> Option<PathBuf> {
+    if let Some(path) = env::var_os("FORGE_GODOT_PATH").map(PathBuf::from) {
+        if path.is_file() {
+            return Some(path);
+        }
+    }
     [
         PathBuf::from("/Applications/Godot.app/Contents/MacOS/Godot"),
         PathBuf::from("/Applications/Godot_mono.app/Contents/MacOS/Godot"),
