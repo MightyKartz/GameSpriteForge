@@ -13,6 +13,18 @@ fi
 test -x "${GODOT}"
 export FORGE_GODOT_PATH="${GODOT}"
 
+credential_scan_matches() {
+	if command -v rg >/dev/null 2>&1; then
+		rg -n -i \
+			'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+			"$@"
+	else
+		grep -R -I -n -E \
+			'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+			"$@"
+	fi
+}
+
 export FORGE_JOB_STORE="${TEST_ROOT}/jobs"
 export FORGE_PLAN_STORE="${TEST_ROOT}/plans"
 
@@ -74,6 +86,10 @@ if find "${TEST_ROOT}/godot/addons/forge_assets" -type f \( -name '*.tres' -o -n
 fi
 if grep -R -E 'sub_resource type="Image"|sub_resource type="ImageTexture"|ImageTexture.create_from_image|^data = PackedByteArray' "${TEST_ROOT}/godot/addons/forge_assets" --include='*.tres' --include='*.tscn'; then
 	echo "World resource embeds image pixels" >&2
+	exit 1
+fi
+if credential_scan_matches "${FORGE_JOB_STORE}" "${TEST_ROOT}/godot" >/dev/null; then
+	echo "credential-like material leaked into world outputs" >&2
 	exit 1
 fi
 

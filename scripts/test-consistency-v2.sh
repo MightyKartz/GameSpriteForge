@@ -13,6 +13,18 @@ export FORGE_PLAN_STORE="${TEST_ROOT}/plans"
 export FORGE_CACHE_STORE="${TEST_ROOT}/cache"
 export FORGE_COMPONENT_STORE="${TEST_ROOT}/components"
 
+credential_scan_matches() {
+  if command -v rg >/dev/null 2>&1; then
+    rg -n -i \
+      'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+      "$@"
+  else
+    grep -R -I -n -E \
+      'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+      "$@"
+  fi
+}
+
 for command in subject schema component; do
   "${FORGE}" --help | grep -E "^  ${command}[[:space:]]" >/dev/null
 done
@@ -66,9 +78,7 @@ REPLAY_JOB="$(printf '%s' "${REPLAY_JSON}" | jq -r '.data.job_id')"
 "${FORGE}" job report --id "${REPLAY_JOB}" --json \
   | jq -e '.ok and .data.providerRequestCount == 0 and (.data.providerRequestOccurred | not)' >/dev/null
 
-if rg -n -i \
-  'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
-  "${FORGE_JOB_STORE}" >/dev/null; then
+if credential_scan_matches "${FORGE_JOB_STORE}" >/dev/null; then
   echo "credential-like material leaked into the V2 fixture JobStore" >&2
   exit 1
 fi

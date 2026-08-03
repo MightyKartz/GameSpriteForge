@@ -51,11 +51,11 @@ character_contract_gate() {
 
 character_matrix_gate() {
   FORGE_CHARACTER_MATRIX_REPORT="${REPORT_DIR}/character-v2-matrix.json" \
-    bash "${ROOT}/scripts/test-character-v2-full-matrix.sh"
+    bash -x "${ROOT}/scripts/test-character-v2-full-matrix.sh"
 }
 
 static_contract_gate() {
-  bash "${ROOT}/scripts/test-cli-product.sh"
+  bash -x "${ROOT}/scripts/test-cli-product.sh"
 }
 
 static_matrix_gate() {

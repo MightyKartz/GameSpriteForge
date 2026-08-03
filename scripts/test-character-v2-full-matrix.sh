@@ -13,6 +13,18 @@ fi
 test -x "${GODOT}"
 export FORGE_GODOT_PATH="${GODOT}"
 
+credential_scan_matches() {
+  if command -v rg >/dev/null 2>&1; then
+    rg -n -i \
+      'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+      "$@"
+  else
+    grep -R -I -n -E \
+      'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+      "$@"
+  fi
+}
+
 cargo build -q -p forge-cli --features consistency-v2 --manifest-path "${ROOT}/Cargo.toml"
 FORGE="${ROOT}/target/debug/forge"
 MANIFEST="${ROOT}/benchmarks/character-v2/frozen-20x5.json"
@@ -95,6 +107,10 @@ if grep -R -E \
   "${TEST_ROOT}/godot-calibration/godot/addons/forge_assets" \
   --include='*.tres' --include='*.tscn'; then
   echo "Character V2 Godot resource embeds image pixels" >&2
+  exit 1
+fi
+if credential_scan_matches "${TEST_ROOT}/full" "${TEST_ROOT}/godot-calibration" >/dev/null; then
+  echo "credential-like material leaked into Character V2 matrix outputs" >&2
   exit 1
 fi
 

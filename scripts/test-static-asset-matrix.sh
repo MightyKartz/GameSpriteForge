@@ -18,6 +18,18 @@ export FORGE_JOB_STORE="${TEST_ROOT}/jobs"
 export FORGE_PLAN_STORE="${TEST_ROOT}/plans"
 export FORGE_CACHE_STORE="${TEST_ROOT}/cache"
 
+credential_scan_matches() {
+  if command -v rg >/dev/null 2>&1; then
+    rg -n -i \
+      'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+      "$@"
+  else
+    grep -R -I -n -E \
+      'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+      "$@"
+  fi
+}
+
 mkdir -p "${TEST_ROOT}/godot"
 printf '%s\n' \
   '[application]' \
@@ -187,9 +199,7 @@ if grep -R -E \
   echo "Static matrix resource embeds image pixels" >&2
   exit 1
 fi
-if rg -n -i \
-  'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
-  "${FORGE_JOB_STORE}" "${TEST_ROOT}/godot" >/dev/null; then
+if credential_scan_matches "${FORGE_JOB_STORE}" "${TEST_ROOT}/godot" >/dev/null; then
   echo "credential-like material leaked into static matrix outputs" >&2
   exit 1
 fi

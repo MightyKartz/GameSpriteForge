@@ -46,6 +46,38 @@ jobs:
           ln -s "${godot_binary}" "${RUNNER_TEMP}/godot-bin/godot"
           printf '%s\n' "${RUNNER_TEMP}/godot-bin" >> "${GITHUB_PATH}"
 
+      - name: Build pinned LGPL FFmpeg helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors \
+            --retry-delay 5 --connect-timeout 30 --max-time 300 -fL \
+            -o "${RUNNER_TEMP}/ffmpeg-8.1.2.tar.xz" \
+            https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz
+          printf '%s  %s\n' \
+            '464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c' \
+            "${RUNNER_TEMP}/ffmpeg-8.1.2.tar.xz" | shasum -a 256 -c -
+          tar -xf "${RUNNER_TEMP}/ffmpeg-8.1.2.tar.xz" -C "${RUNNER_TEMP}"
+          cd "${RUNNER_TEMP}/ffmpeg-8.1.2"
+          ./configure \
+            --prefix="${RUNNER_TEMP}/ffmpeg" \
+            --arch=arm64 \
+            --target-os=darwin \
+            --disable-gpl \
+            --disable-nonfree \
+            --disable-doc \
+            --disable-debug \
+            --disable-ffplay \
+            --enable-static \
+            --disable-shared
+          make -j3 ffmpeg ffprobe
+          mkdir -p "${RUNNER_TEMP}/ffmpeg/bin"
+          cp ffmpeg ffprobe "${RUNNER_TEMP}/ffmpeg/bin/"
+          "${RUNNER_TEMP}/ffmpeg/bin/ffmpeg" -version \
+            > "${RUNNER_TEMP}/ffmpeg-version.txt"
+          ! grep -E -- '--enable-(gpl|nonfree)' "${RUNNER_TEMP}/ffmpeg-version.txt"
+          printf '%s\n' "${RUNNER_TEMP}/ffmpeg/bin" >> "${GITHUB_PATH}"
+
       - name: Run v0.3 release matrix
         shell: bash
         env:
