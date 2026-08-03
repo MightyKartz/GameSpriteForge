@@ -87,6 +87,19 @@
     "staticGodotLoad": "pass",
     "worldGodotLoad": "pass"
   },
+  "githubActions": {
+    "runId": 30860887047,
+    "headSha": "fc82f3dadbef46028005c8cdd28a2230b7780b46",
+    "startedAt": "2026-08-03T23:02:50Z",
+    "finishedAt": "2026-08-03T23:14:01Z",
+    "durationSeconds": 671,
+    "macosRunner": "macos-15",
+    "godotVersion": "4.6.3",
+    "ffmpegProfile": "8.1.2-lgpl",
+    "qaArtifactUploaded": true,
+    "url": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/30860887047",
+    "verdict": "pass"
+  },
   "summary": {
     "passed": 6,
     "failed": 0,

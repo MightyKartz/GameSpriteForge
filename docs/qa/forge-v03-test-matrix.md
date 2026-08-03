@@ -30,3 +30,5 @@ The complete matrix ran on 2026-08-04 against commit `7be5fa4711596e62db017964bc
 The same matrix runs in `.github/workflows/v03-quality.yml` for v0.3 pull requests. CI downloads the pinned Godot 4.6.3 build, passes its executable through `FORGE_GODOT_PATH`, and uploads the JSON report and individual gate logs even when a gate fails.
 
 The environment-provided Godot path was separately verified with a nonstandard executable name against Character, the five-style static matrix, and the complete world installation path. This prevents the CI test from accidentally succeeding only because `/Applications/Godot.app` exists on a developer machine.
+
+GitHub Actions run `30860887047` reproduced the complete matrix on `macos-15` with the pinned LGPL FFmpeg 8.1.2 build and downloaded Godot 4.6.3. All gates passed in 11 minutes 11 seconds and the workflow uploaded its complete QA evidence artifact.
