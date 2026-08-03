@@ -4,7 +4,8 @@ use std::path::{Path, PathBuf};
 use super::VideoError;
 
 pub const FFMPEG_MISSING_CODE: &str = "ffmpeg_missing";
-pub const FFMPEG_MISSING_MESSAGE: &str = "Install ffmpeg or choose an ffmpeg binary in Settings.";
+pub const FFMPEG_MISSING_MESSAGE: &str =
+    "Forge could not find its bundled ffmpeg/ffprobe helpers; reinstall Forge or configure development binaries on PATH.";
 
 #[derive(Debug, Clone, Default)]
 pub struct FfmpegSearch {
@@ -54,9 +55,25 @@ pub fn resolve_binary(
         return Ok(path);
     }
 
+    if let Some(path) = runtime_tool_directory().and_then(|resource_path| {
+        bundled_candidates(binary_name, &resource_path)
+            .into_iter()
+            .find_map(|candidate| existing_file(candidate.as_path()))
+    }) {
+        return Ok(path);
+    }
+
     find_in_path(binary_name)
         .map(PathBuf::from)
         .ok_or_else(VideoError::ffmpeg_missing)
+}
+
+pub fn runtime_tool_directory() -> Option<PathBuf> {
+    let executable = env::current_exe().ok()?;
+    let directory = executable.parent()?.to_path_buf();
+    let ffmpeg = directory.join("ffmpeg");
+    let ffprobe = directory.join("ffprobe");
+    (ffmpeg.is_file() && ffprobe.is_file()).then_some(directory)
 }
 
 pub fn find_in_path(binary_name: &str) -> Option<String> {

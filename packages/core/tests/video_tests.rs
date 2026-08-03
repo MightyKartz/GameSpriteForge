@@ -5,6 +5,10 @@ use std::process::Command;
 use forge_core::video::extract::{extract_frames, ExtractFramesParams};
 use forge_core::video::ffmpeg::{resolve_binary, FFMPEG_MISSING_CODE, FFMPEG_MISSING_MESSAGE};
 use forge_core::video::probe::{probe_video, ProbeVideoParams};
+use forge_core::video::{
+    extract_candidate_frames, extract_sampled_frames, ExtractCandidateFramesParams,
+    SampleVideoFramesParams,
+};
 
 #[test]
 fn missing_configured_binary_uses_exact_error() {
@@ -94,6 +98,67 @@ fn probe_and_extract_green_box_fixture_when_ffmpeg_is_available() {
         Some("frame_00001.png")
     );
     assert!(result.raw_directory.join("frame_00001.png").is_file());
+}
+
+#[test]
+fn exact_video_clip_sampling_emits_the_requested_frame_count() {
+    let Some(ffmpeg) = forge_core::video::ffmpeg::find_in_path("ffmpeg") else {
+        eprintln!("skipping integration test because ffmpeg is unavailable");
+        return;
+    };
+    let temp = tempfile::tempdir().expect("tempdir");
+    let input_path = temp.path().join("green-box-character.mp4");
+    create_fixture(&ffmpeg, &input_path);
+
+    let result = extract_sampled_frames(&SampleVideoFramesParams {
+        input_path,
+        start_time_ms: 125,
+        end_time_ms: Some(875),
+        target_frame_count: 8,
+        output_directory: temp.path().join("sampled"),
+        configured_ffmpeg_path: Some(ffmpeg.into()),
+        bundled_resource_path: None,
+    })
+    .expect("sample exact clip");
+
+    assert_eq!(result.frames.len(), 8);
+    assert_eq!(
+        result
+            .frames
+            .last()
+            .and_then(|path| path.file_name())
+            .and_then(|name| name.to_str()),
+        Some("frame_00008.png")
+    );
+}
+
+#[test]
+fn candidate_sampling_caps_fps_and_covers_the_full_clip() {
+    let Some(ffmpeg) = forge_core::video::ffmpeg::find_in_path("ffmpeg") else {
+        eprintln!("skipping integration test because ffmpeg is unavailable");
+        return;
+    };
+    let temp = tempfile::tempdir().expect("tempdir");
+    let input_path = temp.path().join("green-box-character.mp4");
+    create_fixture(&ffmpeg, &input_path);
+
+    let result = extract_candidate_frames(&ExtractCandidateFramesParams {
+        input_path,
+        start_time_ms: 0,
+        end_time_ms: 1_000,
+        maximum_fps: 12.0,
+        maximum_frame_count: 96,
+        output_directory: temp.path().join("candidates"),
+        configured_ffmpeg_path: Some(ffmpeg.into()),
+        bundled_resource_path: None,
+    })
+    .expect("sample loop candidates");
+
+    assert_eq!(result.duration_ms, 1_000);
+    assert!((result.sample_fps - 12.0).abs() < 0.001);
+    assert_eq!(result.frames.len(), 12);
+    assert!(result.frames.first().is_some_and(|path| path.is_file()));
+    assert!(result.frames.last().is_some_and(|path| path.is_file()));
 }
 
 fn create_fixture(ffmpeg: &str, input_path: &Path) {

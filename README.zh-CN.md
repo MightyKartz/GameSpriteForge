@@ -1,127 +1,191 @@
-# Game Sprite Forge
+# Forge CLI
 
 [English README](README.md)
 
-Game Sprite Forge 是一个本地 macOS 工作台，用于把视频片段、PNG 序列帧、精灵表和 `.gsfpack` 文件夹转换成可用于游戏开发的 2D 精灵动画资产。
+Forge 是一个开源、面向智能体的命令行游戏资产流水线。Codex、Claude、脚本和
+CI 可以通过同一套稳定 JSON 协议生成一致的 2D 游戏资产，并安装到 Godot 4.6.x。
 
-当前测试版本聚焦“导入优先、本地处理”的工作流：选择本地素材，按目标帧数抽取帧，检查帧，移除或规范化背景，运行质量检查，导出精灵资源包，生成 Godot 辅助项目，并通过重新导入验证导出结果。它不依赖云服务、账号、AI provider 配置、市场发布流程或在线 registry。
+当前 macOS Apple Silicon 版本支持：
 
-## 项目介绍
+- 不可变的项目 Style Lock；
+- 带 `idle`、`walk_up`、`walk_right`、`walk_down` 的一致性俯视 Character Pack；
+- 从同一风格板和 anchor 派生的图标集与道具集；
+- 通过 API Key 或 Preview OAuth 直连 xAI REST，不依赖 Grok Build CLI；
+- 确定性抠图、规范化、一致性门禁、阶段级重试、Loop Selection V2、来源记录和 `.gsfpack` 验证；
+- 使用外部纹理、原子覆盖、所有权检查和失败回滚的 Godot 安装。
 
-Game Sprite Forge 面向独立游戏开发者、2D 资产制作者、技术美术和小型游戏团队。它适合已经有本地动画素材，并希望用确定性的本地流程把素材整理成游戏引擎可用资源的人。
-
-当前版本可以帮助你：
-
-- 导入视频、PNG 序列帧、精灵表和 `.gsfpack` 文件夹；
-- 抽取并检查动画帧；
-- 处理绿幕或透明帧素材；
-- 将帧规范化到稳定画布和脚底锚点；
-- 检查边界、循环、Alpha 边缘和帧一致性等质量信号；
-- 导出 PNG 帧、精灵表、manifest、atlas、预览素材和 `.gsfpack` 包；
-- 为导出的资源包生成最小 Godot 辅助项目；
-- 通过本地重新导入验证导出的资源包。
-
-## 当前测试版本
-
-当前公开测试版本面向 macOS Apple Silicon。
-
-请前往 [GitHub Releases](https://github.com/MightyKartz/GameSpriteForge/releases) 下载最新 pre-release。
-
-当前测试 tag：
-
-```text
-v0.1.0-test.2
-```
-
-这是测试版本，仍可能存在粗糙边角，但核心的本地 `导入 -> 抽取 -> 处理 -> 质量检查 -> 导出 -> Godot 辅助 -> 验证` 流程已经可用。
-
-## 功能
-
-- 使用 Tauri、React、TypeScript 和 Rust 构建的本地 macOS 桌面应用。
-- 基于 `ffmpeg`/`ffprobe` 的视频导入。
-- 支持目标帧数抽取，包括短动画常用的 24 帧流程。
-- 支持多行路径的 PNG 序列导入。
-- 精灵表导入支持固定网格和透明间隔切分。
-- `.gsfpack` 导入、导出、验证和重新导入。
-- 按工作阶段显示单一主操作的工作台 UI。
-- 时间线显示目标帧、实际帧、选择区间、采样间隔、循环范围和当前选中帧等证据。
-- 预览区支持原始帧、规范化帧、检查视图和导出预览状态。
-- 带恢复操作的质量报告面板。
-- Godot 项目辅助导出，用于在 Godot 中测试 Forge 输出。
-- 面向发布加固的源码守护脚本和真实 UI QA 证据。
-
-## 仓库结构
-
-```text
-apps/mac/                 Tauri macOS 应用和 React UI
-packages/core/            Rust 媒体处理核心
-packages/pack/            .gsfpack schema 和资源包逻辑
-schemas/                  导出数据的 JSON schema
-examples/                 示例输入和引擎辅助示例
-scripts/                  QA、打包和发布验证脚本
-docs/                     架构说明、计划和 QA 证据
-.agents/skills/forge-dev/ 项目级 agent 开发约束
-```
-
-## 本地开发
-
-前置条件：
-
-- macOS
-- Node.js 和 npm
-- Rust toolchain
-- macOS Tauri 依赖
-- 视频工作流需要 `ffmpeg` 和 `ffprobe`
-
-安装依赖：
+## 安装
 
 ```bash
-npm install
+curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/MightyKartz/GameSpriteForge/main/install.sh | sh
 ```
 
-运行前端开发服务器：
+重新打开终端后验证：
 
 ```bash
-npm run dev
+forge doctor --json
 ```
 
-运行 Tauri 开发应用：
+安装器会把 `forge`、`ffmpeg`、`ffprobe` 安装到版本化用户目录，只把 `forge`
+暴露到 `PATH`；切换版本前会同时验证 Release 压缩包和包内逐文件 SHA-256 清单。
+首个 CLI Release 不带 Apple 签名或公证。Forge 不附带 Godot；引擎安装功能需要
+Godot 4.6.x。
+
+## 五分钟 xAI → Godot
+
+通过隐藏输入保存 API Key，不把密钥写入 shell 历史：
 
 ```bash
-npm --workspace apps/mac run tauri -- dev
+forge provider login --provider xai --method api-key
+forge project init --path "$PWD/game-assets" --name "My Game"
 ```
 
-构建 macOS app bundle：
+创建 `game-assets/specs/style.json`：
+
+```json
+{
+  "schemaVersion": "1",
+  "prompt": "带深色轮廓的紧凑宝石色像素风",
+  "referenceImages": [],
+  "perspective": "topdown",
+  "lighting": "upper_left",
+  "outline": "dark",
+  "background": "transparent",
+  "sampling": "nearest",
+  "characterCanvasSize": 256,
+  "iconCanvasSize": 128,
+  "propCanvasSize": 256
+}
+```
 
 ```bash
-npm --workspace apps/mac run tauri -- build --debug --bundles app
+forge style create \
+  --project "$PWD/game-assets" \
+  --spec "$PWD/game-assets/specs/style.json" \
+  --wait --json
 ```
 
-## 验证
+创建 `game-assets/specs/ranger.json`：
 
-常用检查：
+```json
+{
+  "schemaVersion": "1",
+  "kind": "character",
+  "id": "forest-ranger",
+  "name": "Forest Ranger",
+  "prompt": "一个戴绿色兜帽的紧凑森林游侠",
+  "license": "private"
+}
+```
 
 ```bash
-npm --workspace apps/mac run build
-npm run test:scripts
-npm --workspace apps/mac run smoke:ui:mvp
+forge generate character \
+  --project "$PWD/game-assets" \
+  --spec "$PWD/game-assets/specs/ranger.json" \
+  --wait --json
+
+forge godot plan-install \
+  --pack /absolute/path/Forest-Ranger.gsfpack \
+  --project /absolute/path/my-godot-game \
+  --asset-key forest_ranger --json
+
+forge plan execute --token <返回的-token> --wait --json
 ```
 
-涉及 Rust 媒体处理时：
+## 图标集与道具集
+
+```json
+{
+  "schemaVersion": "1",
+  "kind": "icon_set",
+  "id": "inventory-icons",
+  "name": "Inventory Icons",
+  "items": [
+    { "id": "potion", "name": "Potion", "prompt": "红色治疗药水" },
+    { "id": "key", "name": "Key", "prompt": "一把小黄铜钥匙" }
+  ],
+  "license": "private"
+}
+```
 
 ```bash
-cargo fmt --manifest-path Cargo.toml --all -- --check
-cargo test --manifest-path Cargo.toml sprite_sheet_transparent
+forge generate icon-set --project "$PWD/game-assets" --spec /absolute/icons.json --json
+forge generate prop-set --project "$PWD/game-assets" --spec /absolute/props.json --json
+forge job report --id <job-id> --json
+forge job retry --id <job-id> --item potion --wait --json
+
+# 使用当前 Style Lock 本地重评既有图标/道具像素，不调用 Provider。
+forge job retry --id <static-job> --stage consistency --wait --json
+
+# 角色专用重试：loop / matting 只重跑本地阶段，不调用 Provider。
+forge job retry --id <character-job> --item walk_right --stage loop --wait --json
+forge job report --id <new-job-id> --json
 ```
 
-发布包请使用 `scripts/` 中已有的发布验证脚本。
+生成默认作为可恢复的异步任务运行；增加 `--wait` 可同步等待。公开命令只在
+stdout 写一个 JSON envelope，诊断和交互认证进入 stderr/TTY。
 
-## 说明
+Style Lock 使用版本化的 `style-baseline@2.3.0` 前景感知调色板。基线升级时，Forge
+保留旧的不可变 revision，并在校验通过后复用原风格板，因此迁移无需重新生成图片。
 
-- 透明间隔精灵表导入由 Forge 的本地 Rust/Tauri 流程实现。
-- 第一个测试版本刻意避免云端或账号依赖功能。
-- 当前仓库以源码为主。Release candidate 压缩包和 DMG 会作为 GitHub Release 资产发布，不写入 Git 历史。
+角色生成会覆盖完整视频搜索真实闭合周期，只导出选中 `[start, end)` 内的帧；
+用于证明闭合的边界帧不会重复进入动画。`job report` 会直接返回选中索引、评分组成、
+重试方法，以及本次重试是否产生了 Provider 请求和费用。
 
-## License
+角色发布门槛已经完成：连续三次真实 xAI Character → Pack → Godot 运行均无需人工
+审核，四个动作全部达到 `game_ready`。Provider 费用、重试方式和 Godot 证据记录在
+[`docs/qa/forge-character-loop-v2-2026-08-03.md`](docs/qa/forge-character-loop-v2-2026-08-03.md)。
+`v0.2.0-cli.1` 当前剩余门槛是正式 GitHub Release 的全新安装验证。
 
-目前尚未选择开源许可证。在许可证加入前，项目所有权利由项目所有者保留。
+## 尚未发布的角色一致性 V2
+
+源码树包含面向下一版 CLI 的可选 `consistency-v2` 构建：不可变 Subject Lock、语义化图片
+参考、每动作 8 帧的显式关键帧、类型化 WorkflowGraph 重放、内容寻址缓存和
+`.forge/catalog.json`。在真实 xAI 验收完成之前，这些命令不会进入默认
+`v0.2.0-cli.1` 二进制。SAM/DINO/LPIPS 组件在许可证和阈值校准审计通过前保持未发布，
+`forge component install` 不会静默安装未经审计的权重。
+离线合同、Godot 验证和仍待完成的外部门槛记录在
+[`docs/qa/forge-consistency-v2-and-world-implementation-2026-08-03.md`](docs/qa/forge-consistency-v2-and-world-implementation-2026-08-03.md)。
+
+## 尚未发布的世界资产流水线
+
+后续 CLI 里程碑通过尚未发布的世界功能特性和 `.gsfpack` V3 合同实现；这些命令不会
+进入 `v0.2.0-cli.1` 发布二进制。Terrain、Building、Map 会在角色一致性 V2 之后分版发布：
+
+- 不可变的俯视 Environment Lock；
+- 从两张 Provider 材质板确定性合成的 16/32px dual-grid Terrain Set；
+- 使用固定屋顶、墙体、门窗模块的外观 Building Kit；
+- 不调用 Provider、输出自包含 Godot 世界的 JSON Map Compiler。
+
+```bash
+forge environment create --project /absolute/assets --spec /absolute/environment.json --wait --json
+forge generate terrain-set --project /absolute/assets --spec /absolute/terrain.json --wait --json
+forge generate building-kit --project /absolute/assets --spec /absolute/buildings.json --wait --json
+```
+
+Map 只接受 JSON。Forge 不调用文本模型，也不把自然语言转换为地图；Codex、Claude
+或用户负责生成 `MapSpecV1`，Forge 只负责校验和确定性编译：
+
+```bash
+forge map schema --json
+forge map compile --project /absolute/assets --spec /absolute/map.json --wait --json
+forge map validate --pack /absolute/Forest-Village.gsfpack --json
+```
+
+V1 只覆盖俯视户外地图、dual-grid Terrain、3×3–8×6 的矩形建筑外观、南向入口和
+Godot 4.6.x；不包含室内、等距、平台跳跃、3D、Tiled、Unity 或 Unreal。可运行 JSON
+示例位于 [`examples/cli/world`](examples/cli/world)。
+
+## 安全与来源
+
+- Provider 输出先落地、校验格式并计算 SHA-256，之后才进入本地处理。
+- 每个 Job 锁定一个 Provider、Profile、模型选择和 Style revision。
+- 凭据保存在 Keychain，不进入 Job、Pack、日志或普通 JSON 输出。
+- OAuth 为 Preview；API Key 是稳定商业认证路径。
+- Godot 写入限定在 `addons/forge_assets`，只覆盖 Forge-owned 目录。
+
+## 开发与许可证
+
+开发说明见 [CONTRIBUTING.md](CONTRIBUTING.md)。Forge 使用
+[MIT License](LICENSE)。随 CLI 分发的 FFmpeg helper 使用独立 LGPL 声明并在每个
+Release 同时提供对应源码，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

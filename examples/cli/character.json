@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1",
+  "kind": "character",
+  "id": "fixture-ranger",
+  "name": "Fixture Ranger",
+  "prompt": "a compact forest ranger with a green hood",
+  "license": "private"
+}

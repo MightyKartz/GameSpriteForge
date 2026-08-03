@@ -1,14 +1,21 @@
 [workspace]
 members = [
-  "apps/mac/src-tauri",
+  "packages/cli",
   "packages/core",
-  "packages/pack"
+  "packages/pack",
+  "packages/providers"
+]
+exclude = ["apps/mac/src-tauri"]
+default-members = [
+  "packages/cli",
+  "packages/core",
+  "packages/pack",
+  "packages/providers"
 ]
 resolver = "2"
 
 [workspace.package]
 edition = "2021"
-version = "0.1.0"
+version = "0.2.0-cli.1"
 license = "MIT"
 authors = ["Game Sprite Forge"]
-

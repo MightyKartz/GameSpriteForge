@@ -1,0 +1,152 @@
+name: Release Forge CLI
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version to preflight (no GitHub Release is created)"
+        required: true
+        default: "v0.2.0-cli.1"
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release-macos-arm64:
+    runs-on: macos-15
+    env:
+      FORGE_RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Verify tag and source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${FORGE_RELEASE_TAG}" = "v0.2.0-cli.1"
+          cargo_version="$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next(package["version"] for package in data["packages"] if package["name"] == "forge-cli"))')"
+          test "${FORGE_RELEASE_TAG}" = "v${cargo_version}"
+          cargo fmt --all -- --check
+          cargo clippy --workspace --all-targets -- -D warnings
+          cargo test --workspace --no-fail-fast
+
+      - name: Build Forge
+        run: cargo build -p forge-cli --release --target aarch64-apple-darwin
+
+      - name: Build pinned LGPL FFmpeg helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 -fLO https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz
+          printf '%s  %s\n' \
+            '464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c' \
+            'ffmpeg-8.1.2.tar.xz' | shasum -a 256 -c -
+          tar -xf ffmpeg-8.1.2.tar.xz
+          cd ffmpeg-8.1.2
+          ./configure \
+            --prefix="${RUNNER_TEMP}/ffmpeg" \
+            --arch=arm64 \
+            --target-os=darwin \
+            --disable-gpl \
+            --disable-nonfree \
+            --disable-doc \
+            --disable-debug \
+            --disable-ffplay \
+            --enable-static \
+            --disable-shared
+          make -j3 ffmpeg ffprobe
+          ./ffmpeg -version | tee "${RUNNER_TEMP}/ffmpeg-version.txt"
+          ! grep -E -- '--enable-(gpl|nonfree)' "${RUNNER_TEMP}/ffmpeg-version.txt"
+          mkdir -p "${RUNNER_TEMP}/ffmpeg/bin"
+          cp ffmpeg ffprobe "${RUNNER_TEMP}/ffmpeg/bin/"
+
+      - name: Run CLI product, installer, and release contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 -fL \
+            -o "${RUNNER_TEMP}/godot.zip" \
+            https://github.com/godotengine/godot/releases/download/4.6.3-stable/Godot_v4.6.3-stable_macos.universal.zip
+          mkdir -p "${RUNNER_TEMP}/godot-bin"
+          ditto -x -k "${RUNNER_TEMP}/godot.zip" "${RUNNER_TEMP}/godot-bin"
+          godot_binary="$(find "${RUNNER_TEMP}/godot-bin" -type f -path '*/Contents/MacOS/Godot' -print -quit)"
+          test -n "${godot_binary}"
+          ln -s "${godot_binary}" "${RUNNER_TEMP}/godot-bin/godot"
+          export PATH="${RUNNER_TEMP}/ffmpeg/bin:${RUNNER_TEMP}/godot-bin:${PATH}"
+          godot --version | grep -E '^4\.6\.'
+          bash scripts/test-cli-product.sh
+          bash scripts/test-cli-installer.sh
+          bash scripts/test-cli-signing-contract.sh
+
+      - name: Package unsigned CLI release
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIST="${RUNNER_TEMP}/forge-dist"
+          mkdir -p "${DIST}/bin" "${DIST}/licenses"
+          cp target/aarch64-apple-darwin/release/forge "${DIST}/bin/forge"
+          cp "${RUNNER_TEMP}/ffmpeg/bin/ffmpeg" "${RUNNER_TEMP}/ffmpeg/bin/ffprobe" "${DIST}/bin/"
+          cp LICENSE THIRD_PARTY_NOTICES.md third_party/ffmpeg/BUILD.md third_party/ffmpeg/PATCHES.md "${DIST}/licenses/"
+          cp ffmpeg-8.1.2/COPYING.LGPLv2.1 "${DIST}/licenses/FFMPEG-LGPL-2.1.txt"
+          cp "${RUNNER_TEMP}/ffmpeg-version.txt" "${DIST}/licenses/"
+          printf '{"version":"%s","commit":"%s","target":"aarch64-apple-darwin","rustc":"%s","appleSigned":false,"notarized":false}\n' \
+            "${FORGE_RELEASE_TAG#v}" "${GITHUB_SHA}" "$(rustc --version)" \
+            > "${DIST}/BUILD_INFO.json"
+          (
+            cd "${DIST}"
+            shasum -a 256 bin/forge bin/ffmpeg bin/ffprobe licenses/* BUILD_INFO.json \
+              > MANIFEST.sha256
+            shasum -a 256 -c MANIFEST.sha256
+          )
+          ditto -c -k --keepParent "${DIST}" forge-aarch64-apple-darwin.zip
+          shasum -a 256 forge-aarch64-apple-darwin.zip > forge-aarch64-apple-darwin.zip.sha256
+          cp ffmpeg-8.1.2.tar.xz ffmpeg-8.1.2-source.tar.xz
+          cp install.sh forge-installer.sh
+
+      - name: Generate SBOM
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo install cargo-cyclonedx --locked \
+            --git https://github.com/CycloneDX/cyclonedx-rust-cargo.git \
+            --rev d5c35fdf2150c73e2e3570c59fb40daa1f0a96c3
+          cargo cyclonedx \
+            --manifest-path packages/cli/Cargo.toml \
+            --format json \
+            --describe binaries \
+            --target aarch64-apple-darwin \
+            --override-filename forge-sbom
+          cp packages/cli/forge-sbom.json forge-sbom.cdx.json
+
+      - name: Attest release binary
+        if: github.event_name == 'push'
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4
+        with:
+          subject-path: forge-aarch64-apple-darwin.zip
+          sbom-path: forge-sbom.cdx.json
+
+      - name: Publish GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "${FORGE_RELEASE_TAG}" \
+            --title "Forge CLI ${FORGE_RELEASE_TAG}" \
+            --notes "Agent-first Forge CLI for consistent characters, icon sets, prop sets, and Godot 4.6.x delivery. This first CLI archive is unsigned and not notarized; the installer verifies the release and per-file SHA-256 manifests, and GitHub publishes an artifact attestation and SBOM." \
+            forge-aarch64-apple-darwin.zip \
+            forge-aarch64-apple-darwin.zip.sha256 \
+            forge-installer.sh \
+            forge-sbom.cdx.json \
+            ffmpeg-8.1.2-source.tar.xz \
+            third_party/ffmpeg/BUILD.md \
+            third_party/ffmpeg/PATCHES.md \
+            THIRD_PARTY_NOTICES.md \
+            LICENSE

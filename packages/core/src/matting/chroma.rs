@@ -1,5 +1,6 @@
 use image::{ImageBuffer, Rgba, RgbaImage};
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 use std::fs;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
@@ -86,16 +87,114 @@ pub fn apply_chroma_key(
 ) -> MattingResult<RgbaImage> {
     let params = sanitized_parameters(parameters);
     let key = key_color(image, &params)?;
-    let keyed = ImageBuffer::from_fn(image.width(), image.height(), |x, y| {
+    let mut keyed = ImageBuffer::from_fn(image.width(), image.height(), |x, y| {
         let pixel = image.get_pixel(x, y);
         matte_pixel(*pixel, key, &params)
     });
+    if params.key_mode == ChromaKeyMode::AutoCorners {
+        clear_border_connected_chroma(image, &mut keyed, key, &params);
+    }
 
     if params.halo_pixels == 0 {
         Ok(keyed)
     } else {
         Ok(apply_halo_cleanup(&keyed, params.halo_pixels.min(4)))
     }
+}
+
+fn clear_border_connected_chroma(
+    source: &RgbaImage,
+    keyed: &mut RgbaImage,
+    key: [u8; 3],
+    parameters: &ChromaParameters,
+) {
+    let width = source.width() as usize;
+    let height = source.height() as usize;
+    if width == 0 || height == 0 {
+        return;
+    }
+    let mut visited = vec![false; width * height];
+    let mut queue = VecDeque::new();
+    let mut enqueue = |x: usize, y: usize, queue: &mut VecDeque<usize>| {
+        let index = y * width + x;
+        if !visited[index]
+            && border_chroma_candidate(*source.get_pixel(x as u32, y as u32), key, parameters)
+        {
+            visited[index] = true;
+            queue.push_back(index);
+        }
+    };
+    for x in 0..width {
+        enqueue(x, 0, &mut queue);
+        if height > 1 {
+            enqueue(x, height - 1, &mut queue);
+        }
+    }
+    for y in 0..height {
+        enqueue(0, y, &mut queue);
+        if width > 1 {
+            enqueue(width - 1, y, &mut queue);
+        }
+    }
+    while let Some(index) = queue.pop_front() {
+        let x = index % width;
+        let y = index / width;
+        keyed.get_pixel_mut(x as u32, y as u32)[3] = 0;
+        for (neighbor_x, neighbor_y) in [
+            (x.wrapping_sub(1), y),
+            (x + 1, y),
+            (x, y.wrapping_sub(1)),
+            (x, y + 1),
+        ] {
+            if neighbor_x >= width || neighbor_y >= height {
+                continue;
+            }
+            let neighbor = neighbor_y * width + neighbor_x;
+            if visited[neighbor]
+                || !border_chroma_candidate(
+                    *source.get_pixel(neighbor_x as u32, neighbor_y as u32),
+                    key,
+                    parameters,
+                )
+            {
+                continue;
+            }
+            visited[neighbor] = true;
+            queue.push_back(neighbor);
+        }
+    }
+}
+
+fn border_chroma_candidate(pixel: Rgba<u8>, key: [u8; 3], parameters: &ChromaParameters) -> bool {
+    if pixel[3] == 0 {
+        return true;
+    }
+    let close_to_key = color_distance([pixel[0], pixel[1], pixel[2]], key)
+        <= parameters.threshold as f32 + parameters.softness as f32 * 2.0;
+    close_to_key || shares_dominant_chroma_channel([pixel[0], pixel[1], pixel[2]], key)
+}
+
+fn shares_dominant_chroma_channel(color: [u8; 3], key: [u8; 3]) -> bool {
+    let key_channel = dominant_channel(key);
+    let color_channel = dominant_channel(color);
+    key_channel.is_some() && key_channel == color_channel
+}
+
+fn dominant_channel(color: [u8; 3]) -> Option<usize> {
+    let (index, value) = color
+        .iter()
+        .copied()
+        .enumerate()
+        .max_by_key(|(_, value)| *value)?;
+    let other = color
+        .iter()
+        .copied()
+        .enumerate()
+        .filter(|(candidate, _)| *candidate != index)
+        .map(|(_, value)| value)
+        .max()
+        .unwrap_or_default();
+    (value >= other.saturating_add(24)).then_some(index)
 }
 
 pub fn process_chroma_frame(

@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1",
+  "id": "fixture-ranger",
+  "name": "Fixture Ranger",
+  "prompt": "A compact purple ranger with a hood, boots, belt, and small shoulder cape",
+  "referenceImages": [],
+  "license": "MIT"
+}

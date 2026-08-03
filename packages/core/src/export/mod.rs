@@ -4,14 +4,18 @@ pub mod manifest;
 pub mod sheet;
 pub mod sheet_layout;
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::quality::QualityVerdict;
+use crate::quality::{LoopSelectionReport, QualityReport, QualityVerdict};
 
 pub use gif::{build_preview_gif, GifBackground, PreviewGifOutput, PreviewGifParameters};
 pub use godot::{export_godot_project, GodotProjectExportOutput, GodotProjectExportParams};
-pub use manifest::{export_metadata, EngineManifest, ExportMetadata, PackMetadataParams};
+pub use manifest::{
+    export_metadata, CharacterPackMetadataParams, EngineManifest, ExportMetadata,
+    PackMetadataParams,
+};
 pub use sheet::{build_sprite_sheet, Atlas, AtlasFrame, SpriteSheetOutput, SpriteSheetParameters};
 pub use sheet_layout::{
     plan_sprite_sheet_layout, SpriteSheetFramePlacement, SpriteSheetLayout, SpriteSheetLayoutError,
@@ -79,6 +83,67 @@ pub struct ExportPackOutput {
     pub godot_helper_path: PathBuf,
     pub quality_report_path: PathBuf,
     pub preview_gif_path: PathBuf,
+    pub pack_dir: PathBuf,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CharacterAnimationExport {
+    pub name: String,
+    pub frame_paths: Vec<PathBuf>,
+    pub fps: f32,
+    #[serde(rename = "loop")]
+    pub loop_animation: bool,
+    pub quality_report: QualityReport,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub loop_selection: Option<LoopSelectionReport>,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CharacterPackExportParams {
+    pub exports_dir: PathBuf,
+    pub export_id: String,
+    pub animations: Vec<CharacterAnimationExport>,
+    pub sheet: SpriteSheetParameters,
+    pub metadata: CharacterPackMetadataParams,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnimationQualityEntry {
+    pub name: String,
+    pub report: QualityReport,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub loop_selection_report: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub loop_selection: Option<LoopSelectionReport>,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CharacterQualityReport {
+    #[serde(default = "animation_quality_profile")]
+    pub quality_profile: String,
+    pub verdict: QualityVerdict,
+    pub default_animation: String,
+    pub frame_count: usize,
+    pub animations: Vec<AnimationQualityEntry>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExportCharacterPackOutput {
+    pub export_dir: PathBuf,
+    pub frame_paths: Vec<PathBuf>,
+    pub sprite_sheet_paths: Vec<PathBuf>,
+    pub manifest_path: PathBuf,
+    pub godot_helper_path: PathBuf,
+    pub quality_report_path: PathBuf,
+    pub animation_quality_report_path: PathBuf,
+    pub loop_selection_report_path: PathBuf,
+    pub preview_gif_path: PathBuf,
+    pub animation_preview_paths: BTreeMap<String, PathBuf>,
     pub pack_dir: PathBuf,
 }
 
@@ -176,6 +241,202 @@ pub fn export_pack(params: ExportPackParams) -> Result<ExportPackOutput, ExportE
     })
 }
 
+pub fn export_character_pack(
+    mut params: CharacterPackExportParams,
+) -> Result<ExportCharacterPackOutput, ExportError> {
+    if params.animations.len() < 2 {
+        return Err(ExportError::InvalidParameter(
+            "a Character Pack requires at least two animations".to_string(),
+        ));
+    }
+    let Some(default_index) = params
+        .animations
+        .iter()
+        .position(|animation| animation.name == params.metadata.default_animation)
+    else {
+        return Err(ExportError::InvalidParameter(
+            "default animation is not present".to_string(),
+        ));
+    };
+    if default_index != 0 {
+        let default = params.animations.remove(default_index);
+        params.animations.insert(0, default);
+    }
+    let mut names = Vec::new();
+    for animation in &params.animations {
+        if animation.frame_paths.is_empty() {
+            return Err(ExportError::NoFrames);
+        }
+        if !is_safe_id(&animation.name) {
+            return Err(ExportError::InvalidParameter(format!(
+                "animation name is not engine-safe: {}",
+                animation.name
+            )));
+        }
+        if animation.fps <= 0.0 {
+            return Err(ExportError::InvalidParameter(format!(
+                "animation fps must be positive: {}",
+                animation.name
+            )));
+        }
+        if names.contains(&animation.name) {
+            return Err(ExportError::InvalidParameter(format!(
+                "duplicate animation name: {}",
+                animation.name
+            )));
+        }
+        if animation.quality_report.verdict == QualityVerdict::Blocked {
+            return Err(ExportError::QualityBlocked);
+        }
+        names.push(animation.name.clone());
+    }
+
+    let flattened = params
+        .animations
+        .iter()
+        .flat_map(|animation| animation.frame_paths.iter().cloned())
+        .collect::<Vec<_>>();
+    let sequence = export_frame_sequence(&flattened, &params.exports_dir, &params.export_id)?;
+    let sheet_output =
+        build_sprite_sheet(&sequence.frame_paths, &sequence.export_dir, params.sheet)?;
+
+    let previews_dir = sequence.export_dir.join("previews");
+    fs::create_dir_all(&previews_dir)?;
+    let mut animation_preview_paths = BTreeMap::new();
+    let mut offset = 0usize;
+    let mut manifest_animations = Vec::with_capacity(params.animations.len());
+    let mut quality_entries = Vec::with_capacity(params.animations.len());
+    for animation in &params.animations {
+        let end = offset + animation.frame_paths.len();
+        let exported_frames = &sequence.frame_paths[offset..end];
+        let preview_path = previews_dir.join(format!("{}.gif", animation.name));
+        build_preview_gif(
+            exported_frames,
+            &preview_path,
+            PreviewGifParameters {
+                fps: animation.fps,
+                loop_animation: animation.loop_animation,
+                background: GifBackground::Transparent,
+            },
+        )?;
+        animation_preview_paths.insert(animation.name.clone(), preview_path);
+        manifest_animations.push(manifest::ManifestAnimation {
+            name: animation.name.clone(),
+            frames: (offset..end).collect(),
+            fps: animation.fps,
+            loop_animation: animation.loop_animation,
+        });
+        quality_entries.push(AnimationQualityEntry {
+            name: animation.name.clone(),
+            report: animation.quality_report.clone(),
+            loop_selection_report: animation
+                .loop_selection
+                .as_ref()
+                .map(|_| format!("animations/{}/loop-selection-report.json", animation.name)),
+            loop_selection: animation.loop_selection.clone(),
+        });
+        offset = end;
+    }
+
+    let default_preview = animation_preview_paths
+        .get(&params.metadata.default_animation)
+        .ok_or_else(|| ExportError::InvalidParameter("default preview is missing".to_string()))?;
+    let preview_gif_path = sequence.export_dir.join("preview.gif");
+    fs::copy(default_preview, &preview_gif_path)?;
+
+    let character_quality = CharacterQualityReport {
+        quality_profile: animation_quality_profile(),
+        verdict: params.metadata.quality_report.verdict,
+        default_animation: params.metadata.default_animation.clone(),
+        frame_count: sequence.frame_paths.len(),
+        animations: quality_entries,
+    };
+    let metadata = manifest::export_character_metadata(
+        params.metadata,
+        manifest_animations,
+        &sheet_output.atlas,
+    );
+    let manifest_path = sequence.export_dir.join("manifest.json");
+    let godot_helper_path = sequence.export_dir.join("godot_import.json");
+    let quality_report_path = sequence.export_dir.join("quality-report.json");
+    let animation_quality_report_path = sequence.export_dir.join("animation-quality-report.json");
+    let loop_selection_report_path = sequence.export_dir.join("loop-selection-report.json");
+    fs::write(
+        &manifest_path,
+        serde_json::to_vec_pretty(&metadata.manifest)?,
+    )?;
+    fs::write(
+        &godot_helper_path,
+        serde_json::to_vec_pretty(&godot_import_helper(&metadata.manifest))?,
+    )?;
+    fs::write(
+        &quality_report_path,
+        serde_json::to_vec_pretty(&metadata.quality_report)?,
+    )?;
+    fs::write(
+        &animation_quality_report_path,
+        serde_json::to_vec_pretty(&character_quality)?,
+    )?;
+    fs::write(
+        &loop_selection_report_path,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "profile": crate::quality::LOOP_SELECTION_PROFILE,
+            "animations": character_quality.animations.iter().filter_map(|entry| {
+                entry.loop_selection.as_ref().map(|report| serde_json::json!({
+                    "name": entry.name,
+                    "report": report,
+                }))
+            }).collect::<Vec<_>>(),
+        }))?,
+    )?;
+
+    let pack_dir = sequence.export_dir.join(format!(
+        "{}.gsfpack",
+        sanitize_pack_name(&metadata.forgepack.name)
+    ));
+    write_pack_directory(
+        &pack_dir,
+        &metadata.forgepack,
+        &sequence.frame_paths,
+        &sheet_output.sprite_sheet_paths,
+        &sheet_output.atlas_path,
+        &manifest_path,
+        &godot_helper_path,
+        &quality_report_path,
+        &preview_gif_path,
+    )?;
+    fs::create_dir_all(pack_dir.join("quality"))?;
+    fs::copy(
+        &animation_quality_report_path,
+        pack_dir.join("quality/animations.json"),
+    )?;
+    fs::copy(
+        &loop_selection_report_path,
+        pack_dir.join("quality/loops.json"),
+    )?;
+    for (name, path) in &animation_preview_paths {
+        fs::copy(path, pack_dir.join("previews").join(format!("{name}.gif")))?;
+    }
+
+    Ok(ExportCharacterPackOutput {
+        export_dir: sequence.export_dir,
+        frame_paths: sequence.frame_paths,
+        sprite_sheet_paths: sheet_output.sprite_sheet_paths,
+        manifest_path,
+        godot_helper_path,
+        quality_report_path,
+        animation_quality_report_path,
+        loop_selection_report_path,
+        preview_gif_path,
+        animation_preview_paths,
+        pack_dir,
+    })
+}
+
+fn animation_quality_profile() -> String {
+    "animation-quality@2.0.0".into()
+}
+
 #[allow(clippy::too_many_arguments)]
 fn write_pack_directory(
     pack_dir: &Path,
@@ -229,6 +490,7 @@ fn godot_import_helper(manifest: &manifest::EngineManifest) -> serde_json::Value
         "engine": "godot",
         "format": "AnimatedSprite2D SpriteFrames helper",
         "spriteFrames": {
+            "defaultAnimation": manifest.animations.first().map(|animation| animation.name.clone()),
             "texture": manifest.sheet.image,
             "textures": textures,
             "atlas": "assets/atlas.json",
@@ -333,6 +595,7 @@ mod tests {
                 license_type: "private".to_string(),
                 source_kind: "import_frames".to_string(),
                 source_name: None,
+                source_metadata: None,
                 animation_name: "idle".to_string(),
                 animation_frames: Some(vec![1, 2]),
                 fps: 12.0,
@@ -431,6 +694,7 @@ mod tests {
                 license_type: "private".to_string(),
                 source_kind: "import_frames".to_string(),
                 source_name: None,
+                source_metadata: None,
                 animation_name: "idle".to_string(),
                 animation_frames: None,
                 fps: 12.0,
@@ -540,6 +804,7 @@ mod tests {
                 license_type: "private".to_string(),
                 source_kind: "import_frames".to_string(),
                 source_name: None,
+                source_metadata: None,
                 animation_name: "idle".to_string(),
                 animation_frames: Some(vec![1]),
                 fps: 12.0,

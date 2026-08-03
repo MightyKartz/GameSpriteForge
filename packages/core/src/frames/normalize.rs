@@ -144,7 +144,7 @@ fn normalize_one(
     let offset_x = if source_bbox.has_foreground() {
         (target_center_x - source_bbox.center_x).round() as i32
     } else {
-        ((size.width as i32 - source.width() as i32) / 2) as i32
+        (size.width as i32 - source.width() as i32) / 2
     };
     let offset_y = if source_bbox.has_foreground() {
         match options.mode {
@@ -154,7 +154,7 @@ fn normalize_one(
             }
         }
     } else {
-        ((size.height as i32 - source.height() as i32) / 2) as i32
+        (size.height as i32 - source.height() as i32) / 2
     };
 
     for (x, y, pixel) in source.enumerate_pixels() {

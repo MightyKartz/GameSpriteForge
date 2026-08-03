@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1",
+  "id": "forest-world",
+  "name": "Forest World",
+  "prompt": "cozy moonlit forest village pixel art with mossy stone and warm timber",
+  "perspective": "top_down",
+  "tileSize": 32,
+  "license": "MIT"
+}

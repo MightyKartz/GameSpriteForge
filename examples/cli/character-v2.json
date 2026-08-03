@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "2",
+  "kind": "character",
+  "id": "fixture-ranger-keyframes",
+  "name": "Fixture Ranger Keyframes",
+  "subject": {
+    "id": "fixture-ranger",
+    "revision": "REPLACE_WITH_SUBJECT_REVISION"
+  },
+  "workflow": {
+    "id": "topdown-keyframes",
+    "version": "2.0.0"
+  },
+  "license": "MIT"
+}

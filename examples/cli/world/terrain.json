@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1",
+  "kind": "terrain_set",
+  "id": "forest-ground",
+  "name": "Forest Ground",
+  "base": {
+    "id": "grass",
+    "name": "Grass",
+    "prompt": "soft mossy forest grass with small leaves",
+    "walkable": true,
+    "collision": "none"
+  },
+  "overlay": {
+    "id": "path",
+    "name": "Path",
+    "prompt": "compact warm dirt footpath with tiny stones",
+    "walkable": true,
+    "collision": "none"
+  },
+  "license": "MIT"
+}

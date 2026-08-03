@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/asset-spec.schema.json",
+  "title": "Forge Asset Spec V1",
+  "oneOf": [
+    { "$ref": "#/$defs/character" },
+    { "$ref": "#/$defs/staticSet" },
+    { "$ref": "terrain-set-spec.schema.json" },
+    { "$ref": "building-kit-spec.schema.json" }
+  ],
+  "$defs": {
+    "base": {
+      "type": "object",
+      "required": ["schemaVersion", "kind", "id", "name", "license"],
+      "properties": {
+        "schemaVersion": { "const": "1" },
+        "kind": { "enum": ["character", "icon_set", "prop_set", "terrain_set", "building_kit"] },
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "license": { "type": "string", "minLength": 1 }
+      }
+    },
+    "character": {
+      "allOf": [
+        { "$ref": "#/$defs/base" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "kind", "id", "name", "prompt", "license"],
+          "properties": {
+            "schemaVersion": { "const": "1" },
+            "kind": { "const": "character" },
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "prompt": { "type": "string", "minLength": 1, "maxLength": 4000 },
+            "referenceImage": { "type": "string" },
+            "license": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "staticSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "id", "name", "items", "license"],
+      "properties": {
+        "schemaVersion": { "const": "1" },
+        "kind": { "enum": ["icon_set", "prop_set"] },
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "license": { "type": "string", "minLength": 1 },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name", "prompt"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+              "name": { "type": "string", "minLength": 1 },
+              "prompt": { "type": "string", "minLength": 1, "maxLength": 4000 },
+              "referenceImage": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

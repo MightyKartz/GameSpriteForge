@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1",
+  "kind": "prop_set",
+  "id": "fixture-props",
+  "name": "Fixture Props",
+  "items": [
+    { "id": "chest", "name": "Chest", "prompt": "a compact wooden chest" }
+  ],
+  "license": "private"
+}

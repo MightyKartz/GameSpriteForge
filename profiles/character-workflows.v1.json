@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "1",
+  "workflows": [
+    {
+      "id": "platformer",
+      "version": "1.0.0",
+      "label": "Platformer",
+      "description": "Side-view movement with a compact core animation set.",
+      "defaultAnimation": "idle",
+      "requiredAnimations": [
+        { "name": "idle", "fps": 8, "loop": true },
+        { "name": "walk", "fps": 12, "loop": true },
+        { "name": "jump", "fps": 12, "loop": false }
+      ],
+      "optionalAnimations": [
+        { "name": "run", "fps": 14, "loop": true },
+        { "name": "attack", "fps": 12, "loop": false },
+        { "name": "hurt", "fps": 10, "loop": false },
+        { "name": "death", "fps": 10, "loop": false }
+      ]
+    },
+    {
+      "id": "topdown",
+      "version": "1.0.0",
+      "label": "Top-down",
+      "description": "Directional movement for RPG and action-adventure characters.",
+      "status": "stable",
+      "targetFrameCount": 8,
+      "estimatedProviderRequests": 8,
+      "maximumProviderRequests": 12,
+      "defaultAnimation": "idle",
+      "requiredAnimations": [
+        { "name": "idle", "fps": 8, "loop": true },
+        { "name": "walk_up", "fps": 12, "loop": true },
+        { "name": "walk_right", "fps": 12, "loop": true },
+        { "name": "walk_down", "fps": 12, "loop": true }
+      ],
+      "optionalAnimations": [
+        { "name": "attack", "fps": 12, "loop": false },
+        { "name": "hurt", "fps": 10, "loop": false },
+        { "name": "death", "fps": 10, "loop": false }
+      ]
+    },
+    {
+      "id": "topdown-keyframes",
+      "version": "2.0.0",
+      "label": "Top-down Keyframes",
+      "description": "Experimental identity-locked animation using eight explicit image edits per action.",
+      "status": "experimental",
+      "targetFrameCount": 8,
+      "estimatedProviderRequests": 32,
+      "maximumProviderRequests": 64,
+      "defaultAnimation": "idle",
+      "requiredAnimations": [
+        { "name": "idle", "fps": 8, "loop": true },
+        { "name": "walk_up", "fps": 12, "loop": true },
+        { "name": "walk_right", "fps": 12, "loop": true },
+        { "name": "walk_down", "fps": 12, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "isometric",
+      "version": "1.0.0",
+      "label": "Isometric",
+      "description": "Diagonal-facing movement with explicit front and side coverage.",
+      "defaultAnimation": "idle",
+      "requiredAnimations": [
+        { "name": "idle", "fps": 8, "loop": true },
+        { "name": "walk_down", "fps": 12, "loop": true },
+        { "name": "walk_right", "fps": 12, "loop": true }
+      ],
+      "optionalAnimations": [
+        { "name": "idle_back", "fps": 8, "loop": true },
+        { "name": "attack", "fps": 12, "loop": false },
+        { "name": "hurt", "fps": 10, "loop": false },
+        { "name": "death", "fps": 10, "loop": false }
+      ]
+    },
+    {
+      "id": "custom",
+      "version": "1.0.0",
+      "label": "Custom",
+      "description": "A free-form animation contract for props and unusual characters.",
+      "defaultAnimation": "idle",
+      "requiredAnimations": [],
+      "optionalAnimations": [
+        { "name": "idle", "fps": 8, "loop": true },
+        { "name": "walk", "fps": 12, "loop": true },
+        { "name": "attack", "fps": 12, "loop": false }
+      ]
+    }
+  ]
+}

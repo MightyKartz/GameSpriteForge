@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1",
+  "id": "godot-pixel-art",
+  "version": "1.0.0",
+  "matting": {
+    "mode": "preserve_alpha",
+    "keyMode": "auto_corners",
+    "manualKeyColor": "#00FF00",
+    "threshold": 48,
+    "softness": 18,
+    "despillStrength": 0.5,
+    "haloPixels": 0
+  },
+  "normalize": {
+    "mode": "square_bottom",
+    "marginBottom": 16,
+    "margin": 12,
+    "alphaThreshold": 0
+  },
+  "sheet": {
+    "columns": 4,
+    "paddingPx": 2,
+    "marginPx": 2,
+    "maxTextureSize": 2048,
+    "allowMultiSheet": true
+  },
+  "preview": {
+    "fps": 12.0,
+    "loopAnimation": true,
+    "background": "transparent"
+  },
+  "quality": {
+    "requireGameReady": true
+  }
+}

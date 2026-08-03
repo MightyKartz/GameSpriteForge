@@ -67,6 +67,11 @@ fn inspect_pack_returns_paths_needed_by_local_library() {
         summary.quality_report_path,
         summary.root.join("quality-report.json")
     );
+    assert_eq!(summary.default_animation, "idle");
+    assert_eq!(summary.animations.len(), 1);
+    assert_eq!(summary.animations[0].frame_count, 3);
+    assert_eq!(summary.animations[0].fps, 12.0);
+    assert!(summary.animations[0].loop_animation);
 }
 
 #[test]
@@ -330,6 +335,34 @@ fn single_page_atlas_without_images_still_validates() {
     validate_pack_layout(&pack).unwrap();
 }
 
+#[test]
+fn validates_v3_terrain_pack_without_legacy_frames() {
+    let temp = tempfile::tempdir().unwrap();
+    let pack = temp.path().join("terrain.gsfpack");
+    write_world_pack_fixture(&pack, "terrain_set");
+
+    validate_pack_layout(&pack).unwrap();
+    let summary = read_pack_summary(&pack).unwrap();
+    let inspection = forge_pack::inspect_pack(&pack).unwrap();
+
+    assert_eq!(summary.frame_count, 0);
+    assert_eq!(summary.preview_gif, "preview.png");
+    assert_eq!(inspection.asset_type, "terrain_set");
+    assert_eq!(inspection.atlas_path, pack.join("assets/terrain-atlas.png"));
+}
+
+#[test]
+fn v3_map_pack_requires_self_contained_dependency_directories() {
+    let temp = tempfile::tempdir().unwrap();
+    let pack = temp.path().join("world.gsfpack");
+    write_world_pack_fixture(&pack, "map");
+    fs::remove_dir_all(pack.join("assets/dependencies")).unwrap();
+
+    let error = validate_pack_layout(&pack).unwrap_err();
+
+    assert!(matches!(error, PackError::MissingFile(path) if path == "assets/dependencies"));
+}
+
 #[cfg(unix)]
 #[test]
 fn symlinked_required_file_fails_validation() {
@@ -444,6 +477,70 @@ fn write_pack_fixture(pack: &Path, frame_count: usize) {
         )
         .unwrap();
     }
+}
+
+fn write_world_pack_fixture(pack: &Path, asset_type: &str) {
+    fs::create_dir_all(pack.join("assets")).unwrap();
+    fs::write(pack.join("preview.png"), b"png").unwrap();
+    fs::write(pack.join("assets/manifest.json"), b"{}").unwrap();
+    fs::write(pack.join("assets/godot_import.json"), b"{}").unwrap();
+    fs::write(pack.join("quality-report.json"), b"{}").unwrap();
+    let (type_assets, dependencies) = match asset_type {
+        "terrain_set" => {
+            fs::write(pack.join("assets/terrain-manifest.json"), b"{}").unwrap();
+            fs::write(pack.join("assets/terrain-atlas.png"), b"png").unwrap();
+            (
+                json!({
+                    "terrainManifest": "assets/terrain-manifest.json",
+                    "atlasImage": "assets/terrain-atlas.png"
+                }),
+                None,
+            )
+        }
+        "map" => {
+            fs::write(pack.join("assets/map-manifest.json"), b"{}").unwrap();
+            fs::write(pack.join("assets/map-layout.json"), b"{}").unwrap();
+            fs::write(pack.join("validation-report.json"), b"{}").unwrap();
+            fs::create_dir_all(pack.join("assets/dependencies")).unwrap();
+            fs::create_dir_all(pack.join("assets/runtime")).unwrap();
+            (
+                json!({
+                    "mapManifest": "assets/map-manifest.json",
+                    "mapLayout": "assets/map-layout.json",
+                    "validationReport": "validation-report.json"
+                }),
+                Some(json!([])),
+            )
+        }
+        _ => unreachable!(),
+    };
+    let mut assets = json!({
+        "manifest": "assets/manifest.json",
+        "godotHelper": "assets/godot_import.json",
+        "qualityReport": "quality-report.json"
+    });
+    for (key, value) in type_assets.as_object().unwrap() {
+        assets[key] = value.clone();
+    }
+    let mut metadata = json!({
+        "schemaVersion": "3.0.0",
+        "assetType": asset_type,
+        "id": "world-asset",
+        "name": "World Asset",
+        "version": "1.0.0",
+        "createdAt": "2026-08-03T00:00:00Z",
+        "creator": {"name": "Game Sprite Forge"},
+        "license": {"type": "MIT"},
+        "source": {
+            "kind": if asset_type == "map" { "deterministic_compiler" } else { "provider_generation" }
+        },
+        "assets": assets,
+        "previews": {"image": "preview.png"}
+    });
+    if let Some(dependencies) = dependencies {
+        metadata["dependencies"] = dependencies;
+    }
+    fs::write(pack.join("forgepack.json"), metadata.to_string()).unwrap();
 }
 
 fn forgepack_json(frame_count: usize) -> serde_json::Value {

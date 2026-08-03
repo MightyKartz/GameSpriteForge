@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "kind": "icon_set",
+  "id": "review-icons",
+  "name": "Review Icons",
+  "items": [
+    {
+      "id": "review-potion",
+      "name": "Review Potion",
+      "prompt": "a red healing potion [fixture:review]"
+    }
+  ],
+  "license": "private"
+}

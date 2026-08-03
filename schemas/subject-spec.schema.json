@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/subject-spec.schema.json",
+  "title": "Forge Subject Spec V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "name", "prompt", "license"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "prompt": { "type": "string", "minLength": 1, "maxLength": 4000 },
+    "referenceImages": {
+      "type": "array",
+      "maxItems": 2,
+      "items": { "type": "string" }
+    },
+    "imageModel": { "type": "string", "minLength": 1 },
+    "license": { "type": "string", "minLength": 1 }
+  }
+}
