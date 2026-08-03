@@ -434,6 +434,8 @@ enum BenchmarkCommand {
         limit: Option<usize>,
         #[arg(long)]
         skip_godot: bool,
+        #[arg(long)]
+        accept_provider_cost: bool,
         #[command(flatten)]
         json: JsonFlag,
     },
@@ -1094,12 +1096,19 @@ fn run() -> Result<(), (String, String)> {
                 workflow,
                 limit,
                 skip_godot,
+                accept_provider_cost,
                 ..
             } => {
                 if limit == Some(0) {
                     return Err((
                         "benchmark_limit_invalid".into(),
                         "--limit must be greater than zero".into(),
+                    ));
+                }
+                if provider != "fixture" && !accept_provider_cost {
+                    return Err((
+                        "benchmark_provider_cost_not_accepted".into(),
+                        "real Provider benchmarks require --accept-provider-cost after reviewing `forge benchmark plan`".into(),
                     ));
                 }
                 let suite = read_benchmark_manifest(&manifest)?;

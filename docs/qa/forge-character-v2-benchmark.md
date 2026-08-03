@@ -32,4 +32,6 @@ The contract test uses deterministic fixture results to verify gate mathematics 
 
 `forge benchmark run-character` executes the real Style Lock → Subject Lock → Character Pack pipeline with one Provider instance, writes progress after every case, validates each exported Pack, and optionally installs each result into an isolated Godot target. Use `--limit 1 --workflow keyframes --skip-godot` for a low-cost calibration; omit `--limit` and `--skip-godot` only for the formal frozen run.
 
+Any non-fixture run also requires `--accept-provider-cost`. Forge rejects the command before resolving credentials or making a request unless the operator has first reviewed `forge benchmark plan` and explicitly accepts the Provider cost envelope.
+
 The frozen fixture baseline is recorded in `docs/qa/forge-character-v2-fixture-baseline-2026-08-03.json`. It produced 40/40 valid, game-ready Packs and the expected cold request counts: nine for every video Pack and 32 for every keyframe Pack. Fixture identity improvement is deliberately not a release-quality signal and remains a failing gate; a real xAI 20×5 run is required to evaluate that claim.

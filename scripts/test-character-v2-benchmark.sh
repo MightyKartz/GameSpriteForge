@@ -35,6 +35,19 @@ MANIFEST="${ROOT}/benchmarks/character-v2/frozen-20x5.json"
       .data.keyframeRequests.normal == 640
     ' >/dev/null
 
+if "${FORGE}" benchmark run-character \
+  --manifest "${MANIFEST}" \
+  --output "${TEST_ROOT}/unapproved-xai" \
+  --provider xai \
+  --workflow keyframes \
+  --limit 1 \
+  --skip-godot \
+  --json \
+  | jq -e '.ok' >/dev/null; then
+  echo "real Provider benchmark ran without explicit cost acceptance" >&2
+  exit 1
+fi
+
 jq -n '
   def result($index; $workflow):
     {
