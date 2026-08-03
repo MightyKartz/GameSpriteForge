@@ -125,7 +125,8 @@ jobs:
             --manifest-path packages/cli/Cargo.toml \
             --format json \
             --target aarch64-apple-darwin \
-            --override-filename forge-sbom.cdx.json
+            --override-filename forge-sbom.cdx
+          test -s packages/cli/forge-sbom.cdx.json
           cp packages/cli/forge-sbom.cdx.json forge-sbom.cdx.json
 
       - name: Attest release binary
