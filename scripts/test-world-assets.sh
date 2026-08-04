@@ -6,6 +6,25 @@ FORGE_BIN="${ROOT_DIR}/target/debug/forge"
 TEST_ROOT="$(mktemp -d /tmp/forge-world-product.XXXXXX)"
 trap 'rm -rf "${TEST_ROOT}"' EXIT
 
+GODOT="${FORGE_GODOT_PATH:-/Applications/Godot.app/Contents/MacOS/Godot}"
+if [ ! -x "${GODOT}" ]; then
+	GODOT="$(command -v godot || command -v godot4 || true)"
+fi
+test -x "${GODOT}"
+export FORGE_GODOT_PATH="${GODOT}"
+
+credential_scan_matches() {
+	if command -v rg >/dev/null 2>&1; then
+		rg -n -i \
+			'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+			"$@"
+	else
+		grep -R -I -n -E \
+			'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+			"$@"
+	fi
+}
+
 export FORGE_JOB_STORE="${TEST_ROOT}/jobs"
 export FORGE_PLAN_STORE="${TEST_ROOT}/plans"
 
@@ -54,7 +73,7 @@ install_pack "${TERRAIN_PACK}" "addons/forge_assets/terrain"
 install_pack "${BUILDING_PACK}" "addons/forge_assets/buildings"
 install_pack "${MAP_PACK}" "addons/forge_assets/world"
 
-/Applications/Godot.app/Contents/MacOS/Godot \
+"${GODOT}" \
 	--headless \
 	--path "${TEST_ROOT}/godot" \
 	--script "${ROOT_DIR}/scripts/godot/verify_forge_world.gd" \
@@ -67,6 +86,10 @@ if find "${TEST_ROOT}/godot/addons/forge_assets" -type f \( -name '*.tres' -o -n
 fi
 if grep -R -E 'sub_resource type="Image"|sub_resource type="ImageTexture"|ImageTexture.create_from_image|^data = PackedByteArray' "${TEST_ROOT}/godot/addons/forge_assets" --include='*.tres' --include='*.tscn'; then
 	echo "World resource embeds image pixels" >&2
+	exit 1
+fi
+if credential_scan_matches "${FORGE_JOB_STORE}" "${TEST_ROOT}/godot" >/dev/null; then
+	echo "credential-like material leaked into world outputs" >&2
 	exit 1
 fi
 

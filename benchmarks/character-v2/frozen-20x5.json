@@ -1,0 +1,328 @@
+{
+  "schemaVersion": "1",
+  "id": "character-v2-frozen-20x5-2026-08-03",
+  "styles": [
+    {
+      "id": "forest-pixel",
+      "spec": {
+        "schemaVersion": "1",
+        "prompt": "compact jewel-tone forest pixel art, readable silhouettes, dark plum outlines, restrained texture",
+        "referenceImages": [],
+        "perspective": "topdown",
+        "lighting": "upper_left",
+        "outline": "dark_clean",
+        "background": "transparent",
+        "sampling": "nearest",
+        "characterCanvasSize": 256,
+        "iconCanvasSize": 128,
+        "propCanvasSize": 256
+      }
+    },
+    {
+      "id": "watercolor-fantasy",
+      "spec": {
+        "schemaVersion": "1",
+        "prompt": "soft storybook watercolor fantasy game art, controlled edges, muted mineral palette, readable small-scale shapes",
+        "referenceImages": [],
+        "perspective": "topdown",
+        "lighting": "soft_upper_left",
+        "outline": "painted_edge",
+        "background": "transparent",
+        "sampling": "linear",
+        "characterCanvasSize": 256,
+        "iconCanvasSize": 128,
+        "propCanvasSize": 256
+      }
+    },
+    {
+      "id": "retro-scifi",
+      "spec": {
+        "schemaVersion": "1",
+        "prompt": "retro science-fiction sprite art, chunky industrial forms, cyan amber and charcoal palette, sharp technical highlights",
+        "referenceImages": [],
+        "perspective": "topdown",
+        "lighting": "cool_upper_left",
+        "outline": "charcoal",
+        "background": "transparent",
+        "sampling": "nearest",
+        "characterCanvasSize": 256,
+        "iconCanvasSize": 128,
+        "propCanvasSize": 256
+      }
+    },
+    {
+      "id": "gothic-ink",
+      "spec": {
+        "schemaVersion": "1",
+        "prompt": "gothic ink-and-gouache game art, angular silhouettes, black burgundy and parchment palette, crisp hatched accents",
+        "referenceImages": [],
+        "perspective": "topdown",
+        "lighting": "dramatic_upper_left",
+        "outline": "black_ink",
+        "background": "transparent",
+        "sampling": "linear",
+        "characterCanvasSize": 256,
+        "iconCanvasSize": 128,
+        "propCanvasSize": 256
+      }
+    },
+    {
+      "id": "pastel-clay",
+      "spec": {
+        "schemaVersion": "1",
+        "prompt": "friendly pastel clay-like 2D game art, rounded silhouettes, soft occlusion, coral mint cream and navy palette",
+        "referenceImages": [],
+        "perspective": "topdown",
+        "lighting": "soft_upper_left",
+        "outline": "soft_navy",
+        "background": "transparent",
+        "sampling": "linear",
+        "characterCanvasSize": 256,
+        "iconCanvasSize": 128,
+        "propCanvasSize": 256
+      }
+    }
+  ],
+  "cases": [
+    {
+      "id": "forest-ranger",
+      "styleId": "forest-pixel",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "forest-ranger",
+        "name": "Forest Ranger",
+        "prompt": "a lean forest ranger with moss hood, short auburn hair, leather bracers, green tunic, brown boots and a compact bow",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "forest-druid",
+      "styleId": "forest-pixel",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "forest-druid",
+        "name": "Forest Druid",
+        "prompt": "a broad forest druid with braided gray hair, antler circlet, layered leaf mantle, oak staff and dark green robes",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "forest-scout",
+      "styleId": "forest-pixel",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "forest-scout",
+        "name": "Forest Scout",
+        "prompt": "a small agile scout with black cropped hair, russet scarf, tan vest, dark trousers, satchel and short spear",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "forest-herbalist",
+      "styleId": "forest-pixel",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "forest-herbalist",
+        "name": "Forest Herbalist",
+        "prompt": "a sturdy herbalist with copper curls, cream apron, teal shirt, herb pouches, round spectacles and a woven basket",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "watercolor-knight",
+      "styleId": "watercolor-fantasy",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "watercolor-knight",
+        "name": "Watercolor Knight",
+        "prompt": "a tall knight with warm brown skin, silver half-plate, blue tabard, red plume, kite shield and sheathed sword",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "watercolor-mage",
+      "styleId": "watercolor-fantasy",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "watercolor-mage",
+        "name": "Watercolor Mage",
+        "prompt": "a slender mage with long white braid, indigo coat, gold sash, moon-shaped brooch and a crystal wand",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "watercolor-archer",
+      "styleId": "watercolor-fantasy",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "watercolor-archer",
+        "name": "Watercolor Archer",
+        "prompt": "an athletic archer with dark curly hair, ochre cloak, cream shirt, green leggings, longbow and blue-fletched arrows",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "watercolor-bard",
+      "styleId": "watercolor-fantasy",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "watercolor-bard",
+        "name": "Watercolor Bard",
+        "prompt": "a cheerful round-faced bard with chestnut bob, plum beret, teal coat, striped trousers and a small lute",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "scifi-marine",
+      "styleId": "retro-scifi",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "scifi-marine",
+        "name": "Retro Marine",
+        "prompt": "a heavy space marine with dark visor, charcoal armor, amber shoulder plates, cyan chest light and compact pulse carbine",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "scifi-mechanic",
+      "styleId": "retro-scifi",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "scifi-mechanic",
+        "name": "Retro Mechanic",
+        "prompt": "a compact mechanic with shaved sides and orange braid, navy coveralls, cyan goggles, tool belt and large wrench",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "scifi-scout",
+      "styleId": "retro-scifi",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "scifi-scout",
+        "name": "Retro Scout",
+        "prompt": "a slim reconnaissance scout with white helmet, short cyan cape, amber body suit, dark boots and handheld scanner",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "scifi-android",
+      "styleId": "retro-scifi",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "scifi-android",
+        "name": "Retro Android",
+        "prompt": "a humanoid service android with rounded cream shell, single cyan face panel, orange joints and a small utility pack",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "gothic-hunter",
+      "styleId": "gothic-ink",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "gothic-hunter",
+        "name": "Gothic Hunter",
+        "prompt": "a severe monster hunter with black ponytail, wide burgundy hat, long charcoal coat, silver buckles and folded crossbow",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "gothic-necromancer",
+      "styleId": "gothic-ink",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "gothic-necromancer",
+        "name": "Gothic Necromancer",
+        "prompt": "a gaunt necromancer with pale shaved head, black layered robes, burgundy cords, bone talisman and crooked staff",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "gothic-monk",
+      "styleId": "gothic-ink",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "gothic-monk",
+        "name": "Gothic Monk",
+        "prompt": "a muscular monastery guardian with shaved crown, parchment tunic, black wraps, burgundy sash and iron lantern",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "gothic-guard",
+      "styleId": "gothic-ink",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "gothic-guard",
+        "name": "Gothic Guard",
+        "prompt": "a stocky city guard with gray moustache, black sallet helmet, burgundy gambeson, parchment cloak and halberd",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "pastel-cook",
+      "styleId": "pastel-clay",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "pastel-cook",
+        "name": "Pastel Cook",
+        "prompt": "a round friendly cook with navy curls, tall cream hat, coral apron, mint shirt and wooden spoon",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "pastel-farmer",
+      "styleId": "pastel-clay",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "pastel-farmer",
+        "name": "Pastel Farmer",
+        "prompt": "a tall farmer with red braids, straw hat, mint overalls, cream boots and small watering can",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "pastel-courier",
+      "styleId": "pastel-clay",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "pastel-courier",
+        "name": "Pastel Courier",
+        "prompt": "a quick courier with short navy hair, coral cap, cream jacket, mint shorts, high boots and square mail bag",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "pastel-alchemist",
+      "styleId": "pastel-clay",
+      "subject": {
+        "schemaVersion": "1",
+        "id": "pastel-alchemist",
+        "name": "Pastel Alchemist",
+        "prompt": "a small alchemist with lavender bun, navy spectacles, mint coat, coral gloves, cream satchel and round flask",
+        "referenceImages": [],
+        "license": "MIT"
+      }
+    }
+  ]
+}

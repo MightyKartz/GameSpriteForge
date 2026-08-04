@@ -25,6 +25,12 @@ use forge_core::automation::{
 };
 #[cfg(feature = "terrain-assets")]
 use forge_core::automation::{CreateEnvironmentLockRequest, GenerateTerrainSetRequest};
+#[cfg(feature = "consistency-v2")]
+use forge_core::benchmark::{
+    plan_character_benchmark, run_character_benchmark, summarize_character_benchmark,
+    BenchmarkWorkflow, CharacterBenchmarkExecutionOptions, CharacterBenchmarkManifestV1,
+    CharacterBenchmarkRunV1,
+};
 use forge_core::catalog::read_project_catalog;
 #[cfg(feature = "consistency-v2")]
 use forge_core::component::{
@@ -102,6 +108,11 @@ enum Command {
     Component {
         #[command(subcommand)]
         command: ComponentCommand,
+    },
+    #[cfg(feature = "consistency-v2")]
+    Benchmark {
+        #[command(subcommand)]
+        command: BenchmarkCommand,
     },
     #[cfg(feature = "terrain-assets")]
     Environment {
@@ -377,6 +388,65 @@ enum ComponentCommand {
         #[command(flatten)]
         json: JsonFlag,
     },
+}
+
+#[cfg(feature = "consistency-v2")]
+#[derive(Subcommand)]
+enum BenchmarkCommand {
+    Validate {
+        #[arg(long)]
+        manifest: PathBuf,
+        #[arg(long, default_value = "fixture")]
+        provider: String,
+        #[arg(long, default_value = "default")]
+        profile: String,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
+    Plan {
+        #[arg(long)]
+        manifest: PathBuf,
+        #[arg(long, default_value = "xai")]
+        provider: String,
+        #[arg(long, default_value = "default")]
+        profile: String,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
+    Summarize {
+        #[arg(long)]
+        input: PathBuf,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
+    RunCharacter {
+        #[arg(long)]
+        manifest: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long, default_value = "fixture")]
+        provider: String,
+        #[arg(long, default_value = "default")]
+        profile: String,
+        #[arg(long, value_enum, default_value = "both")]
+        workflow: BenchmarkWorkflowArg,
+        #[arg(long)]
+        limit: Option<usize>,
+        #[arg(long)]
+        skip_godot: bool,
+        #[arg(long)]
+        accept_provider_cost: bool,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
+}
+
+#[cfg(feature = "consistency-v2")]
+#[derive(Clone, Copy, ValueEnum)]
+enum BenchmarkWorkflowArg {
+    Video,
+    Keyframes,
+    Both,
 }
 
 #[cfg(feature = "terrain-assets")]
@@ -931,6 +1001,7 @@ fn run() -> Result<(), (String, String)> {
                 "schemas": [
                     "asset@1.0.0",
                     "character@2.0.0",
+                    "character-benchmark@1.0.0",
                     "style@1.0.0",
                     "subject@1.0.0",
                     "map@1.0.0"
@@ -941,6 +1012,9 @@ fn run() -> Result<(), (String, String)> {
                     "asset@1.0.0" => include_str!("../../../schemas/asset-spec.schema.json"),
                     "character@2.0.0" => {
                         include_str!("../../../schemas/character-v2.schema.json")
+                    }
+                    "character-benchmark@1.0.0" => {
+                        include_str!("../../../schemas/character-benchmark.schema.json")
                     }
                     "style@1.0.0" => include_str!("../../../schemas/style-spec.schema.json"),
                     "subject@1.0.0" => include_str!("../../../schemas/subject-spec.schema.json"),
@@ -975,6 +1049,102 @@ fn run() -> Result<(), (String, String)> {
                 accept_licenses,
                 ..
             } => success(&install_component(&component, accept_licenses).map_err(display_error)?),
+        },
+        #[cfg(feature = "consistency-v2")]
+        Command::Benchmark { command } => match command {
+            BenchmarkCommand::Validate {
+                manifest,
+                provider,
+                profile,
+                ..
+            } => {
+                let suite = read_benchmark_manifest(&manifest)?;
+                validate_benchmark_references(&suite, &manifest)?;
+                let plan =
+                    plan_character_benchmark(&suite, &provider, &profile).map_err(display_error)?;
+                success(&serde_json::json!({
+                    "valid": true,
+                    "manifest": manifest,
+                    "manifestSha256": hash_asset_file(&manifest).map_err(display_error)?,
+                    "plan": plan,
+                }))
+            }
+            BenchmarkCommand::Plan {
+                manifest,
+                provider,
+                profile,
+                ..
+            } => {
+                let suite = read_benchmark_manifest(&manifest)?;
+                validate_benchmark_references(&suite, &manifest)?;
+                success(
+                    &plan_character_benchmark(&suite, &provider, &profile)
+                        .map_err(display_error)?,
+                )
+            }
+            BenchmarkCommand::Summarize { input, .. } => {
+                let run: CharacterBenchmarkRunV1 =
+                    serde_json::from_slice(&fs::read(&input).map_err(io_error)?)
+                        .map_err(json_error)?;
+                success(&summarize_character_benchmark(&run).map_err(display_error)?)
+            }
+            BenchmarkCommand::RunCharacter {
+                manifest,
+                output,
+                provider,
+                profile,
+                workflow,
+                limit,
+                skip_godot,
+                accept_provider_cost,
+                ..
+            } => {
+                if limit == Some(0) {
+                    return Err((
+                        "benchmark_limit_invalid".into(),
+                        "--limit must be greater than zero".into(),
+                    ));
+                }
+                if provider != "fixture" && !accept_provider_cost {
+                    return Err((
+                        "benchmark_provider_cost_not_accepted".into(),
+                        "real Provider benchmarks require --accept-provider-cost after reviewing `forge benchmark plan`".into(),
+                    ));
+                }
+                let suite = read_benchmark_manifest(&manifest)?;
+                validate_benchmark_references(&suite, &manifest)?;
+                if env::var_os("FORGE_CACHE_STORE").is_none() {
+                    env::set_var("FORGE_CACHE_STORE", output.join("cache"));
+                }
+                let resolved = resolve_provider(&provider, &profile).map_err(display_error)?;
+                let workflows = match workflow {
+                    BenchmarkWorkflowArg::Video => vec![BenchmarkWorkflow::Video],
+                    BenchmarkWorkflowArg::Keyframes => vec![BenchmarkWorkflow::Keyframes],
+                    BenchmarkWorkflowArg::Both => {
+                        vec![BenchmarkWorkflow::Video, BenchmarkWorkflow::Keyframes]
+                    }
+                };
+                let godot_project = (!skip_godot).then(|| output.join("godot"));
+                let (_, summary) = run_character_benchmark(
+                    &suite,
+                    &manifest,
+                    &CharacterBenchmarkExecutionOptions {
+                        output_root: output.clone(),
+                        provider_id: provider,
+                        profile_id: profile,
+                        workflows,
+                        limit,
+                        godot_project,
+                    },
+                    resolved.as_ref(),
+                )
+                .map_err(display_error)?;
+                success(&serde_json::json!({
+                    "run": output.join("benchmark-run.json"),
+                    "summary": output.join("benchmark-summary.json"),
+                    "results": summary,
+                }))
+            }
         },
         #[cfg(feature = "terrain-assets")]
         Command::Environment { command } => match command {
@@ -1284,6 +1454,61 @@ fn success<T: Serialize>(data: &T) -> Result<(), (String, String)> {
         error: None,
     };
     println!("{}", serde_json::to_string(&envelope).map_err(json_error)?);
+    Ok(())
+}
+
+#[cfg(feature = "consistency-v2")]
+fn read_benchmark_manifest(path: &Path) -> Result<CharacterBenchmarkManifestV1, (String, String)> {
+    let manifest: CharacterBenchmarkManifestV1 =
+        serde_json::from_slice(&fs::read(path).map_err(io_error)?).map_err(json_error)?;
+    manifest.validate().map_err(display_error)?;
+    Ok(manifest)
+}
+
+#[cfg(feature = "consistency-v2")]
+fn validate_benchmark_references(
+    manifest: &CharacterBenchmarkManifestV1,
+    manifest_path: &Path,
+) -> Result<(), (String, String)> {
+    let root = manifest_path.parent().unwrap_or_else(|| Path::new("."));
+    for (owner, reference) in manifest
+        .styles
+        .iter()
+        .flat_map(|style| {
+            style
+                .spec
+                .reference_images
+                .iter()
+                .map(move |path| (format!("style {}", style.id), path))
+        })
+        .chain(manifest.cases.iter().flat_map(|case| {
+            case.subject
+                .reference_images
+                .iter()
+                .map(move |path| (format!("case {}", case.id), path))
+        }))
+    {
+        if reference.is_absolute()
+            || reference
+                .components()
+                .any(|component| matches!(component, std::path::Component::ParentDir))
+        {
+            return Err((
+                "benchmark_reference_invalid".into(),
+                format!(
+                    "{owner} reference must stay relative to the benchmark manifest: {}",
+                    reference.display()
+                ),
+            ));
+        }
+        let resolved = root.join(reference);
+        if !resolved.is_file() {
+            return Err((
+                "benchmark_reference_missing".into(),
+                format!("{owner} reference does not exist: {}", resolved.display()),
+            ));
+        }
+    }
     Ok(())
 }
 
@@ -2169,6 +2394,11 @@ fn plan_store() -> Result<PlanStore, (String, String)> {
 }
 
 fn locate_godot() -> Option<PathBuf> {
+    if let Some(path) = env::var_os("FORGE_GODOT_PATH").map(PathBuf::from) {
+        if path.is_file() {
+            return Some(path);
+        }
+    }
     [
         PathBuf::from("/Applications/Godot.app/Contents/MacOS/Godot"),
         PathBuf::from("/Applications/Godot_mono.app/Contents/MacOS/Godot"),

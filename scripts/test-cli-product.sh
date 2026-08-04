@@ -11,6 +11,18 @@ FORGE="${ROOT}/target/debug/forge"
 export FORGE_JOB_STORE="${TEST_ROOT}/jobs"
 export FORGE_PLAN_STORE="${TEST_ROOT}/plans"
 
+credential_scan_matches() {
+  if command -v rg >/dev/null 2>&1; then
+    rg -n -i \
+      'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+      "$@"
+  else
+    grep -R -I -n -E \
+      'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+      "$@"
+  fi
+}
+
 if "${FORGE}" --help | grep -E '^  (subject|schema|component|environment|terrain|building|map)[[:space:]]'; then
   echo "post-v0.2 command leaked into the v0.2 CLI surface" >&2
   exit 1
@@ -172,9 +184,7 @@ test -f "${RESOURCE}"
 test "$(stat -f '%z' "${RESOURCE}")" -lt 1048576
 ! grep -q 'PackedByteArray\|sub_resource type="Image"' "${RESOURCE}"
 
-if rg -n -i \
-  'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
-  "${FORGE_JOB_STORE}" >/dev/null; then
+if credential_scan_matches "${FORGE_JOB_STORE}" >/dev/null; then
   echo "credential-like material leaked into the fixture JobStore" >&2
   exit 1
 fi

@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "1",
+  "profile": "forge-v0.3-release-matrix@1.0.0",
+  "testedCommit": "7be5fa4711596e62db017964bc190384907e4bf9",
+  "branch": "codex/v0.3-character-benchmarks",
+  "startedAt": "2026-08-03T22:35:06Z",
+  "finishedAt": "2026-08-03T22:42:35Z",
+  "durationSeconds": 449,
+  "gates": [
+    {
+      "id": "rust-quality",
+      "scope": "release_blocking",
+      "status": "pass",
+      "durationSeconds": 78
+    },
+    {
+      "id": "character-v2-contract",
+      "scope": "release_blocking",
+      "status": "pass",
+      "durationSeconds": 21
+    },
+    {
+      "id": "character-v2-full-matrix",
+      "scope": "release_blocking",
+      "status": "pass",
+      "durationSeconds": 266
+    },
+    {
+      "id": "static-cli-contract",
+      "scope": "release_blocking",
+      "status": "pass",
+      "durationSeconds": 27
+    },
+    {
+      "id": "static-five-style-matrix",
+      "scope": "release_blocking",
+      "status": "pass",
+      "durationSeconds": 41
+    },
+    {
+      "id": "world-assets-experimental",
+      "scope": "experimental",
+      "status": "pass",
+      "durationSeconds": 16
+    }
+  ],
+  "characterV2": {
+    "styles": 5,
+    "characters": 20,
+    "workflowResults": 40,
+    "gameReadyPacks": 40,
+    "validPacks": 40,
+    "videoMedianProviderRequests": 9,
+    "keyframeMedianProviderRequests": 32,
+    "videoIdentitySamples": 80,
+    "keyframeIdentitySamples": 640,
+    "godotCalibrationLoaded": true,
+    "fixtureIdentityImprovementGate": "expected_fail"
+  },
+  "staticAssets": {
+    "styles": 5,
+    "iconPacks": 5,
+    "propPacks": 5,
+    "iconItems": 25,
+    "propItems": 25,
+    "iconProviderRequests": 25,
+    "propProviderRequests": 25,
+    "gameReadyPacks": 10,
+    "validPacks": 10,
+    "godotLoadedPacks": 10,
+    "resourceEmbedding": "pass",
+    "credentialScan": "pass"
+  },
+  "worldAssets": {
+    "scope": "experimental",
+    "terrainPack": "pass",
+    "buildingPack": "pass",
+    "jsonMapPack": "pass",
+    "deterministicLayout": "pass",
+    "godotWorldLoad": "pass",
+    "resourceEmbedding": "pass"
+  },
+  "ciGodotPathValidation": {
+    "finishedAt": "2026-08-03T22:49:43Z",
+    "customExecutablePath": "pass",
+    "characterGodotLoad": "pass",
+    "staticGodotLoad": "pass",
+    "worldGodotLoad": "pass"
+  },
+  "githubActions": {
+    "runId": 30860887047,
+    "headSha": "fc82f3dadbef46028005c8cdd28a2230b7780b46",
+    "startedAt": "2026-08-03T23:02:50Z",
+    "finishedAt": "2026-08-03T23:14:01Z",
+    "durationSeconds": 671,
+    "macosRunner": "macos-15",
+    "godotVersion": "4.6.3",
+    "ffmpegProfile": "8.1.2-lgpl",
+    "qaArtifactUploaded": true,
+    "url": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/30860887047",
+    "verdict": "pass"
+  },
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "releaseBlockingPassed": true,
+    "experimentalPassed": true
+  },
+  "verdict": "pass",
+  "limitations": [
+    "Fixture tests prove workflow correctness and deterministic gates, not real-model visual superiority.",
+    "Character identity improvement remains a real xAI benchmark gate.",
+    "World assets remain compile-gated experiments and are not part of the v0.3 public CLI claim."
+  ]
+}

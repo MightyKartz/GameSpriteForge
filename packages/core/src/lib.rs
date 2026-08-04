@@ -1,5 +1,6 @@
 pub mod asset_project;
 pub mod automation;
+pub mod benchmark;
 pub mod catalog;
 pub mod component;
 pub mod export;

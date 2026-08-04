@@ -1,0 +1,94 @@
+name: Forge v0.3 Quality Matrix
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/v03-quality.yml"
+      - "benchmarks/**"
+      - "examples/**"
+      - "packages/cli/**"
+      - "packages/core/**"
+      - "packages/pack/**"
+      - "packages/providers/**"
+      - "profiles/**"
+      - "schemas/**"
+      - "scripts/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v03-quality:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Godot 4.6.3
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors \
+            --retry-delay 5 --connect-timeout 30 --max-time 300 -fL \
+            -o "${RUNNER_TEMP}/godot.zip" \
+            https://github.com/godotengine/godot/releases/download/4.6.3-stable/Godot_v4.6.3-stable_macos.universal.zip
+          mkdir -p "${RUNNER_TEMP}/godot-bin"
+          ditto -x -k "${RUNNER_TEMP}/godot.zip" "${RUNNER_TEMP}/godot-bin"
+          godot_binary="$(find "${RUNNER_TEMP}/godot-bin" -type f -path '*/Contents/MacOS/Godot' -print -quit)"
+          test -n "${godot_binary}"
+          "${godot_binary}" --version | grep -E '^4\.6\.3'
+          printf 'FORGE_GODOT_PATH=%s\n' "${godot_binary}" >> "${GITHUB_ENV}"
+          ln -s "${godot_binary}" "${RUNNER_TEMP}/godot-bin/godot"
+          printf '%s\n' "${RUNNER_TEMP}/godot-bin" >> "${GITHUB_PATH}"
+
+      - name: Build pinned LGPL FFmpeg helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 --retry 5 --retry-all-errors \
+            --retry-delay 5 --connect-timeout 30 --max-time 300 -fL \
+            -o "${RUNNER_TEMP}/ffmpeg-8.1.2.tar.xz" \
+            https://ffmpeg.org/releases/ffmpeg-8.1.2.tar.xz
+          printf '%s  %s\n' \
+            '464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c' \
+            "${RUNNER_TEMP}/ffmpeg-8.1.2.tar.xz" | shasum -a 256 -c -
+          tar -xf "${RUNNER_TEMP}/ffmpeg-8.1.2.tar.xz" -C "${RUNNER_TEMP}"
+          cd "${RUNNER_TEMP}/ffmpeg-8.1.2"
+          ./configure \
+            --prefix="${RUNNER_TEMP}/ffmpeg" \
+            --arch=arm64 \
+            --target-os=darwin \
+            --disable-gpl \
+            --disable-nonfree \
+            --disable-doc \
+            --disable-debug \
+            --disable-ffplay \
+            --enable-static \
+            --disable-shared
+          make -j3 ffmpeg ffprobe
+          mkdir -p "${RUNNER_TEMP}/ffmpeg/bin"
+          cp ffmpeg ffprobe "${RUNNER_TEMP}/ffmpeg/bin/"
+          "${RUNNER_TEMP}/ffmpeg/bin/ffmpeg" -version \
+            > "${RUNNER_TEMP}/ffmpeg-version.txt"
+          ! grep -E -- '--enable-(gpl|nonfree)' "${RUNNER_TEMP}/ffmpeg-version.txt"
+          printf '%s\n' "${RUNNER_TEMP}/ffmpeg/bin" >> "${GITHUB_PATH}"
+
+      - name: Run v0.3 release matrix
+        shell: bash
+        env:
+          FORGE_V03_REPORT_DIR: ${{ runner.temp }}/forge-v03-quality
+        run: bash scripts/test-v03-release-matrix.sh
+
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: forge-v03-quality-${{ github.run_id }}
+          path: ${{ runner.temp }}/forge-v03-quality
+          if-no-files-found: error
+          retention-days: 14
