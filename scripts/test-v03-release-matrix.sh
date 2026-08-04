@@ -46,7 +46,8 @@ rust_quality_gate() {
 
 character_contract_gate() {
   bash "${ROOT}/scripts/test-consistency-v2.sh" &&
-  bash "${ROOT}/scripts/test-character-v2-benchmark.sh"
+  bash "${ROOT}/scripts/test-character-v2-benchmark.sh" &&
+  bash "${ROOT}/scripts/test-real-provider-budget-guard.sh"
 }
 
 character_matrix_gate() {

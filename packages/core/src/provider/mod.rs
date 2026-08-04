@@ -198,8 +198,32 @@ pub enum ProviderError {
     InvalidOutput(String),
     #[error("provider operation was cancelled")]
     Cancelled,
+    #[error("real_provider_not_accepted: {0}")]
+    RealProviderNotAccepted(String),
+    #[error("provider_request_budget_exceeded: {0}")]
+    RequestBudgetExceeded(String),
+    #[error("provider_cost_budget_exceeded: {0}")]
+    CostBudgetExceeded(String),
     #[error("provider io error: {0}")]
     Io(#[from] std::io::Error),
+}
+
+impl ProviderError {
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::Unavailable(_) => "provider_unavailable",
+            Self::AuthenticationRequired(_) => "provider_authentication_required",
+            Self::Entitlement(_) => "provider_entitlement_unavailable",
+            Self::RateLimited(_) => "provider_rate_limited",
+            Self::Request(_) => "provider_request_failed",
+            Self::InvalidOutput(_) => "provider_invalid_output",
+            Self::Cancelled => "cancelled",
+            Self::RealProviderNotAccepted(_) => "real_provider_not_accepted",
+            Self::RequestBudgetExceeded(_) => "provider_request_budget_exceeded",
+            Self::CostBudgetExceeded(_) => "provider_cost_budget_exceeded",
+            Self::Io(_) => "provider_io_error",
+        }
+    }
 }
 
 pub trait CredentialProvider: Send + Sync {
@@ -213,6 +237,15 @@ pub trait MediaGenerationProvider: Send + Sync {
     fn id(&self) -> &'static str;
     fn capabilities(&self) -> Vec<ProviderCapability>;
     fn health_check(&self) -> ProviderHealth;
+    fn resolved_image_model(&self, requested: Option<&str>) -> Option<String> {
+        requested.map(str::to_owned)
+    }
+    fn resolved_video_model(&self, requested: Option<&str>) -> Option<String> {
+        requested.map(str::to_owned)
+    }
+    fn resolved_video_edit_model(&self, requested: Option<&str>) -> Option<String> {
+        self.resolved_video_model(requested)
+    }
     fn generate_image(
         &self,
         request: &GenerateImageRequest,

@@ -20,6 +20,7 @@ pub const FORGE_PROJECT_FILE: &str = "forge-project.json";
 pub const STYLE_LOCK_FILE: &str = "style-lock.json";
 pub const CONSISTENCY_PROFILE: &str = "consistency@1.3.0";
 pub const STYLE_BASELINE_PROFILE: &str = "style-baseline@2.3.0";
+pub const KEYFRAME_HARD_GATE_PROFILE: &str = "keyframe-hard-defects@1.0.0";
 const NORMALIZED_FOREGROUND_EXTENT: f32 = 0.82;
 const PALETTE_SIMILARITY_SIGMA: f32 = 112.0;
 const PALETTE_COLOR_LIMIT: usize = 24;
@@ -373,7 +374,8 @@ pub fn build_style_lock(
     work_dir: &Path,
 ) -> Result<StyleBuildOutput, AssetProjectError> {
     let mut project = read_project(project_root)?;
-    let spec: StyleSpecV1 = serde_json::from_slice(&fs::read(spec_path)?)?;
+    let mut spec: StyleSpecV1 = serde_json::from_slice(&fs::read(spec_path)?)?;
+    spec.image_model = provider.resolved_image_model(spec.image_model.as_deref());
     validate_style_spec(&spec)?;
     let spec_root = spec_path.parent().unwrap_or_else(|| Path::new("."));
     let references = spec
@@ -525,6 +527,11 @@ pub fn normalize_static_image(
         (canvas_size - height) / 2
     };
     image::imageops::overlay(&mut canvas, &resized, x.into(), y.into());
+    for pixel in canvas.pixels_mut() {
+        if pixel[3] < 32 {
+            *pixel = Rgba([0, 0, 0, 0]);
+        }
+    }
     if let Some(parent) = output.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -656,6 +663,152 @@ pub fn assess_consistency(
         metrics,
         verdict,
         reasons,
+    }
+}
+
+pub fn apply_keyframe_hard_defects(
+    candidate: &RgbaImage,
+    identity: &RgbaImage,
+    pose_guide: &RgbaImage,
+    report: &mut ConsistencyItemReport,
+) {
+    let mut hard_reasons = Vec::new();
+    if has_opaque_background_residual(candidate) {
+        hard_reasons.push("opaque_background_residual");
+    }
+    if disconnected_low_alpha_noise_ratio(candidate) > 0.02 {
+        hard_reasons.push("low_alpha_noise");
+    }
+
+    let aspect_ratio = foreground_aspect_ratio(candidate);
+    let identity_aspect_ratio = foreground_aspect_ratio(identity);
+    let aspect_ratio_drift = match (aspect_ratio, identity_aspect_ratio) {
+        (Some(candidate), Some(identity)) if identity > f32::EPSILON => candidate / identity,
+        _ => 1.0,
+    };
+    if !(0.60..=1.60).contains(&aspect_ratio_drift) {
+        hard_reasons.push("silhouette_aspect_drift");
+    }
+    let candidate_pose_overlap = pose_guide_color_overlap(candidate, pose_guide);
+    let identity_pose_overlap = pose_guide_color_overlap(identity, pose_guide);
+    if candidate_pose_overlap > 0.04 && candidate_pose_overlap > identity_pose_overlap + 0.025 {
+        hard_reasons.push("pose_structure_leak");
+    }
+
+    if !hard_reasons.is_empty() {
+        report.verdict = ConsistencyVerdict::Blocked;
+        for reason in hard_reasons {
+            if !report.reasons.iter().any(|existing| existing == reason) {
+                report.reasons.push(reason.into());
+            }
+        }
+    }
+}
+
+fn has_opaque_background_residual(image: &RgbaImage) -> bool {
+    let Some((left, top, right, bottom)) = alpha_bounds(image) else {
+        return false;
+    };
+    let bbox_area = u64::from(right - left + 1) * u64::from(bottom - top + 1);
+    let canvas_area = u64::from(image.width()) * u64::from(image.height());
+    if bbox_area == 0 || canvas_area == 0 || bbox_area as f32 / (canvas_area as f32) < 0.20 {
+        return false;
+    }
+    let foreground = image.pixels().filter(|pixel| pixel[3] > 16).count() as u64;
+    foreground as f32 / bbox_area as f32 >= 0.90
+}
+
+fn foreground_aspect_ratio(image: &RgbaImage) -> Option<f32> {
+    alpha_bounds(image).map(|(left, top, right, bottom)| {
+        (right - left + 1) as f32 / (bottom - top + 1).max(1) as f32
+    })
+}
+
+fn disconnected_low_alpha_noise_ratio(image: &RgbaImage) -> f32 {
+    let components = alpha_component_areas(image, 0);
+    let Some(largest) = components.iter().max() else {
+        return 0.0;
+    };
+    let total = components.iter().sum::<usize>();
+    let disconnected = total.saturating_sub(*largest);
+    if disconnected < 64 || total == 0 {
+        0.0
+    } else {
+        disconnected as f32 / total as f32
+    }
+}
+
+fn alpha_component_areas(image: &RgbaImage, threshold: u8) -> Vec<usize> {
+    let width = image.width() as usize;
+    let height = image.height() as usize;
+    if width == 0 || height == 0 {
+        return Vec::new();
+    }
+    let foreground = image
+        .pixels()
+        .map(|pixel| pixel[3] > threshold)
+        .collect::<Vec<_>>();
+    let mut visited = vec![false; foreground.len()];
+    let mut areas = Vec::new();
+    for start in 0..foreground.len() {
+        if !foreground[start] || visited[start] {
+            continue;
+        }
+        visited[start] = true;
+        let mut queue = VecDeque::from([start]);
+        let mut area = 0usize;
+        while let Some(index) = queue.pop_front() {
+            area += 1;
+            let x = index % width;
+            let y = index / width;
+            for neighbor_y in y.saturating_sub(1)..=(y + 1).min(height - 1) {
+                for neighbor_x in x.saturating_sub(1)..=(x + 1).min(width - 1) {
+                    let neighbor = neighbor_y * width + neighbor_x;
+                    if foreground[neighbor] && !visited[neighbor] {
+                        visited[neighbor] = true;
+                        queue.push_back(neighbor);
+                    }
+                }
+            }
+        }
+        areas.push(area);
+    }
+    areas
+}
+
+fn pose_guide_color_overlap(candidate: &RgbaImage, pose_guide: &RgbaImage) -> f32 {
+    let mut colors = HashMap::<[u8; 3], usize>::new();
+    for pixel in pose_guide.pixels() {
+        let rgb = [pixel[0], pixel[1], pixel[2]];
+        let range = *rgb.iter().max().unwrap_or(&0) - *rgb.iter().min().unwrap_or(&0);
+        if pixel[3] > 16 && range > 32 && rgb.iter().any(|channel| *channel < 240) {
+            *colors.entry(rgb).or_default() += 1;
+        }
+    }
+    let Some((guide_color, _)) = colors.into_iter().max_by_key(|(_, count)| *count) else {
+        return 0.0;
+    };
+    let mut foreground = 0usize;
+    let mut matching = 0usize;
+    for pixel in candidate.pixels() {
+        if pixel[3] <= 16 {
+            continue;
+        }
+        foreground += 1;
+        let distance_squared = [pixel[0], pixel[1], pixel[2]]
+            .iter()
+            .zip(guide_color)
+            .map(|(candidate, guide)| {
+                let delta = i32::from(*candidate) - i32::from(guide);
+                delta * delta
+            })
+            .sum::<i32>();
+        matching += usize::from(distance_squared <= 40_i32.pow(2));
+    }
+    if foreground == 0 {
+        0.0
+    } else {
+        matching as f32 / foreground as f32
     }
 }
 
@@ -1634,6 +1787,141 @@ mod tests {
         let report = assess_consistency("walk_right", 1, &signature, &style, None, None, 128);
         assert_eq!(report.verdict, ConsistencyVerdict::Blocked);
         assert!(report.reasons.contains(&"multiple_subjects".into()));
+    }
+
+    #[test]
+    fn keyframe_hard_gates_block_background_pose_leak_noise_and_extreme_silhouette() {
+        let mut identity = RgbaImage::from_pixel(128, 128, Rgba([0, 0, 0, 0]));
+        for y in 24..40 {
+            for x in 52..76 {
+                identity.put_pixel(x, y, Rgba([40, 90, 150, 255]));
+            }
+        }
+        for y in 40..88 {
+            for x in 48..80 {
+                identity.put_pixel(x, y, Rgba([40, 90, 150, 255]));
+            }
+        }
+        for y in 50..70 {
+            for x in 40..88 {
+                identity.put_pixel(x, y, Rgba([40, 90, 150, 255]));
+            }
+        }
+        for y in 88..112 {
+            for x in 48..60 {
+                identity.put_pixel(x, y, Rgba([40, 90, 150, 255]));
+            }
+            for x in 68..80 {
+                identity.put_pixel(x, y, Rgba([40, 90, 150, 255]));
+            }
+        }
+        let mut pose = RgbaImage::from_pixel(128, 128, Rgba([255, 255, 255, 255]));
+        for y in 24..110 {
+            for x in 61..67 {
+                pose.put_pixel(x, y, Rgba([145, 65, 200, 255]));
+            }
+        }
+        for y in 48..55 {
+            for x in 24..104 {
+                pose.put_pixel(x, y, Rgba([145, 65, 200, 255]));
+            }
+        }
+        let style = StyleLockV1 {
+            schema_version: "1".into(),
+            revision: "hard-gate-style".into(),
+            provider_id: "fixture".into(),
+            profile_id: "default".into(),
+            image_model: Some("fixture-image".into()),
+            prompt: "test".into(),
+            perspective: "topdown".into(),
+            lighting: "soft".into(),
+            outline: "clean".into(),
+            background: "transparent".into(),
+            sampling: SamplingMode::Nearest,
+            character_canvas_size: 128,
+            icon_canvas_size: 128,
+            prop_canvas_size: 128,
+            board_path: PathBuf::from("board.png"),
+            board_sha256: "hash".into(),
+            reference_sha256: vec![],
+            baseline_profile: STYLE_BASELINE_PROFILE.into(),
+            migrated_from_revision: None,
+            baseline: StyleBaseline {
+                palette: image_signature(&identity).palette,
+                edge_density: image_signature(&identity).edge_density,
+                foreground_scale: NORMALIZED_FOREGROUND_EXTENT,
+                perceptual_hash: "0".into(),
+            },
+        };
+        let identity_signature = image_signature(&identity);
+        let base_report = |candidate: &RgbaImage| {
+            assess_consistency(
+                "idle/frame-00",
+                1,
+                &image_signature(candidate),
+                &style,
+                Some(&identity_signature),
+                Some(&identity_signature),
+                128,
+            )
+        };
+
+        let mut clean_report = base_report(&identity);
+        apply_keyframe_hard_defects(&identity, &identity, &pose, &mut clean_report);
+        assert!(!clean_report
+            .reasons
+            .iter()
+            .any(|reason| reason.contains("background") || reason.contains("leak")));
+
+        let mut background = identity.clone();
+        for y in 12..116 {
+            for x in 16..112 {
+                background.put_pixel(x, y, Rgba([112, 112, 112, 255]));
+            }
+        }
+        let mut background_report = base_report(&background);
+        apply_keyframe_hard_defects(&background, &identity, &pose, &mut background_report);
+        assert_eq!(background_report.verdict, ConsistencyVerdict::Blocked);
+        assert!(background_report
+            .reasons
+            .contains(&"opaque_background_residual".into()));
+
+        let mut noisy = identity.clone();
+        for index in 0..96_u32 {
+            let x = 2 + (index * 17) % 124;
+            let y = 2 + (index * 29) % 124;
+            if noisy.get_pixel(x, y)[3] == 0 {
+                noisy.put_pixel(x, y, Rgba([255, 255, 255, 8]));
+            }
+        }
+        let mut noisy_report = base_report(&noisy);
+        apply_keyframe_hard_defects(&noisy, &identity, &pose, &mut noisy_report);
+        assert_eq!(noisy_report.verdict, ConsistencyVerdict::Blocked);
+        assert!(noisy_report.reasons.contains(&"low_alpha_noise".into()));
+
+        let mut leaked_pose = identity.clone();
+        for y in 48..56 {
+            for x in 4..124 {
+                leaked_pose.put_pixel(x, y, Rgba([145, 65, 200, 255]));
+            }
+        }
+        let mut pose_report = base_report(&leaked_pose);
+        apply_keyframe_hard_defects(&leaked_pose, &identity, &pose, &mut pose_report);
+        assert_eq!(pose_report.verdict, ConsistencyVerdict::Blocked);
+        assert!(pose_report.reasons.contains(&"pose_structure_leak".into()));
+
+        let mut extreme = identity.clone();
+        for y in 70..78 {
+            for x in 1..127 {
+                extreme.put_pixel(x, y, Rgba([20, 180, 80, 255]));
+            }
+        }
+        let mut extreme_report = base_report(&extreme);
+        apply_keyframe_hard_defects(&extreme, &identity, &pose, &mut extreme_report);
+        assert_eq!(extreme_report.verdict, ConsistencyVerdict::Blocked);
+        assert!(extreme_report
+            .reasons
+            .contains(&"silhouette_aspect_drift".into()));
     }
 
     #[test]

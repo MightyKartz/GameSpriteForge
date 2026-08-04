@@ -15,6 +15,36 @@ use crate::xai::XaiProvider;
 pub const XAI_PROVIDER_ID: &str = "xai";
 pub const FIXTURE_PROVIDER_ID: &str = "fixture";
 
+pub fn resolve_image_model(
+    provider_id: &str,
+    requested: Option<&str>,
+) -> Result<String, ProviderError> {
+    match provider_id {
+        XAI_PROVIDER_ID => Ok(requested
+            .map(str::to_owned)
+            .unwrap_or_else(|| XaiProvider::default_image_model().to_string())),
+        FIXTURE_PROVIDER_ID => Ok(requested.unwrap_or("fixture-image").to_string()),
+        other => Err(ProviderError::Unavailable(format!(
+            "unknown provider: {other}"
+        ))),
+    }
+}
+
+pub fn resolve_video_model(
+    provider_id: &str,
+    requested: Option<&str>,
+) -> Result<String, ProviderError> {
+    match provider_id {
+        XAI_PROVIDER_ID => Ok(requested
+            .map(str::to_owned)
+            .unwrap_or_else(|| XaiProvider::default_video_model().to_string())),
+        FIXTURE_PROVIDER_ID => Ok(requested.unwrap_or("fixture-video").to_string()),
+        other => Err(ProviderError::Unavailable(format!(
+            "unknown provider: {other}"
+        ))),
+    }
+}
+
 pub fn list_provider_health() -> Vec<ProviderHealth> {
     let xai = resolve_xai_credentials_for_profile("default")
         .map(XaiProvider::new)

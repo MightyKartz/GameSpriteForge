@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::env;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -29,6 +30,107 @@ const DEFAULT_VIDEO_EDIT_MODEL: &str = "grok-imagine-video";
 const JSON_RESPONSE_LIMIT: usize = 64 * 1024 * 1024;
 const MEDIA_RESPONSE_LIMIT: u64 = 512 * 1024 * 1024;
 const VIDEO_DATA_URL_INPUT_LIMIT: u64 = 32 * 1024 * 1024;
+const REAL_PROVIDER_ACCEPT_ENV: &str = "FORGE_REAL_PROVIDER_ACCEPT";
+const REAL_PROVIDER_MAX_REQUESTS_ENV: &str = "FORGE_REAL_PROVIDER_MAX_REQUESTS";
+const REAL_PROVIDER_MAX_COST_TICKS_ENV: &str = "FORGE_REAL_PROVIDER_MAX_COST_TICKS";
+
+#[derive(Debug, Clone, Copy)]
+struct RealProviderBudgetLimits {
+    max_requests: u32,
+    max_cost_ticks: u64,
+}
+
+#[derive(Debug, Default)]
+struct RealProviderBudgetState {
+    limits: Option<RealProviderBudgetLimits>,
+    reserved_requests: u32,
+    observed_cost_ticks: u64,
+}
+
+#[derive(Debug, Default)]
+struct RealProviderBudgetGuard {
+    state: Mutex<RealProviderBudgetState>,
+}
+
+impl RealProviderBudgetGuard {
+    fn ensure_accepted(&self) -> Result<RealProviderBudgetLimits, ProviderError> {
+        let mut state = self.state.lock().unwrap();
+        if let Some(limits) = state.limits {
+            return Ok(limits);
+        }
+        if env::var(REAL_PROVIDER_ACCEPT_ENV).as_deref() != Ok("1") {
+            return Err(ProviderError::RealProviderNotAccepted(format!(
+                "set {REAL_PROVIDER_ACCEPT_ENV}=1 only after reviewing the plan"
+            )));
+        }
+        let max_requests = parse_positive_env::<u32>(REAL_PROVIDER_MAX_REQUESTS_ENV)?;
+        let max_cost_ticks = parse_positive_env::<u64>(REAL_PROVIDER_MAX_COST_TICKS_ENV)?;
+        let limits = RealProviderBudgetLimits {
+            max_requests,
+            max_cost_ticks,
+        };
+        state.limits = Some(limits);
+        Ok(limits)
+    }
+
+    fn reserve_request(&self) -> Result<(), ProviderError> {
+        let limits = self.ensure_accepted()?;
+        let mut state = self.state.lock().unwrap();
+        if state.reserved_requests >= limits.max_requests {
+            return Err(ProviderError::RequestBudgetExceeded(format!(
+                "real Provider request limit {} has been reached",
+                limits.max_requests
+            )));
+        }
+        if state.observed_cost_ticks >= limits.max_cost_ticks {
+            return Err(ProviderError::CostBudgetExceeded(format!(
+                "real Provider cost limit {} ticks has been reached",
+                limits.max_cost_ticks
+            )));
+        }
+        state.reserved_requests += 1;
+        Ok(())
+    }
+
+    fn record_cost(&self, ticks: Option<u64>) -> Result<(), ProviderError> {
+        let limits = self.ensure_accepted()?;
+        let ticks = ticks.ok_or_else(|| {
+            ProviderError::CostBudgetExceeded(
+                "real Provider response omitted costInUsdTicks; refusing an unmetered result"
+                    .into(),
+            )
+        })?;
+        let mut state = self.state.lock().unwrap();
+        state.observed_cost_ticks = state.observed_cost_ticks.saturating_add(ticks);
+        if state.observed_cost_ticks > limits.max_cost_ticks {
+            return Err(ProviderError::CostBudgetExceeded(format!(
+                "real Provider cost {} exceeds the configured limit {} ticks",
+                state.observed_cost_ticks, limits.max_cost_ticks
+            )));
+        }
+        Ok(())
+    }
+}
+
+fn parse_positive_env<T>(name: &str) -> Result<T, ProviderError>
+where
+    T: std::str::FromStr + PartialEq + Default,
+{
+    let raw = env::var(name).map_err(|_| {
+        ProviderError::RealProviderNotAccepted(format!(
+            "{name} is required for real Provider execution"
+        ))
+    })?;
+    let value = raw.parse::<T>().map_err(|_| {
+        ProviderError::RealProviderNotAccepted(format!("{name} must be a positive integer"))
+    })?;
+    if value == T::default() {
+        return Err(ProviderError::RealProviderNotAccepted(format!(
+            "{name} must be greater than zero"
+        )));
+    }
+    Ok(value)
+}
 
 pub struct XaiProvider {
     credentials: Arc<dyn CredentialProvider>,
@@ -36,6 +138,7 @@ pub struct XaiProvider {
     base_url: String,
     usage: Mutex<ProviderUsage>,
     temporary_files: Mutex<HashMap<String, String>>,
+    real_budget: Option<RealProviderBudgetGuard>,
 }
 
 impl XaiProvider {
@@ -58,12 +161,14 @@ impl XaiProvider {
             .user_agent("Game-Sprite-Forge/0.1")
             .build()
             .map_err(|error| ProviderError::Request(error.to_string()))?;
+        let real_budget = (!base_url_is_loopback(&base_url)).then(Default::default);
         Ok(Self {
             credentials,
             client,
             base_url,
             usage: Mutex::new(ProviderUsage::default()),
             temporary_files: Mutex::new(HashMap::new()),
+            real_budget,
         })
     }
 
@@ -79,6 +184,18 @@ impl XaiProvider {
             ProviderCapability::Cancel,
             ProviderCapability::Usage,
         ]
+    }
+
+    pub fn default_image_model() -> &'static str {
+        DEFAULT_IMAGE_MODEL
+    }
+
+    pub fn default_video_model() -> &'static str {
+        DEFAULT_VIDEO_MODEL
+    }
+
+    pub fn default_video_edit_model() -> &'static str {
+        DEFAULT_VIDEO_EDIT_MODEL
     }
 
     pub fn constraints() -> ProviderConstraints {
@@ -98,6 +215,7 @@ impl XaiProvider {
         payload: Value,
         output_path: &Path,
     ) -> Result<ProviderMedia, ProviderError> {
+        self.reserve_real_request()?;
         let url = format!("{}/{}", self.base_url, endpoint.trim_start_matches('/'));
         let response = self.send_authenticated(|bearer| {
             self.client
@@ -107,7 +225,7 @@ impl XaiProvider {
                 .json(&payload)
         })?;
         let value = parse_json_response(response, "xAI image request")?;
-        self.record_usage(&value, true, false);
+        self.record_usage(&value, true, false)?;
         let first = value
             .get("data")
             .and_then(Value::as_array)
@@ -198,7 +316,26 @@ impl XaiProvider {
         }
     }
 
-    fn record_usage(&self, value: &Value, image: bool, video: bool) {
+    fn ensure_real_accepted(&self) -> Result<(), ProviderError> {
+        self.real_budget
+            .as_ref()
+            .map(RealProviderBudgetGuard::ensure_accepted)
+            .transpose()
+            .map(|_| ())
+    }
+
+    fn reserve_real_request(&self) -> Result<(), ProviderError> {
+        self.real_budget
+            .as_ref()
+            .map(RealProviderBudgetGuard::reserve_request)
+            .transpose()
+            .map(|_| ())
+    }
+
+    fn record_usage(&self, value: &Value, image: bool, video: bool) -> Result<(), ProviderError> {
+        let ticks = value
+            .pointer("/usage/cost_in_usd_ticks")
+            .and_then(Value::as_u64);
         let mut usage = self.usage.lock().unwrap();
         usage.requests += 1;
         if image {
@@ -207,15 +344,18 @@ impl XaiProvider {
         if video {
             usage.generated_videos += 1;
         }
-        if let Some(ticks) = value
-            .pointer("/usage/cost_in_usd_ticks")
-            .and_then(Value::as_u64)
-        {
+        if let Some(ticks) = ticks {
             usage.cost_in_usd_ticks = Some(usage.cost_in_usd_ticks.unwrap_or(0) + ticks);
         }
+        drop(usage);
+        if let Some(budget) = &self.real_budget {
+            budget.record_cost(ticks)?;
+        }
+        Ok(())
     }
 
     fn upload_private_file(&self, bytes: &[u8], file_name: &str) -> Result<String, ProviderError> {
+        self.reserve_real_request()?;
         let url = format!("{}/files", self.base_url);
         let bytes = bytes.to_vec();
         let file_name = file_name.to_string();
@@ -248,6 +388,7 @@ impl XaiProvider {
                 "refusing to delete an invalid xAI file id".into(),
             ));
         }
+        self.ensure_real_accepted()?;
         let url = format!("{}/files/{file_id}", self.base_url);
         self.usage.lock().unwrap().requests += 1;
         self.send_authenticated(|bearer| self.client.delete(&url).bearer_auth(bearer))?;
@@ -286,6 +427,18 @@ impl MediaGenerationProvider for XaiProvider {
                 None
             },
         }
+    }
+
+    fn resolved_image_model(&self, requested: Option<&str>) -> Option<String> {
+        Some(requested.unwrap_or(DEFAULT_IMAGE_MODEL).to_string())
+    }
+
+    fn resolved_video_model(&self, requested: Option<&str>) -> Option<String> {
+        Some(requested.unwrap_or(DEFAULT_VIDEO_MODEL).to_string())
+    }
+
+    fn resolved_video_edit_model(&self, requested: Option<&str>) -> Option<String> {
+        Some(requested.unwrap_or(DEFAULT_VIDEO_EDIT_MODEL).to_string())
     }
 
     fn generate_image(
@@ -380,6 +533,7 @@ impl MediaGenerationProvider for XaiProvider {
                 );
             }
         }
+        self.reserve_real_request()?;
         let url = format!("{}/videos/generations", self.base_url);
         let response = self.send_authenticated(|bearer| {
             self.client
@@ -389,7 +543,7 @@ impl MediaGenerationProvider for XaiProvider {
                 .json(&payload)
         })?;
         let value = parse_json_response(response, "xAI video generation")?;
-        self.record_usage(&value, false, false);
+        self.record_usage(&value, false, false)?;
         let request_id = value
             .get("request_id")
             .and_then(Value::as_str)
@@ -451,6 +605,7 @@ impl MediaGenerationProvider for XaiProvider {
             "prompt": request.prompt,
             "video": video,
         });
+        self.reserve_real_request()?;
         let url = format!("{}/videos/edits", self.base_url);
         let response = self.send_authenticated(|bearer| {
             self.client
@@ -477,7 +632,7 @@ impl MediaGenerationProvider for XaiProvider {
                 return Err(error);
             }
         };
-        self.record_usage(&value, false, false);
+        self.record_usage(&value, false, false)?;
         self.usage.lock().unwrap().edited_videos += 1;
         let request_id = match value
             .get("request_id")
@@ -516,6 +671,7 @@ impl MediaGenerationProvider for XaiProvider {
                 "provider ticket does not belong to xAI".into(),
             ));
         }
+        self.ensure_real_accepted()?;
         let url = format!("{}/videos/{}", self.base_url, ticket.request_id);
         let response =
             self.send_authenticated(|bearer| self.client.get(&url).bearer_auth(bearer))?;
@@ -541,7 +697,7 @@ impl MediaGenerationProvider for XaiProvider {
                 let cleanup_result = self.cleanup_ticket_file(&ticket.request_id);
                 download_result?;
                 cleanup_result?;
-                self.record_usage(&value, false, true);
+                self.record_usage(&value, false, true)?;
                 Ok(ProviderPoll::Succeeded(ProviderMedia {
                     path: output_path.to_path_buf(),
                     mime_type: "video/mp4".into(),
@@ -1320,5 +1476,64 @@ mod tests {
             )
             .unwrap();
         server.join().unwrap();
+    }
+
+    #[test]
+    fn real_provider_budget_requires_acceptance_and_enforces_request_and_cost_limits() {
+        temp_env::with_vars(
+            [
+                (REAL_PROVIDER_ACCEPT_ENV, None::<&str>),
+                (REAL_PROVIDER_MAX_REQUESTS_ENV, None::<&str>),
+                (REAL_PROVIDER_MAX_COST_TICKS_ENV, None::<&str>),
+            ],
+            || {
+                let guard = RealProviderBudgetGuard::default();
+                assert!(matches!(
+                    guard.reserve_request(),
+                    Err(ProviderError::RealProviderNotAccepted(_))
+                ));
+            },
+        );
+
+        temp_env::with_vars(
+            [
+                (REAL_PROVIDER_ACCEPT_ENV, Some("1")),
+                (REAL_PROVIDER_MAX_REQUESTS_ENV, Some("2")),
+                (REAL_PROVIDER_MAX_COST_TICKS_ENV, Some("100")),
+            ],
+            || {
+                let guard = RealProviderBudgetGuard::default();
+                guard.reserve_request().unwrap();
+                guard.record_cost(Some(40)).unwrap();
+                guard.reserve_request().unwrap();
+                assert!(matches!(
+                    guard.reserve_request(),
+                    Err(ProviderError::RequestBudgetExceeded(_))
+                ));
+                assert!(matches!(
+                    guard.record_cost(Some(61)),
+                    Err(ProviderError::CostBudgetExceeded(_))
+                ));
+            },
+        );
+    }
+
+    #[test]
+    fn xai_resolves_default_models_for_provenance() {
+        let credentials: Arc<dyn CredentialProvider> =
+            Arc::new(TestCredential("api_key", "secret"));
+        let provider = XaiProvider::with_base_url(credentials, "http://127.0.0.1:1/v1").unwrap();
+        assert_eq!(
+            provider.resolved_image_model(None).as_deref(),
+            Some(DEFAULT_IMAGE_MODEL)
+        );
+        assert_eq!(
+            provider.resolved_video_model(None).as_deref(),
+            Some(DEFAULT_VIDEO_MODEL)
+        );
+        assert_eq!(
+            provider.resolved_video_edit_model(None).as_deref(),
+            Some(DEFAULT_VIDEO_EDIT_MODEL)
+        );
     }
 }

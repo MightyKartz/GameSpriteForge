@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "2",
+  "kind": "character",
+  "id": "real-void-mechanic-v2",
+  "name": "Real Void Mechanic V2",
+  "subject": {
+    "id": "real-void-mechanic",
+    "revision": "4faea3593925468a"
+  },
+  "workflow": {
+    "id": "topdown-keyframes",
+    "version": "2.0.0"
+  },
+  "license": "private"
+}

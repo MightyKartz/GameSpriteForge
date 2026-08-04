@@ -34,3 +34,4 @@ keyring = { version = "3.6.3", default-features = false, features = ["windows-na
 
 [dev-dependencies]
 forge_pack = { package = "pack", path = "../pack" }
+temp-env = "0.3"

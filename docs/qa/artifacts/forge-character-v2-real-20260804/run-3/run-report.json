@@ -1,0 +1,200 @@
+{
+  "date": "2026-08-04",
+  "run": "run-3",
+  "gitCommit": "33cea99427fa7123a1b2425825a09964f7419d3a",
+  "style": "retro-scifi",
+  "subjectRevision": "4faea3593925468a",
+  "jobIds": {
+    "style_lock": "d2803c38-8347-4c07-9ae8-775187a85211",
+    "subject_lock": "714836aa-5456-4ba0-8365-e2bf83565cda",
+    "character_generate": "318d2f48-8d67-49a5-9b0c-23f06d61ebde"
+  },
+  "planEstimate": {
+    "providerRequestEstimate": 32,
+    "maximumProviderRequests": 64,
+    "cacheHitCount": 0,
+    "providerId": "xai",
+    "workflow": "topdown-keyframes@2.0.0"
+  },
+  "jobReport": {
+    "jobId": "318d2f48-8d67-49a5-9b0c-23f06d61ebde",
+    "lifecycleState": "failed",
+    "errorCode": "keyframe_regeneration_required",
+    "recoverable": true,
+    "providerRequestCount": 46,
+    "providerCostInUsdTicks": 36800000000,
+    "overallVerdict": "blocked",
+    "verdictCounts": {
+      "awaiting_review": 5,
+      "blocked": 2,
+      "game_ready": 22,
+      "regenerate": 3
+    },
+    "perAction": {
+      "idle": {
+        "awaiting_review": 1,
+        "game_ready": 7
+      },
+      "walk_down": {
+        "awaiting_review": 1,
+        "blocked": 1,
+        "game_ready": 6
+      },
+      "walk_right": {
+        "awaiting_review": 1,
+        "game_ready": 6,
+        "regenerate": 1
+      },
+      "walk_up": {
+        "awaiting_review": 2,
+        "blocked": 1,
+        "game_ready": 3,
+        "regenerate": 2
+      }
+    },
+    "nonGameReadyItems": [
+      {
+        "id": "idle/frame-03",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_up/frame-01",
+        "attempt": 2,
+        "verdict": "blocked",
+        "reasons": [
+          "multiple_subjects",
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_up/frame-04",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_up/frame-05",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_up/frame-06",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_up/frame-07",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_right/frame-02",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_right/frame-06",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_down/frame-02",
+        "attempt": 2,
+        "verdict": "blocked",
+        "reasons": [
+          "multiple_subjects",
+          "foreground_scale_drift",
+          "edge_density_drift",
+          "anchor_drift"
+        ]
+      },
+      {
+        "id": "walk_down/frame-07",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "identity_similarity_low"
+        ]
+      }
+    ]
+  },
+  "retryDecision": "no retry: 10/32 frames missed quality (3 regenerate, 2 blocked, 5 awaiting_review) after the workflows built-in second attempt - misses are spread across all four actions with edge_density_drift dominant (8 of 10 items), so this is a systemic quality miss, not the single-item miss the one allowed targeted retry covers; run-3 used 48 / 37900000000 of its 70 / 55800000000 guard",
+  "packPath": null,
+  "packSha256": null,
+  "packValidate": "not_executed: generation job failed at the consistency gate before pack assembly; forge asset list is empty (no .gsfpack produced)",
+  "godot": {
+    "planInstall": "not_executed: no pack",
+    "import": "not_executed: no pack",
+    "resourceSizes": null,
+    "embeddedScan": null,
+    "assetsJson": null,
+    "note": "Minimal verify project stub was pre-created at target/qa/character-v2-real-20260804/run-3/godot-project but unused"
+  },
+  "providerUsage": {
+    "requests": 48,
+    "costInUsdTicks": 37900000000,
+    "generatedImages": 48,
+    "perJob": [
+      {
+        "jobId": "d2803c38-8347-4c07-9ae8-775187a85211",
+        "role": "style lock",
+        "requests": 1,
+        "costInUsdTicks": 500000000
+      },
+      {
+        "jobId": "714836aa-5456-4ba0-8365-e2bf83565cda",
+        "role": "subject lock",
+        "requests": 1,
+        "costInUsdTicks": 600000000
+      },
+      {
+        "jobId": "318d2f48-8d67-49a5-9b0c-23f06d61ebde",
+        "role": "character generate (failed)",
+        "requests": 46,
+        "costInUsdTicks": 36800000000
+      }
+    ]
+  },
+  "budgetWarning": null,
+  "budgetNote": "48 requests / 37900000000 ticks: below the 200-request / 120000000000-tick warning thresholds and within the run-3 guard of 70 requests / 55800000000 ticks. FINAL 3-run totals: 167 requests / 132100000000 ticks of the 250-request / 150000000000-tick budget (run-1 62/49100000000, run-2 57/45100000000, run-3 48/37900000000); 83 requests / 17900000000 ticks unspent",
+  "evidence": {
+    "samplePreview": {
+      "file": "sample-idle-frame-00.png",
+      "source": "jobs/318d2f48/keyframes/idle/frame-00.png",
+      "verdict": "game_ready",
+      "sha256": "23f6e439299c9d97264cfda7497b81d5b32d87836527931e94a2ae81f351d1ba"
+    },
+    "specs": [
+      "style.json",
+      "subject.json",
+      "character-v2.json"
+    ]
+  },
+  "credentialScan": {
+    "pattern": "authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key",
+    "matches": 0,
+    "result": "clean"
+  }
+}

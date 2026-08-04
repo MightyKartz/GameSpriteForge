@@ -231,6 +231,18 @@ impl MediaGenerationProvider for FixtureProvider {
         }
     }
 
+    fn resolved_image_model(&self, requested: Option<&str>) -> Option<String> {
+        Some(requested.unwrap_or("fixture-image").to_string())
+    }
+
+    fn resolved_video_model(&self, requested: Option<&str>) -> Option<String> {
+        Some(requested.unwrap_or("fixture-video").to_string())
+    }
+
+    fn resolved_video_edit_model(&self, requested: Option<&str>) -> Option<String> {
+        Some(requested.unwrap_or("fixture-video-edit").to_string())
+    }
+
     fn generate_image(
         &self,
         request: &GenerateImageRequest,

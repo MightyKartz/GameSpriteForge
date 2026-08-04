@@ -12,10 +12,10 @@ use sha2::{Digest, Sha256};
 use thiserror::Error;
 
 use crate::asset_project::{
-    assess_consistency, build_style_lock, export_static_pack, hash_file as hash_asset_file,
-    image_signature, normalize_static_image, read_style_lock, write_contact_sheet,
-    ConsistencyItemReport, ConsistencyReportV1, ConsistencyVerdict, StaticAssetKind,
-    StaticPackItem, CONSISTENCY_PROFILE,
+    apply_keyframe_hard_defects, assess_consistency, build_style_lock, export_static_pack,
+    hash_file as hash_asset_file, image_signature, normalize_static_image, read_style_lock,
+    write_contact_sheet, ConsistencyItemReport, ConsistencyReportV1, ConsistencyVerdict,
+    StaticAssetKind, StaticPackItem, CONSISTENCY_PROFILE, KEYFRAME_HARD_GATE_PROFILE,
 };
 use crate::catalog::{
     link_catalog_install, register_catalog_asset, CatalogProviderRefV1, CatalogStyleRefV1,
@@ -37,8 +37,9 @@ use crate::project::{
 };
 use crate::provider::{
     EditImageRequest, EditVideoRequest, GenerateImageRequest, GenerateVideoRequest,
-    MediaGenerationProvider, ProviderCapability, ProviderImageReference, ProviderInputRef,
-    ProviderMedia, ProviderPoll, ProviderTicket, ProviderUsage, ReferenceRole, VideoGenerationMode,
+    MediaGenerationProvider, ProviderCapability, ProviderError, ProviderImageReference,
+    ProviderInputRef, ProviderMedia, ProviderPoll, ProviderTicket, ProviderUsage, ReferenceRole,
+    VideoGenerationMode,
 };
 use crate::quality::{
     compute_quality_report, compute_quality_report_for_animation, select_loop_frames,
@@ -85,8 +86,24 @@ pub enum AutomationRunError {
     Json(#[from] serde_json::Error),
     #[error("asset processing failed: {0}")]
     Processing(String),
+    #[error("{0}")]
+    Provider(#[from] ProviderError),
     #[error("job was cancelled")]
     Cancelled,
+}
+
+impl AutomationRunError {
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::Job(_) => "job_error",
+            Self::Io(_) => "io_error",
+            Self::Image(_) => "image_error",
+            Self::Json(_) => "invalid_json",
+            Self::Processing(_) => "automation_failed",
+            Self::Provider(error) => error.code(),
+            Self::Cancelled => "cancelled",
+        }
+    }
 }
 
 pub fn stage_plan_job(
@@ -308,7 +325,8 @@ pub fn run_operation_with_provider(
             }
             Ok(record)
         }
-        Err(AutomationRunError::Cancelled) => {
+        Err(AutomationRunError::Cancelled)
+        | Err(AutomationRunError::Provider(ProviderError::Cancelled)) => {
             if let Some(usage_result) = usage_result {
                 usage_result?;
             }
@@ -329,7 +347,7 @@ pub fn run_operation_with_provider(
                 record.state = JobState::Failed;
                 record.worker_pid = None;
                 record.error_summary = Some(message.clone());
-                record.error_code = Some("automation_failed".into());
+                record.error_code = Some(error.code().into());
                 record.recoverable = true;
                 record.next_actions = vec!["job_report".into(), "prepare_new_plan".into()];
             });
@@ -1677,6 +1695,21 @@ fn run_generate_keyframe_character_pack(
             "SubjectLock, StyleLock, and Provider profile do not match".into(),
         ));
     }
+    let image_model = provider
+        .resolved_image_model(
+            request
+                .generation
+                .image_model
+                .as_deref()
+                .or(subject.image_model.as_deref())
+                .or(style.image_model.as_deref()),
+        )
+        .ok_or_else(|| {
+            AutomationRunError::Processing(
+                "provider_model_unresolved: keyframe image model must be locked before execution"
+                    .into(),
+            )
+        })?;
 
     let record = store.read_record(job_id)?;
     let provider_root = record.job_dir.join("source/provider-keyframes");
@@ -1689,7 +1722,8 @@ fn run_generate_keyframe_character_pack(
     fs::create_dir_all(&accepted_root)?;
     let cache = ContentCache::default_store()
         .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
-    let identity = image_signature(&image::open(&subject.canonical_path)?.to_rgba8());
+    let identity_image = image::open(&subject.canonical_path)?.to_rgba8();
+    let identity = image_signature(&identity_image);
     let source_graph = request
         .reuse_from_job_dir
         .as_ref()
@@ -1725,6 +1759,10 @@ fn run_generate_keyframe_character_pack(
             check_cancelled(store, job_id)?;
             let node_id = format!("frame_image:{action}:{frame}");
             let output_path = action_root.join(format!("frame-{frame:02}.png"));
+            let pose_path = pose_root.join(format!("{action}-frame-{frame:02}.png"));
+            write_pose_guide(&pose_path, action, frame, style.character_canvas_size)?;
+            let pose_sha256 = hash_file(&pose_path)?;
+            let pose_image = image::open(&pose_path)?.to_rgba8();
             let should_regenerate = request.reuse_from_job_dir.is_none()
                 || (provider_frame_retry
                     && selected_retry_frames.contains(&((*action).to_string(), frame)));
@@ -1760,8 +1798,9 @@ fn run_generate_keyframe_character_pack(
                 }
                 fs::copy(&source_output.path, &output_path)?;
                 let actual = hash_file(&output_path)?;
-                let signature = image_signature(&image::open(&output_path)?.to_rgba8());
-                reports.push(assess_consistency(
+                let reused_image = image::open(&output_path)?.to_rgba8();
+                let signature = image_signature(&reused_image);
+                let mut report = assess_consistency(
                     &format!("{action}/frame-{frame:02}"),
                     0,
                     &signature,
@@ -1769,7 +1808,14 @@ fn run_generate_keyframe_character_pack(
                     Some(&identity),
                     Some(&identity),
                     style.character_canvas_size,
-                ));
+                );
+                apply_keyframe_hard_defects(
+                    &reused_image,
+                    &identity_image,
+                    &pose_image,
+                    &mut report,
+                );
+                reports.push(report);
                 let mut reused = source_node.clone();
                 reused.outputs = vec![WorkflowArtifactV1 {
                     sha256: actual,
@@ -1782,9 +1828,6 @@ fn run_generate_keyframe_character_pack(
                 continue;
             }
 
-            let pose_path = pose_root.join(format!("{action}-frame-{frame:02}.png"));
-            write_pose_guide(&pose_path, action, frame, style.character_canvas_size)?;
-            let pose_sha256 = hash_file(&pose_path)?;
             let input_sha256 = vec![
                 subject.canonical_sha256.clone(),
                 style.board_sha256.clone(),
@@ -1814,7 +1857,7 @@ fn run_generate_keyframe_character_pack(
                     "frame_image",
                     "provider-image-edit@2.0.0",
                     Some(provider.id()),
-                    request.generation.image_model.as_deref(),
+                    Some(&image_model),
                     &parameters,
                     &input_sha256,
                 )
@@ -1868,7 +1911,7 @@ fn run_generate_keyframe_character_pack(
                         .edit_image(
                             &EditImageRequest {
                                 prompt: keyframe_prompt(action, frame, attempt),
-                                model: request.generation.image_model.clone(),
+                                model: Some(image_model.clone()),
                                 references,
                                 aspect_ratio: "1:1".into(),
                                 resolution: "1k".into(),
@@ -1890,7 +1933,7 @@ fn run_generate_keyframe_character_pack(
                 )
                 .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
                 let signature = image_signature(&normalized);
-                let report = assess_consistency(
+                let mut report = assess_consistency(
                     &format!("{action}/frame-{frame:02}"),
                     attempt,
                     &signature,
@@ -1899,6 +1942,7 @@ fn run_generate_keyframe_character_pack(
                     Some(&identity),
                     style.character_canvas_size,
                 );
+                apply_keyframe_hard_defects(&normalized, &identity_image, &pose_image, &mut report);
                 final_raw_sha = Some(raw_sha256);
                 final_cache_key = Some(cache_key);
                 let accepted = report.verdict == ConsistencyVerdict::GameReady;
@@ -1948,7 +1992,7 @@ fn run_generate_keyframe_character_pack(
                 provider_request,
                 cache_hit,
                 provider_id: Some(provider.id().into()),
-                model: request.generation.image_model.clone(),
+                model: Some(image_model.clone()),
             });
             manifest_frames.push(serde_json::json!({
                 "animation": action,
@@ -2005,6 +2049,8 @@ fn run_generate_keyframe_character_pack(
             "schemaVersion": "1",
             "providerId": provider.id(),
             "profileId": request.profile_id,
+            "model": image_model.clone(),
+            "hardGateProfile": KEYFRAME_HARD_GATE_PROFILE,
             "workflow": "topdown-keyframes@2.0.0",
             "subject": {
                 "id": subject.id,
@@ -2177,7 +2223,7 @@ fn run_generate_keyframe_character_pack(
                         provider: Some(CatalogProviderRefV1 {
                             provider_id: request.provider_id.clone(),
                             profile_id: request.profile_id.clone(),
-                            model: request.generation.image_model.clone(),
+                            model: Some(image_model.clone()),
                         }),
                         installed: None,
                         created_at: Utc::now(),
@@ -4139,7 +4185,7 @@ fn animation_video_repair_prompt(action: &str) -> String {
 fn provider_error(error: crate::provider::ProviderError) -> AutomationRunError {
     match error {
         crate::provider::ProviderError::Cancelled => AutomationRunError::Cancelled,
-        other => AutomationRunError::Processing(other.to_string()),
+        other => AutomationRunError::Provider(other),
     }
 }
 

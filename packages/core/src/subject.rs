@@ -166,7 +166,9 @@ pub fn build_subject_lock(
         .join(STYLE_LOCK_FILE);
     let style =
         read_style_lock(&style_path).map_err(|error| SubjectError::Invalid(error.to_string()))?;
-    let spec = read_subject_spec(spec_path)?;
+    let mut spec = read_subject_spec(spec_path)?;
+    spec.image_model =
+        provider.resolved_image_model(spec.image_model.as_deref().or(style.image_model.as_deref()));
     let reference_sha256 = spec
         .reference_images
         .iter()

@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "1",
+  "profile": "forge-phase0-regression-baseline@1.0.0",
+  "date": "2026-08-04T05:30:52Z",
+  "git": {
+    "commit": "69e6aec92df999f8b18e60acb214b43a339004c3",
+    "branch": "codex/v0.3-character-benchmarks",
+    "snapshot_file": "git-status.txt",
+    "mid_run_external_change": "README.md (13:01:11 local) and README.zh-CN.md (13:01:30 local) were modified by an external process while step c was running; not touched by any baseline step. Verified no executed script or crate writes repo-root README files. All other tracked modifications match the start-of-run snapshot exactly."
+  },
+  "environment": {
+    "forge_binary": "target/debug/forge",
+    "forge_version": "forge 0.2.0-cli.1",
+    "cli_help_file": "cli-help-baseline.txt",
+    "cli_version_file": "cli-version.txt",
+    "real_provider_calls": "none — FORGE_REAL_PROVIDER_ACCEPT was never set; all runs used the fixture provider or offline planning"
+  },
+  "steps": [
+    {
+      "id": "a-cargo-fmt",
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0,
+      "log_file": "step-a-cargo-fmt.log",
+      "status": "pass",
+      "notes": "Clean; log is empty (no diffs)."
+    },
+    {
+      "id": "b-cargo-clippy",
+      "command": "cargo clippy --workspace --all-targets --all-features -- -D warnings",
+      "exit_code": 0,
+      "log_file": "step-b-cargo-clippy.log",
+      "status": "pass",
+      "notes": "No warnings; finished in ~3m35s."
+    },
+    {
+      "id": "c-cargo-test",
+      "command": "cargo test --workspace --no-fail-fast",
+      "exit_code": 0,
+      "log_file": "step-c-cargo-test.log",
+      "status": "pass",
+      "notes": "135 passed, 0 failed across 21 test binaries (unit + integration), default features."
+    },
+    {
+      "id": "d-cli-product-contract",
+      "command": "bash scripts/test-cli-product.sh",
+      "exit_code": 0,
+      "log_file": "step-d-cli-product.log",
+      "status": "pass",
+      "notes": "Fixture-provider end-to-end CLI contract: project/style/generate/retry/review/cancel/pack validate/godot plan-install. Ends with 'PASS Forge CLI product contract'."
+    },
+    {
+      "id": "e-v03-release-matrix",
+      "command": "bash scripts/test-v03-release-matrix.sh",
+      "exit_code": 0,
+      "log_file": "step-e-v03-release-matrix.log",
+      "status": "pass",
+      "notes": "6/6 gates pass (rust-quality, character-v2-contract, character-v2-full-matrix, static-cli-contract, static-five-style-matrix, world-assets-experimental); verdict=pass. Reviewed before running: xai references are offline cost-planning plus a cost-acceptance guard that is expected to fail; actual runs use the fixture provider. Full report: target/qa/v0.3-release-matrix-20260804T050933Z/v0.3-test-report.json."
+    },
+    {
+      "id": "f-cli-installer",
+      "command": "bash scripts/test-cli-installer.sh",
+      "exit_code": 0,
+      "log_file": "step-f-cli-installer.log",
+      "status": "pass",
+      "notes": "Reviewed before running: fully offline (mktemp sandbox, file:// release URL, /usr/bin/true payload binaries, FORGE_INSTALL_TEST_MODE=1); no network, no real provider calls. Ends with 'PASS Forge CLI installer contract'."
+    },
+    {
+      "id": "g-cli-signing-contract",
+      "command": "bash scripts/test-cli-signing-contract.sh",
+      "exit_code": 0,
+      "log_file": "step-g-cli-signing-contract.log",
+      "status": "pass",
+      "notes": "Ad-hoc codesign checks on temp copies of /usr/bin/true plus grep contracts over release workflow/install.sh. Ends with 'PASS Forge CLI unsigned release and optional signing contract'."
+    }
+  ],
+  "summary": {
+    "total": 7,
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "pre_existing_failures": []
+  }
+}

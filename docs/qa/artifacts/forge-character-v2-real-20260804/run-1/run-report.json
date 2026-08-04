@@ -1,0 +1,291 @@
+{
+  "date": "2026-08-04",
+  "run": "run-1",
+  "gitCommit": "33cea99427fa7123a1b2425825a09964f7419d3a",
+  "style": "forest-pixel",
+  "subjectRevision": "11ba6a7a2479feb9",
+  "networkIncident": {
+    "description": "System TUN proxy fake-IP (198.18.0.0/16) route for api.x.ai was broken (TLS reset during handshake); direct egress to the real Cloudflare IPs worked. Ran a localhost-only CONNECT proxy (127.0.0.1:18231) that resolves targets via DoH (1.1.1.1) and relays end-to-end TLS; all forge commands used HTTPS_PROXY pointing at it. No credentials or plaintext transit the workaround.",
+    "firstStyleAttemptJobId": "895483fc-ad3d-4495-9015-f327f52ba163"
+  },
+  "jobIds": {
+    "style_attempt_1_failed_network": "895483fc-ad3d-4495-9015-f327f52ba163",
+    "style_lock": "b41d1ffb-8f95-4f68-904a-44161d1d5981",
+    "subject_lock": "ed71fa30-a2af-4049-8bb4-a08612e6f38a",
+    "character_generate": "272b5dd9-0e2d-42bb-b16f-91c704d0b5fc"
+  },
+  "planEstimate": {
+    "providerRequestEstimate": 32,
+    "maximumProviderRequests": 64,
+    "cacheHitCount": 0,
+    "providerId": "xai",
+    "workflow": "topdown-keyframes@2.0.0"
+  },
+  "jobReport": {
+    "jobId": "272b5dd9-0e2d-42bb-b16f-91c704d0b5fc",
+    "lifecycleState": "failed",
+    "errorCode": "keyframe_regeneration_required",
+    "recoverable": true,
+    "providerRequestCount": 60,
+    "providerCostInUsdTicks": 48000000000,
+    "overallVerdict": "blocked",
+    "verdictCounts": {
+      "awaiting_review": 2,
+      "blocked": 4,
+      "game_ready": 14,
+      "regenerate": 12
+    },
+    "perAction": {
+      "idle": {
+        "awaiting_review": 1,
+        "blocked": 1,
+        "game_ready": 4,
+        "regenerate": 2
+      },
+      "walk_down": {
+        "awaiting_review": 1,
+        "game_ready": 4,
+        "regenerate": 3
+      },
+      "walk_right": {
+        "blocked": 2,
+        "game_ready": 2,
+        "regenerate": 4
+      },
+      "walk_up": {
+        "blocked": 1,
+        "game_ready": 4,
+        "regenerate": 3
+      }
+    },
+    "nonGameReadyItems": [
+      {
+        "id": "idle/frame-01",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "idle/frame-02",
+        "attempt": 2,
+        "verdict": "blocked",
+        "reasons": [
+          "multiple_subjects",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "idle/frame-04",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "idle/frame-07",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "palette_drift",
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_up/frame-02",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_up/frame-03",
+        "attempt": 2,
+        "verdict": "blocked",
+        "reasons": [
+          "multiple_subjects"
+        ]
+      },
+      {
+        "id": "walk_up/frame-05",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_up/frame-07",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_right/frame-00",
+        "attempt": 2,
+        "verdict": "blocked",
+        "reasons": [
+          "multiple_subjects",
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_right/frame-01",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_right/frame-03",
+        "attempt": 2,
+        "verdict": "blocked",
+        "reasons": [
+          "multiple_subjects",
+          "palette_drift",
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_right/frame-04",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "palette_drift",
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_right/frame-05",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_right/frame-07",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "palette_drift",
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_down/frame-01",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_down/frame-02",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_down/frame-03",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_down/frame-04",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      }
+    ]
+  },
+  "retryDecision": "no retry: 16/32 frames missed quality (12 regenerate, 4 blocked, 2 awaiting_review) after the workflows built-in second attempt - this is a systemic quality miss, not the single-item miss the one allowed targeted retry covers; a full 16-18 frame regen would also exceed the run-1 guard of ~70 requests / 60000000000 ticks",
+  "packPath": null,
+  "packSha256": null,
+  "packValidate": "not_executed: generation job failed at the consistency gate before pack assembly; forge asset list is empty (no .gsfpack produced)",
+  "godot": {
+    "planInstall": "not_executed: no pack",
+    "import": "not_executed: no pack",
+    "resourceSizes": null,
+    "embeddedScan": null,
+    "assetsJson": null,
+    "note": "Minimal verify project stub was pre-created at target/qa/character-v2-real-20260804/run-1/godot-project but unused"
+  },
+  "providerUsage": {
+    "requests": 62,
+    "costInUsdTicks": 49100000000,
+    "generatedImages": 62,
+    "perJob": [
+      {
+        "jobId": "895483fc-ad3d-4495-9015-f327f52ba163",
+        "role": "style attempt 1 (network failure)",
+        "requests": 0,
+        "costInUsdTicks": 0
+      },
+      {
+        "jobId": "b41d1ffb-8f95-4f68-904a-44161d1d5981",
+        "role": "style lock",
+        "requests": 1,
+        "costInUsdTicks": 500000000
+      },
+      {
+        "jobId": "ed71fa30-a2af-4049-8bb4-a08612e6f38a",
+        "role": "subject lock",
+        "requests": 1,
+        "costInUsdTicks": 600000000
+      },
+      {
+        "jobId": "272b5dd9-0e2d-42bb-b16f-91c704d0b5fc",
+        "role": "character generate (failed)",
+        "requests": 60,
+        "costInUsdTicks": 48000000000
+      }
+    ]
+  },
+  "budgetWarning": null,
+  "budgetNote": "62 requests / 49100000000 ticks: below the 200-request / 120000000000-tick warning thresholds and within the run-1 guard of ~70 requests / 60000000000 ticks; 188 requests / 100900000000 ticks remain of the 3-run budget",
+  "evidence": {
+    "samplePreview": {
+      "file": "sample-walk_up-frame-00.png",
+      "source": "jobs/272b5dd9/keyframes/walk_up/frame-00.png",
+      "verdict": "game_ready",
+      "sha256": "020e1b2bb85cef653854944c5b9d9a04341a531fff8233aa9efe430c50d12d4b"
+    },
+    "specs": [
+      "style.json",
+      "subject.json",
+      "character-v2.json"
+    ]
+  },
+  "credentialScan": {
+    "pattern": "authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key",
+    "matches": 0,
+    "result": "clean"
+  }
+}
