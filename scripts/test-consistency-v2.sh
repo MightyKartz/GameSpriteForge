@@ -51,7 +51,14 @@ jq --arg revision "${SUBJECT_REVISION}" '.subject.revision = $revision' \
 PLAN_JSON="$("${FORGE}" generate character \
   --project "${TEST_ROOT}/project" --spec "${TEST_ROOT}/character-v2.json" --plan-only --json)"
 printf '%s' "${PLAN_JSON}" \
-  | jq -e '.ok and .data.estimate.providerRequestEstimate == 32 and .data.estimate.maximumProviderRequests == 64' >/dev/null
+  | jq -e '.ok
+    and .data.estimate.providerRequestEstimate == 32
+    and .data.estimate.maximumProviderRequests == 64
+    and .data.estimate.model == "fixture-image"' >/dev/null
+PLAN_TOKEN="$(printf '%s' "${PLAN_JSON}" | jq -r '.data.token')"
+jq -e '.operation.request.generation.imageModel == "fixture-image"
+  and .operation.request.generation.videoModel == "fixture-video"' \
+  "${FORGE_PLAN_STORE}/${PLAN_TOKEN}.pending.json" >/dev/null
 
 CHARACTER_JSON="$("${FORGE}" generate character \
   --project "${TEST_ROOT}/project" --spec "${TEST_ROOT}/character-v2.json" --wait --json)"

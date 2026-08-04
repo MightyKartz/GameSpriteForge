@@ -1,6 +1,6 @@
 # Forge 完整视觉资产系统实施状态
 
-状态：Active — 阶段 0 完成，等待验收
+状态：Active — 阶段 0 已验收；阶段 1 未晋级结论已接受，收尾完成待复验
 负责人：Kimi 实施，Codex 分阶段验收
 计划文档：`docs/architecture/forge-complete-visual-asset-system-implementation-plan.md`
 基线提交：`69e6aec`（`codex/v0.3-character-benchmarks`）
@@ -9,8 +9,8 @@
 
 | 阶段 | 状态 | 证据 |
 | --- | --- | --- |
-| 0 基线冻结与仓库卫生 | ✅ 完成（待 Codex 验收） | 本文档 + baseline JSON |
-| 1 v0.3 Character 真实门槛 | ⚠️ 已执行 — **未晋级** | `forge-character-v2-real-gate-2026-08-04.md` |
+| 0 基线冻结与仓库卫生 | ✅ 已验收 | 本文档 + baseline JSON |
+| 1 v0.3 Character 真实门槛 | ⚠️ **未晋级；阶段 1 收尾完成待复验** | `forge-character-v2-real-gate-2026-08-04.md` + `forge-stage1-closure-2026-08-04.md` |
 | 2 GameArtManifest 与项目 Build Core | 未开始 | — |
 | 3 CollectionLock、Portrait 与 Static 完整化 | 未开始 | — |
 | 4 World 资产正式化 | 未开始 | — |
@@ -81,8 +81,10 @@ experimental，未降低阈值。实际费用 167 请求 / 132.1B ticks（$132.1
 完整证据与逐门槛核对：`docs/qa/forge-character-v2-real-gate-2026-08-04.md`。
 冻结 20×5 真实 benchmark 暂缓执行（成功率门槛数学上不可达），待 Codex 决策。
 
-备注：计划中预设的 `FORGE_REAL_PROVIDER_*` 环境变量守卫在当前代码库尚不存在；
-本次运行通过「运行前离线 plan + 逐次核对 provider-usage.json」的程序化预算守卫执行。
+阶段 1 收尾已实现代码级 `FORGE_REAL_PROVIDER_ACCEPT`、`FORGE_REAL_PROVIDER_MAX_REQUESTS`
+和 `FORGE_REAL_PROVIDER_MAX_COST_TICKS` 守卫；未显式接受或缺少正数上限时，CLI 会在读取
+凭据和建立网络请求之前拒绝真实 Provider 执行。收尾修复、定向测试和复验入口见
+`docs/qa/forge-stage1-closure-2026-08-04.md`。
 
 ## 变更记录
 
@@ -90,3 +92,4 @@ experimental，未降低阈值。实际费用 167 请求 / 132.1B ticks（$132.1
 | --- | --- | --- | --- |
 | 2026-08-04 | 0 | 基线冻结、README 同步、QA artifact policy、状态文档建立 | `docs/qa/artifacts/forge-complete-visual-baseline-2026-08-04/` |
 | 2026-08-04 | 1 | 三次真实 xAI Character V2 闭环，未晋级；费用 167 请求 / $132.10 | `docs/qa/forge-character-v2-real-gate-2026-08-04.md` + `docs/qa/artifacts/forge-character-v2-real-20260804/` |
+| 2026-08-04 | 1 收尾 | 五项验收缺口修复；未调用真实 Provider，待 Codex 复验 | `docs/qa/forge-stage1-closure-2026-08-04.md` |

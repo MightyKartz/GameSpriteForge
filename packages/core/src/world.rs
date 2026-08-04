@@ -494,7 +494,9 @@ pub fn build_environment_lock(
         .join(STYLE_LOCK_FILE);
     let style =
         read_style_lock(&style_path).map_err(|error| WorldError::Invalid(error.to_string()))?;
-    let spec: EnvironmentSpecV1 = serde_json::from_slice(&fs::read(spec_path)?)?;
+    let mut spec: EnvironmentSpecV1 = serde_json::from_slice(&fs::read(spec_path)?)?;
+    spec.image_model =
+        provider.resolved_image_model(spec.image_model.as_deref().or(style.image_model.as_deref()));
     validate_environment_spec(&spec)?;
     let revision = hash_json(&serde_json::json!({
         "spec": spec,

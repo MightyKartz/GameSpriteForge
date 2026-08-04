@@ -140,7 +140,7 @@
       }
     ]
   },
-  "retryDecision": "no retry: 10/32 frames missed quality (3 regenerate, 2 blocked, 5 awaiting_review) after the workflows built-in second attempt - misses are spread across all four actions with edge_density_drift dominant (7 of 10 items), so this is a systemic quality miss, not the single-item miss the one allowed targeted retry covers; run-3 used 48 / 37900000000 of its 70 / 55800000000 guard",
+  "retryDecision": "no retry: 10/32 frames missed quality (3 regenerate, 2 blocked, 5 awaiting_review) after the workflows built-in second attempt - misses are spread across all four actions with edge_density_drift dominant (8 of 10 items), so this is a systemic quality miss, not the single-item miss the one allowed targeted retry covers; run-3 used 48 / 37900000000 of its 70 / 55800000000 guard",
   "packPath": null,
   "packSha256": null,
   "packValidate": "not_executed: generation job failed at the consistency gate before pack assembly; forge asset list is empty (no .gsfpack produced)",

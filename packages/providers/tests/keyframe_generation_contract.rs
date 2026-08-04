@@ -105,6 +105,7 @@ fn fixture_keyframes_create_pack_graph_catalog_and_single_frame_retry() {
         .path()
         .join("subject-lock.json");
     let subject = read_subject_lock(&subject_lock_path).unwrap();
+    assert_eq!(subject.image_model.as_deref(), Some("fixture-image"));
     let profile = automation_profile();
     let request = GenerateCharacterPackRequest {
         schema_version: "3".into(),
@@ -154,7 +155,16 @@ fn fixture_keyframes_create_pack_graph_catalog_and_single_frame_retry() {
         &provider,
         AutomationOperation::GenerateCharacterPack(request.clone()),
     );
-    assert_eq!(completed.lifecycle_state, JobLifecycleState::Succeeded);
+    let consistency_details = fs::read_to_string(completed.job_dir.join("consistency-report.json"))
+        .unwrap_or_else(|_| "no consistency report".into());
+    assert_eq!(
+        completed.lifecycle_state,
+        JobLifecycleState::Succeeded,
+        "error_code={:?} error_summary={:?} consistency={}",
+        completed.error_code,
+        completed.error_summary,
+        consistency_details
+    );
     let graph = read_workflow_graph(&completed.job_dir.join(WORKFLOW_GRAPH_FILE)).unwrap();
     assert_eq!(
         graph
@@ -193,6 +203,25 @@ fn fixture_keyframes_create_pack_graph_catalog_and_single_frame_retry() {
         .iter()
         .any(|node| node.id == "collection_consistency"));
     assert!(graph.nodes.iter().any(|node| node.id == "shared_normalize"));
+    assert!(graph
+        .nodes
+        .iter()
+        .filter(|node| node.provider_request)
+        .all(|node| node.model.as_deref() == Some("fixture-image")));
+    let completed_manifest: serde_json::Value = serde_json::from_slice(
+        &fs::read(
+            completed
+                .job_dir
+                .join("source/keyframe-provider-manifest.json"),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(completed_manifest["model"], "fixture-image");
+    assert_eq!(
+        completed_manifest["hardGateProfile"],
+        "keyframe-hard-defects@1.0.0"
+    );
     assert!(completed
         .artifacts
         .iter()

@@ -35,7 +35,7 @@ watercolor-fantasy、retro-scifi）；三次运行方法论一致，未为通过
 ## 失败画像（跨运行一致）
 
 - **`edge_density_drift` 是三次运行的共同首要原因**（运行 1：多数缺失帧；运行 2：15/17；
-  运行 3：7/10）。真实 xAI 逐帧生成在像素边缘密度上无法保持集合内一致。
+  运行 3：8/10）。真实 xAI 逐帧生成在像素边缘密度上无法保持集合内一致。
 - `identity_similarity_low` 次之（运行 1 多数帧、运行 2 6 帧、运行 3 3 帧）。
 - `multiple_subjects` 集中在运行 1（4 blocked 帧全因此）与运行 3（2 blocked 帧）。
 - 所有缺失帧均为 attempt 2 —— 工作流内置的第二次尝试无法挽救。

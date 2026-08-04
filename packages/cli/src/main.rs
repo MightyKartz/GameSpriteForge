@@ -55,7 +55,10 @@ use forge_providers::auth::{
     login_xai_device_code, logout_xai_profile, save_xai_auth_preference, CredentialStorageKind,
     CredentialStore, XaiAuthMethod,
 };
-use forge_providers::{list_provider_health_noninteractive, resolve_provider, XAI_PROVIDER_ID};
+use forge_providers::{
+    list_provider_health_noninteractive, resolve_image_model as resolve_provider_image_model,
+    resolve_provider, resolve_video_model as resolve_provider_video_model, XAI_PROVIDER_ID,
+};
 use serde::Serialize;
 
 const JSON_SCHEMA_VERSION: &str = "1";
@@ -1111,6 +1114,7 @@ fn run() -> Result<(), (String, String)> {
                         "real Provider benchmarks require --accept-provider-cost after reviewing `forge benchmark plan`".into(),
                     ));
                 }
+                ensure_real_provider_execution(&provider)?;
                 let suite = read_benchmark_manifest(&manifest)?;
                 validate_benchmark_references(&suite, &manifest)?;
                 if env::var_os("FORGE_CACHE_STORE").is_none() {
@@ -1405,9 +1409,9 @@ fn run() -> Result<(), (String, String)> {
             PlanCommand::GenerateCharacter(input) => {
                 let request: GenerateCharacterPackRequest = read_request(&input)?;
                 ensure_character_workflow_enabled(&request)?;
-                let plan = plan_store()?
-                    .prepare(AutomationOperation::GenerateCharacterPack(request))
-                    .map_err(display_error)?;
+                let mut operation = AutomationOperation::GenerateCharacterPack(request);
+                resolve_operation_models(&mut operation)?;
+                let plan = plan_store()?.prepare(operation).map_err(display_error)?;
                 success(&plan)
             }
             PlanCommand::InstallGodot(input) => {
@@ -1543,6 +1547,9 @@ fn run_plan_operation(
     if let AutomationOperation::GenerateCharacterPack(request) = operation {
         ensure_character_workflow_enabled(request)?;
     }
+    if let Some(provider_id) = operation_provider_id(operation) {
+        ensure_real_provider_execution(provider_id)?;
+    }
     let provider = match operation {
         AutomationOperation::GenerateCharacterPack(request) => Some(
             resolve_provider(&request.provider_id, &request.profile_id).map_err(display_error)?,
@@ -1568,7 +1575,48 @@ fn run_plan_operation(
         _ => None,
     };
     run_operation_with_provider(store, job_id, operation, provider.as_deref())
-        .map_err(display_error)
+        .map_err(|error| (error.code().into(), error.to_string()))
+}
+
+fn operation_provider_id(operation: &AutomationOperation) -> Option<&str> {
+    match operation {
+        AutomationOperation::GenerateCharacterPack(request) => Some(&request.provider_id),
+        AutomationOperation::CreateStyleLock(request) => Some(&request.provider_id),
+        AutomationOperation::CreateSubjectLock(request) => Some(&request.provider_id),
+        AutomationOperation::GenerateStaticAssetSet(request) => Some(&request.provider_id),
+        AutomationOperation::CreateEnvironmentLock(request) => Some(&request.provider_id),
+        AutomationOperation::GenerateTerrainSet(request) => Some(&request.provider_id),
+        AutomationOperation::GenerateBuildingKit(request) => Some(&request.provider_id),
+        _ => None,
+    }
+}
+
+fn ensure_real_provider_execution(provider_id: &str) -> Result<(), (String, String)> {
+    if provider_id == "fixture" {
+        return Ok(());
+    }
+    if env::var("FORGE_REAL_PROVIDER_ACCEPT").as_deref() != Ok("1") {
+        return Err((
+            "real_provider_not_accepted".into(),
+            "set FORGE_REAL_PROVIDER_ACCEPT=1 only after reviewing the plan".into(),
+        ));
+    }
+    for name in [
+        "FORGE_REAL_PROVIDER_MAX_REQUESTS",
+        "FORGE_REAL_PROVIDER_MAX_COST_TICKS",
+    ] {
+        let valid = env::var(name)
+            .ok()
+            .and_then(|value| value.parse::<u64>().ok())
+            .is_some_and(|value| value > 0);
+        if !valid {
+            return Err((
+                "real_provider_not_accepted".into(),
+                format!("{name} must be set to a positive integer"),
+            ));
+        }
+    }
+    Ok(())
 }
 
 fn ensure_character_workflow_enabled(
@@ -1583,7 +1631,11 @@ fn ensure_character_workflow_enabled(
     Ok(())
 }
 
-fn prepare_and_execute(operation: AutomationOperation, wait: bool) -> Result<(), (String, String)> {
+fn prepare_and_execute(
+    mut operation: AutomationOperation,
+    wait: bool,
+) -> Result<(), (String, String)> {
+    resolve_operation_models(&mut operation)?;
     let plan = plan_store()?.prepare(operation).map_err(display_error)?;
     let claimed = plan_store()?.claim(&plan.token).map_err(display_error)?;
     let store = job_store()?;
@@ -1598,15 +1650,45 @@ fn prepare_and_execute(operation: AutomationOperation, wait: bool) -> Result<(),
 }
 
 fn prepare_or_plan(
-    operation: AutomationOperation,
+    mut operation: AutomationOperation,
     wait: bool,
     plan_only: bool,
 ) -> Result<(), (String, String)> {
+    resolve_operation_models(&mut operation)?;
     if plan_only {
         let plan = plan_store()?.prepare(operation).map_err(display_error)?;
         return success(&plan);
     }
     prepare_and_execute(operation, wait)
+}
+
+fn resolve_operation_models(operation: &mut AutomationOperation) -> Result<(), (String, String)> {
+    match operation {
+        AutomationOperation::GenerateCharacterPack(request) => {
+            request.generation.image_model = Some(
+                resolve_provider_image_model(
+                    &request.provider_id,
+                    request.generation.image_model.as_deref(),
+                )
+                .map_err(display_error)?,
+            );
+            request.generation.video_model = Some(
+                resolve_provider_video_model(
+                    &request.provider_id,
+                    request.generation.video_model.as_deref(),
+                )
+                .map_err(display_error)?,
+            );
+        }
+        AutomationOperation::GenerateStaticAssetSet(request) => {
+            request.image_model = Some(
+                resolve_provider_image_model(&request.provider_id, request.image_model.as_deref())
+                    .map_err(display_error)?,
+            );
+        }
+        _ => {}
+    }
+    Ok(())
 }
 
 fn generate_character(input: ProjectSpecInput) -> Result<(), (String, String)> {
