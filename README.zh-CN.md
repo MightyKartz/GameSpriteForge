@@ -135,14 +135,18 @@ Style Lock 使用版本化的 `style-baseline@2.3.0` 前景感知调色板。基
 角色发布门槛已经完成：连续三次真实 xAI Character → Pack → Godot 运行均无需人工
 审核，四个动作全部达到 `game_ready`。Provider 费用、重试方式和 Godot 证据记录在
 [`docs/qa/forge-character-loop-v2-2026-08-03.md`](docs/qa/forge-character-loop-v2-2026-08-03.md)。
-`v0.2.0-cli.1` 当前剩余门槛是正式 GitHub Release 的全新安装验证。
+`v0.2.0-cli.1` 已在 GitHub Releases 正式发布（2026-08-03，未签名、未公证，附带 SBOM 与
+Artifact Attestation）。最后一项发布操作检查——从该 Release 进行全新账户安装验证——尚未
+记录于 `docs/qa/`。
 
 ## 尚未发布的角色一致性 V2
 
-源码树包含面向下一版 CLI 的可选 `consistency-v2` 构建：不可变 Subject Lock、语义化图片
+源码树包含面向 v0.3 CLI 发布线的可选 `consistency-v2` 构建：不可变 Subject Lock、语义化图片
 参考、每动作 8 帧的显式关键帧、类型化 WorkflowGraph 重放、内容寻址缓存和
-`.forge/catalog.json`。在真实 xAI 验收完成之前，这些命令不会进入默认
-`v0.2.0-cli.1` 二进制。SAM/DINO/LPIPS 组件在许可证和阈值校准审计通过前保持未发布，
+`.forge/catalog.json`。在真实 xAI 验收完成之前，这些命令不会进入默认发布
+二进制。v0.3 fixture/合同矩阵已于 2026-08-04 六门全过
+（[`docs/qa/forge-v03-test-matrix.md`](docs/qa/forge-v03-test-matrix.md)）；真实模型
+身份晋级门槛仍未完成。SAM/DINO/LPIPS 组件在许可证和阈值校准审计通过前保持未发布，
 `forge component install` 不会静默安装未经审计的权重。
 离线合同、Godot 验证和仍待完成的外部门槛记录在
 [`docs/qa/forge-consistency-v2-and-world-implementation-2026-08-03.md`](docs/qa/forge-consistency-v2-and-world-implementation-2026-08-03.md)。
@@ -150,7 +154,7 @@ Style Lock 使用版本化的 `style-baseline@2.3.0` 前景感知调色板。基
 ## 尚未发布的世界资产流水线
 
 后续 CLI 里程碑通过尚未发布的世界功能特性和 `.gsfpack` V3 合同实现；这些命令不会
-进入 `v0.2.0-cli.1` 发布二进制。Terrain、Building、Map 会在角色一致性 V2 之后分版发布：
+进入默认发布二进制，并保持 experimental；v0.3 矩阵已记录其 fixture 级通过。Terrain、Building、Map 会在角色一致性 V2 之后分版发布：
 
 - 不可变的俯视 Environment Lock；
 - 从两张 Provider 材质板确定性合成的 16/32px dual-grid Terrain Set；
