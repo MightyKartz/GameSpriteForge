@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "2",
+  "kind": "character",
+  "id": "real-forest-warden-v2",
+  "name": "Real Forest Warden V2",
+  "subject": {
+    "id": "real-forest-warden",
+    "revision": "11ba6a7a2479feb9"
+  },
+  "workflow": {
+    "id": "topdown-keyframes",
+    "version": "2.0.0"
+  },
+  "license": "private"
+}

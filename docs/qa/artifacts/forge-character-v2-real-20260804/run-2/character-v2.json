@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "2",
+  "kind": "character",
+  "id": "real-storybook-apothecary-v2",
+  "name": "Real Storybook Apothecary V2",
+  "subject": {
+    "id": "real-storybook-apothecary",
+    "revision": "1b7f051eb0c219f2"
+  },
+  "workflow": {
+    "id": "topdown-keyframes",
+    "version": "2.0.0"
+  },
+  "license": "private"
+}
