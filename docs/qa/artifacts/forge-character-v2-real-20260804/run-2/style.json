@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1",
+  "prompt": "soft storybook watercolor fantasy game art, controlled edges, muted mineral palette, readable small-scale shapes",
+  "referenceImages": [],
+  "perspective": "topdown",
+  "lighting": "soft_upper_left",
+  "outline": "painted_edge",
+  "background": "transparent",
+  "sampling": "linear",
+  "characterCanvasSize": 256,
+  "iconCanvasSize": 128,
+  "propCanvasSize": 256
+}

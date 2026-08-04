@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1",
+  "prompt": "compact jewel-tone forest pixel art, readable silhouettes, dark plum outlines, restrained texture",
+  "referenceImages": [],
+  "perspective": "topdown",
+  "lighting": "upper_left",
+  "outline": "dark_clean",
+  "background": "transparent",
+  "sampling": "nearest",
+  "characterCanvasSize": 256,
+  "iconCanvasSize": 128,
+  "propCanvasSize": 256
+}

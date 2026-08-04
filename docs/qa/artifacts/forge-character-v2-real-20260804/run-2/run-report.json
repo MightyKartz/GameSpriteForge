@@ -1,0 +1,253 @@
+{
+  "date": "2026-08-04",
+  "run": "run-2",
+  "gitCommit": "33cea99427fa7123a1b2425825a09964f7419d3a",
+  "style": "watercolor-fantasy",
+  "subjectRevision": "1b7f051eb0c219f2",
+  "jobIds": {
+    "style_lock": "8a41ab4b-d625-4789-8cf7-7c5d1e6ee255",
+    "subject_lock": "89289167-8c66-4242-a3f3-ca276f44ead9",
+    "character_generate": "d2ff6447-b94b-4292-9d79-b573f0ef5676"
+  },
+  "planEstimate": {
+    "providerRequestEstimate": 32,
+    "maximumProviderRequests": 64,
+    "cacheHitCount": 0,
+    "providerId": "xai",
+    "workflow": "topdown-keyframes@2.0.0"
+  },
+  "jobReport": {
+    "jobId": "d2ff6447-b94b-4292-9d79-b573f0ef5676",
+    "lifecycleState": "failed",
+    "errorCode": "keyframe_regeneration_required",
+    "recoverable": true,
+    "providerRequestCount": 55,
+    "providerCostInUsdTicks": 44000000000,
+    "overallVerdict": "regenerate",
+    "verdictCounts": {
+      "awaiting_review": 12,
+      "game_ready": 15,
+      "regenerate": 5
+    },
+    "perAction": {
+      "idle": {
+        "awaiting_review": 2,
+        "game_ready": 6
+      },
+      "walk_down": {
+        "awaiting_review": 4,
+        "game_ready": 2,
+        "regenerate": 2
+      },
+      "walk_right": {
+        "awaiting_review": 4,
+        "game_ready": 4
+      },
+      "walk_up": {
+        "awaiting_review": 2,
+        "game_ready": 3,
+        "regenerate": 3
+      }
+    },
+    "nonGameReadyItems": [
+      {
+        "id": "idle/frame-02",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "idle/frame-06",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_up/frame-00",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_up/frame-01",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_up/frame-03",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_up/frame-04",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_up/frame-06",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "anchor_drift"
+        ]
+      },
+      {
+        "id": "walk_right/frame-01",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_right/frame-03",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_right/frame-04",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_right/frame-07",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_down/frame-01",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_down/frame-02",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      },
+      {
+        "id": "walk_down/frame-03",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_down/frame-04",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_down/frame-06",
+        "attempt": 2,
+        "verdict": "awaiting_review",
+        "reasons": [
+          "edge_density_drift"
+        ]
+      },
+      {
+        "id": "walk_down/frame-07",
+        "attempt": 2,
+        "verdict": "regenerate",
+        "reasons": [
+          "edge_density_drift",
+          "identity_similarity_low"
+        ]
+      }
+    ]
+  },
+  "retryDecision": "no retry: 17/32 frames missed quality (5 regenerate, 12 awaiting_review) after the workflows built-in second attempt - this is a systemic quality miss spread across all four actions, not the single-item miss the one allowed targeted retry covers; a broad regen would also risk exceeding the run-2 guard of 70 requests / 60000000000 ticks (run already used 57 / 45100000000)",
+  "packPath": null,
+  "packSha256": null,
+  "packValidate": "not_executed: generation job failed at the consistency gate before pack assembly; no .gsfpack produced",
+  "godot": {
+    "planInstall": "not_executed: no pack",
+    "import": "not_executed: no pack",
+    "resourceSizes": null,
+    "embeddedScan": null,
+    "assetsJson": null,
+    "note": "Minimal verify project stub was pre-created at target/qa/character-v2-real-20260804/run-2/godot-project but unused"
+  },
+  "providerUsage": {
+    "requests": 57,
+    "costInUsdTicks": 45100000000,
+    "generatedImages": 57,
+    "perJob": [
+      {
+        "jobId": "8a41ab4b-d625-4789-8cf7-7c5d1e6ee255",
+        "role": "style lock",
+        "requests": 1,
+        "costInUsdTicks": 500000000
+      },
+      {
+        "jobId": "89289167-8c66-4242-a3f3-ca276f44ead9",
+        "role": "subject lock",
+        "requests": 1,
+        "costInUsdTicks": 600000000
+      },
+      {
+        "jobId": "d2ff6447-b94b-4292-9d79-b573f0ef5676",
+        "role": "character generate (failed)",
+        "requests": 55,
+        "costInUsdTicks": 44000000000
+      }
+    ]
+  },
+  "budgetWarning": null,
+  "budgetNote": "57 requests / 45100000000 ticks: below the 200-request / 120000000000-tick warning thresholds and within the run-2 guard of 70 requests / 60000000000 ticks; 131 requests / 55800000000 ticks remain of the 3-run budget (250 total; run-1 used 62/49100000000, run-2 used 57/45100000000)",
+  "evidence": {
+    "samplePreview": {
+      "file": "sample-idle-frame-00.png",
+      "source": "jobs/d2ff6447/keyframes/idle/frame-00.png",
+      "verdict": "game_ready",
+      "sha256": "0fd6f0a26830db2681e12aab8ea6955f8742371d331f3a3be8c8de9da69a1082"
+    },
+    "specs": [
+      "style.json",
+      "subject.json",
+      "character-v2.json"
+    ]
+  },
+  "credentialScan": {
+    "pattern": "authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key",
+    "matches": 0,
+    "result": "clean"
+  }
+}

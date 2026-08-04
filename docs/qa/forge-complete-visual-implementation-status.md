@@ -10,7 +10,7 @@
 | 阶段 | 状态 | 证据 |
 | --- | --- | --- |
 | 0 基线冻结与仓库卫生 | ✅ 完成（待 Codex 验收） | 本文档 + baseline JSON |
-| 1 v0.3 Character 真实门槛 | ⏸ 阻塞：需真实 xAI 费用批准 | — |
+| 1 v0.3 Character 真实门槛 | ⚠️ 已执行 — **未晋级** | `forge-character-v2-real-gate-2026-08-04.md` |
 | 2 GameArtManifest 与项目 Build Core | 未开始 | — |
 | 3 CollectionLock、Portrait 与 Static 完整化 | 未开始 | — |
 | 4 World 资产正式化 | 未开始 | — |
@@ -68,15 +68,25 @@
   已核实为本次阶段 0 的 README 同步编辑（任务 3），非异常。
 - 未运行任何真实（付费）xAI 调用；全部 fixture / 离线。
 
-## 阶段 1 阻塞说明
+## 阶段 1 预算协议
 
 阶段 1（v0.3 Character 真实 xAI A/B 晋级门槛）需要真实 Provider 费用。按协议：
-默认拒绝真实调用，必须设置 `FORGE_REAL_PROVIDER_ACCEPT=1` 且显式给出
-`FORGE_REAL_PROVIDER_MAX_REQUESTS` / `FORGE_REAL_PROVIDER_MAX_COST_TICKS` 预算，
-由 Codex/用户批准后执行。当前未获批准，保持阻塞。
+默认拒绝真实调用，预算由 Codex/用户批准后执行，超出即阻断。
+## 阶段 1 结果（2026-08-04）
+
+用户批准 3 次真实闭环（上限 250 请求 / 150B ticks）。三次全新目录真实 xAI
+Character V2 → Pack → Godot 运行均**未通过一致性门禁**（14/15/22 帧 game_ready，
+Pack 成功率 0/3），`topdown-keyframes@2.0.0` 未晋级：video 保持默认，keyframe 保持
+experimental，未降低阈值。实际费用 167 请求 / 132.1B ticks（$132.10），预算内。
+完整证据与逐门槛核对：`docs/qa/forge-character-v2-real-gate-2026-08-04.md`。
+冻结 20×5 真实 benchmark 暂缓执行（成功率门槛数学上不可达），待 Codex 决策。
+
+备注：计划中预设的 `FORGE_REAL_PROVIDER_*` 环境变量守卫在当前代码库尚不存在；
+本次运行通过「运行前离线 plan + 逐次核对 provider-usage.json」的程序化预算守卫执行。
 
 ## 变更记录
 
 | 日期 | 阶段 | 内容 | 证据 |
 | --- | --- | --- | --- |
 | 2026-08-04 | 0 | 基线冻结、README 同步、QA artifact policy、状态文档建立 | `docs/qa/artifacts/forge-complete-visual-baseline-2026-08-04/` |
+| 2026-08-04 | 1 | 三次真实 xAI Character V2 闭环，未晋级；费用 167 请求 / $132.10 | `docs/qa/forge-character-v2-real-gate-2026-08-04.md` + `docs/qa/artifacts/forge-character-v2-real-20260804/` |

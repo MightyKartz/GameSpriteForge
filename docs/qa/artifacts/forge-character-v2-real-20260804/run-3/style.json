@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1",
+  "prompt": "retro science-fiction sprite art, chunky industrial forms, cyan amber and charcoal palette, sharp technical highlights",
+  "referenceImages": [],
+  "perspective": "topdown",
+  "lighting": "cool_upper_left",
+  "outline": "charcoal",
+  "background": "transparent",
+  "sampling": "nearest",
+  "characterCanvasSize": 256,
+  "iconCanvasSize": 128,
+  "propCanvasSize": 256
+}
