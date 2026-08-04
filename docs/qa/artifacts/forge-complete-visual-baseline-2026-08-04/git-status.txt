@@ -1,0 +1,124 @@
+## git status --short
+ M .agents/skills/forge-dev/SKILL.md
+ M apps/mac/package.json
+ M apps/mac/scripts/smoke-ui.mjs
+ M apps/mac/src-tauri/Cargo.toml
+ M apps/mac/src-tauri/src/lib.rs
+ M apps/mac/src-tauri/tests/sample_pipeline_tests.rs
+ M apps/mac/src/App.tsx
+ M apps/mac/src/i18n.ts
+ M apps/mac/src/styles/app.css
+ M apps/mac/src/systemDialogs.ts
+ M apps/mac/src/tauriCommands.ts
+ M package-lock.json
+ M package.json
+ M scripts/test-forge-dev-skill-source.mjs
+ M scripts/test-real-ui-followup-fixes-source.mjs
+?? apps/mac/src/routes/CharacterPackRoute.tsx
+?? docs/architecture/3d-asset-forge-opportunity.html
+?? docs/architecture/3d-asset-forge-opportunity.md
+?? docs/automation/codex-plugin.md
+?? docs/qa/artifacts/forge-automation-open-job-2026-07-31.png
+?? docs/qa/artifacts/forge-character-pack-real-app-2026-08-02.png
+?? docs/qa/artifacts/forge-character-pack-ui-en-US-2026-08-02.png
+?? docs/qa/artifacts/forge-character-pack-ui-zh-CN-2026-08-02.png
+?? docs/qa/artifacts/forge-cli-demo-20260802/
+?? docs/qa/artifacts/forge-complete-visual-baseline-2026-08-04/
+?? docs/qa/artifacts/forge-local-test-native-2026-08-02.png
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-1/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-2/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/assets/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/godot/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/122f193a-b95b-4e74-96e4-0b73285451a9/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/d171c445-3ebf-459c-b106-b9834fc74469/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/.job.lock
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/animation-quality-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/consistency-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/exports/5b9f6808-411e-4f37-ae48-e2a07ef193cb/animation-quality-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/exports/5b9f6808-411e-4f37-ae48-e2a07ef193cb/atlas.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/exports/5b9f6808-411e-4f37-ae48-e2a07ef193cb/godot_import.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/exports/5b9f6808-411e-4f37-ae48-e2a07ef193cb/loop-selection-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/exports/5b9f6808-411e-4f37-ae48-e2a07ef193cb/manifest.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/exports/5b9f6808-411e-4f37-ae48-e2a07ef193cb/quality-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/job.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/loop-selection-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/normalized-frames.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/provider-usage.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/source/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/workflow-stage-manifest.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/jobs/e3dae37c-fc5d-4b50-b68e-6808a6a6dd4e/workspace.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-3/plans/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/assets/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/godot/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/08483d9f-ca8d-4f58-9822-8ffc786f660e/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/399dc441-6433-4967-a977-67ba9d8ca893/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/.job.lock
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/animation-quality-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/consistency-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/exports/5ddccca0-0820-4a60-888e-aecc9c408f21/animation-quality-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/exports/5ddccca0-0820-4a60-888e-aecc9c408f21/atlas.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/exports/5ddccca0-0820-4a60-888e-aecc9c408f21/godot_import.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/exports/5ddccca0-0820-4a60-888e-aecc9c408f21/loop-selection-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/exports/5ddccca0-0820-4a60-888e-aecc9c408f21/manifest.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/exports/5ddccca0-0820-4a60-888e-aecc9c408f21/quality-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/job.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/loop-selection-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/normalized-frames.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/provider-usage.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/source/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/workflow-stage-manifest.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/jobs/6ab4e241-de4b-4ff6-a595-7657570a1a81/workspace.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-4/plans/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/assets/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/godot/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/.job.lock
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/animation-quality-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/consistency-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/exports/173333df-d1aa-42af-82ff-4d13167f2513/animation-quality-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/exports/173333df-d1aa-42af-82ff-4d13167f2513/atlas.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/exports/173333df-d1aa-42af-82ff-4d13167f2513/godot_import.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/exports/173333df-d1aa-42af-82ff-4d13167f2513/loop-selection-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/exports/173333df-d1aa-42af-82ff-4d13167f2513/manifest.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/exports/173333df-d1aa-42af-82ff-4d13167f2513/quality-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/job.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/loop-selection-report.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/normalized-frames.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/provider-usage.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/source/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/workflow-stage-manifest.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/2f7c8d19-e903-4234-96ac-709b0e37cd63/workspace.json
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/5add44af-5fae-4358-b197-ad3f90779657/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/jobs/cbb34f99-a2ed-4ef9-87cf-116ecf514ce6/
+?? docs/qa/artifacts/forge-loop-v2-real-20260803/run-5/plans/
+?? docs/qa/artifacts/forge-project-asset-loop-manifest-2026-08-02.json
+?? docs/qa/artifacts/forge-project-asset-loop-ui-en-US-2026-08-02.png
+?? docs/qa/artifacts/forge-project-asset-loop-ui-zh-CN-2026-08-02.png
+?? docs/qa/artifacts/forge-project-asset-loop-usage-2026-08-02.json
+?? docs/qa/artifacts/forge-repair-loop-character-after-2026-08-02.json
+?? docs/qa/artifacts/forge-repair-loop-character-before-2026-08-02.json
+?? docs/qa/artifacts/forge-repair-loop-character-comparison-2026-08-02.json
+?? docs/qa/artifacts/forge-repair-loop-ui-en-US-2026-08-02.png
+?? docs/qa/artifacts/forge-repair-loop-ui-zh-CN-2026-08-02.png
+?? docs/qa/artifacts/forge-static-real-20260803/
+?? docs/qa/artifacts/forge-world-real-20260803/
+?? docs/qa/artifacts/forge-xai-character-preview-2026-08-02.gif
+?? docs/qa/artifacts/forge-xai-character-quality-2026-08-02.json
+?? docs/qa/artifacts/forge-xai-godot-usage-2026-08-02.json
+?? docs/qa/artifacts/forge-xai-provider-manifest-2026-08-02.json
+?? docs/qa/artifacts/forge-xai-provider-reference-2026-08-02.png
+?? docs/qa/artifacts/forge-xai-real-acceptance-20260803/
+?? docs/qa/artifacts/godot-pack-smoke-20260802-094025/
+?? docs/qa/forge-character-pack-v1-2026-08-02.md
+?? docs/qa/forge-cli-resource-demo-2026-08-02.md
+?? docs/qa/forge-local-test-2026-08-02.md
+?? packages/core/forge-sbom.cdx.json
+?? packages/mcp/
+?? packages/pack/forge-sbom.cdx.json
+?? packages/providers/forge-sbom.cdx.json
+?? plugins/
+?? scripts/package-forge-plugin.sh
+
+## git log --oneline -3
+69e6aec docs: normalize implementation plan header
+2df206a docs: add visual asset system implementation plan
+b4308d2 docs: record passing v0.3 quality run

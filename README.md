@@ -162,15 +162,20 @@ The Character release gate is complete: three consecutive clean real-xAI Charact
 Pack → Godot runs passed all four actions without manual review. The evidence and
 provider-cost/retry audit are recorded in
 [`docs/qa/forge-character-loop-v2-2026-08-03.md`](docs/qa/forge-character-loop-v2-2026-08-03.md).
-The remaining `v0.2.0-cli.1` gate is a clean installation from the published GitHub Release.
+`v0.2.0-cli.1` is published on GitHub Releases (2026-08-03, unsigned and not
+notarized, with SBOM and Artifact Attestation). The final release-operation check —
+a clean-account installation from that published release — is not yet recorded
+under `docs/qa/`.
 
 ## Unreleased Character consistency V2
 
-The source tree contains an opt-in `consistency-v2` build for the next CLI release. It adds
+The source tree contains an opt-in `consistency-v2` build for the v0.3 CLI release line. It adds
 immutable Subject Locks, semantic image-reference roles, 8-frame-per-action keyframe generation,
 typed WorkflowGraph replay, a content-addressed cache, and `.forge/catalog.json`. These commands
-are deliberately absent from the default `v0.2.0-cli.1` binary until the real-xAI acceptance gate
-is complete. The signed SAM/DINO/LPIPS component remains unpublished until license and calibration
+are deliberately absent from the default release binary until the real-xAI acceptance gate
+is complete. The v0.3 fixture/contract matrix passed all six gates on 2026-08-04
+([`docs/qa/forge-v03-test-matrix.md`](docs/qa/forge-v03-test-matrix.md)); the real-model
+identity promotion gate remains open. The signed SAM/DINO/LPIPS component remains unpublished until license and calibration
 review; `forge component install` never substitutes unreviewed weights.
 The implemented offline contracts, Godot verification, and remaining external gates are recorded in
 [`docs/qa/forge-consistency-v2-and-world-implementation-2026-08-03.md`](docs/qa/forge-consistency-v2-and-world-implementation-2026-08-03.md).
@@ -178,8 +183,8 @@ The implemented offline contracts, Godot verification, and remaining external ga
 ## Unreleased world pipeline
 
 The next CLI milestones are implemented behind unreleased world build features and the
-V3 Pack contract. These commands are intentionally absent from the `v0.2.0-cli.1`
-release binary. Terrain, Building, and Map ship separately after Character consistency V2:
+V3 Pack contract. These commands are intentionally absent from the default release
+binary and stay experimental; the v0.3 matrix records their fixture-level pass. Terrain, Building, and Map ship separately after Character consistency V2:
 
 - immutable top-down Environment Locks;
 - deterministic 16/32 px dual-grid Terrain Sets built from two Provider-generated
