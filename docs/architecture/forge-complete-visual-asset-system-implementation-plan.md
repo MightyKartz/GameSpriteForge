@@ -1,9 +1,12 @@
 # Forge 完整 2D 图像资产系统实施计划
 
-状态：Implementation handoff / 待 Kimi 实施、Codex 分阶段验收  
-版本：1.0  
-日期：2026-08-04  
-目标仓库：`MightyKartz/GameSpriteForge`  
+状态：Implementation handoff / 待 Kimi 实施、Codex 分阶段验收
+
+版本：1.0
+
+日期：2026-08-04
+
+目标仓库：`MightyKartz/GameSpriteForge`
 当前基线：`v0.2.0-cli.1` 已发布，`v0.3` Character consistency V2 与跨资产 fixture matrix 已实现但尚未完成真实模型晋级门槛
 
 ## 1. 文档用途
