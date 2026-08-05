@@ -17,9 +17,9 @@ use forge_core::automation::CreateSubjectLockRequest;
 #[cfg(feature = "building-assets")]
 use forge_core::automation::GenerateBuildingKitRequest;
 use forge_core::automation::{
-    analyze_repair, automation_profile, character_workflow_catalog, prepare_repair_plan,
-    run_operation_with_provider, stage_plan_job, AutomationOperation, AutomationPlan,
-    CharacterRetryStage, CreateStyleLockRequest, GenerateCharacterPackRequest,
+    analyze_repair, automation_profile, character_workflow_catalog, fingerprint_operation_inputs,
+    prepare_repair_plan, run_operation_with_provider, stage_plan_job, AutomationOperation,
+    AutomationPlan, CharacterRetryStage, CreateStyleLockRequest, GenerateCharacterPackRequest,
     GenerateStaticAssetSetRequest, GodotInstallRequest, PlanStore, PrepareAssetRequest,
     PrepareCharacterPackRequest,
 };
@@ -36,6 +36,11 @@ use forge_core::catalog::read_project_catalog;
 use forge_core::component::{
     inspect_component, install_component, list_components, FixtureVisionComponent, VisionComponent,
     VisionComponentRequestV1, VisionOperation,
+};
+#[cfg(feature = "game-art-manifest")]
+use forge_core::game_art::{
+    compute_build_plan, compute_project_diff, project_source_sha256, GameArtError,
+    GameArtManifestV1, ProviderCapabilityInput, BUILD_STATE_FILE,
 };
 use forge_core::job::{JobArtifactRecord, JobRecord, JobStore, JOB_WORKSPACE_JSON};
 use forge_core::provider::{CredentialKind, ProviderHealth};
@@ -102,7 +107,7 @@ enum Command {
         #[command(subcommand)]
         command: SubjectCommand,
     },
-    #[cfg(feature = "consistency-v2")]
+    #[cfg(any(feature = "consistency-v2", feature = "game-art-manifest"))]
     Schema {
         #[command(subcommand)]
         command: SchemaCommand,
@@ -328,6 +333,26 @@ enum ProjectCommand {
         #[command(flatten)]
         json: JsonFlag,
     },
+    #[cfg(feature = "game-art-manifest")]
+    Diff {
+        #[arg(long)]
+        project: PathBuf,
+        #[arg(long)]
+        manifest: PathBuf,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
+    #[cfg(feature = "game-art-manifest")]
+    PlanBuild {
+        #[arg(long)]
+        project: PathBuf,
+        #[arg(long)]
+        manifest: PathBuf,
+        #[arg(long)]
+        resume_from_job: Option<String>,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
 }
 
 #[derive(Subcommand)]
@@ -363,7 +388,7 @@ enum SubjectCommand {
     },
 }
 
-#[cfg(feature = "consistency-v2")]
+#[cfg(any(feature = "consistency-v2", feature = "game-art-manifest"))]
 #[derive(Subcommand)]
 enum SchemaCommand {
     List(JsonFlag),
@@ -797,9 +822,11 @@ fn run() -> Result<(), (String, String)> {
                 success(&record)
             }
             JobCommand::Cancel { id, .. } => {
-                let record = job_store()?
-                    .request_cancellation(&id)
+                let store = job_store()?;
+                store
+                    .request_cancellation_cascade(&id)
                     .map_err(display_error)?;
+                let record = store.read_record(&id).map_err(display_error)?;
                 success(&record)
             }
             JobCommand::Report { id, .. } => {
@@ -925,6 +952,17 @@ fn run() -> Result<(), (String, String)> {
                     success(&inspection)
                 }
             }
+            #[cfg(feature = "game-art-manifest")]
+            ProjectCommand::Diff {
+                project, manifest, ..
+            } => project_diff(&project, &manifest),
+            #[cfg(feature = "game-art-manifest")]
+            ProjectCommand::PlanBuild {
+                project,
+                manifest,
+                resume_from_job,
+                ..
+            } => project_plan_build(&project, &manifest, resume_from_job.as_deref()),
         },
         Command::Style { command } => match command {
             StyleCommand::Create(input) => {
@@ -998,30 +1036,42 @@ fn run() -> Result<(), (String, String)> {
                 success(&read_subject_lock(&path).map_err(display_error)?)
             }
         },
-        #[cfg(feature = "consistency-v2")]
+        #[cfg(any(feature = "consistency-v2", feature = "game-art-manifest"))]
         Command::Schema { command } => match command {
-            SchemaCommand::List(_) => success(&serde_json::json!({
-                "schemas": [
-                    "asset@1.0.0",
+            SchemaCommand::List(_) => {
+                let mut schemas = vec!["asset@1.0.0", "style@1.0.0"];
+                #[cfg(feature = "consistency-v2")]
+                schemas.extend([
                     "character@2.0.0",
                     "character-benchmark@1.0.0",
-                    "style@1.0.0",
                     "subject@1.0.0",
-                    "map@1.0.0"
-                ]
-            })),
+                ]);
+                #[cfg(feature = "map-compiler")]
+                schemas.push("map@1.0.0");
+                #[cfg(feature = "game-art-manifest")]
+                schemas.push("game-art-manifest@1.0.0");
+                success(&serde_json::json!({ "schemas": schemas }))
+            }
             SchemaCommand::Show { id, .. } => {
                 let source = match id.as_str() {
                     "asset@1.0.0" => include_str!("../../../schemas/asset-spec.schema.json"),
+                    #[cfg(feature = "consistency-v2")]
                     "character@2.0.0" => {
                         include_str!("../../../schemas/character-v2.schema.json")
                     }
+                    #[cfg(feature = "consistency-v2")]
                     "character-benchmark@1.0.0" => {
                         include_str!("../../../schemas/character-benchmark.schema.json")
                     }
                     "style@1.0.0" => include_str!("../../../schemas/style-spec.schema.json"),
+                    #[cfg(feature = "consistency-v2")]
                     "subject@1.0.0" => include_str!("../../../schemas/subject-spec.schema.json"),
+                    #[cfg(feature = "map-compiler")]
                     "map@1.0.0" => include_str!("../../../schemas/map-spec.schema.json"),
+                    #[cfg(feature = "game-art-manifest")]
+                    "game-art-manifest@1.0.0" => {
+                        include_str!("../../../schemas/game-art-manifest.schema.json")
+                    }
                     _ => return Err(("schema_not_found".into(), format!("unknown schema: {id}"))),
                 };
                 let schema: serde_json::Value = serde_json::from_str(source).map_err(json_error)?;
@@ -1427,11 +1477,15 @@ fn run() -> Result<(), (String, String)> {
                 success(&plan)
             }
             PlanCommand::Execute { token, wait, .. } => {
-                let plan = plan_store()?.claim(&token).map_err(display_error)?;
+                let plans = plan_store()?;
+                let pending = plans.inspect_pending(&token).map_err(display_error)?;
+                verify_plan_inputs(&pending)?;
+                preflight_plan_operation(&pending.operation)?;
+                let plan = plans.claim(&token).map_err(display_error)?;
                 let store = job_store()?;
                 let record = stage_plan_job(&store, &plan).map_err(display_error)?;
                 if wait {
-                    let result = run_plan_operation(&store, &record.job_id, &plan.operation)?;
+                    let result = run_claimed_plan(&store, &record.job_id, &plan)?;
                     success(&result)
                 } else {
                     spawn_worker(&record)?;
@@ -1444,7 +1498,7 @@ fn run() -> Result<(), (String, String)> {
             let record = store.read_record(&job_id).map_err(display_error)?;
             let bytes = fs::read(record.job_dir.join(JOB_WORKSPACE_JSON)).map_err(io_error)?;
             let plan: AutomationPlan = serde_json::from_slice(&bytes).map_err(json_error)?;
-            run_plan_operation(&store, &job_id, &plan.operation)?;
+            run_claimed_plan(&store, &job_id, &plan)?;
             Ok(())
         }
     }
@@ -1516,6 +1570,149 @@ fn validate_benchmark_references(
     Ok(())
 }
 
+#[cfg(feature = "game-art-manifest")]
+fn project_diff(project: &Path, manifest: &Path) -> Result<(), (String, String)> {
+    let validated = GameArtManifestV1::load_validated(manifest).map_err(game_art_error)?;
+    let diff = compute_project_diff(project, &validated).map_err(game_art_error)?;
+    success(&diff)
+}
+
+/// Plan-only project build: computes the offline build plan and prepares a
+/// single-use plan token; execution goes through `forge plan execute`. The
+/// provider is only asked for its static capability descriptor — no provider
+/// network I/O happens here.
+#[cfg(feature = "game-art-manifest")]
+fn project_plan_build(
+    project: &Path,
+    manifest: &Path,
+    resume_from_job: Option<&str>,
+) -> Result<(), (String, String)> {
+    // Canonicalize before deriving any digest so symlink aliases (notably
+    // macOS /tmp -> /private/tmp) cannot produce a token that invalidates
+    // itself at execution.
+    let canonical_project = project.canonicalize().map_err(io_error)?;
+    let canonical_manifest = manifest.canonicalize().map_err(io_error)?;
+    let validated =
+        GameArtManifestV1::load_validated(&canonical_manifest).map_err(game_art_error)?;
+    let diff = compute_project_diff(&canonical_project, &validated).map_err(game_art_error)?;
+    let capabilities = provider_capability_input(
+        &validated.manifest.provider.id,
+        &validated.manifest.provider.profile_id,
+    )?;
+    let plan = compute_build_plan(&canonical_project, &validated, &diff, &capabilities)
+        .map_err(game_art_error)?;
+    let plan_sha256 = plan.plan_sha256();
+    let source_sha256 =
+        project_source_sha256(&canonical_project, &validated, &diff).map_err(game_art_error)?;
+    let (resume_state_path, resume_state_sha256) = if let Some(source_job_id) = resume_from_job {
+        let source = job_store()?
+            .read_record(source_job_id)
+            .map_err(display_error)?;
+        if source.operation_kind != forge_core::job::JobOperationKind::BuildProject {
+            return Err((
+                "invalid_resume_source".into(),
+                format!("job {source_job_id} is not a build_project job"),
+            ));
+        }
+        if source.lifecycle_state != forge_core::job::JobLifecycleState::Failed
+            || !source.recoverable
+            || source.worker_pid.is_some()
+        {
+            return Err((
+                "resume_source_active".into(),
+                "resume source must be a terminal failed, recoverable build with no live worker"
+                    .into(),
+            ));
+        }
+        let path = source.job_dir.join(BUILD_STATE_FILE);
+        let bytes = fs::read(&path).map_err(io_error)?;
+        let state: forge_core::game_art::ProjectBuildStateV1 =
+            serde_json::from_slice(&bytes).map_err(json_error)?;
+        if state.plan_sha256 != plan_sha256 {
+            return Err((
+                "resume_plan_mismatch".into(),
+                "resume source was created from a different complete build plan".into(),
+            ));
+        }
+        (
+            Some(path.canonicalize().map_err(io_error)?),
+            Some(hash_asset_file(&path).map_err(display_error)?),
+        )
+    } else {
+        (None, None)
+    };
+    // Build the operation through its tagged JSON form so the CLI does not
+    // depend on the core facade re-exporting the request type.
+    let operation: AutomationOperation = serde_json::from_value(serde_json::json!({
+        "kind": "build_project",
+        "request": {
+            "schemaVersion": "1",
+            "projectPath": canonical_project,
+            "manifestPath": canonical_manifest,
+            "expectedPlanSha256": plan_sha256,
+            "providerCapabilities": capabilities.capabilities,
+            "imageModel": capabilities.image_model,
+            "videoModel": capabilities.video_model,
+            "expectedSourceSha256": source_sha256,
+            "resumeFromJobId": resume_from_job,
+            "resumeStatePath": resume_state_path,
+            "resumeStateSha256": resume_state_sha256,
+        }
+    }))
+    .map_err(json_error)?;
+    let prepared = plan_store()?.prepare(operation).map_err(display_error)?;
+    let mut plan_json = serde_json::to_value(&plan).map_err(json_error)?;
+    plan_json
+        .as_object_mut()
+        .expect("ProjectBuildPlanV1 serializes to an object")
+        .insert("planSha256".into(), plan_sha256.into());
+    success(&serde_json::json!({
+        "plan": plan_json,
+        "token": prepared.token,
+        "expiresAt": prepared.expires_at,
+        "inputFingerprint": prepared.input_fingerprint,
+        "effects": prepared.effects,
+    }))
+}
+
+/// Fill the offline plan layer's provider input from the resolved provider's
+/// static capability descriptor (snake_case names) and default model pins.
+#[cfg(feature = "game-art-manifest")]
+fn provider_capability_input(
+    provider_id: &str,
+    _profile_id: &str,
+) -> Result<ProviderCapabilityInput, (String, String)> {
+    let descriptor = list_provider_health_noninteractive()
+        .into_iter()
+        .find(|health| health.provider_id == provider_id)
+        .ok_or_else(|| {
+            (
+                "unsupported_provider".into(),
+                format!("provider {provider_id} has no static descriptor"),
+            )
+        })?;
+    let capabilities = descriptor
+        .capabilities
+        .into_iter()
+        .filter_map(|capability| {
+            serde_json::to_value(capability)
+                .ok()?
+                .as_str()
+                .map(str::to_owned)
+        })
+        .collect();
+    Ok(ProviderCapabilityInput {
+        capabilities,
+        image_model: Some(resolve_provider_image_model(provider_id, None).map_err(display_error)?),
+        video_model: Some(resolve_provider_video_model(provider_id, None).map_err(display_error)?),
+    })
+}
+
+#[cfg(feature = "game-art-manifest")]
+fn game_art_error(error: GameArtError) -> (String, String) {
+    (error.code().into(), error.to_string())
+}
+
 fn provider_health(provider_id: &str, profile_id: &str) -> ProviderHealth {
     match resolve_provider(provider_id, profile_id) {
         Ok(provider) => provider.health_check(),
@@ -1551,6 +1748,31 @@ fn run_plan_operation(
         ensure_real_provider_execution(provider_id)?;
     }
     let provider = match operation {
+        #[cfg(feature = "game-art-manifest")]
+        AutomationOperation::BuildProject(request) => {
+            let validated = GameArtManifestV1::load_validated(&request.manifest_path)
+                .map_err(game_art_error)?;
+            let diff =
+                compute_project_diff(&request.project_path, &validated).map_err(game_art_error)?;
+            let capabilities = ProviderCapabilityInput {
+                capabilities: request.provider_capabilities.iter().cloned().collect(),
+                image_model: request.image_model.clone(),
+                video_model: request.video_model.clone(),
+            };
+            let plan = compute_build_plan(&request.project_path, &validated, &diff, &capabilities)
+                .map_err(game_art_error)?;
+            if plan.provider_request_estimate == 0 {
+                None
+            } else {
+                let provider_id = validated.manifest.provider.id.as_str();
+                ensure_real_provider_execution(provider_id)?;
+                ensure_project_plan_budget(&plan)?;
+                Some(
+                    resolve_provider(provider_id, &validated.manifest.provider.profile_id)
+                        .map_err(display_error)?,
+                )
+            }
+        }
         AutomationOperation::GenerateCharacterPack(request) => Some(
             resolve_provider(&request.provider_id, &request.profile_id).map_err(display_error)?,
         ),
@@ -1576,6 +1798,123 @@ fn run_plan_operation(
     };
     run_operation_with_provider(store, job_id, operation, provider.as_deref())
         .map_err(|error| (error.code().into(), error.to_string()))
+}
+
+fn verify_plan_inputs(plan: &AutomationPlan) -> Result<(), (String, String)> {
+    let current = fingerprint_operation_inputs(&plan.operation).map_err(display_error)?;
+    if current != plan.input_fingerprint {
+        return Err((
+            "input_changed".into(),
+            "operation inputs changed after plan creation".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn run_claimed_plan(
+    store: &JobStore,
+    job_id: &str,
+    plan: &AutomationPlan,
+) -> Result<JobRecord, (String, String)> {
+    if let Err(error) = verify_plan_inputs(plan) {
+        let _ = store.update_record(job_id, |record| {
+            record.state = forge_core::job::JobState::Failed;
+            record.lifecycle_state = forge_core::job::JobLifecycleState::Failed;
+            record.worker_pid = None;
+            record.error_code = Some(error.0.clone());
+            record.error_summary = Some(error.1.clone());
+            record.next_actions = vec!["prepare_new_plan".into(), "job_report".into()];
+        });
+        return Err(error);
+    }
+    run_plan_operation(store, job_id, &plan.operation)
+}
+
+fn preflight_plan_operation(operation: &AutomationOperation) -> Result<(), (String, String)> {
+    if let AutomationOperation::GenerateCharacterPack(request) = operation {
+        ensure_character_workflow_enabled(request)?;
+    }
+    if let AutomationOperation::BuildProject(request) = operation {
+        #[cfg(not(feature = "game-art-manifest"))]
+        {
+            let _ = request;
+            return Err((
+                "feature_not_available".into(),
+                "this forge binary was built without game-art-manifest support".into(),
+            ));
+        }
+        #[cfg(feature = "game-art-manifest")]
+        {
+            let validated = GameArtManifestV1::load_validated(&request.manifest_path)
+                .map_err(game_art_error)?;
+            let diff =
+                compute_project_diff(&request.project_path, &validated).map_err(game_art_error)?;
+            let capabilities = ProviderCapabilityInput {
+                capabilities: request.provider_capabilities.iter().cloned().collect(),
+                image_model: request.image_model.clone(),
+                video_model: request.video_model.clone(),
+            };
+            let plan = compute_build_plan(&request.project_path, &validated, &diff, &capabilities)
+                .map_err(game_art_error)?;
+            if request
+                .expected_plan_sha256
+                .as_deref()
+                .is_some_and(|expected| expected != plan.plan_sha256())
+            {
+                return Err((
+                    "input_changed".into(),
+                    "project inputs changed after plan creation".into(),
+                ));
+            }
+            if !plan.unmet_capabilities.is_empty() {
+                return Err((
+                    "provider_capability_missing".into(),
+                    format!(
+                        "provider is missing required capabilities: {}",
+                        plan.unmet_capabilities.join(", ")
+                    ),
+                ));
+            }
+            let source_sha256 = project_source_sha256(&request.project_path, &validated, &diff)
+                .map_err(game_art_error)?;
+            if request
+                .expected_source_sha256
+                .as_deref()
+                .is_some_and(|expected| expected != source_sha256)
+            {
+                return Err((
+                    "input_changed".into(),
+                    "project source closure changed after plan creation".into(),
+                ));
+            }
+            validate_resume_preflight(request, &plan.plan_sha256())?;
+            if plan.provider_request_estimate > 0 {
+                ensure_real_provider_execution(&validated.manifest.provider.id)?;
+                ensure_project_plan_budget(&plan)?;
+                resolve_provider(
+                    &validated.manifest.provider.id,
+                    &validated.manifest.provider.profile_id,
+                )
+                .map_err(display_error)?;
+            }
+            return Ok(());
+        }
+    }
+    if let Some(provider_id) = operation_provider_id(operation) {
+        ensure_real_provider_execution(provider_id)?;
+        let profile_id = match operation {
+            AutomationOperation::GenerateCharacterPack(request) => &request.profile_id,
+            AutomationOperation::CreateStyleLock(request) => &request.profile_id,
+            AutomationOperation::CreateSubjectLock(request) => &request.profile_id,
+            AutomationOperation::GenerateStaticAssetSet(request) => &request.profile_id,
+            AutomationOperation::CreateEnvironmentLock(request) => &request.profile_id,
+            AutomationOperation::GenerateTerrainSet(request) => &request.profile_id,
+            AutomationOperation::GenerateBuildingKit(request) => &request.profile_id,
+            _ => unreachable!("provider operation has a profile"),
+        };
+        resolve_provider(provider_id, profile_id).map_err(display_error)?;
+    }
+    Ok(())
 }
 
 fn operation_provider_id(operation: &AutomationOperation) -> Option<&str> {
@@ -1617,6 +1956,106 @@ fn ensure_real_provider_execution(provider_id: &str) -> Result<(), (String, Stri
         }
     }
     Ok(())
+}
+
+#[cfg(feature = "game-art-manifest")]
+fn ensure_project_plan_budget(
+    plan: &forge_core::game_art::ProjectBuildPlanV1,
+) -> Result<(), (String, String)> {
+    if plan.provider.id == "fixture" {
+        return Ok(());
+    }
+    let max_requests = env::var("FORGE_REAL_PROVIDER_MAX_REQUESTS")
+        .ok()
+        .and_then(|value| value.parse::<u32>().ok())
+        .unwrap_or(0);
+    if max_requests < plan.maximum_provider_requests {
+        return Err((
+            "provider_budget_exceeded".into(),
+            format!(
+                "reviewed project plan may require {} requests, but FORGE_REAL_PROVIDER_MAX_REQUESTS={max_requests}",
+                plan.maximum_provider_requests
+            ),
+        ));
+    }
+    if let Some(maximum_cost) = plan.maximum_cost_ticks {
+        let accepted = env::var("FORGE_REAL_PROVIDER_MAX_COST_TICKS")
+            .ok()
+            .and_then(|value| value.parse::<u64>().ok())
+            .unwrap_or(0);
+        if accepted < maximum_cost {
+            return Err((
+                "provider_budget_exceeded".into(),
+                format!(
+                    "reviewed project plan may cost {maximum_cost} ticks, but FORGE_REAL_PROVIDER_MAX_COST_TICKS={accepted}"
+                ),
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(feature = "game-art-manifest")]
+fn validate_resume_preflight(
+    request: &forge_core::automation::BuildProjectRequestV1,
+    plan_sha256: &str,
+) -> Result<(), (String, String)> {
+    match (
+        request.resume_from_job_id.as_deref(),
+        request.resume_state_path.as_ref(),
+        request.resume_state_sha256.as_deref(),
+    ) {
+        (None, None, None) => Ok(()),
+        (Some(job_id), Some(path), Some(expected_sha256)) => {
+            let source = job_store()?.read_record(job_id).map_err(display_error)?;
+            if source.operation_kind != forge_core::job::JobOperationKind::BuildProject {
+                return Err((
+                    "invalid_resume_source".into(),
+                    format!("job {job_id} is not a build_project job"),
+                ));
+            }
+            if source.lifecycle_state != forge_core::job::JobLifecycleState::Failed
+                || !source.recoverable
+                || source.worker_pid.is_some()
+            {
+                return Err((
+                    "resume_source_active".into(),
+                    "resume source must be a terminal failed, recoverable build with no live worker"
+                        .into(),
+                ));
+            }
+            let expected_path = source.job_dir.join(BUILD_STATE_FILE);
+            if path.canonicalize().map_err(io_error)?
+                != expected_path.canonicalize().map_err(io_error)?
+            {
+                return Err((
+                    "invalid_resume_source".into(),
+                    "resume state path does not belong to the source job".into(),
+                ));
+            }
+            let actual = hash_asset_file(path).map_err(display_error)?;
+            if actual != expected_sha256 {
+                return Err((
+                    "input_changed".into(),
+                    "resume state changed after plan creation".into(),
+                ));
+            }
+            let state: forge_core::game_art::ProjectBuildStateV1 =
+                serde_json::from_slice(&fs::read(path).map_err(io_error)?).map_err(json_error)?;
+            if state.plan_sha256 != plan_sha256 {
+                return Err((
+                    "resume_plan_mismatch".into(),
+                    "resume state belongs to a different complete plan".into(),
+                ));
+            }
+            Ok(())
+        }
+        _ => Err((
+            "invalid_resume_source".into(),
+            "resumeFromJobId, resumeStatePath and resumeStateSha256 must be supplied together"
+                .into(),
+        )),
+    }
 }
 
 fn ensure_character_workflow_enabled(

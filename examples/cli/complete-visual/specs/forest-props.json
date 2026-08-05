@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1",
+  "kind": "prop_set",
+  "id": "forest-props",
+  "name": "Forest Props",
+  "items": [
+    { "id": "crate", "name": "Crate", "prompt": "a compact wooden crate" }
+  ],
+  "license": "private"
+}

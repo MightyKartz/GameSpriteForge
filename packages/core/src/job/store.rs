@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::fs::{self, File, OpenOptions};
 use std::path::{Path, PathBuf};
 
@@ -239,15 +240,46 @@ impl JobStore {
     pub fn request_cancellation(&self, job_id: &str) -> Result<JobRecord, JobStoreError> {
         self.update_record(job_id, |record| {
             record.cancellation_requested = true;
-            if !matches!(
-                record.lifecycle_state,
-                JobLifecycleState::Succeeded
-                    | JobLifecycleState::Failed
-                    | JobLifecycleState::Cancelled
-            ) {
+            if !is_terminal_lifecycle(record.lifecycle_state) {
                 record.next_actions = vec!["wait_for_cancellation".to_string()];
             }
         })
+    }
+
+    /// Every job whose `parent_job_id` points at `parent_job_id`, most
+    /// recently updated first (inherited from [`Self::list_records`]).
+    pub fn list_children(&self, parent_job_id: &str) -> Result<Vec<JobRecord>, JobStoreError> {
+        Ok(self
+            .list_records()?
+            .into_iter()
+            .filter(|record| record.parent_job_id.as_deref() == Some(parent_job_id))
+            .collect())
+    }
+
+    /// Set the cancellation flag on `job_id` and recursively on every
+    /// non-terminal descendant (child jobs discovered via `parent_job_id`).
+    /// Terminal children (Succeeded/Failed/Cancelled) are left untouched and
+    /// are not traversed. Returns the number of jobs flagged, including the
+    /// root job itself.
+    pub fn request_cancellation_cascade(&self, job_id: &str) -> Result<usize, JobStoreError> {
+        self.request_cancellation(job_id)?;
+        let mut flagged = 1;
+        let mut visited = BTreeSet::new();
+        let mut frontier = vec![job_id.to_string()];
+        while let Some(parent_id) = frontier.pop() {
+            if !visited.insert(parent_id.clone()) {
+                continue;
+            }
+            for child in self.list_children(&parent_id)? {
+                if is_terminal_lifecycle(child.lifecycle_state) {
+                    continue;
+                }
+                self.request_cancellation(&child.job_id)?;
+                flagged += 1;
+                frontier.push(child.job_id);
+            }
+        }
+        Ok(flagged)
     }
 
     fn job_dir(&self, job_id: &str) -> Result<PathBuf, JobStoreError> {
@@ -256,6 +288,13 @@ impl JobStore {
         }
         Ok(self.root.join(job_id))
     }
+}
+
+fn is_terminal_lifecycle(state: JobLifecycleState) -> bool {
+    matches!(
+        state,
+        JobLifecycleState::Succeeded | JobLifecycleState::Failed | JobLifecycleState::Cancelled
+    )
 }
 
 fn is_filesystem_safe_job_id(job_id: &str) -> bool {

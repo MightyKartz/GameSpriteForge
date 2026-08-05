@@ -18,6 +18,8 @@ building-assets = ["terrain-assets"]
 map-compiler = ["building-assets"]
 # Compatibility umbrella for development and the existing world contract tests.
 world-assets = ["map-compiler"]
+# Stage 2 game art manifest pipeline. Release builds enable each milestone independently.
+game-art-manifest = []
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }

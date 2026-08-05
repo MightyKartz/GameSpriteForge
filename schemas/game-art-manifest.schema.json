@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/game-art-manifest.schema.json",
+  "title": "Forge Game Art Manifest V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "projectId", "name", "provider", "defaults", "assets"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "kind": { "const": "game_art_manifest" },
+    "projectId": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
+    "name": { "type": "string", "minLength": 1 },
+    "styleRevision": { "type": "string", "minLength": 1 },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "profileId"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "profileId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outputDirectory", "godotRoot", "license"],
+      "properties": {
+        "outputDirectory": { "type": "string", "minLength": 1 },
+        "godotRoot": { "type": "string", "minLength": 1 },
+        "license": { "type": "string", "minLength": 1 }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "spec"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
+          "kind": { "enum": ["character", "icon_set", "prop_set"] },
+          "spec": { "type": "string", "minLength": 1 },
+          "required": { "type": "boolean", "default": true },
+          "dependsOn": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^([A-Za-z0-9_-]+|(style|subject):[A-Za-z0-9_-]+@[A-Za-z0-9_.-]+)$"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

@@ -448,6 +448,39 @@ pub struct GodotInstallRequest {
     pub provider_refs: Vec<ProviderAssetRef>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields)]
+pub struct BuildProjectRequestV1 {
+    #[serde(default = "schema_version")]
+    pub schema_version: String,
+    pub project_path: PathBuf,
+    pub manifest_path: PathBuf,
+    /// Exact pure build plan reviewed by the caller. Execution recomputes the
+    /// plan and refuses to run when this digest no longer matches.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_plan_sha256: Option<String>,
+    /// Static provider descriptor captured without resolving credentials.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub provider_capabilities: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub image_model: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub video_model: Option<String>,
+    /// Immutable source closure (project, manifest, specs/references and
+    /// Style/Subject Locks) revalidated before every provider child.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_source_sha256: Option<String>,
+    /// Explicit source parent for crash recovery. A new job may reuse only a
+    /// succeeded child whose complete plan digest is identical.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resume_from_job_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resume_state_path: Option<PathBuf>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resume_state_sha256: Option<String>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", content = "request", rename_all = "snake_case")]
 pub enum AutomationOperation {
@@ -462,6 +495,7 @@ pub enum AutomationOperation {
     GenerateBuildingKit(GenerateBuildingKitRequest),
     CompileMap(CompileMapRequest),
     InstallGodot(GodotInstallRequest),
+    BuildProject(BuildProjectRequestV1),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

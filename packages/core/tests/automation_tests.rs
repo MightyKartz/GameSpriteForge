@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use forge_core::automation::{
     automation_profile, run_operation, stage_plan_job, AssetInput, AssetMetadata,
@@ -7,7 +7,7 @@ use forge_core::automation::{
     CharacterWorkflowSelection, FixedGridSplit, GodotInstallRequest, MattingRecipe, PlanStore,
     PrepareAssetRequest, PrepareCharacterPackRequest, QualityPolicy, SpriteSheetSplit,
 };
-use forge_core::job::{JobLifecycleState, JobStore};
+use forge_core::job::{JobLifecycleState, JobOperationKind, JobStore};
 use image::{Rgba, RgbaImage};
 use tempfile::tempdir;
 
@@ -351,6 +351,204 @@ fn guided_character_workflow_requires_its_core_animations() {
         .unwrap_err();
 
     assert!(error.to_string().contains("requires animations: jump"));
+}
+
+#[test]
+fn build_project_plan_round_trips_with_zero_provider_estimate() {
+    let temp = tempdir().unwrap();
+    let (project, manifest) = build_project_fixture(temp.path());
+    let store = PlanStore::new(temp.path().join("plans")).unwrap();
+
+    let prepared = store
+        .prepare(build_project_operation(&project, &manifest))
+        .unwrap();
+
+    assert_eq!(prepared.estimate.provider_request_estimate, 0);
+    assert_eq!(prepared.estimate.maximum_provider_requests, 0);
+    assert_eq!(prepared.estimate.cache_hit_count, 0);
+    assert!(prepared.estimate.provider_id.is_none());
+    assert!(prepared.estimate.profile_id.is_none());
+    assert_eq!(prepared.effects.len(), 1);
+    assert!(prepared.effects[0].contains("build project from manifest"));
+
+    let claimed = store.claim(&prepared.token).unwrap();
+    assert!(matches!(
+        claimed.operation,
+        AutomationOperation::BuildProject(_)
+    ));
+}
+
+#[test]
+fn build_project_fingerprint_tracks_manifest_contents() {
+    let temp = tempdir().unwrap();
+    let (project, manifest) = build_project_fixture(temp.path());
+    let store = PlanStore::new(temp.path().join("plans")).unwrap();
+    let prepared = store
+        .prepare(build_project_operation(&project, &manifest))
+        .unwrap();
+
+    let mut manifest_json: serde_json::Value =
+        serde_json::from_slice(&fs::read(&manifest).unwrap()).unwrap();
+    manifest_json["name"] = "changed".into();
+    fs::write(
+        &manifest,
+        serde_json::to_vec_pretty(&manifest_json).unwrap(),
+    )
+    .unwrap();
+
+    let error = store.claim(&prepared.token).unwrap_err();
+    assert!(error.to_string().contains("input changed"));
+}
+
+#[test]
+fn build_project_validate_rejects_bad_paths() {
+    let temp = tempdir().unwrap();
+    let (project, manifest) = build_project_fixture(temp.path());
+    let store = PlanStore::new(temp.path().join("plans")).unwrap();
+
+    let error = store
+        .prepare(build_project_operation(
+            &project,
+            Path::new("game-art.json"),
+        ))
+        .unwrap_err();
+    assert!(error
+        .to_string()
+        .contains("manifestPath must be an absolute path"));
+
+    let error = store
+        .prepare(build_project_operation(Path::new("project"), &manifest))
+        .unwrap_err();
+    assert!(error
+        .to_string()
+        .contains("projectPath must be an absolute path"));
+
+    let error = store
+        .prepare(build_project_operation(
+            &project,
+            &temp.path().join("missing.json"),
+        ))
+        .unwrap_err();
+    assert!(error.to_string().contains("manifest file does not exist"));
+
+    let error = store
+        .prepare(build_project_operation(
+            &temp.path().join("missing-dir"),
+            &manifest,
+        ))
+        .unwrap_err();
+    assert!(error
+        .to_string()
+        .contains("project directory does not exist"));
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::symlink;
+
+        let link = temp.path().join("linked-manifest.json");
+        symlink(&manifest, &link).unwrap();
+        let error = store
+            .prepare(build_project_operation(&project, &link))
+            .unwrap_err();
+        assert!(error.to_string().contains("symbolic link"));
+    }
+}
+
+#[test]
+fn build_project_job_stages_steps_and_fails_on_invalid_manifest() {
+    let temp = tempdir().unwrap();
+    let (project, manifest) = build_project_fixture(temp.path());
+    let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+    let prepared = plans
+        .prepare(build_project_operation(&project, &manifest))
+        .unwrap();
+    let plan = plans.claim(&prepared.token).unwrap();
+    let jobs = JobStore::new(temp.path().join("jobs")).unwrap();
+    let queued = stage_plan_job(&jobs, &plan).unwrap();
+
+    assert_eq!(queued.operation_kind, JobOperationKind::BuildProject);
+    let step_names = queued
+        .steps
+        .iter()
+        .map(|step| step.name.as_str())
+        .collect::<Vec<_>>();
+    assert_eq!(
+        step_names,
+        [
+            "validate_manifest",
+            "diff_catalog",
+            "run_child_builds",
+            "update_catalog",
+            "summarize"
+        ]
+    );
+
+    fs::write(&manifest, "{\"schemaVersion\":\"1\"}\n").unwrap();
+
+    // The fail-closed placeholder is gone: the runner now dispatches to the
+    // build orchestrator, which rejects this malformed manifest with a
+    // manifest-level error. FORGE_PLAN_STORE keeps the dispatch's child
+    // PlanStore inside the tempdir.
+    let run = || run_operation(&jobs, &queued.job_id, &plan.operation);
+    let error = temp_env::with_var(
+        "FORGE_PLAN_STORE",
+        Some(temp.path().join("child-plans")),
+        run,
+    )
+    .unwrap_err();
+    assert_eq!(error.code(), "invalid_json");
+    let record = jobs.read_record(&queued.job_id).unwrap();
+    assert_eq!(record.lifecycle_state, JobLifecycleState::Failed);
+    assert_eq!(record.error_code.as_deref(), Some("invalid_json"));
+}
+
+fn build_project_fixture(root: &Path) -> (PathBuf, PathBuf) {
+    let project = root.join("project");
+    fs::create_dir(&project).unwrap();
+    fs::write(
+        project.join("forge-project.json"),
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schemaVersion": "1",
+            "projectId": "test-project",
+            "name": "Test Project",
+            "provider": { "id": "fixture", "profileId": "default" },
+            "outputDir": "build"
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    let manifest = root.join("game-art.json");
+    fs::write(
+        &manifest,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schemaVersion": "1",
+            "kind": "game_art_manifest",
+            "projectId": "test-project",
+            "name": "Test Project",
+            "provider": { "id": "fixture", "profileId": "default" },
+            "defaults": {
+                "outputDirectory": "packs",
+                "godotRoot": "addons/forge_assets",
+                "license": "private"
+            },
+            "assets": []
+        }))
+        .unwrap(),
+    )
+    .unwrap();
+    (project, manifest)
+}
+
+fn build_project_operation(project: &Path, manifest: &Path) -> AutomationOperation {
+    serde_json::from_value(serde_json::json!({
+        "kind": "build_project",
+        "request": {
+            "schemaVersion": "1",
+            "projectPath": project,
+            "manifestPath": manifest
+        }
+    }))
+    .unwrap()
 }
 
 fn request(paths: Vec<PathBuf>) -> PrepareAssetRequest {

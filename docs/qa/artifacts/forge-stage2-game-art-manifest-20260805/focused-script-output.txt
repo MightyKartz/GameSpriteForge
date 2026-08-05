@@ -1,0 +1,10 @@
+CHECK 0 PASS: example manifest parses — project diff reports 3 new_asset builds against a fixture project
+CHECK 1 PASS: deterministic plan hash 53c5e1c0ac844301… stable across reruns and manifest key-order/whitespace rewrite
+CHECK 2 PASS: reuse without provider jobs — 5 jobs after first build (1 style + 1 parent + 3 children); re-execution reused 3/3 with 0 provider requests and 0 new child jobs (count 5 → 6, parent only)
+CHECK 3 PASS: targeted invalidation — hud-icons rebuild (spec_changed), hero/forest-props reuse, exactly one new child job (count 6 → 8: 1 parent + 1 child)
+CHECK 4 PASS: required/optional behavior — required icon_set failure failed the parent (project_build_failed) and skipped the dependent hero (dependency_failed) while the unrelated optional prop_set built; a failing optional prop_set did not block the required icon_set (parent succeeded)
+CHECK 5 PASS: cancel propagation — job cancel flagged parent and active child 10569703-5fbc-4902-9c3e-2de6dc90b278 (job.json cancellation_requested=true); both reached cancelled
+CHECK 6 PASS: crash recovery — cargo test -p core --test game_art_build_tests reconcile + cargo test -p core concurrent (catalog::tests::concurrent_registers_do_not_lose_updates)
+CHECK 7 PASS: single JSON stdout — every forge command in this script emitted exactly one JSON envelope (jq-verified)
+CHECK 8 PASS: credential scan — 0 matches across FORGE_JOB_STORE and FORGE_PLAN_STORE
+PASS Forge game art manifest contract
