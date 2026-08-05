@@ -1,0 +1,20 @@
+{
+  "animations": [
+    {
+      "fps": 12.0,
+      "frameCount": 8,
+      "loop": true,
+      "name": "walk"
+    }
+  ],
+  "assetId": "godot-smoke-walk",
+  "assetKey": "knight",
+  "defaultAnimation": "walk",
+  "gameplayControllerIncluded": false,
+  "kind": "animation",
+  "nodeType": "AnimatedSprite2D",
+  "packSha256": "ae7fc0d23a812967de9cc74a701052f29c3ffe18232fda7f1212ab31d6832123",
+  "scenePath": "res://addons/forge_assets/knight/forge_animated_sprite.tscn",
+  "schemaVersion": "1",
+  "spriteFramesPath": "res://addons/forge_assets/knight/forge_sprite_frames.tres"
+}

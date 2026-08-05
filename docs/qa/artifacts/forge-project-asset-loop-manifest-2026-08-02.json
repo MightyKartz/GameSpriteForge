@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1",
+  "updatedAt": "2026-08-02T00:32:16.653795Z",
+  "assets": {
+    "knight": {
+      "assetId": "godot-smoke-walk",
+      "name": "Godot Smoke Walk",
+      "kind": "animation",
+      "revision": 2,
+      "packSha256": "ae7fc0d23a812967de9cc74a701052f29c3ffe18232fda7f1212ab31d6832123",
+      "pack": {
+        "kind": "external_absolute",
+        "path": "/private/tmp/forge-project-loop-e2e.ByPS09/godot-pack-smoke-e2e/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack"
+      },
+      "godotTarget": "addons/forge_assets/knight",
+      "scenePath": "addons/forge_assets/knight/forge_animated_sprite.tscn",
+      "spriteFramesPath": "addons/forge_assets/knight/forge_sprite_frames.tres",
+      "usagePath": "addons/forge_assets/knight/forge_usage.json",
+      "defaultAnimation": "walk",
+      "animations": [
+        {
+          "name": "walk",
+          "frameCount": 8,
+          "fps": 12.0,
+          "loop": true
+        }
+      ],
+      "providerRefs": [
+        {
+          "provider": "spritecook",
+          "assetId": "spritecook-demo-knight",
+          "label": "Knight source"
+        }
+      ],
+      "lastJobId": "432c5ac4-c6df-417d-8e72-03c55fd7e2aa",
+      "installedAt": "2026-08-02T00:32:01.687173Z"
+    }
+  }
+}

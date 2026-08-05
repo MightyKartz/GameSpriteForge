@@ -1,0 +1,57 @@
+{
+  "animations": {
+    "idle": {
+      "animation": "idle",
+      "attempt": 1,
+      "stillPath": "/tmp/forge-xai-real.jzHVP7/jobs/bd7b3dc0-5c8c-4552-94c2-d0fb40b8b5ef/source/provider/idle/attempt-1/direction.png",
+      "stillSha256": "5f12fafa835ce59d0e6919d964b137884a46bd71959e23a9513d390d6fe0a036",
+      "videoAssetId": "16a77415-cb0a-947c-8d55-9d505d0d5183",
+      "videoPath": "/tmp/forge-xai-real.jzHVP7/jobs/bd7b3dc0-5c8c-4552-94c2-d0fb40b8b5ef/source/provider/idle/attempt-1/animation.mp4",
+      "videoSha256": "d720bdfd28e91d324c5965a089d7d6a4b465e3bab23bf21fac7de5044556d538"
+    },
+    "walk_down": {
+      "animation": "walk_down",
+      "attempt": 1,
+      "stillPath": "/tmp/forge-xai-real.jzHVP7/jobs/bd7b3dc0-5c8c-4552-94c2-d0fb40b8b5ef/source/provider/walk_down/attempt-1/direction.png",
+      "stillSha256": "999636472080c8895be42e0d1e67e8677a6c2888d7ae969a78e7797147225c98",
+      "videoAssetId": "08073969-b6eb-9c08-91b5-dd5f9fa15195",
+      "videoPath": "/tmp/forge-xai-real.jzHVP7/jobs/bd7b3dc0-5c8c-4552-94c2-d0fb40b8b5ef/source/provider/walk_down/attempt-1/animation.mp4",
+      "videoSha256": "187e6da17a0cc007cf4ebd31bb1f55c626696da023339b01b52253bc8ce96501"
+    },
+    "walk_right": {
+      "animation": "walk_right",
+      "attempt": 1,
+      "stillPath": "/tmp/forge-xai-real.jzHVP7/jobs/bd7b3dc0-5c8c-4552-94c2-d0fb40b8b5ef/source/provider/walk_right/attempt-1/direction.png",
+      "stillSha256": "92cce594c3d898ec6901ece0580f14212516d57234ec4da8846ff11f133f2c6f",
+      "videoAssetId": "6626ed9b-8f91-9591-a1f8-59cdc7cf6f39",
+      "videoPath": "/tmp/forge-xai-real.jzHVP7/jobs/bd7b3dc0-5c8c-4552-94c2-d0fb40b8b5ef/source/provider/walk_right/attempt-1/animation.mp4",
+      "videoSha256": "d298c43a91a827be11dcabb873bda905d81fa0aa18667784f109ea4c060c1216"
+    },
+    "walk_up": {
+      "animation": "walk_up",
+      "attempt": 1,
+      "stillPath": "/tmp/forge-xai-real.jzHVP7/jobs/bd7b3dc0-5c8c-4552-94c2-d0fb40b8b5ef/source/provider/walk_up/attempt-1/direction.png",
+      "stillSha256": "ef03bdbda360fdc87913c85b2b97633746ca83a79b25912da621e1b8127bcfff",
+      "videoAssetId": "807afabb-67c7-90d7-b310-d6c5604ed8d8",
+      "videoPath": "/tmp/forge-xai-real.jzHVP7/jobs/bd7b3dc0-5c8c-4552-94c2-d0fb40b8b5ef/source/provider/walk_up/attempt-1/animation.mp4",
+      "videoSha256": "8b5ffebee54eeef866aad38c0307555973803a969df64ea2996ae1090a5b48ef"
+    }
+  },
+  "imageModel": null,
+  "profileId": "default",
+  "providerId": "xai",
+  "reference": {
+    "assetId": null,
+    "path": "/tmp/forge-xai-real.jzHVP7/jobs/bd7b3dc0-5c8c-4552-94c2-d0fb40b8b5ef/source/provider/reference/reference.png",
+    "sha256": "3b01c423e87544f7b2e63dd0f8cd506927bf684395bce03e67adfd7fefbfde8f"
+  },
+  "schemaVersion": "1",
+  "usage": {
+    "costInUsdTicks": 25700000000,
+    "generatedImages": 5,
+    "generatedVideos": 4,
+    "requests": 13
+  },
+  "videoModel": null,
+  "workflow": "topdown@1.0.0"
+}
