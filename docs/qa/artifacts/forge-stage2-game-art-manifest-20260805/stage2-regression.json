@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1",
+  "profile": "forge-stage2-regression@1.0.0",
+  "date": "2026-08-05T02:38:22Z",
+  "git": {
+    "commit": "43e7ab3f4d81b9f39ab8b316b067ade44d10b014",
+    "branch": "codex/stage2-game-art-manifest",
+    "snapshot_file": "git-status.txt",
+    "note": "Stage 2 ships as an uncommitted working-tree changeset on top of this HEAD (no commits made per wave rules). git-status.txt / git-diff-stat.txt were captured after the acceptance-fix to packages/cli/src/main.rs."
+  },
+  "environment": {
+    "forge_binary": "target/debug/forge",
+    "forge_version": "forge 0.2.0-cli.1",
+    "real_provider_calls": "none — FORGE_REAL_PROVIDER_ACCEPT was never set; all runs used the fixture provider or offline planning"
+  },
+  "steps": [
+    {
+      "id": "a-cargo-fmt",
+      "command": "cargo fmt --all -- --check",
+      "exit_code": 0,
+      "log_file": "target/qa/stage2-regression-20260805T022316Z/step-a-cargo-fmt.log",
+      "status": "pass",
+      "notes": "Clean; log is empty (no diffs)."
+    },
+    {
+      "id": "b-cargo-clippy",
+      "command": "cargo clippy --workspace --all-targets --all-features -- -D warnings",
+      "exit_code": 0,
+      "log_file": "target/qa/stage2-regression-20260805T022316Z/step-b-cargo-clippy.log",
+      "status": "pass",
+      "notes": "No warnings. --all-features includes the new game-art-manifest gate, so the stage 2 CLI surface is covered."
+    },
+    {
+      "id": "c-cargo-test",
+      "command": "cargo test --workspace --no-fail-fast",
+      "exit_code": 0,
+      "log_file": "target/qa/stage2-regression-20260805T022316Z/step-c-cargo-test.log",
+      "status": "pass",
+      "notes": "210 passed, 0 failed across 19 test binaries (unit + integration), default features. Includes packages/core/tests/game_art_build_tests.rs (9 orchestrator tests) and catalog concurrency tests."
+    },
+    {
+      "id": "d-cli-product-contract",
+      "command": "bash scripts/test-cli-product.sh",
+      "exit_code": 0,
+      "log_file": "target/qa/stage2-regression-20260805T022316Z/step-d-cli-product.log",
+      "status": "pass",
+      "notes": "Default-feature CLI surface unchanged: project/style/generate/retry/review/cancel/pack validate/godot plan-install. Ends with 'PASS Forge CLI product contract'."
+    },
+    {
+      "id": "e-v03-release-matrix",
+      "command": "bash scripts/test-v03-release-matrix.sh",
+      "exit_code": 0,
+      "log_file": "target/qa/stage2-regression-20260805T022316Z/step-e-v03-release-matrix.log",
+      "status": "pass",
+      "notes": "6/6 gates pass (rust-quality, character-v2-contract, character-v2-full-matrix, static-cli-contract, static-five-style-matrix, world-assets-experimental); verdict=pass. Full report: target/qa/v0.3-release-matrix-20260805T022701Z/v0.3-test-report.json."
+    },
+    {
+      "id": "f-cli-installer",
+      "command": "bash scripts/test-cli-installer.sh",
+      "exit_code": 0,
+      "log_file": "target/qa/stage2-regression-20260805T022316Z/step-f-cli-installer.log",
+      "status": "pass",
+      "notes": "Fully offline (mktemp sandbox, file:// release URL, FORGE_INSTALL_TEST_MODE=1). Ends with 'PASS Forge CLI installer contract'."
+    },
+    {
+      "id": "g-cli-signing-contract",
+      "command": "bash scripts/test-cli-signing-contract.sh",
+      "exit_code": 0,
+      "log_file": "target/qa/stage2-regression-20260805T022316Z/step-g-cli-signing-contract.log",
+      "status": "pass",
+      "notes": "Ad-hoc codesign checks on temp copies plus grep contracts over release workflow/install.sh. Ends with 'PASS Forge CLI unsigned release and optional signing contract'."
+    },
+    {
+      "id": "h-game-art-manifest",
+      "command": "bash scripts/test-game-art-manifest.sh",
+      "exit_code": 0,
+      "log_file": "target/qa/stage2-regression-20260805T022316Z/step-h-game-art-manifest.log",
+      "status": "pass",
+      "notes": "Stage 2 focused acceptance script (fixture provider, mktemp JobStore/PlanStore/CacheStore). CHECK 0-8 + 'PASS Forge game art manifest contract'; check lines copied to focused-script-output.txt. This run also re-confirms the script green from a clean state after the acceptance fix."
+    }
+  ],
+  "summary": {
+    "total": 8,
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0,
+    "pre_existing_failures": []
+  }
+}

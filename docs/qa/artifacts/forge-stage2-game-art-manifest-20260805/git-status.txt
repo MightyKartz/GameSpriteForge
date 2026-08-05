@@ -1,0 +1,18 @@
+ M packages/cli/Cargo.toml
+ M packages/cli/src/main.rs
+ M packages/core/src/automation/mod.rs
+ M packages/core/src/automation/plan.rs
+ M packages/core/src/automation/repair.rs
+ M packages/core/src/automation/runner.rs
+ M packages/core/src/automation/types.rs
+ M packages/core/src/catalog.rs
+ M packages/core/src/job/store.rs
+ M packages/core/src/job/types.rs
+ M packages/core/src/lib.rs
+ M packages/core/tests/automation_tests.rs
+?? docs/qa/artifacts/forge-stage2-game-art-manifest-20260805/
+?? examples/cli/complete-visual/
+?? packages/core/src/game_art/
+?? packages/core/tests/game_art_build_tests.rs
+?? schemas/game-art-manifest.schema.json
+?? scripts/test-game-art-manifest.sh

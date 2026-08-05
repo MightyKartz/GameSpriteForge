@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1",
+  "kind": "icon_set",
+  "id": "hud-icons",
+  "name": "HUD Icons",
+  "items": [
+    { "id": "coin", "name": "Coin", "prompt": "a small gold coin" },
+    { "id": "gem", "name": "Gem", "prompt": "a bright red gem" }
+  ],
+  "license": "private"
+}

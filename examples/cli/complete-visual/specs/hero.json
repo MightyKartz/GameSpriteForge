@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1",
+  "kind": "character",
+  "id": "hero",
+  "name": "Hero Knight",
+  "prompt": "a brave knight in compact jewel-tone armor",
+  "license": "private"
+}

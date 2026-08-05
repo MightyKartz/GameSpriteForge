@@ -11,12 +11,13 @@ pub use repair::{
 pub use runner::{run_operation, run_operation_with_provider, stage_plan_job, AutomationRunError};
 pub use types::{
     automation_profile, character_workflow_catalog, AssetInput, AssetMetadata, AutomationOperation,
-    AutomationPlan, AutomationProfile, CharacterAnimationRecipe, CharacterPackMetadata,
-    CharacterRetryStage, CharacterWorkflowAnimation, CharacterWorkflowCatalog,
-    CharacterWorkflowPreset, CharacterWorkflowSelection, CompileMapRequest,
-    CreateEnvironmentLockRequest, CreateStyleLockRequest, CreateSubjectLockRequest, FixedGridSplit,
-    GenerateBuildingKitRequest, GenerateCharacterPackRequest, GenerateStaticAssetSetRequest,
-    GenerateTerrainSetRequest, GeneratedCharacterSpec, GenerationPolicy, GodotInstallRequest,
-    MattingRecipe, PlanEstimateV1, PrepareAssetRequest, PrepareCharacterPackRequest, PreparedPlan,
-    QualityPolicy, SpriteSheetSplit,
+    AutomationPlan, AutomationProfile, BuildProjectRequestV1, CharacterAnimationRecipe,
+    CharacterPackMetadata, CharacterRetryStage, CharacterWorkflowAnimation,
+    CharacterWorkflowCatalog, CharacterWorkflowPreset, CharacterWorkflowSelection,
+    CompileMapRequest, CreateEnvironmentLockRequest, CreateStyleLockRequest,
+    CreateSubjectLockRequest, FixedGridSplit, GenerateBuildingKitRequest,
+    GenerateCharacterPackRequest, GenerateStaticAssetSetRequest, GenerateTerrainSetRequest,
+    GeneratedCharacterSpec, GenerationPolicy, GodotInstallRequest, MattingRecipe, PlanEstimateV1,
+    PrepareAssetRequest, PrepareCharacterPackRequest, PreparedPlan, QualityPolicy,
+    SpriteSheetSplit,
 };

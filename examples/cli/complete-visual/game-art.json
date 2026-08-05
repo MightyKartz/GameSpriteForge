@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1",
+  "kind": "game_art_manifest",
+  "projectId": "complete-visual",
+  "name": "Complete Visual Example",
+  "provider": { "id": "fixture", "profileId": "default" },
+  "defaults": {
+    "outputDirectory": "packs",
+    "godotRoot": "addons/forge_assets",
+    "license": "private"
+  },
+  "assets": [
+    {
+      "id": "hero",
+      "kind": "character",
+      "spec": "specs/hero.json",
+      "tags": ["player"]
+    },
+    {
+      "id": "hud-icons",
+      "kind": "icon_set",
+      "spec": "specs/hud-icons.json",
+      "tags": ["hud"]
+    },
+    {
+      "id": "forest-props",
+      "kind": "prop_set",
+      "spec": "specs/forest-props.json",
+      "tags": ["forest"]
+    }
+  ]
+}

@@ -268,6 +268,11 @@ fn estimate_operation(operation: &AutomationOperation) -> super::types::PlanEsti
             profile_id: Some(request.profile_id.clone()),
             ..Default::default()
         },
+        AutomationOperation::BuildProject(_) => {
+            // The parent build job makes no provider calls itself; child builds
+            // are planned separately and carry their own estimates.
+            PlanEstimateV1::default()
+        }
         _ => PlanEstimateV1::default(),
     }
 }
@@ -563,6 +568,45 @@ fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreEr
                 )));
             }
         }
+        AutomationOperation::BuildProject(request) => {
+            if request.schema_version != "1" {
+                return Err(PlanStoreError::InvalidRequest(
+                    "build project requests require schemaVersion \"1\"".into(),
+                ));
+            }
+            if request.project_path.as_os_str().is_empty() {
+                return Err(PlanStoreError::InvalidRequest(
+                    "projectPath must not be empty".into(),
+                ));
+            }
+            if !request.project_path.is_absolute() {
+                return Err(PlanStoreError::InvalidRequest(
+                    "projectPath must be an absolute path".into(),
+                ));
+            }
+            if !request.manifest_path.is_absolute() {
+                return Err(PlanStoreError::InvalidRequest(
+                    "manifestPath must be an absolute path".into(),
+                ));
+            }
+            if !request.project_path.is_dir() {
+                return Err(PlanStoreError::InvalidRequest(format!(
+                    "project directory does not exist: {}",
+                    request.project_path.display()
+                )));
+            }
+            if request.manifest_path.is_symlink() {
+                return Err(PlanStoreError::InvalidRequest(
+                    "manifestPath must not be a symbolic link".into(),
+                ));
+            }
+            if !request.manifest_path.is_file() {
+                return Err(PlanStoreError::InvalidRequest(format!(
+                    "manifest file does not exist: {}",
+                    request.manifest_path.display()
+                )));
+            }
+        }
     }
     Ok(())
 }
@@ -827,6 +871,18 @@ pub fn fingerprint_operation_inputs(
                 &request.project_path,
                 &request.project_path.join(&request.target),
             )?;
+        }
+        AutomationOperation::BuildProject(request) => {
+            // Pin the canonical project directory and the manifest identity plus
+            // bytes; the diff/spec contents derived from the manifest are
+            // captured at execution time by the build orchestrator.
+            let canonical_project =
+                fs::canonicalize(&request.project_path).map_err(|source| PlanStoreError::Io {
+                    path: request.project_path.clone(),
+                    source,
+                })?;
+            hasher.update(canonical_project.to_string_lossy().as_bytes());
+            hash_files(&mut hasher, std::slice::from_ref(&request.manifest_path))?;
         }
     }
     Ok(format!("{:x}", hasher.finalize()))
@@ -1527,6 +1583,11 @@ fn describe_effects(operation: &AutomationOperation) -> Vec<String> {
                 "leave the optional source project catalog unchanged".into()
             },
         ],
+        AutomationOperation::BuildProject(request) => vec![format!(
+            "build project from manifest {} into {}",
+            request.manifest_path.display(),
+            request.project_path.display()
+        )],
     }
 }
 

@@ -37,6 +37,11 @@ use forge_core::component::{
     inspect_component, install_component, list_components, FixtureVisionComponent, VisionComponent,
     VisionComponentRequestV1, VisionOperation,
 };
+#[cfg(feature = "game-art-manifest")]
+use forge_core::game_art::{
+    compute_build_plan, compute_project_diff, GameArtError, GameArtManifestV1,
+    ProviderCapabilityInput,
+};
 use forge_core::job::{JobArtifactRecord, JobRecord, JobStore, JOB_WORKSPACE_JSON};
 use forge_core::provider::{CredentialKind, ProviderHealth};
 #[cfg(feature = "consistency-v2")]
@@ -325,6 +330,24 @@ enum ProjectCommand {
     Inspect {
         #[arg(long)]
         project: PathBuf,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
+    #[cfg(feature = "game-art-manifest")]
+    Diff {
+        #[arg(long)]
+        project: PathBuf,
+        #[arg(long)]
+        manifest: PathBuf,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
+    #[cfg(feature = "game-art-manifest")]
+    PlanBuild {
+        #[arg(long)]
+        project: PathBuf,
+        #[arg(long)]
+        manifest: PathBuf,
         #[command(flatten)]
         json: JsonFlag,
     },
@@ -797,9 +820,11 @@ fn run() -> Result<(), (String, String)> {
                 success(&record)
             }
             JobCommand::Cancel { id, .. } => {
-                let record = job_store()?
-                    .request_cancellation(&id)
+                let store = job_store()?;
+                store
+                    .request_cancellation_cascade(&id)
                     .map_err(display_error)?;
+                let record = store.read_record(&id).map_err(display_error)?;
                 success(&record)
             }
             JobCommand::Report { id, .. } => {
@@ -925,6 +950,14 @@ fn run() -> Result<(), (String, String)> {
                     success(&inspection)
                 }
             }
+            #[cfg(feature = "game-art-manifest")]
+            ProjectCommand::Diff {
+                project, manifest, ..
+            } => project_diff(&project, &manifest),
+            #[cfg(feature = "game-art-manifest")]
+            ProjectCommand::PlanBuild {
+                project, manifest, ..
+            } => project_plan_build(&project, &manifest),
         },
         Command::Style { command } => match command {
             StyleCommand::Create(input) => {
@@ -1007,7 +1040,8 @@ fn run() -> Result<(), (String, String)> {
                     "character-benchmark@1.0.0",
                     "style@1.0.0",
                     "subject@1.0.0",
-                    "map@1.0.0"
+                    "map@1.0.0",
+                    "game-art-manifest@1.0.0"
                 ]
             })),
             SchemaCommand::Show { id, .. } => {
@@ -1022,6 +1056,9 @@ fn run() -> Result<(), (String, String)> {
                     "style@1.0.0" => include_str!("../../../schemas/style-spec.schema.json"),
                     "subject@1.0.0" => include_str!("../../../schemas/subject-spec.schema.json"),
                     "map@1.0.0" => include_str!("../../../schemas/map-spec.schema.json"),
+                    "game-art-manifest@1.0.0" => {
+                        include_str!("../../../schemas/game-art-manifest.schema.json")
+                    }
                     _ => return Err(("schema_not_found".into(), format!("unknown schema: {id}"))),
                 };
                 let schema: serde_json::Value = serde_json::from_str(source).map_err(json_error)?;
@@ -1516,6 +1553,88 @@ fn validate_benchmark_references(
     Ok(())
 }
 
+#[cfg(feature = "game-art-manifest")]
+fn project_diff(project: &Path, manifest: &Path) -> Result<(), (String, String)> {
+    let validated = GameArtManifestV1::load_validated(manifest).map_err(game_art_error)?;
+    let diff = compute_project_diff(project, &validated).map_err(game_art_error)?;
+    success(&diff)
+}
+
+/// Plan-only project build: computes the offline build plan and prepares a
+/// single-use plan token; execution goes through `forge plan execute`. The
+/// provider is only asked for its static capability descriptor — no provider
+/// network I/O happens here.
+#[cfg(feature = "game-art-manifest")]
+fn project_plan_build(project: &Path, manifest: &Path) -> Result<(), (String, String)> {
+    let validated = GameArtManifestV1::load_validated(manifest).map_err(game_art_error)?;
+    let diff = compute_project_diff(project, &validated).map_err(game_art_error)?;
+    let capabilities = provider_capability_input(
+        &validated.manifest.provider.id,
+        &validated.manifest.provider.profile_id,
+    )?;
+    let plan =
+        compute_build_plan(project, &validated, &diff, &capabilities).map_err(game_art_error)?;
+    let plan_sha256 = plan.plan_sha256();
+    // The automation layer pins canonical absolute paths; canonicalizing up
+    // front also resolves any symlinked input paths it would reject.
+    let canonical_project = project.canonicalize().map_err(io_error)?;
+    let canonical_manifest = manifest.canonicalize().map_err(io_error)?;
+    // Build the operation through its tagged JSON form so the CLI does not
+    // depend on the core facade re-exporting the request type.
+    let operation: AutomationOperation = serde_json::from_value(serde_json::json!({
+        "kind": "build_project",
+        "request": {
+            "schemaVersion": "1",
+            "projectPath": canonical_project,
+            "manifestPath": canonical_manifest,
+        }
+    }))
+    .map_err(json_error)?;
+    let prepared = plan_store()?.prepare(operation).map_err(display_error)?;
+    let mut plan_json = serde_json::to_value(&plan).map_err(json_error)?;
+    plan_json
+        .as_object_mut()
+        .expect("ProjectBuildPlanV1 serializes to an object")
+        .insert("planSha256".into(), plan_sha256.into());
+    success(&serde_json::json!({
+        "plan": plan_json,
+        "token": prepared.token,
+        "expiresAt": prepared.expires_at,
+        "inputFingerprint": prepared.input_fingerprint,
+        "effects": prepared.effects,
+    }))
+}
+
+/// Fill the offline plan layer's provider input from the resolved provider's
+/// static capability descriptor (snake_case names) and default model pins.
+#[cfg(feature = "game-art-manifest")]
+fn provider_capability_input(
+    provider_id: &str,
+    profile_id: &str,
+) -> Result<ProviderCapabilityInput, (String, String)> {
+    let provider = resolve_provider(provider_id, profile_id).map_err(display_error)?;
+    let capabilities = provider
+        .capabilities()
+        .into_iter()
+        .filter_map(|capability| {
+            serde_json::to_value(capability)
+                .ok()?
+                .as_str()
+                .map(str::to_owned)
+        })
+        .collect();
+    Ok(ProviderCapabilityInput {
+        capabilities,
+        image_model: Some(resolve_provider_image_model(provider_id, None).map_err(display_error)?),
+        video_model: Some(resolve_provider_video_model(provider_id, None).map_err(display_error)?),
+    })
+}
+
+#[cfg(feature = "game-art-manifest")]
+fn game_art_error(error: GameArtError) -> (String, String) {
+    (error.code().into(), error.to_string())
+}
+
 fn provider_health(provider_id: &str, profile_id: &str) -> ProviderHealth {
     match resolve_provider(provider_id, profile_id) {
         Ok(provider) => provider.health_check(),
@@ -1551,6 +1670,17 @@ fn run_plan_operation(
         ensure_real_provider_execution(provider_id)?;
     }
     let provider = match operation {
+        #[cfg(feature = "game-art-manifest")]
+        AutomationOperation::BuildProject(request) => {
+            let validated = GameArtManifestV1::load_validated(&request.manifest_path)
+                .map_err(game_art_error)?;
+            let provider_id = validated.manifest.provider.id.as_str();
+            ensure_real_provider_execution(provider_id)?;
+            Some(
+                resolve_provider(provider_id, &validated.manifest.provider.profile_id)
+                    .map_err(display_error)?,
+            )
+        }
         AutomationOperation::GenerateCharacterPack(request) => Some(
             resolve_provider(&request.provider_id, &request.profile_id).map_err(display_error)?,
         ),

@@ -1,6 +1,6 @@
 # Forge 完整视觉资产系统实施状态
 
-状态：Active — 阶段 0 已验收；阶段 1 未晋级结论已接受，收尾完成待复验
+状态：Active — 阶段 0 已验收；阶段 1 未晋级结论已接受，收尾完成待复验；阶段 2 实施完成待 Codex 验收
 负责人：Kimi 实施，Codex 分阶段验收
 计划文档：`docs/architecture/forge-complete-visual-asset-system-implementation-plan.md`
 基线提交：`69e6aec`（`codex/v0.3-character-benchmarks`）
@@ -11,7 +11,7 @@
 | --- | --- | --- |
 | 0 基线冻结与仓库卫生 | ✅ 已验收 | 本文档 + baseline JSON |
 | 1 v0.3 Character 真实门槛 | ⚠️ **未晋级；阶段 1 收尾完成待复验** | `forge-character-v2-real-gate-2026-08-04.md` + `forge-stage1-closure-2026-08-04.md` |
-| 2 GameArtManifest 与项目 Build Core | 未开始 | — |
+| 2 GameArtManifest 与项目 Build Core | ✅ **实施完成，待 Codex 验收** | `forge-stage2-game-art-manifest-2026-08-05.md` + `artifacts/forge-stage2-game-art-manifest-20260805/stage2-regression.json` |
 | 3 CollectionLock、Portrait 与 Static 完整化 | 未开始 | — |
 | 4 World 资产正式化 | 未开始 | — |
 | 5 Background 与 UI | 未开始 | — |
@@ -93,3 +93,4 @@ experimental，未降低阈值。实际费用 167 请求 / 132.1B ticks（$132.1
 | 2026-08-04 | 0 | 基线冻结、README 同步、QA artifact policy、状态文档建立 | `docs/qa/artifacts/forge-complete-visual-baseline-2026-08-04/` |
 | 2026-08-04 | 1 | 三次真实 xAI Character V2 闭环，未晋级；费用 167 请求 / $132.10 | `docs/qa/forge-character-v2-real-gate-2026-08-04.md` + `docs/qa/artifacts/forge-character-v2-real-20260804/` |
 | 2026-08-04 | 1 收尾 | 五项验收缺口修复；未调用真实 Provider，待 Codex 复验 | `docs/qa/forge-stage1-closure-2026-08-04.md` |
+| 2026-08-05 | 2 | GameArtManifestV1 + ProjectCatalogV2 + project diff/plan-build + BuildProject 编排器（父子 Job、取消级联、崩溃恢复）实施完成，CLI 经 `game-art-manifest` feature 放出；验收回归 8/8 通过，focused script CHECK 0–8 全绿；验收发现 CLI `plan execute` 对 BuildProject 不解析 provider 的缺口，已由实现方修复并复验；全程 fixture，0 真实请求 | `docs/qa/forge-stage2-game-art-manifest-2026-08-05.md` + `docs/qa/artifacts/forge-stage2-game-art-manifest-20260805/` |

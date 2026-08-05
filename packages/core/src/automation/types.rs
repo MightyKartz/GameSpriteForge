@@ -448,6 +448,16 @@ pub struct GodotInstallRequest {
     pub provider_refs: Vec<ProviderAssetRef>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(deny_unknown_fields)]
+pub struct BuildProjectRequestV1 {
+    #[serde(default = "schema_version")]
+    pub schema_version: String,
+    pub project_path: PathBuf,
+    pub manifest_path: PathBuf,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", content = "request", rename_all = "snake_case")]
 pub enum AutomationOperation {
@@ -462,6 +472,7 @@ pub enum AutomationOperation {
     GenerateBuildingKit(GenerateBuildingKitRequest),
     CompileMap(CompileMapRequest),
     InstallGodot(GodotInstallRequest),
+    BuildProject(BuildProjectRequestV1),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

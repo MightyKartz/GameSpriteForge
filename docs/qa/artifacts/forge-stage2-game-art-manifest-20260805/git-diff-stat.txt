@@ -1,0 +1,13 @@
+ packages/cli/Cargo.toml                 |   2 +
+ packages/cli/src/main.rs                | 136 +++++++-
+ packages/core/src/automation/mod.rs     |  17 +-
+ packages/core/src/automation/plan.rs    |  61 ++++
+ packages/core/src/automation/repair.rs  |   6 +-
+ packages/core/src/automation/runner.rs  |  37 +++
+ packages/core/src/automation/types.rs   |  11 +
+ packages/core/src/catalog.rs            | 567 ++++++++++++++++++++++++++++++--
+ packages/core/src/job/store.rs          |  50 ++-
+ packages/core/src/job/types.rs          |   1 +
+ packages/core/src/lib.rs                |   1 +
+ packages/core/tests/automation_tests.rs | 168 +++++++++-
+ 12 files changed, 1009 insertions(+), 48 deletions(-)

@@ -5,6 +5,7 @@ pub mod catalog;
 pub mod component;
 pub mod export;
 pub mod frames;
+pub mod game_art;
 pub mod job;
 pub mod matting;
 pub mod preview;

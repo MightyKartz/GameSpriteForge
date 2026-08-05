@@ -128,6 +128,7 @@ pub enum JobOperationKind {
     GenerateBuildingKit,
     CompileMap,
     InstallGodot,
+    BuildProject,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

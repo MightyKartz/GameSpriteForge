@@ -61,6 +61,7 @@ use crate::world::{
     read_environment_lock,
 };
 
+use super::plan::{PlanStore, PlanStoreError};
 use super::repair::active_repair_child;
 use super::types::{
     AssetInput, AutomationOperation, AutomationPlan, CharacterAnimationRecipe, CharacterRetryStage,
@@ -88,8 +89,14 @@ pub enum AutomationRunError {
     Processing(String),
     #[error("{0}")]
     Provider(#[from] ProviderError),
+    #[error("plan store error: {0}")]
+    Plan(#[from] PlanStoreError),
+    #[error("{0}")]
+    GameArt(#[from] crate::game_art::GameArtError),
     #[error("job was cancelled")]
     Cancelled,
+    #[error("project build failed: {0}")]
+    ProjectBuildFailed(String),
 }
 
 impl AutomationRunError {
@@ -101,7 +108,10 @@ impl AutomationRunError {
             Self::Json(_) => "invalid_json",
             Self::Processing(_) => "automation_failed",
             Self::Provider(error) => error.code(),
+            Self::Plan(_) => "plan_store_error",
+            Self::GameArt(error) => error.code(),
             Self::Cancelled => "cancelled",
+            Self::ProjectBuildFailed(_) => "project_build_failed",
         }
     }
 }
@@ -153,6 +163,9 @@ pub fn stage_plan_job(
         AutomationOperation::CompileMap(_) => (SourceKind::FromCode, JobOperationKind::CompileMap),
         AutomationOperation::InstallGodot(_) => {
             (SourceKind::ImportGsfpack, JobOperationKind::InstallGodot)
+        }
+        AutomationOperation::BuildProject(_) => {
+            (SourceKind::FromCode, JobOperationKind::BuildProject)
         }
     };
     let mut record = store.create_job(source_kind)?;
@@ -289,6 +302,20 @@ pub fn run_operation_with_provider(
         }
         AutomationOperation::CompileMap(request) => run_compile_map(store, job_id, request),
         AutomationOperation::InstallGodot(request) => run_install_godot(store, job_id, request),
+        AutomationOperation::BuildProject(request) => {
+            // Children are planned through the same PlanStore the CLI uses:
+            // FORGE_PLAN_STORE when set, otherwise the default app store.
+            // The parent build job itself makes no provider calls; every
+            // child goes back through run_operation_with_provider so the
+            // real-provider cost guard stays in force.
+            let plans = match std::env::var_os("FORGE_PLAN_STORE") {
+                Some(root) => PlanStore::new(root),
+                None => PlanStore::default_app_store(),
+            }
+            .map_err(AutomationRunError::Plan)?;
+            crate::game_art::run_build_project(store, &plans, job_id, request, provider)
+                .and_then(|_report| store.read_record(job_id).map_err(AutomationRunError::Job))
+        }
     };
     if result.is_err() && operation_is_video_character(operation) {
         if let (
@@ -5909,6 +5936,16 @@ fn steps_for_operation(operation: &AutomationOperation) -> Vec<JobStepRecord> {
             .into_iter()
             .map(str::to_string)
             .collect(),
+        AutomationOperation::BuildProject(_) => [
+            "validate_manifest",
+            "diff_catalog",
+            "run_child_builds",
+            "update_catalog",
+            "summarize",
+        ]
+        .into_iter()
+        .map(str::to_string)
+        .collect(),
     };
     names
         .into_iter()
