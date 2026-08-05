@@ -1,11 +1,15 @@
 # Forge 阶段 2：GameArtManifest 与项目 Build Core 验收（2026-08-05）
 
-状态：**实施完成，验收证据齐全，等待 Codex 验收**
+状态：**原始实施完成；Codex 复验 blocker 已由后续修复关闭，见 `forge-stage2-codex-remediation-2026-08-05.md`**
 
 范围：`GameArtManifestV1` 校验、ProjectCatalogV2、`project diff` / `project plan-build`、
 BuildProject 编排器（父子 Job、取消级联、崩溃恢复），以及 `game-art-manifest` feature 后的
 CLI `forge project diff|plan-build`。本波为验收证据波：只新增 focused script、示例与 QA
 文档；验收中发现的一处 CLI 派发缺陷已由实现方修复并复验（见第 5 节）。
+
+> 后续验收说明：本文件保留 Kimi 原始验收证据与历史数字。Codex 深度复验发现并修复了
+> 输入闭包、Pack 真实性、TOCTOU、恢复并发、请求上限和 usage 重复等问题；当前结论、
+> commit 与新回归结果以 `docs/qa/forge-stage2-codex-remediation-2026-08-05.md` 及其机器报告为准。
 
 ## 1. 实施摘要（Implementation summary）
 

@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "1",
+  "profile": "forge-stage2-codex-remediation@1.0.0",
+  "date": "2026-08-05T06:25:28Z",
+  "git": {
+    "commit": "54b8639becbfc70a67ba7741d2a97ae74c4fb22f",
+    "branch": "codex/stage2-game-art-manifest",
+    "pullRequest": 10
+  },
+  "scope": {
+    "realProviderCalls": 0,
+    "realProviderCost": 0,
+    "provider": "fixture",
+    "desktopOrMcpChanges": false
+  },
+  "closedBlockers": [
+    "complete_plan_input_closure",
+    "pack_layout_and_symlink_validation",
+    "style_and_subject_lock_containment",
+    "approved_input_snapshots",
+    "provider_model_and_budget_locking",
+    "character_maximum_requests_17",
+    "strict_single_successor_recovery",
+    "cancel_cascade",
+    "parent_child_usage_deduplication",
+    "catalog_provenance_and_dependency_hashes",
+    "symlink_project_path_canonicalization"
+  ],
+  "steps": [
+    {
+      "id": "fmt-and-diff",
+      "command": "cargo fmt --all -- --check && git diff --check",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "clippy",
+      "command": "cargo clippy --workspace --all-targets --all-features -- -D warnings",
+      "status": "pass",
+      "exitCode": 0,
+      "warnings": 0
+    },
+    {
+      "id": "workspace-tests",
+      "command": "cargo test --workspace --all-features --no-fail-fast",
+      "status": "pass",
+      "exitCode": 0,
+      "passed": 225,
+      "failed": 0
+    },
+    {
+      "id": "cli-product",
+      "command": "scripts/test-cli-product.sh",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "cli-installer",
+      "command": "scripts/test-cli-installer.sh",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "cli-signing-contract",
+      "command": "scripts/test-cli-signing-contract.sh",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "game-art-manifest-contract",
+      "command": "scripts/test-game-art-manifest.sh",
+      "status": "pass",
+      "exitCode": 0,
+      "checks": ["0", "1", "1A", "1B", "2", "2A", "3", "4", "5", "6", "6A", "7", "8"],
+      "credentialScanMatches": 0
+    },
+    {
+      "id": "v03-release-matrix",
+      "command": "scripts/test-v03-release-matrix.sh",
+      "status": "pass",
+      "exitCode": 0,
+      "report": "target/qa/v0.3-release-matrix-20260805T061502Z/v0.3-test-report.json",
+      "passed": 6,
+      "failed": 0,
+      "releaseBlockingPassed": true,
+      "experimentalPassed": true
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "verdict": "pass",
+    "stage2EngineeringContract": "accepted_pending_pr_ci"
+  }
+}
