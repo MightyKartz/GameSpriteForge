@@ -7,8 +7,8 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 
 use super::types::{
-    is_valid_id, AssetKind, GameArtAssetV1, GameArtError, GameArtManifestV1, LockRef,
-    GAME_ART_MANIFEST_KIND, GAME_ART_MANIFEST_SCHEMA_VERSION,
+    is_valid_id, is_valid_lock_revision, AssetKind, GameArtAssetV1, GameArtError,
+    GameArtManifestV1, LockRef, GAME_ART_MANIFEST_KIND, GAME_ART_MANIFEST_SCHEMA_VERSION,
 };
 
 /// A manifest that passed full validation and whose asset specs were
@@ -83,6 +83,15 @@ impl GameArtManifestV1 {
                 "provider.id and provider.profileId must be non-empty".into(),
             ));
         }
+        if self
+            .style_revision
+            .as_deref()
+            .is_some_and(|revision| !is_valid_lock_revision(revision))
+        {
+            return Err(GameArtError::InvalidLockRef(
+                "styleRevision must be a single non-empty [A-Za-z0-9_.-]+ path component".into(),
+            ));
+        }
         if self.defaults.output_directory.as_os_str().is_empty()
             || self.defaults.godot_root.as_os_str().is_empty()
             || self.defaults.license.trim().is_empty()
@@ -109,6 +118,8 @@ impl GameArtManifestV1 {
         // Every dependsOn entry is either a declared asset id (graph edge) or
         // a syntactically valid immutable lock reference.
         for asset in &self.assets {
+            let mut subject_locks = 0usize;
+            let mut style_locks = 0usize;
             for dependency in &asset.depends_on {
                 if dependency == &asset.id {
                     return Err(GameArtError::SelfDependency(format!(
@@ -121,13 +132,29 @@ impl GameArtManifestV1 {
                 }
                 if dependency.contains(':') || dependency.contains('@') {
                     // Not a bare asset id, so it must parse as a lock reference.
-                    LockRef::parse(dependency)?;
+                    let reference = LockRef::parse(dependency)?;
+                    match reference.kind {
+                        super::types::LockKind::Subject => subject_locks += 1,
+                        super::types::LockKind::Style => style_locks += 1,
+                    }
                 } else {
                     return Err(GameArtError::UnknownDependency(format!(
                         "asset \"{}\" depends on \"{dependency}\", which is neither a declared asset id nor a lock reference",
                         asset.id
                     )));
                 }
+            }
+            if subject_locks > usize::from(asset.kind == AssetKind::Character) {
+                return Err(GameArtError::InvalidLockRef(format!(
+                    "asset \"{}\" may declare at most one subject lock, and only character assets support it",
+                    asset.id
+                )));
+            }
+            if style_locks > 1 {
+                return Err(GameArtError::InvalidLockRef(format!(
+                    "asset \"{}\" may declare at most one style lock",
+                    asset.id
+                )));
             }
         }
 
@@ -449,12 +476,153 @@ fn resolve_spec(
             asset.id
         ))
     })?;
+    let value: Value = serde_json::from_slice(&bytes).map_err(|error| {
+        GameArtError::InvalidJson(format!(
+            "asset \"{}\" spec \"{raw}\" is invalid JSON: {error}",
+            asset.id
+        ))
+    })?;
+    let spec_dir = canonical_spec_path.parent().unwrap_or(canonical_root);
+    let mut reference_paths = Vec::new();
+    collect_reference_paths(&value, &mut reference_paths);
+    let mut resolved_references = Vec::new();
+    for reference in reference_paths {
+        resolved_references.push(resolve_reference(
+            asset,
+            &reference,
+            spec_dir,
+            canonical_root,
+        )?);
+    }
+    resolved_references.sort();
+    resolved_references.dedup();
+
+    let mut input_hasher = Sha256::new();
+    input_hasher.update(b"forge-asset-input-closure-v1\0");
+    hash_framed(&mut input_hasher, b"spec", &bytes);
+    for reference in resolved_references {
+        let relative = reference.strip_prefix(canonical_root).map_err(|_| {
+            GameArtError::SymlinkEscape(format!(
+                "asset \"{}\" reference {} resolves outside the manifest directory",
+                asset.id,
+                reference.display()
+            ))
+        })?;
+        let contents = fs::read(&reference).map_err(|error| {
+            GameArtError::Io(format!(
+                "cannot read reference {} for asset \"{}\": {error}",
+                reference.display(),
+                asset.id
+            ))
+        })?;
+        hash_framed(
+            &mut input_hasher,
+            relative.to_string_lossy().as_bytes(),
+            &contents,
+        );
+    }
     Ok(ValidatedAssetSpec {
         asset_id: asset.id.clone(),
         canonical_spec_path,
         spec_size_bytes: bytes.len() as u64,
-        spec_sha256: format!("{:x}", Sha256::digest(&bytes)),
+        // This field intentionally fingerprints the complete local input
+        // closure, not just the JSON bytes. A reference image mutation must
+        // invalidate reuse and any outstanding single-use plan token.
+        spec_sha256: format!("{:x}", input_hasher.finalize()),
     })
+}
+
+fn collect_reference_paths(value: &Value, output: &mut Vec<PathBuf>) {
+    match value {
+        Value::Object(object) => {
+            for (key, child) in object {
+                if matches!(key.as_str(), "referenceImage" | "referenceImagePath") {
+                    if let Some(path) = child.as_str() {
+                        output.push(PathBuf::from(path));
+                    }
+                }
+                collect_reference_paths(child, output);
+            }
+        }
+        Value::Array(items) => {
+            for item in items {
+                collect_reference_paths(item, output);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn resolve_reference(
+    asset: &GameArtAssetV1,
+    reference: &Path,
+    spec_dir: &Path,
+    canonical_root: &Path,
+) -> Result<PathBuf, GameArtError> {
+    let raw = reference.to_string_lossy();
+    if looks_like_url(&raw) {
+        return Err(GameArtError::UrlNotAllowed(format!(
+            "asset \"{}\" reference \"{raw}\" is a URL",
+            asset.id
+        )));
+    }
+    for component in reference.components() {
+        match component {
+            Component::Prefix(_) | Component::RootDir => {
+                return Err(GameArtError::AbsolutePath(format!(
+                    "asset \"{}\" reference \"{raw}\" must be relative to its spec",
+                    asset.id
+                )));
+            }
+            Component::ParentDir => {
+                return Err(GameArtError::PathTraversal(format!(
+                    "asset \"{}\" reference \"{raw}\" must not contain \"..\"",
+                    asset.id
+                )));
+            }
+            Component::CurDir | Component::Normal(_) => {}
+        }
+    }
+    let candidate = spec_dir.join(reference);
+    let metadata = fs::metadata(&candidate).map_err(|error| {
+        if error.kind() == std::io::ErrorKind::NotFound {
+            GameArtError::SpecNotFound(format!(
+                "asset \"{}\" reference \"{raw}\" does not exist",
+                asset.id
+            ))
+        } else {
+            GameArtError::Io(format!(
+                "cannot stat reference \"{raw}\" for asset \"{}\": {error}",
+                asset.id
+            ))
+        }
+    })?;
+    if !metadata.is_file() {
+        return Err(GameArtError::SpecNotFile(format!(
+            "asset \"{}\" reference \"{raw}\" is not a regular file",
+            asset.id
+        )));
+    }
+    let canonical = candidate.canonicalize().map_err(|error| {
+        GameArtError::Io(format!(
+            "cannot canonicalize reference \"{raw}\" for asset \"{}\": {error}",
+            asset.id
+        ))
+    })?;
+    if !canonical.starts_with(canonical_root) {
+        return Err(GameArtError::SymlinkEscape(format!(
+            "asset \"{}\" reference \"{raw}\" resolves outside the manifest directory",
+            asset.id
+        )));
+    }
+    Ok(canonical)
+}
+
+fn hash_framed(hasher: &mut Sha256, label: &[u8], contents: &[u8]) {
+    hasher.update((label.len() as u64).to_le_bytes());
+    hasher.update(label);
+    hasher.update((contents.len() as u64).to_le_bytes());
+    hasher.update(contents);
 }
 
 #[cfg(test)]
@@ -848,10 +1016,10 @@ mod tests {
         );
         assert!(spec.canonical_spec_path.is_absolute());
         assert_eq!(spec.spec_size_bytes, spec_content.len() as u64);
-        assert_eq!(
-            spec.spec_sha256,
-            format!("{:x}", Sha256::digest(spec_content))
-        );
+        let mut expected = Sha256::new();
+        expected.update(b"forge-asset-input-closure-v1\0");
+        hash_framed(&mut expected, b"spec", spec_content);
+        assert_eq!(spec.spec_sha256, format!("{:x}", expected.finalize()));
     }
 
     #[test]
@@ -868,6 +1036,99 @@ mod tests {
             code_of(GameArtManifestV1::load_validated(&manifest_path)),
             "absolute_path"
         );
+    }
+
+    #[test]
+    fn rejects_path_like_style_revisions() {
+        for revision in [".", "..", "/tmp/escape", "../escape"] {
+            let mut value: Value = serde_json::from_str(&manifest_with_assets("[]")).unwrap();
+            value["styleRevision"] = revision.into();
+            let error =
+                GameArtManifestV1::from_slice(&serde_json::to_vec(&value).unwrap()).unwrap_err();
+            assert_eq!(error.code(), "invalid_lock_ref", "revision: {revision}");
+        }
+    }
+
+    #[test]
+    fn reference_images_are_path_safe_and_part_of_the_input_hash() {
+        let temp = tempfile::tempdir().unwrap();
+        let spec_dir = temp.path().join("specs");
+        let reference_dir = spec_dir.join("refs");
+        fs::create_dir_all(&reference_dir).unwrap();
+        let reference = reference_dir.join("coin.png");
+        fs::write(&reference, b"first-image-bytes").unwrap();
+        fs::write(
+            spec_dir.join("icons.json"),
+            r#"{
+                "schemaVersion":"1", "kind":"icon_set", "id":"icons",
+                "name":"Icons", "license":"private",
+                "items":[{"id":"coin","name":"Coin","prompt":"coin","referenceImage":"refs/coin.png"}]
+            }"#,
+        )
+        .unwrap();
+        let manifest_path = write_manifest(
+            temp.path(),
+            &manifest_with_assets(&format!(
+                "[{}]",
+                asset_json("icons", "icon_set", "specs/icons.json", "")
+            )),
+        );
+        let first = GameArtManifestV1::load_validated(&manifest_path)
+            .unwrap()
+            .asset("icons")
+            .unwrap()
+            .spec_sha256
+            .clone();
+        fs::write(&reference, b"second-image-bytes").unwrap();
+        let second = GameArtManifestV1::load_validated(&manifest_path)
+            .unwrap()
+            .asset("icons")
+            .unwrap()
+            .spec_sha256
+            .clone();
+        assert_ne!(
+            first, second,
+            "reference bytes must invalidate the input hash"
+        );
+
+        let escaped = fs::read_to_string(spec_dir.join("icons.json"))
+            .unwrap()
+            .replace("refs/coin.png", "../outside.png");
+        fs::write(spec_dir.join("icons.json"), escaped).unwrap();
+        fs::write(temp.path().join("outside.png"), b"outside").unwrap();
+        let error = GameArtManifestV1::load_validated(&manifest_path).unwrap_err();
+        assert_eq!(error.code(), "path_traversal");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn reference_image_symlink_escape_is_rejected() {
+        use std::os::unix::fs::symlink;
+
+        let temp = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let spec_dir = temp.path().join("specs");
+        fs::create_dir_all(spec_dir.join("refs")).unwrap();
+        fs::write(outside.path().join("coin.png"), b"outside").unwrap();
+        symlink(
+            outside.path().join("coin.png"),
+            spec_dir.join("refs/coin.png"),
+        )
+        .unwrap();
+        fs::write(
+            spec_dir.join("icons.json"),
+            r#"{"referenceImage":"refs/coin.png"}"#,
+        )
+        .unwrap();
+        let manifest_path = write_manifest(
+            temp.path(),
+            &manifest_with_assets(&format!(
+                "[{}]",
+                asset_json("icons", "icon_set", "specs/icons.json", "")
+            )),
+        );
+        let error = GameArtManifestV1::load_validated(&manifest_path).unwrap_err();
+        assert_eq!(error.code(), "symlink_escape");
     }
 
     #[test]

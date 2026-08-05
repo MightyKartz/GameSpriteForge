@@ -224,7 +224,15 @@ pub fn run_operation_with_provider(
     operation: &AutomationOperation,
     provider: Option<&dyn MediaGenerationProvider>,
 ) -> Result<JobRecord, AutomationRunError> {
-    let provider_usage_baseline = provider.map(MediaGenerationProvider::usage);
+    // BuildProject is an orchestrator: only its child jobs call the Provider.
+    // Tracking the shared provider again at the parent would duplicate every
+    // child request in provider-usage.json.
+    let usage_provider = if matches!(operation, AutomationOperation::BuildProject(_)) {
+        None
+    } else {
+        provider
+    };
+    let provider_usage_baseline = usage_provider.map(MediaGenerationProvider::usage);
     store.update_record(job_id, |record| {
         record.lifecycle_state = JobLifecycleState::Running;
         record.progress = 0.02;
@@ -333,7 +341,7 @@ pub fn run_operation_with_provider(
             );
         }
     }
-    let usage_result = provider.map(|provider| {
+    let usage_result = usage_provider.map(|provider| {
         persist_provider_usage(
             store,
             job_id,
@@ -6049,13 +6057,25 @@ fn copy_directory(source: &Path, target: &Path) -> Result<(), std::io::Error> {
 }
 
 fn hash_directory(root: &Path) -> Result<String, std::io::Error> {
+    if fs::symlink_metadata(root)?.file_type().is_symlink() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("directory root is a symbolic link: {}", root.display()),
+        ));
+    }
     let mut paths = Vec::new();
     collect_paths(root, root, &mut paths)?;
     paths.sort();
     let mut hasher = Sha256::new();
+    hasher.update(b"forge-directory-hash-v2\0");
     for relative in paths {
-        hasher.update(relative.to_string_lossy().as_bytes());
-        hasher.update(fs::read(root.join(relative))?);
+        let relative_text = relative.to_string_lossy();
+        let contents = fs::read(root.join(&relative))?;
+        hasher.update(b"file\0");
+        hasher.update((relative_text.len() as u64).to_le_bytes());
+        hasher.update(relative_text.as_bytes());
+        hasher.update((contents.len() as u64).to_le_bytes());
+        hasher.update(contents);
     }
     Ok(format!("{:x}", hasher.finalize()))
 }
@@ -6071,9 +6091,18 @@ fn collect_paths(
 ) -> Result<(), std::io::Error> {
     for entry in fs::read_dir(directory)? {
         let entry = entry?;
-        if entry.file_type()?.is_dir() {
+        let file_type = entry.file_type()?;
+        if file_type.is_symlink() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!(
+                    "directory contains symbolic link: {}",
+                    entry.path().display()
+                ),
+            ));
+        } else if file_type.is_dir() {
             collect_paths(root, &entry.path(), paths)?;
-        } else if entry.file_type()?.is_file() {
+        } else if file_type.is_file() {
             paths.push(
                 entry
                     .path()
@@ -6081,6 +6110,14 @@ fn collect_paths(
                     .unwrap_or(&entry.path())
                     .to_path_buf(),
             );
+        } else {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!(
+                    "directory contains unsupported entry: {}",
+                    entry.path().display()
+                ),
+            ));
         }
     }
     Ok(())

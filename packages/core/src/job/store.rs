@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::fs::{self, File, OpenOptions};
 use std::path::{Path, PathBuf};
 
@@ -263,19 +264,19 @@ impl JobStore {
     pub fn request_cancellation_cascade(&self, job_id: &str) -> Result<usize, JobStoreError> {
         self.request_cancellation(job_id)?;
         let mut flagged = 1;
-        let records = self.list_records()?;
+        let mut visited = BTreeSet::new();
         let mut frontier = vec![job_id.to_string()];
         while let Some(parent_id) = frontier.pop() {
-            for child in records
-                .iter()
-                .filter(|record| record.parent_job_id.as_deref() == Some(parent_id.as_str()))
-            {
+            if !visited.insert(parent_id.clone()) {
+                continue;
+            }
+            for child in self.list_children(&parent_id)? {
                 if is_terminal_lifecycle(child.lifecycle_state) {
                     continue;
                 }
                 self.request_cancellation(&child.job_id)?;
                 flagged += 1;
-                frontier.push(child.job_id.clone());
+                frontier.push(child.job_id);
             }
         }
         Ok(flagged)

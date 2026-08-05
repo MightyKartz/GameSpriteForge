@@ -16,8 +16,9 @@ pub use build::{
 };
 
 pub use diff::{
-    compute_project_diff, reasons, topological_build_order, AssetDiffActionV1, DiffActionKindV1,
-    ProjectDiffV1, ResolvedLockRefV1, PROJECT_DIFF_SCHEMA_VERSION,
+    compute_project_diff, project_source_sha256, reasons, topological_build_order,
+    AssetDiffActionV1, DiffActionKindV1, ProjectDiffV1, ResolvedLockRefV1,
+    PROJECT_DIFF_SCHEMA_VERSION,
 };
 pub use manifest::{ValidatedAssetSpec, ValidatedManifest};
 pub use plan::{

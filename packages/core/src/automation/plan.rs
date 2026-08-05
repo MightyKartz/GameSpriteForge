@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::fs;
 use std::io::Read;
 use std::path::{Component, Path, PathBuf};
@@ -16,7 +16,11 @@ use super::types::{
 };
 use crate::asset_project::{read_project, read_style_lock, resolve_relative, StyleSpecV1};
 use crate::catalog::{read_project_catalog, PROJECT_CATALOG_RELATIVE};
-use crate::job::RepairContext;
+use crate::game_art::{
+    compute_build_plan, compute_project_diff, project_source_sha256, GameArtManifestV1,
+    ProjectBuildStateV1, ProviderCapabilityInput,
+};
+use crate::job::{JobRecord, RepairContext};
 use crate::subject::{read_subject_lock, read_subject_spec};
 use crate::video::{probe_video, ProbeVideoParams};
 use crate::world::{
@@ -147,13 +151,12 @@ impl PlanStore {
         if !pending.exists() {
             return Err(PlanStoreError::NotFound(token.to_string()));
         }
-        fs::rename(&pending, &claimed).map_err(|source| PlanStoreError::Io {
-            path: pending.clone(),
-            source,
-        })?;
-
-        let mut plan: AutomationPlan = read_json(&claimed)?;
+        let mut plan: AutomationPlan = read_json(&pending)?;
         if Utc::now() > plan.expires_at {
+            fs::rename(&pending, &claimed).map_err(|source| PlanStoreError::Io {
+                path: pending.clone(),
+                source,
+            })?;
             plan.state = PlanState::Expired;
             write_json_atomic(&claimed, &plan)?;
             return Err(PlanStoreError::Expired(plan.expires_at));
@@ -162,8 +165,47 @@ impl PlanStore {
         if current_fingerprint != plan.input_fingerprint {
             return Err(PlanStoreError::InputChanged);
         }
+        fs::rename(&pending, &claimed).map_err(|source| {
+            if claimed.exists() {
+                PlanStoreError::AlreadyUsed(token.to_string())
+            } else {
+                PlanStoreError::Io {
+                    path: pending.clone(),
+                    source,
+                }
+            }
+        })?;
+        // Close the verification→claim window. If a local input changed in
+        // between, restore the pending token rather than consuming it.
+        let post_claim_fingerprint = fingerprint_operation_inputs(&plan.operation)?;
+        if post_claim_fingerprint != plan.input_fingerprint {
+            fs::rename(&claimed, &pending).map_err(|source| PlanStoreError::Io {
+                path: claimed.clone(),
+                source,
+            })?;
+            return Err(PlanStoreError::InputChanged);
+        }
         plan.state = PlanState::Claimed;
         write_json_atomic(&claimed, &plan)?;
+        Ok(plan)
+    }
+
+    /// Read and validate a pending plan without consuming its single-use
+    /// token. The CLI uses this for execution preflight (cost acceptance,
+    /// feature availability and credential resolution) before `claim`.
+    pub fn inspect_pending(&self, token: &str) -> Result<AutomationPlan, PlanStoreError> {
+        validate_token(token)?;
+        let pending = self.pending_path(token);
+        if self.claimed_path(token).exists() {
+            return Err(PlanStoreError::AlreadyUsed(token.to_string()));
+        }
+        if !pending.exists() {
+            return Err(PlanStoreError::NotFound(token.to_string()));
+        }
+        let plan: AutomationPlan = read_json(&pending)?;
+        if Utc::now() > plan.expires_at {
+            return Err(PlanStoreError::Expired(plan.expires_at));
+        }
         Ok(plan)
     }
 
@@ -215,7 +257,7 @@ fn estimate_operation(operation: &AutomationOperation) -> super::types::PlanEsti
             } else if keyframe {
                 (32, 64)
             } else {
-                (9, 13)
+                (9, 17)
             };
             PlanEstimateV1 {
                 provider_request_estimate: estimated,
@@ -873,16 +915,146 @@ pub fn fingerprint_operation_inputs(
             )?;
         }
         AutomationOperation::BuildProject(request) => {
-            // Pin the canonical project directory and the manifest identity plus
-            // bytes; the diff/spec contents derived from the manifest are
-            // captured at execution time by the build orchestrator.
             let canonical_project =
                 fs::canonicalize(&request.project_path).map_err(|source| PlanStoreError::Io {
                     path: request.project_path.clone(),
                     source,
                 })?;
             hasher.update(canonical_project.to_string_lossy().as_bytes());
-            hash_files(&mut hasher, std::slice::from_ref(&request.manifest_path))?;
+            let validated = GameArtManifestV1::load_validated(&request.manifest_path)
+                .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
+            let diff = compute_project_diff(&canonical_project, &validated)
+                .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
+            let capabilities = ProviderCapabilityInput {
+                capabilities: request.provider_capabilities.iter().cloned().collect(),
+                image_model: request.image_model.clone(),
+                video_model: request.video_model.clone(),
+            };
+            let plan = compute_build_plan(&canonical_project, &validated, &diff, &capabilities)
+                .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
+            let source_sha256 = project_source_sha256(&canonical_project, &validated, &diff)
+                .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
+            hasher.update(b"build-project-plan-v1\0");
+            hasher.update(plan.plan_sha256().as_bytes());
+            if let Some(expected) = &request.expected_plan_sha256 {
+                hasher.update(expected.as_bytes());
+            }
+            if let Some(source_job_id) = &request.resume_from_job_id {
+                hasher.update(b"resume-from\0");
+                hasher.update(source_job_id.as_bytes());
+            }
+            hasher.update(b"source-closure\0");
+            hasher.update(source_sha256.as_bytes());
+            if let Some(expected) = &request.expected_source_sha256 {
+                hasher.update(expected.as_bytes());
+            }
+            hash_files(
+                &mut hasher,
+                &[
+                    request.manifest_path.clone(),
+                    canonical_project.join("forge-project.json"),
+                ],
+            )?;
+            if let Some(revision) = &diff.style_revision {
+                hash_directory(
+                    &mut hasher,
+                    &canonical_project.join(".forge/styles").join(revision),
+                )?;
+            }
+            let mut lock_directories = BTreeSet::new();
+            for action in &diff.actions {
+                for reference in &action.lock_refs {
+                    let directory = match reference.kind {
+                        crate::game_art::LockKind::Style => canonical_project
+                            .join(".forge/styles")
+                            .join(&reference.revision),
+                        crate::game_art::LockKind::Subject => canonical_project
+                            .join(".forge/subjects")
+                            .join(&reference.id)
+                            .join(&reference.revision),
+                    };
+                    lock_directories.insert(directory);
+                }
+            }
+            for directory in lock_directories {
+                hash_directory(&mut hasher, &directory)?;
+            }
+            let catalog_path = canonical_project.join(PROJECT_CATALOG_RELATIVE);
+            if catalog_path.is_file() {
+                hash_files(&mut hasher, std::slice::from_ref(&catalog_path))?;
+            }
+            let catalog = read_project_catalog(&canonical_project)
+                .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
+            for asset in &validated.manifest.assets {
+                let Some(entry) = catalog.assets.get(&asset.id) else {
+                    continue;
+                };
+                let pack_path = resolve_relative(&canonical_project, &entry.pack_path);
+                forge_pack::validate_pack_layout(&pack_path).map_err(|error| {
+                    PlanStoreError::InvalidRequest(format!(
+                        "catalog pack for {} is invalid: {error}",
+                        asset.id
+                    ))
+                })?;
+                hash_directory(&mut hasher, &pack_path)?;
+            }
+            match (
+                request.resume_state_path.as_ref(),
+                request.resume_state_sha256.as_ref(),
+            ) {
+                (Some(path), Some(expected)) => {
+                    hash_files(&mut hasher, std::slice::from_ref(path))?;
+                    let bytes = fs::read(path).map_err(|source| PlanStoreError::Io {
+                        path: path.clone(),
+                        source,
+                    })?;
+                    let actual = format!("{:x}", Sha256::digest(&bytes));
+                    hasher.update(expected.as_bytes());
+                    hasher.update(actual.as_bytes());
+                    let state: ProjectBuildStateV1 = serde_json::from_slice(&bytes)?;
+                    for entry in state.assets {
+                        if let Some(pack_path) = entry.pack_path {
+                            forge_pack::validate_pack_layout(&pack_path).map_err(|error| {
+                                PlanStoreError::InvalidRequest(format!(
+                                    "resume pack is invalid: {error}"
+                                ))
+                            })?;
+                            hash_directory(&mut hasher, &pack_path)?;
+                        }
+                        if let Some(child_job_id) = entry.child_job_id {
+                            let jobs_root =
+                                path.parent().and_then(Path::parent).ok_or_else(|| {
+                                    PlanStoreError::InvalidRequest(
+                                        "resume state is not inside a JobStore".into(),
+                                    )
+                                })?;
+                            let child_record_path = jobs_root.join(child_job_id).join("job.json");
+                            hash_files(&mut hasher, std::slice::from_ref(&child_record_path))?;
+                            let child: JobRecord = read_json(&child_record_path)?;
+                            for artifact in child
+                                .artifacts
+                                .iter()
+                                .filter(|artifact| artifact.kind == "gsfpack")
+                            {
+                                forge_pack::validate_pack_layout(&artifact.path).map_err(
+                                    |error| {
+                                        PlanStoreError::InvalidRequest(format!(
+                                            "resume child pack is invalid: {error}"
+                                        ))
+                                    },
+                                )?;
+                                hash_directory(&mut hasher, &artifact.path)?;
+                            }
+                        }
+                    }
+                }
+                (None, None) => {}
+                _ => {
+                    return Err(PlanStoreError::InvalidRequest(
+                        "resumeStatePath and resumeStateSha256 must be supplied together".into(),
+                    ));
+                }
+            }
         }
     }
     Ok(format!("{:x}", hasher.finalize()))
@@ -1409,12 +1581,31 @@ fn hash_files(hasher: &mut Sha256, paths: &[PathBuf]) -> Result<(), PlanStoreErr
 }
 
 fn hash_directory(hasher: &mut Sha256, root: &Path) -> Result<(), PlanStoreError> {
+    let root_metadata = fs::symlink_metadata(root).map_err(|source| PlanStoreError::Io {
+        path: root.to_path_buf(),
+        source,
+    })?;
+    if root_metadata.file_type().is_symlink() {
+        return Err(PlanStoreError::InvalidRequest(format!(
+            "directory input root is a symbolic link: {}",
+            root.display()
+        )));
+    }
     let mut files = Vec::new();
     collect_files(root, root, &mut files)?;
     files.sort();
+    hasher.update(b"forge-directory-hash-v2\0");
     for relative in files {
-        hasher.update(relative.to_string_lossy().as_bytes());
-        hash_file_contents(hasher, &root.join(relative))?;
+        let relative_text = relative.to_string_lossy();
+        hasher.update(b"file\0");
+        hasher.update((relative_text.len() as u64).to_le_bytes());
+        hasher.update(relative_text.as_bytes());
+        let contents = fs::read(root.join(&relative)).map_err(|source| PlanStoreError::Io {
+            path: root.join(&relative),
+            source,
+        })?;
+        hasher.update((contents.len() as u64).to_le_bytes());
+        hasher.update(contents);
     }
     Ok(())
 }
@@ -1437,9 +1628,11 @@ fn collect_files(
             source,
         })?;
         if metadata.is_symlink() {
-            continue;
-        }
-        if metadata.is_dir() {
+            return Err(PlanStoreError::InvalidRequest(format!(
+                "directory input contains symbolic link: {}",
+                entry.path().display()
+            )));
+        } else if metadata.is_dir() {
             collect_files(root, &entry.path(), files)?;
         } else if metadata.is_file() {
             files.push(
@@ -1449,6 +1642,11 @@ fn collect_files(
                     .unwrap_or(&entry.path())
                     .to_path_buf(),
             );
+        } else {
+            return Err(PlanStoreError::InvalidRequest(format!(
+                "directory input contains unsupported entry: {}",
+                entry.path().display()
+            )));
         }
     }
     Ok(())

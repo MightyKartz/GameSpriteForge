@@ -387,9 +387,12 @@ fn build_project_fingerprint_tracks_manifest_contents() {
         .prepare(build_project_operation(&project, &manifest))
         .unwrap();
 
+    let mut manifest_json: serde_json::Value =
+        serde_json::from_slice(&fs::read(&manifest).unwrap()).unwrap();
+    manifest_json["name"] = "changed".into();
     fs::write(
         &manifest,
-        "{\"schemaVersion\":\"1\",\"name\":\"changed\"}\n",
+        serde_json::to_vec_pretty(&manifest_json).unwrap(),
     )
     .unwrap();
 
@@ -480,6 +483,8 @@ fn build_project_job_stages_steps_and_fails_on_invalid_manifest() {
         ]
     );
 
+    fs::write(&manifest, "{\"schemaVersion\":\"1\"}\n").unwrap();
+
     // The fail-closed placeholder is gone: the runner now dispatches to the
     // build orchestrator, which rejects this malformed manifest with a
     // manifest-level error. FORGE_PLAN_STORE keeps the dispatch's child
@@ -500,8 +505,37 @@ fn build_project_job_stages_steps_and_fails_on_invalid_manifest() {
 fn build_project_fixture(root: &Path) -> (PathBuf, PathBuf) {
     let project = root.join("project");
     fs::create_dir(&project).unwrap();
+    fs::write(
+        project.join("forge-project.json"),
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schemaVersion": "1",
+            "projectId": "test-project",
+            "name": "Test Project",
+            "provider": { "id": "fixture", "profileId": "default" },
+            "outputDir": "build"
+        }))
+        .unwrap(),
+    )
+    .unwrap();
     let manifest = root.join("game-art.json");
-    fs::write(&manifest, "{\"schemaVersion\":\"1\"}\n").unwrap();
+    fs::write(
+        &manifest,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schemaVersion": "1",
+            "kind": "game_art_manifest",
+            "projectId": "test-project",
+            "name": "Test Project",
+            "provider": { "id": "fixture", "profileId": "default" },
+            "defaults": {
+                "outputDirectory": "packs",
+                "godotRoot": "addons/forge_assets",
+                "license": "private"
+            },
+            "assets": []
+        }))
+        .unwrap(),
+    )
+    .unwrap();
     (project, manifest)
 }
 

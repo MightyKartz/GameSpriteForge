@@ -24,7 +24,8 @@
 //! [`ProjectBuildPlanV1`]: super::ProjectBuildPlanV1
 
 use std::collections::BTreeSet;
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use chrono::Utc;
@@ -36,17 +37,19 @@ use super::plan::{
     PlanActionKindV1, ProjectBuildPlanV1, ProjectPlanActionV1, ProviderCapabilityInput,
 };
 use super::types::{AssetKind, GameArtError, GameArtManifestV1};
-use super::{compute_build_plan, compute_project_diff};
+use super::{compute_build_plan, compute_project_diff, project_source_sha256};
 use crate::asset_project::{
-    resolve_relative, CharacterAssetSpecV1, StaticAssetSetSpecV1, STYLE_LOCK_FILE,
+    read_style_lock, resolve_relative, CharacterAssetSpecV1, StaticAssetSetSpecV1, STYLE_LOCK_FILE,
 };
 use crate::automation::{
     run_operation_with_provider, stage_plan_job, AutomationOperation, AutomationRunError,
     BuildProjectRequestV1, GenerateCharacterPackRequest, GenerateStaticAssetSetRequest, PlanStore,
+    PlanStoreError,
 };
 use crate::catalog::{
     read_project_catalog, register_catalog_asset_v2, CatalogDependencyRefV1,
-    CatalogLockRevisionsV1, CatalogProviderRefV1, CatalogStyleRefV1, ProjectCatalogEntryV2,
+    CatalogLockRevisionsV1, CatalogProviderRefV1, CatalogStyleRefV1, CatalogSubjectRefV1,
+    ProjectCatalogEntryV2,
 };
 use crate::job::{JobLifecycleState, JobOperationKind, JobRecord, JobState, JobStore};
 use crate::provider::{MediaGenerationProvider, ProviderError, ProviderUsage};
@@ -103,6 +106,8 @@ pub struct BuildStateAssetV1 {
     pub status: BuildAssetStatusV1,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub child_job_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub child_job_ids: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pack_path: Option<PathBuf>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -171,6 +176,8 @@ pub struct ProjectBuildReportV1 {
     pub summary: ProjectBuildSummaryV1,
     /// Provider usage aggregated from every child's `provider-usage.json`.
     pub provider_usage: ProviderUsage,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub provider_usage_warnings: Vec<String>,
 }
 
 /// Execute the stage 2 project build for the parent job `parent_job_id`.
@@ -204,10 +211,28 @@ pub fn run_build_project(
 
     step(store, parent_job_id, "diff_catalog", "running", 0.12)?;
     let diff = compute_project_diff(&project_root, &validated)?;
-    let capabilities = provider_capability_input(provider);
+    let capabilities = ProviderCapabilityInput {
+        capabilities: request.provider_capabilities.iter().cloned().collect(),
+        image_model: request.image_model.clone(),
+        video_model: request.video_model.clone(),
+    };
     let plan = compute_build_plan(&project_root, &validated, &diff, &capabilities)?;
     let manifest_sha256 = plan.manifest_sha256.clone();
     let plan_sha256 = plan.plan_sha256();
+    if request
+        .expected_plan_sha256
+        .as_deref()
+        .is_some_and(|expected| expected != plan_sha256)
+    {
+        return Err(AutomationRunError::Plan(PlanStoreError::InputChanged));
+    }
+    if !plan.unmet_capabilities.is_empty() {
+        return Err(AutomationRunError::Processing(format!(
+            "provider is missing required capabilities: {}",
+            plan.unmet_capabilities.join(", ")
+        )));
+    }
+    verify_source_fingerprint(request, &validated, &diff)?;
     step(store, parent_job_id, "diff_catalog", "succeeded", 0.18)?;
 
     // Child requests need a Style Lock to build against; the diff resolved
@@ -222,6 +247,28 @@ pub fn run_build_project(
             "provider {} must be resolved before running this plan",
             validated.manifest.provider.id
         )));
+    }
+    if let Some(provider) = provider {
+        let actual = provider_capability_input(Some(provider));
+        for required in capabilities.capabilities.iter().filter(|capability| {
+            matches!(
+                capability.as_str(),
+                "edit_image" | "image_to_video" | "edit_video"
+            )
+        }) {
+            if !actual.capabilities.contains(required) {
+                return Err(AutomationRunError::Processing(format!(
+                    "resolved provider no longer exposes planned capability {required}"
+                )));
+            }
+        }
+        if actual.image_model != plan.provider.image_model
+            || actual.video_model != plan.provider.video_model
+        {
+            return Err(AutomationRunError::Processing(
+                "resolved provider model defaults differ from the reviewed project plan".into(),
+            ));
+        }
     }
     let style_lock_path = if build_required {
         let revision = style_revision.as_deref().ok_or_else(|| {
@@ -244,7 +291,79 @@ pub fn run_build_project(
     // still matches; anything else goes back to `pending`.
     let parent = store.read_record(parent_job_id)?;
     let state_path = parent.job_dir.join(BUILD_STATE_FILE);
-    let mut state = resume_or_fresh_state(&state_path, &plan, &manifest_sha256, &plan_sha256);
+    let style_lock_path = style_lock_path
+        .as_deref()
+        .map(|path| snapshot_style_lock(path, &parent.job_dir.join("source/approved-inputs")))
+        .transpose()?;
+    if style_lock_path.is_some() {
+        verify_current_project_sources(request)?;
+    }
+    let mut resume_source_dir = None;
+    let (prior_state_path, strict_resume) = if let Some(source_job_id) = &request.resume_from_job_id
+    {
+        let source = store.read_record(source_job_id)?;
+        if source.operation_kind != JobOperationKind::BuildProject || source_job_id == parent_job_id
+        {
+            return Err(AutomationRunError::Processing(format!(
+                "resume source {source_job_id} is not a different build_project job"
+            )));
+        }
+        if source.lifecycle_state != JobLifecycleState::Failed
+            || !source.recoverable
+            || source.worker_pid.is_some()
+        {
+            return Err(AutomationRunError::Processing(
+                "resume source must be a terminal failed, recoverable build with no live worker"
+                    .into(),
+            ));
+        }
+        let expected_path = source.job_dir.join(BUILD_STATE_FILE);
+        let requested_path = request.resume_state_path.as_ref().ok_or_else(|| {
+            AutomationRunError::Processing("resumeStatePath is required for recovery".into())
+        })?;
+        if requested_path.canonicalize()? != expected_path.canonicalize()? {
+            return Err(AutomationRunError::Processing(
+                "resumeStatePath does not belong to resumeFromJobId".into(),
+            ));
+        }
+        resume_source_dir = Some(source.job_dir);
+        (expected_path, true)
+    } else {
+        if request.resume_state_path.is_some() || request.resume_state_sha256.is_some() {
+            return Err(AutomationRunError::Processing(
+                "resume state fields require resumeFromJobId".into(),
+            ));
+        }
+        (state_path.clone(), false)
+    };
+    let prior_state = load_prior_build_state(
+        store,
+        &prior_state_path,
+        &manifest_sha256,
+        &plan_sha256,
+        strict_resume,
+        request.resume_state_sha256.as_deref(),
+    )?;
+    if let Some(source_dir) = resume_source_dir {
+        let lease_path = source_dir.join(".resume-claimed");
+        let mut lease = OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(&lease_path)
+            .map_err(|error| {
+                if error.kind() == std::io::ErrorKind::AlreadyExists {
+                    AutomationRunError::Processing(
+                        "resume source already has a successor build".into(),
+                    )
+                } else {
+                    AutomationRunError::Io(error)
+                }
+            })?;
+        lease.write_all(parent_job_id.as_bytes())?;
+        lease.sync_all()?;
+    }
+    let mut state =
+        resume_or_fresh_state(prior_state.as_ref(), &plan, &manifest_sha256, &plan_sha256);
     write_build_state(&state_path, &state)?;
 
     let catalog = read_project_catalog(&project_root).map_err(|error| {
@@ -314,7 +433,7 @@ pub fn run_build_project(
                 && entry.spec_sha256 == action.spec_sha256
                 && pack_intact(entry)
             {
-                let meta = parse_spec_meta(action)?;
+                let meta = parse_spec_meta(&project_root, action)?;
                 register_built_asset(
                     &project_root,
                     &validated,
@@ -407,18 +526,31 @@ pub fn run_build_project(
             continue;
         }
 
+        // Project/spec/reference/Style/Subject inputs are immutable for the
+        // duration of a build. Revalidate immediately before every operation
+        // that can spend Provider budget.
+        verify_current_project_sources(request)?;
+
         let provider = provider.expect("provider presence checked when builds are required");
         let style_lock_path = style_lock_path
             .clone()
             .expect("style lock path exists when builds are required");
-        let meta = parse_spec_meta(action)?;
+        let mut meta = parse_spec_meta(&project_root, action)?;
+        snapshot_spec_meta_inputs(
+            &mut meta,
+            &parent
+                .job_dir
+                .join("source/approved-inputs")
+                .join(&action.asset_id),
+        )?;
+        verify_current_project_sources(request)?;
         let operation = child_operation(
             &project_root,
             &validated.manifest,
             action,
             &meta,
             &style_lock_path,
-            provider,
+            &plan,
         )?;
 
         step(
@@ -499,6 +631,31 @@ pub fn run_build_project(
         };
         match child_record.lifecycle_state {
             JobLifecycleState::Succeeded => {
+                if store.read_record(parent_job_id)?.cancellation_requested {
+                    store.request_cancellation(&child_record.job_id)?;
+                    cancelled = true;
+                    transition(
+                        &state_path,
+                        &mut state,
+                        &action.asset_id,
+                        BuildAssetStatusV1::Skipped,
+                        Some(child_record.job_id.clone()),
+                        Some("cancelled_before_catalog_registration".into()),
+                    )?;
+                    poisoned.insert(action.asset_id.clone());
+                    results.push(ProjectBuildAssetResultV1 {
+                        asset_id: action.asset_id.clone(),
+                        kind: action.kind,
+                        action: action.action,
+                        status: BuildResultStatusV1::Skipped,
+                        reasons: vec!["cancelled".into()],
+                        child_job_id: Some(child_record.job_id.clone()),
+                        pack_path: None,
+                        pack_sha256: None,
+                        error: Some("cancelled_before_catalog_registration".into()),
+                    });
+                    continue;
+                }
                 let pack = child_record
                     .artifacts
                     .iter()
@@ -512,6 +669,23 @@ pub fn run_build_project(
                 let pack_path = pack.path.clone();
                 let pack_sha256 = hash_pack(&pack_path, true)?;
                 let quality = child_quality(store, Some(child_record.job_id.as_str()));
+                // Persist recoverable success before catalog registration.
+                // A crash after this write can heal the catalog without a
+                // second Provider request.
+                let entry = state
+                    .assets
+                    .iter_mut()
+                    .find(|entry| entry.asset_id == action.asset_id)
+                    .expect("state covers every plan action");
+                entry.status = BuildAssetStatusV1::Succeeded;
+                entry.child_job_id = Some(child_record.job_id.clone());
+                if !entry.child_job_ids.contains(&child_record.job_id) {
+                    entry.child_job_ids.push(child_record.job_id.clone());
+                }
+                entry.pack_path = Some(pack_path.clone());
+                entry.pack_sha256 = Some(pack_sha256.clone());
+                entry.error = None;
+                write_build_state(&state_path, &state)?;
                 register_built_asset(
                     &project_root,
                     &validated,
@@ -525,17 +699,6 @@ pub fn run_build_project(
                     quality,
                     provider,
                 )?;
-                let entry = state
-                    .assets
-                    .iter_mut()
-                    .find(|entry| entry.asset_id == action.asset_id)
-                    .expect("state covers every plan action");
-                entry.status = BuildAssetStatusV1::Succeeded;
-                entry.child_job_id = Some(child_record.job_id.clone());
-                entry.pack_path = Some(pack_path.clone());
-                entry.pack_sha256 = Some(pack_sha256.clone());
-                entry.error = None;
-                write_build_state(&state_path, &state)?;
                 results.push(ProjectBuildAssetResultV1 {
                     asset_id: action.asset_id.clone(),
                     kind: action.kind,
@@ -614,6 +777,7 @@ pub fn run_build_project(
             BuildResultStatusV1::Skipped => summary.skipped += 1,
         }
     }
+    let (provider_usage, provider_usage_warnings) = aggregate_provider_usage(store, &state);
     let report = ProjectBuildReportV1 {
         schema_version: PROJECT_BUILD_REPORT_SCHEMA_VERSION.to_string(),
         kind: PROJECT_BUILD_REPORT_KIND.to_string(),
@@ -622,7 +786,8 @@ pub fn run_build_project(
         plan,
         results,
         summary,
-        provider_usage: aggregate_provider_usage(store, &state),
+        provider_usage,
+        provider_usage_warnings,
     };
     let report_path = parent.job_dir.join(PROJECT_BUILD_REPORT_FILE);
     write_json_atomic(&report_path, &report)?;
@@ -700,6 +865,25 @@ pub fn reconcile_interrupted_builds(store: &JobStore) -> Result<usize, Automatio
             record.error_summary = Some(format!("build worker process {pid} is no longer running"));
             record.next_actions = vec!["prepare_new_plan".into(), "job_report".into()];
         })?;
+        for child in store.list_children(&record.job_id)? {
+            if matches!(
+                child.lifecycle_state,
+                JobLifecycleState::Running | JobLifecycleState::Queued | JobLifecycleState::Idle
+            ) {
+                store.update_record(&child.job_id, |child| {
+                    child.state = JobState::Failed;
+                    child.lifecycle_state = JobLifecycleState::Failed;
+                    child.worker_pid = None;
+                    child.recoverable = true;
+                    child.error_code = Some("parent_worker_lost".into());
+                    child.error_summary = Some(format!(
+                        "parent build worker for {} is no longer running",
+                        record.job_id
+                    ));
+                    child.next_actions = vec!["resume_project_build".into(), "job_report".into()];
+                })?;
+            }
+        }
         reconciled += 1;
     }
     Ok(reconciled)
@@ -761,10 +945,79 @@ impl SpecMeta {
     }
 }
 
+fn snapshot_style_lock(
+    source_lock_path: &Path,
+    snapshot_root: &Path,
+) -> Result<PathBuf, AutomationRunError> {
+    let mut lock = read_style_lock(source_lock_path)
+        .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
+    let style_root = snapshot_root.join("style");
+    fs::create_dir_all(&style_root)?;
+    let board_path = snapshot_file_stable(&lock.board_path, &style_root.join("style-board.png"))?;
+    lock.board_path = board_path;
+    let snapshot_lock_path = style_root.join(STYLE_LOCK_FILE);
+    write_json_atomic(&snapshot_lock_path, &lock)?;
+    Ok(snapshot_lock_path)
+}
+
+fn snapshot_spec_meta_inputs(
+    meta: &mut SpecMeta,
+    snapshot_root: &Path,
+) -> Result<(), AutomationRunError> {
+    fs::create_dir_all(snapshot_root)?;
+    match meta {
+        SpecMeta::Character {
+            reference_image, ..
+        } => {
+            if let Some(source) = reference_image.as_ref() {
+                let extension = source
+                    .extension()
+                    .and_then(|value| value.to_str())
+                    .unwrap_or("png");
+                *reference_image = Some(snapshot_file_stable(
+                    source,
+                    &snapshot_root.join(format!("character-reference.{extension}")),
+                )?);
+            }
+        }
+        SpecMeta::StaticSet { spec } => {
+            for item in &mut spec.items {
+                if let Some(source) = item.reference_image.as_ref() {
+                    let extension = source
+                        .extension()
+                        .and_then(|value| value.to_str())
+                        .unwrap_or("png");
+                    item.reference_image = Some(snapshot_file_stable(
+                        source,
+                        &snapshot_root.join(format!("{}-reference.{extension}", item.id)),
+                    )?);
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn snapshot_file_stable(source: &Path, destination: &Path) -> Result<PathBuf, AutomationRunError> {
+    let before = fs::read(source)?;
+    if let Some(parent) = destination.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(destination, &before)?;
+    let after = fs::read(source)?;
+    if Sha256::digest(&before) != Sha256::digest(&after) {
+        return Err(AutomationRunError::Plan(PlanStoreError::InputChanged));
+    }
+    Ok(destination.to_path_buf())
+}
+
 /// Parse the action's spec file and cross-check the embedded id/kind against
 /// the manifest declaration, so a spec swapped for a different asset fails
 /// with `invalid_manifest` instead of producing a mismatched child job.
-fn parse_spec_meta(action: &ProjectPlanActionV1) -> Result<SpecMeta, AutomationRunError> {
+fn parse_spec_meta(
+    project_root: &Path,
+    action: &ProjectPlanActionV1,
+) -> Result<SpecMeta, AutomationRunError> {
     let bytes = fs::read(&action.canonical_spec_path)?;
     let spec_dir = action
         .canonical_spec_path
@@ -799,13 +1052,52 @@ fn parse_spec_meta(action: &ProjectPlanActionV1) -> Result<SpecMeta, AutomationR
             if spec.id != action.asset_id {
                 return Err(id_mismatch(&spec.id).into());
             }
+            let mut reference_image = spec
+                .reference_image
+                .map(|path| resolve_relative(&spec_dir, &path));
+            if let Some(subject) = action
+                .lock_refs
+                .iter()
+                .find(|reference| reference.kind == super::types::LockKind::Subject)
+            {
+                if reference_image.is_some() {
+                    return Err(GameArtError::InvalidManifest(format!(
+                        "character asset \"{}\" cannot combine spec referenceImage with subject lock {}@{} in the stable video workflow",
+                        action.asset_id, subject.id, subject.revision
+                    ))
+                    .into());
+                }
+                let lock_path =
+                    crate::subject::subject_lock_path(project_root, &subject.id, &subject.revision);
+                let lock = crate::subject::read_subject_lock(&lock_path).map_err(|error| {
+                    GameArtError::InvalidLockRef(format!(
+                        "subject lock {}@{} failed integrity validation: {error}",
+                        subject.id, subject.revision
+                    ))
+                })?;
+                for (label, path) in [
+                    ("canonical", &lock.canonical_path),
+                    ("mask", &lock.mask_path),
+                ] {
+                    let canonical_project = project_root.canonicalize()?;
+                    let canonical_input = path.canonicalize()?;
+                    if !canonical_input.starts_with(&canonical_project) {
+                        return Err(GameArtError::SymlinkEscape(format!(
+                            "subject lock {}@{} {label} input resolves outside project {}",
+                            subject.id,
+                            subject.revision,
+                            canonical_project.display()
+                        ))
+                        .into());
+                    }
+                }
+                reference_image = Some(lock.canonical_path);
+            }
             Ok(SpecMeta::Character {
                 name: spec.name,
                 license: spec.license,
                 prompt: spec.prompt,
-                reference_image: spec
-                    .reference_image
-                    .map(|path| resolve_relative(&spec_dir, &path)),
+                reference_image,
             })
         }
         AssetKind::IconSet | AssetKind::PropSet => {
@@ -844,7 +1136,7 @@ fn child_operation(
     action: &ProjectPlanActionV1,
     meta: &SpecMeta,
     style_lock_path: &Path,
-    provider: &dyn MediaGenerationProvider,
+    plan: &ProjectBuildPlanV1,
 ) -> Result<AutomationOperation, AutomationRunError> {
     match meta {
         SpecMeta::Character {
@@ -876,8 +1168,8 @@ fn child_operation(
                         "maxAttemptsPerAnimation": 2,
                         "targetFrameCount": 8,
                         "videoDurationSeconds": 4,
-                        "imageModel": provider.resolved_image_model(None),
-                        "videoModel": provider.resolved_video_model(None),
+                        "imageModel": plan.provider.image_model,
+                        "videoModel": plan.provider.video_model,
                     },
                     "quality": { "requireGameReady": true }
                 }))?;
@@ -892,7 +1184,7 @@ fn child_operation(
                 profile_id: manifest.provider.profile_id.clone(),
                 asset: spec.clone(),
                 max_attempts_per_item: 2,
-                image_model: provider.resolved_image_model(None),
+                image_model: plan.provider.image_model.clone(),
                 reuse_from_job_dir: None,
                 retry_item_ids: vec![],
                 consistency_recheck_only: false,
@@ -994,6 +1286,15 @@ fn execute_child(
         Some(child.job_id.clone()),
         None,
     )?;
+    if store.read_record(parent_job_id)?.cancellation_requested {
+        store.request_cancellation(&child.job_id)?;
+        return Ok(store.update_record(&child.job_id, |record| {
+            record.lifecycle_state = JobLifecycleState::Cancelled;
+            record.error_code = Some("cancelled".into());
+            record.error_summary = Some("parent build was cancelled before child execution".into());
+            record.next_actions = vec!["job_report".into()];
+        })?);
+    }
     run_operation_with_provider(store, &child.job_id, &claimed.operation, Some(provider))
 }
 
@@ -1026,13 +1327,19 @@ fn register_built_asset(
                 action.asset_id
             ))
         })?;
+    let catalog = read_project_catalog(project_root).map_err(|error| {
+        AutomationRunError::Processing(format!("invalid project catalog: {error}"))
+    })?;
     let mut dependencies: Vec<CatalogDependencyRefV1> = action
         .depends_on_assets
         .iter()
         .map(|id| CatalogDependencyRefV1 {
             id: id.clone(),
             revision: None,
-            hash: None,
+            hash: catalog
+                .assets
+                .get(id)
+                .map(|entry| entry.pack_sha256.clone()),
         })
         .collect();
     dependencies.extend(
@@ -1042,7 +1349,7 @@ fn register_built_asset(
             .map(|reference| CatalogDependencyRefV1 {
                 id: format!("{}:{}", reference.kind, reference.id),
                 revision: Some(reference.revision.clone()),
-                hash: None,
+                hash: Some(reference.lock_sha256.clone()),
             }),
     );
     let (workflow_profile, workflow_version) = action
@@ -1052,6 +1359,10 @@ fn register_built_asset(
         .unwrap_or((None, None));
     let (quality_profile, quality_verdict, game_ready) = quality;
     let model = provider.resolved_image_model(None);
+    let subject = action
+        .lock_refs
+        .iter()
+        .find(|reference| reference.kind == super::types::LockKind::Subject);
     let entry = ProjectCatalogEntryV2 {
         asset_id: action.asset_id.clone(),
         name: meta.name().to_string(),
@@ -1063,7 +1374,10 @@ fn register_built_asset(
         style: style_revision.as_ref().map(|revision| CatalogStyleRefV1 {
             revision: revision.clone(),
         }),
-        subject: None,
+        subject: subject.map(|reference| CatalogSubjectRefV1 {
+            id: reference.id.clone(),
+            revision: reference.revision.clone(),
+        }),
         workflow: action.workflow.clone(),
         provider: Some(CatalogProviderRefV1 {
             provider_id: validated.manifest.provider.id.clone(),
@@ -1077,11 +1391,12 @@ fn register_built_asset(
         dependencies: Some(dependencies),
         locks: Some(CatalogLockRevisionsV1 {
             style: style_revision.clone(),
+            subject: subject.map(|reference| reference.revision.clone()),
             ..CatalogLockRevisionsV1::default()
         }),
         workflow_profile,
         workflow_version,
-        pack_version: None,
+        pack_version: Some("2".into()),
         quality_verdict,
         quality_profile,
         game_ready,
@@ -1127,7 +1442,10 @@ fn provider_capability_input(
 }
 
 /// Sum every child job's `provider-usage.json` delta into one total.
-fn aggregate_provider_usage(store: &JobStore, state: &ProjectBuildStateV1) -> ProviderUsage {
+fn aggregate_provider_usage(
+    store: &JobStore,
+    state: &ProjectBuildStateV1,
+) -> (ProviderUsage, Vec<String>) {
     #[derive(Deserialize)]
     struct UsageFile {
         usage: ProviderUsage,
@@ -1135,32 +1453,40 @@ fn aggregate_provider_usage(store: &JobStore, state: &ProjectBuildStateV1) -> Pr
 
     let mut total = ProviderUsage::default();
     let mut seen = BTreeSet::new();
+    let mut warnings = Vec::new();
     for entry in &state.assets {
-        let Some(child_job_id) = &entry.child_job_id else {
-            continue;
-        };
-        if !seen.insert(child_job_id.clone()) {
-            continue;
-        }
-        let Ok(record) = store.read_record(child_job_id) else {
-            continue;
-        };
-        let Ok(bytes) = fs::read(record.job_dir.join("provider-usage.json")) else {
-            continue;
-        };
-        let Ok(file) = serde_json::from_slice::<UsageFile>(&bytes) else {
-            continue;
-        };
-        total.requests += file.usage.requests;
-        total.generated_images += file.usage.generated_images;
-        total.generated_videos += file.usage.generated_videos;
-        total.edited_videos += file.usage.edited_videos;
-        total.private_file_uploads += file.usage.private_file_uploads;
-        if let Some(ticks) = file.usage.cost_in_usd_ticks {
-            *total.cost_in_usd_ticks.get_or_insert(0) += ticks;
+        let child_ids = entry.child_job_ids.iter().chain(entry.child_job_id.iter());
+        for child_job_id in child_ids {
+            if !seen.insert(child_job_id.clone()) {
+                continue;
+            }
+            let Ok(record) = store.read_record(child_job_id) else {
+                warnings.push(format!("missing child job record: {child_job_id}"));
+                continue;
+            };
+            let usage_path = record.job_dir.join("provider-usage.json");
+            let Ok(bytes) = fs::read(&usage_path) else {
+                warnings.push(format!(
+                    "missing provider usage for child {child_job_id}: {}",
+                    usage_path.display()
+                ));
+                continue;
+            };
+            let Ok(file) = serde_json::from_slice::<UsageFile>(&bytes) else {
+                warnings.push(format!("invalid provider usage for child {child_job_id}"));
+                continue;
+            };
+            total.requests += file.usage.requests;
+            total.generated_images += file.usage.generated_images;
+            total.generated_videos += file.usage.generated_videos;
+            total.edited_videos += file.usage.edited_videos;
+            total.private_file_uploads += file.usage.private_file_uploads;
+            if let Some(ticks) = file.usage.cost_in_usd_ticks {
+                *total.cost_in_usd_ticks.get_or_insert(0) += ticks;
+            }
         }
     }
-    total
+    (total, warnings)
 }
 
 /// A resume entry is only trustworthy when the recorded pack still exists and
@@ -1172,25 +1498,131 @@ fn pack_intact(entry: &BuildStateAssetV1) -> bool {
     path.is_dir() && hash_pack(path, true).is_ok_and(|actual| &actual == recorded)
 }
 
+fn verify_source_fingerprint(
+    request: &BuildProjectRequestV1,
+    validated: &super::ValidatedManifest,
+    diff: &super::ProjectDiffV1,
+) -> Result<(), AutomationRunError> {
+    let Some(expected) = request.expected_source_sha256.as_deref() else {
+        return Ok(());
+    };
+    let actual = project_source_sha256(&request.project_path, validated, diff)?;
+    if actual != expected {
+        return Err(AutomationRunError::Plan(PlanStoreError::InputChanged));
+    }
+    Ok(())
+}
+
+fn verify_current_project_sources(
+    request: &BuildProjectRequestV1,
+) -> Result<(), AutomationRunError> {
+    let Some(_) = request.expected_source_sha256 else {
+        return Ok(());
+    };
+    let validated = GameArtManifestV1::load_validated(&request.manifest_path)?;
+    let diff = compute_project_diff(&request.project_path, &validated)?;
+    verify_source_fingerprint(request, &validated, &diff)
+}
+
+fn load_prior_build_state(
+    store: &JobStore,
+    state_path: &Path,
+    manifest_sha256: &str,
+    plan_sha256: &str,
+    strict: bool,
+    expected_state_sha256: Option<&str>,
+) -> Result<Option<ProjectBuildStateV1>, AutomationRunError> {
+    let bytes = match fs::read(state_path) {
+        Ok(bytes) => bytes,
+        Err(error) if !strict && error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(error.into()),
+    };
+    let actual_state_sha256 = format!("{:x}", Sha256::digest(&bytes));
+    if strict && expected_state_sha256 != Some(actual_state_sha256.as_str()) {
+        return Err(AutomationRunError::Plan(PlanStoreError::InputChanged));
+    }
+    let mut state: ProjectBuildStateV1 = match serde_json::from_slice(&bytes) {
+        Ok(state) => state,
+        Err(_error) if !strict => return Ok(None),
+        Err(error) => return Err(error.into()),
+    };
+    if state.manifest_sha256 != manifest_sha256 || state.plan_sha256 != plan_sha256 {
+        if strict {
+            return Err(AutomationRunError::Processing(
+                "resume source manifest/plan digest does not match the reviewed build".into(),
+            ));
+        }
+        return Ok(None);
+    }
+    // Recover the precise crash window where a child reached Succeeded but
+    // the parent state had not yet been promoted/catalog-registered.
+    for entry in &mut state.assets {
+        if entry.status != BuildAssetStatusV1::Running {
+            continue;
+        }
+        let Some(child_job_id) = entry.child_job_id.as_deref() else {
+            continue;
+        };
+        let Ok(child) = store.read_record(child_job_id) else {
+            continue;
+        };
+        if child.lifecycle_state != JobLifecycleState::Succeeded {
+            continue;
+        }
+        let Some(pack) = child
+            .artifacts
+            .iter()
+            .find(|artifact| artifact.kind == "gsfpack")
+        else {
+            continue;
+        };
+        let pack_sha256 = hash_pack(&pack.path, pack.path.is_dir())?;
+        if pack
+            .sha256
+            .as_deref()
+            .is_some_and(|recorded| recorded != pack_sha256)
+        {
+            return Err(AutomationRunError::Processing(format!(
+                "recovered child {child_job_id} pack changed after child success"
+            )));
+        }
+        entry.status = BuildAssetStatusV1::Succeeded;
+        entry.pack_path = Some(pack.path.clone());
+        entry.pack_sha256 = Some(pack_sha256);
+        entry.error = None;
+    }
+    if strict {
+        for entry in state
+            .assets
+            .iter()
+            .filter(|entry| entry.status == BuildAssetStatusV1::Succeeded)
+        {
+            if !pack_intact(entry) {
+                return Err(AutomationRunError::Processing(format!(
+                    "resume artifact for {} is missing or changed; refusing an implicit paid rebuild",
+                    entry.asset_id
+                )));
+            }
+        }
+    }
+    Ok(Some(state))
+}
+
 /// Load a prior build-state when it belongs to the same manifest, carrying
 /// terminal info forward for entries whose spec hash is unchanged; otherwise
 /// start every build/rebuild action `pending`.
 fn resume_or_fresh_state(
-    state_path: &Path,
+    prior: Option<&ProjectBuildStateV1>,
     plan: &ProjectBuildPlanV1,
     manifest_sha256: &str,
     plan_sha256: &str,
 ) -> ProjectBuildStateV1 {
-    let prior: Option<ProjectBuildStateV1> = fs::read(state_path)
-        .ok()
-        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-        .filter(|state: &ProjectBuildStateV1| state.manifest_sha256 == manifest_sha256);
     let mut assets = Vec::new();
     for action in &plan.actions {
         if action.action == PlanActionKindV1::Reuse {
             continue;
         }
-        let carried = prior.as_ref().and_then(|state| {
+        let carried = prior.and_then(|state| {
             state.assets.iter().find(|entry| {
                 entry.asset_id == action.asset_id && entry.spec_sha256 == action.spec_sha256
             })
@@ -1202,6 +1634,7 @@ fn resume_or_fresh_state(
                 spec_sha256: entry.spec_sha256.clone(),
                 status: entry.status,
                 child_job_id: entry.child_job_id.clone(),
+                child_job_ids: entry.child_job_ids.clone(),
                 pack_path: entry.pack_path.clone(),
                 pack_sha256: entry.pack_sha256.clone(),
                 error: entry.error.clone(),
@@ -1212,6 +1645,7 @@ fn resume_or_fresh_state(
                 spec_sha256: action.spec_sha256.clone(),
                 status: BuildAssetStatusV1::Pending,
                 child_job_id: None,
+                child_job_ids: Vec::new(),
                 pack_path: None,
                 pack_sha256: None,
                 error: None,
@@ -1242,7 +1676,12 @@ fn transition(
         .expect("state covers every plan action");
     entry.status = status;
     if child_job_id.is_some() {
-        entry.child_job_id = child_job_id;
+        if let Some(child_job_id) = child_job_id {
+            if !entry.child_job_ids.contains(&child_job_id) {
+                entry.child_job_ids.push(child_job_id.clone());
+            }
+            entry.child_job_id = Some(child_job_id);
+        }
     }
     entry.error = error;
     write_build_state(state_path, state)

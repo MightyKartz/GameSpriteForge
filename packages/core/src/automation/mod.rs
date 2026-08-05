@@ -3,7 +3,7 @@ mod repair;
 mod runner;
 mod types;
 
-pub use plan::{PlanStore, PlanStoreError, PLAN_TTL_MINUTES};
+pub use plan::{fingerprint_operation_inputs, PlanStore, PlanStoreError, PLAN_TTL_MINUTES};
 pub use repair::{
     analyze_repair, character_quality_snapshot, prepare_repair_plan, single_quality_snapshot,
     write_repair_comparison, RepairAnalysis, RepairComparison, RepairError, MAX_REPAIR_ATTEMPTS,

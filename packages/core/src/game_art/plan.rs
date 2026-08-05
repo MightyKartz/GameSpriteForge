@@ -13,7 +13,8 @@
 //!   `static-set@1.0.0`.
 //! - Provider request estimates mirror `automation::plan::estimate_operation`
 //!   for a fresh (non-retry) build: a character pack estimates 9 requests with
-//!   a maximum of 13 (the non-keyframe `GenerateCharacterPack` branch); a
+//!   a maximum of 17 (one subject reference plus four directions, each with
+//!   at most two edit-image + image-to-video attempts); a
 //!   static asset set estimates one request per spec item with a maximum of
 //!   two per item (the `GenerateStaticAssetSet` branch). Item counts come from
 //!   parsing each asset's spec file (`CharacterAssetSpecV1` for characters,
@@ -63,7 +64,7 @@ pub const CACHE_KIND_CATALOG_REUSE: &str = "catalog_reuse";
 // Mirrors `automation::plan::estimate_operation`'s non-keyframe
 // `GenerateCharacterPack` branch (fresh build, `topdown@1.0.0` video path).
 const CHARACTER_ESTIMATED_PROVIDER_REQUESTS: u32 = 9;
-const CHARACTER_MAXIMUM_PROVIDER_REQUESTS: u32 = 13;
+const CHARACTER_MAXIMUM_PROVIDER_REQUESTS: u32 = 17;
 
 /// Provider facts the offline plan layer is allowed to see: the resolved
 /// provider's capability strings (snake_case, matching `ProviderCapability`
@@ -400,10 +401,11 @@ mod tests {
     use super::*;
     use crate::asset_project::{ForgeProjectV1, ProviderSelection, FORGE_PROJECT_FILE};
     use crate::catalog::{
-        register_catalog_asset_v2, CatalogLockRevisionsV1, CatalogProviderRefV1, CatalogStyleRefV1,
-        CatalogSubjectRefV1, ProjectCatalogEntryV2,
+        read_project_catalog, register_catalog_asset_v2, CatalogDependencyRefV1,
+        CatalogLockRevisionsV1, CatalogProviderRefV1, CatalogStyleRefV1, CatalogSubjectRefV1,
+        ProjectCatalogEntryV2,
     };
-    use crate::game_art::diff::hash_pack;
+    use crate::game_art::diff::{hash_pack, semantic_lock_sha256, write_test_pack_fixture};
     use crate::game_art::{compute_project_diff, reasons, GameArtManifestV1, ProjectDiffV1};
     use chrono::{DateTime, Utc};
     use serde_json::json;
@@ -463,13 +465,35 @@ mod tests {
     fn write_style_lock(root: &Path) {
         let directory = root.join(".forge/styles/style-rev-1");
         fs::create_dir_all(&directory).unwrap();
+        let board = directory.join("style-board.png");
+        fs::write(&board, b"style-board").unwrap();
         fs::write(
             directory.join("style-lock.json"),
             json!({
                 "schemaVersion": "1",
                 "revision": "style-rev-1",
                 "providerId": "xai",
-                "profileId": "default"
+                "profileId": "default",
+                "imageModel": "grok-image",
+                "prompt": "test style",
+                "perspective": "topdown",
+                "lighting": "upper_left",
+                "outline": "dark",
+                "background": "transparent",
+                "sampling": "nearest",
+                "characterCanvasSize": 256,
+                "iconCanvasSize": 128,
+                "propCanvasSize": 256,
+                "boardPath": board,
+                "boardSha256": format!("{:x}", Sha256::digest(b"style-board")),
+                "referenceSha256": [],
+                "baselineProfile": "style-baseline@1.1.0",
+                "baseline": {
+                    "palette": [{"color": "#8250D2", "weight": 1.0}],
+                    "edgeDensity": 0.25,
+                    "foregroundScale": 0.5,
+                    "perceptualHash": "0000000000000000"
+                }
             })
             .to_string(),
         )
@@ -479,14 +503,39 @@ mod tests {
     fn write_subject_lock(root: &Path) {
         let directory = root.join(".forge/subjects/hero/subject-rev-1");
         fs::create_dir_all(&directory).unwrap();
+        let canonical = directory.join("canonical.png");
+        let mask = directory.join("mask.png");
+        fs::write(&canonical, b"canonical").unwrap();
+        fs::write(&mask, b"mask").unwrap();
         fs::write(
             directory.join("subject-lock.json"),
             json!({
                 "schemaVersion": "1",
+                "profile": "subject-lock@1.0.0",
                 "id": "hero",
+                "name": "Hero",
                 "revision": "subject-rev-1",
+                "createdAt": "2026-08-05T00:00:00Z",
+                "prompt": "test hero",
+                "license": "private",
+                "styleRevision": "style-rev-1",
+                "styleSha256": "a".repeat(64),
                 "providerId": "xai",
-                "profileId": "default"
+                "profileId": "default",
+                "imageModel": "grok-image",
+                "canonicalPath": canonical,
+                "canonicalSha256": format!("{:x}", Sha256::digest(b"canonical")),
+                "maskPath": mask,
+                "maskSha256": format!("{:x}", Sha256::digest(b"mask")),
+                "referenceSha256": [],
+                "baseline": {
+                    "perceptualHash": "0000000000000000",
+                    "foregroundScale": 0.5,
+                    "edgeDensity": 0.25,
+                    "anchorX": 8.0,
+                    "anchorY": 16.0,
+                    "subjectCount": 1
+                }
             })
             .to_string(),
         )
@@ -510,8 +559,48 @@ mod tests {
         with_subject: bool,
     ) {
         let pack_dir = root.join("packs").join(asset_id);
-        fs::create_dir_all(&pack_dir).unwrap();
-        fs::write(pack_dir.join("pack.json"), b"{}").unwrap();
+        write_test_pack_fixture(&pack_dir, asset_id);
+        let catalog = read_project_catalog(root).unwrap();
+        let manifest_asset = validated
+            .manifest
+            .assets
+            .iter()
+            .find(|asset| asset.id == asset_id)
+            .unwrap();
+        let mut dependencies = manifest_asset
+            .depends_on
+            .iter()
+            .filter(|dependency| !dependency.contains(':'))
+            .map(|dependency| {
+                let dependency_pack = root.join("packs").join(dependency);
+                CatalogDependencyRefV1 {
+                    id: dependency.clone(),
+                    revision: None,
+                    hash: catalog
+                        .assets
+                        .get(dependency)
+                        .map(|entry| entry.pack_sha256.clone())
+                        .or_else(|| {
+                            dependency_pack
+                                .is_dir()
+                                .then(|| hash_pack(&dependency_pack, true).unwrap())
+                        }),
+                }
+            })
+            .collect::<Vec<_>>();
+        if with_subject {
+            dependencies.push(CatalogDependencyRefV1 {
+                id: "subject:hero".into(),
+                revision: Some("subject-rev-1".into()),
+                hash: Some(
+                    semantic_lock_sha256(
+                        root,
+                        &root.join(".forge/subjects/hero/subject-rev-1/subject-lock.json"),
+                    )
+                    .unwrap(),
+                ),
+            });
+        }
         let entry = ProjectCatalogEntryV2 {
             asset_id: asset_id.into(),
             name: format!("Asset {asset_id}"),
@@ -537,7 +626,7 @@ mod tests {
             created_at: fixed_time(),
             spec_path: Some(PathBuf::from(format!("specs/{asset_id}.json"))),
             spec_sha256: Some(validated.asset(asset_id).unwrap().spec_sha256.clone()),
-            dependencies: None,
+            dependencies: Some(dependencies),
             locks: Some(CatalogLockRevisionsV1 {
                 style: Some("style-rev-1".into()),
                 subject: with_subject.then(|| "subject-rev-1".to_string()),
@@ -639,6 +728,10 @@ mod tests {
         );
         fs::write(root.join("game-art.json"), manifest_json(&assets)).unwrap();
         let validated = validate(root);
+        for asset_id in ["hero", "hud-icons"] {
+            let pack_dir = root.join("packs").join(asset_id);
+            write_test_pack_fixture(&pack_dir, asset_id);
+        }
         let registration_order: [&str; 2] = if hero_first {
             ["hero", "hud-icons"]
         } else {
@@ -675,10 +768,14 @@ mod tests {
         // Recomputing is stable too.
         assert_eq!(plan_first.plan_sha256(), plan_first.plan_sha256());
         // Both projects reuse everything.
-        assert!(plan_first
-            .actions
-            .iter()
-            .all(|action| action.action == PlanActionKindV1::Reuse));
+        assert!(
+            plan_first
+                .actions
+                .iter()
+                .all(|action| action.action == PlanActionKindV1::Reuse),
+            "unexpected actions: {:#?}",
+            plan_first.actions
+        );
     }
 
     #[test]
@@ -901,13 +998,13 @@ mod tests {
             .iter()
             .all(|action| action.asset_id != "old-asset"));
 
-        // Per-action estimates mirror estimate_operation: character 9/13,
+        // Per-action estimates mirror estimate_operation: character 9/17,
         // static set items/2*items, reuse 0/0.
         let hero = plan_action(&plan, "hero");
         assert_eq!(hero.action, PlanActionKindV1::Build);
         assert_eq!(hero.workflow, "topdown@1.0.0");
         assert_eq!(hero.provider_request_estimate, 9);
-        assert_eq!(hero.maximum_provider_requests, 13);
+        assert_eq!(hero.maximum_provider_requests, 17);
         let icons = plan_action(&plan, "hud-icons");
         assert_eq!(icons.workflow, "static-set@1.0.0");
         assert_eq!(icons.provider_request_estimate, 3);
@@ -919,7 +1016,7 @@ mod tests {
 
         // Totals, cache accounting and the local node formula.
         assert_eq!(plan.provider_request_estimate, 12);
-        assert_eq!(plan.maximum_provider_requests, 19);
+        assert_eq!(plan.maximum_provider_requests, 23);
         assert_eq!(plan.cache_hits, 1);
         assert_eq!(plan.cache_misses, 2);
         assert_eq!(

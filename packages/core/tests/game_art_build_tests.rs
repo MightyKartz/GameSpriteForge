@@ -426,6 +426,14 @@ fn build_request(root: &Path) -> BuildProjectRequestV1 {
         schema_version: "1".into(),
         project_path: root.to_path_buf(),
         manifest_path: root.join("game-art.json"),
+        expected_plan_sha256: None,
+        provider_capabilities: vec!["edit_image".into(), "image_to_video".into()],
+        image_model: Some("fixture-image".into()),
+        video_model: Some("fixture-video".into()),
+        expected_source_sha256: None,
+        resume_from_job_id: None,
+        resume_state_path: None,
+        resume_state_sha256: None,
     }
 }
 
@@ -1123,7 +1131,8 @@ fn reconcile_marks_dead_workers_and_resume_skips_completed_assets() {
 
     // Simulate a crash between child success and catalog registration: the
     // catalog loses the hud-icons entry, so only build-state.json can prove
-    // the asset is done. The prop set spec is fixed (new spec hash).
+    // the asset is done. Inputs stay byte-identical: recovery is allowed only
+    // when the complete plan digest is unchanged.
     let catalog_path = root.join(PROJECT_CATALOG_RELATIVE);
     let mut catalog_json: serde_json::Value =
         serde_json::from_slice(&fs::read(&catalog_path).unwrap()).unwrap();
@@ -1136,36 +1145,109 @@ fn reconcile_marks_dead_workers_and_resume_skips_completed_assets() {
         serde_json::to_vec_pretty(&catalog_json).unwrap(),
     )
     .unwrap();
-    write_static_spec(&root, "forest-props", "prop_set", &["a wooden crate"]);
+    // Model the exact legacy crash window: the child already succeeded, but
+    // the parent state is still Running and lacks persisted pack facts.
+    let state_path = parent.job_dir.join(BUILD_STATE_FILE);
+    let mut crashed_state: serde_json::Value =
+        serde_json::from_slice(&fs::read(&state_path).unwrap()).unwrap();
+    let icon_state = crashed_state["assets"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|entry| entry["assetId"] == "hud-icons")
+        .unwrap();
+    icon_state["status"] = "running".into();
+    icon_state.as_object_mut().unwrap().remove("packPath");
+    icon_state.as_object_mut().unwrap().remove("packSha256");
+    fs::write(
+        &state_path,
+        serde_json::to_vec_pretty(&crashed_state).unwrap(),
+    )
+    .unwrap();
 
-    let prior_child_ids: std::collections::BTreeSet<String> = children_of(&jobs, &parent_id)
-        .into_iter()
-        .map(|child| child.job_id)
-        .collect();
-
-    // Retry with the SAME parent job: the completed icon set is skipped
-    // without a child (build-state resume) and re-registered from the
-    // recorded pack facts; the prop set builds fresh.
-    jobs.update_record(&parent_id, |record| {
+    // A live/non-terminal parent is never a valid recovery source, even if a
+    // caller can point at its state file and reproduce its digest.
+    let mut active_resume_request = build_request(&root);
+    active_resume_request.resume_from_job_id = Some(parent_id.clone());
+    active_resume_request.resume_state_path = Some(state_path.clone());
+    active_resume_request.resume_state_sha256 =
+        Some(forge_core::asset_project::hash_file(&state_path).unwrap());
+    let active_plan = plans
+        .prepare(AutomationOperation::BuildProject(
+            active_resume_request.clone(),
+        ))
+        .unwrap();
+    let active_claim = plans.claim(&active_plan.token).unwrap();
+    let active_successor = stage_plan_job(&jobs, &active_claim).unwrap();
+    jobs.update_record(&active_successor.job_id, |record| {
         record.lifecycle_state = JobLifecycleState::Running;
         record.worker_pid = Some(std::process::id());
     })
     .unwrap();
-    let report = run_build_project(
+    let active_error = run_build_project(
         &jobs,
         &plans,
-        &parent_id,
-        &build_request(&root),
+        &active_successor.job_id,
+        &active_resume_request,
         Some(&provider),
     )
+    .unwrap_err();
+    assert!(active_error
+        .to_string()
+        .contains("terminal failed, recoverable build"));
+    assert!(!parent.job_dir.join(".resume-claimed").exists());
+    jobs.update_record(&active_successor.job_id, |record| {
+        record.lifecycle_state = JobLifecycleState::Failed;
+        record.state = forge_core::job::JobState::Failed;
+        record.worker_pid = None;
+    })
     .unwrap();
-    assert_eq!(report.summary.failed, 0);
+
+    jobs.update_record(&parent_id, |record| {
+        record.lifecycle_state = JobLifecycleState::Failed;
+        record.state = forge_core::job::JobState::Failed;
+        record.worker_pid = None;
+        record.recoverable = true;
+        record.error_code = Some("worker_lost".into());
+    })
+    .unwrap();
+    // Public recovery creates a NEW parent job with an explicit source id.
+    // The succeeded icon is reused; the still-invalid prop gets one fresh
+    // child and fails again. The original parent remains immutable.
+    let mut resume_request = build_request(&root);
+    resume_request.resume_from_job_id = Some(parent_id.clone());
+    let source = jobs.read_record(&parent_id).unwrap();
+    let resume_state_path = source.job_dir.join(BUILD_STATE_FILE);
+    resume_request.resume_state_sha256 =
+        Some(forge_core::asset_project::hash_file(&resume_state_path).unwrap());
+    resume_request.resume_state_path = Some(resume_state_path);
+    let prepared = plans
+        .prepare(AutomationOperation::BuildProject(resume_request.clone()))
+        .unwrap();
+    let claimed = plans.claim(&prepared.token).unwrap();
+    let resumed_parent = stage_plan_job(&jobs, &claimed).unwrap();
+    jobs.update_record(&resumed_parent.job_id, |record| {
+        record.lifecycle_state = JobLifecycleState::Running;
+        record.worker_pid = Some(std::process::id());
+    })
+    .unwrap();
+    let error = run_build_project(
+        &jobs,
+        &plans,
+        &resumed_parent.job_id,
+        &resume_request,
+        Some(&provider),
+    )
+    .unwrap_err();
+    assert_eq!(error.code(), "project_build_failed");
+    let report: forge_core::game_art::ProjectBuildReportV1 = serde_json::from_slice(
+        &fs::read(resumed_parent.job_dir.join(PROJECT_BUILD_REPORT_FILE)).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(report.summary.failed, 1);
     assert_eq!(report.summary.skipped, 0);
 
-    let new_children: Vec<_> = children_of(&jobs, &parent_id)
-        .into_iter()
-        .filter(|child| !prior_child_ids.contains(&child.job_id))
-        .collect();
+    let new_children = children_of(&jobs, &resumed_parent.job_id);
     assert_eq!(new_children.len(), 1, "only the prop set gets a new child");
     assert_eq!(new_children[0].asset_id.as_deref(), Some("forest-props"));
 
@@ -1191,7 +1273,44 @@ fn reconcile_marks_dead_workers_and_resume_skips_completed_assets() {
     let icon_entry = catalog.assets.get("hud-icons").unwrap();
     assert_eq!(icon_entry.pack_sha256, icon_pack_sha);
     assert_eq!(icon_entry.source_job_id, icon_child_id);
-    assert!(catalog.assets.contains_key("forest-props"));
+    assert!(!catalog.assets.contains_key("forest-props"));
+
+    // Recovery is a single-successor operation. Restore the same catalog
+    // crash window so the plan digest matches, then prove the source lease
+    // rejects a second successor before any child can be created.
+    let mut catalog_json: serde_json::Value =
+        serde_json::from_slice(&fs::read(&catalog_path).unwrap()).unwrap();
+    catalog_json["assets"]
+        .as_object_mut()
+        .unwrap()
+        .remove("hud-icons");
+    fs::write(
+        &catalog_path,
+        serde_json::to_vec_pretty(&catalog_json).unwrap(),
+    )
+    .unwrap();
+    let duplicate_plan = plans
+        .prepare(AutomationOperation::BuildProject(resume_request.clone()))
+        .unwrap();
+    let duplicate_claim = plans.claim(&duplicate_plan.token).unwrap();
+    let duplicate_parent = stage_plan_job(&jobs, &duplicate_claim).unwrap();
+    jobs.update_record(&duplicate_parent.job_id, |record| {
+        record.lifecycle_state = JobLifecycleState::Running;
+        record.worker_pid = Some(std::process::id());
+    })
+    .unwrap();
+    let duplicate_error = run_build_project(
+        &jobs,
+        &plans,
+        &duplicate_parent.job_id,
+        &resume_request,
+        Some(&provider),
+    )
+    .unwrap_err();
+    assert!(duplicate_error
+        .to_string()
+        .contains("already has a successor build"));
+    assert!(children_of(&jobs, &duplicate_parent.job_id).is_empty());
 }
 
 // ---------------------------------------------------------------------------

@@ -218,8 +218,10 @@ impl fmt::Display for LockRef {
 }
 
 /// Lock revisions are immutable identifiers or digests: `[A-Za-z0-9_.-]+`.
-fn is_valid_lock_revision(value: &str) -> bool {
+pub(crate) fn is_valid_lock_revision(value: &str) -> bool {
     !value.is_empty()
+        && value != "."
+        && value != ".."
         && value.chars().all(|character| {
             character.is_ascii_alphanumeric() || matches!(character, '_' | '.' | '-')
         })
@@ -340,6 +342,8 @@ mod tests {
             "style:id@",
             "style:bad id@rev",
             "style:id@bad rev",
+            "style:id@.",
+            "style:id@..",
             // Extra separators leak into id/revision and fail the charset.
             "style:a:b@rev",
             "style:id@rev@extra",

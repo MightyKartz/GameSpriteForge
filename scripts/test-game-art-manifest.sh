@@ -26,11 +26,11 @@ EXAMPLE="${ROOT}/examples/cli/complete-visual"
 credential_scan_matches() {
   if command -v rg >/dev/null 2>&1; then
     rg -n -i \
-      'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+      "authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key|https?://[^[:space:]\"']*(temporary|signed|signature|token)=" \
       "$@"
   else
     grep -R -I -n -E \
-      'authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key' \
+      "authorization:[[:space:]]*bearer|access[_-]?token|refresh[_-]?token|device[_-]?code|xai[_-]?api[_-]?key|https?://[^[:space:]\"']*(temporary|signed|signature|token)=" \
       "$@"
   fi
 }
@@ -78,6 +78,9 @@ init_project_with_style() {
 PROJECT_A="${TEST_ROOT}/project-a"
 init_project_with_style "${PROJECT_A}" "Game Art A"
 cp "${EXAMPLE}/game-art.json" "${PROJECT_A}/game-art.json"
+jq '.projectId = "game-art-a" | .name = "Game Art A" | .provider.id = "fixture"' \
+  "${PROJECT_A}/game-art.json" > "${TEST_ROOT}/project-a-manifest.json"
+cp "${TEST_ROOT}/project-a-manifest.json" "${PROJECT_A}/game-art.json"
 mkdir -p "${PROJECT_A}/specs"
 cp "${EXAMPLE}"/specs/*.json "${PROJECT_A}/specs/"
 MANIFEST_A="${PROJECT_A}/game-art.json"
@@ -112,6 +115,59 @@ SHA_REWRITTEN="$(printf '%s' "${PLAN_REWRITTEN}" | jq -r '.data.plan.planSha256'
 test "${SHA_FIRST}" = "${SHA_REWRITTEN}"
 echo "CHECK 1 PASS: deterministic plan hash ${SHA_FIRST:0:16}… stable across reruns and manifest key-order/whitespace rewrite"
 
+# CHECK 1A — token input closure: changing a spec after plan creation must
+# invalidate the token before any parent/child job is staged.
+cp "${PROJECT_A}/specs/hud-icons.json" "${TEST_ROOT}/hud-icons-before-drift.json"
+PLAN_DRIFT="$(forge_json project plan-build --project "${PROJECT_A}" --manifest "${MANIFEST_A}")"
+TOKEN_DRIFT="$(printf '%s' "${PLAN_DRIFT}" | jq -r '.data.token')"
+COUNT_BEFORE_DRIFT="$(job_count)"
+jq '.items[0].prompt = "drifted after plan"' "${PROJECT_A}/specs/hud-icons.json" \
+  > "${TEST_ROOT}/hud-icons-drifted.json"
+cp "${TEST_ROOT}/hud-icons-drifted.json" "${PROJECT_A}/specs/hud-icons.json"
+EXEC_DRIFT="$("${FORGE}" plan execute --token "${TOKEN_DRIFT}" --wait --json || true)"
+printf '%s' "${EXEC_DRIFT}" | jq -e '(.ok | not)' >/dev/null
+test "$(job_count)" = "${COUNT_BEFORE_DRIFT}"
+cp "${TEST_ROOT}/hud-icons-before-drift.json" "${PROJECT_A}/specs/hud-icons.json"
+echo "CHECK 1A PASS: plan token rejected post-plan spec drift before staging any job"
+
+# CHECK 1B — game-art-only schema surface and xAI offline planning must not
+# resolve credentials or touch Keychain. The real-provider acceptance guard
+# runs before claim/staging and therefore leaves the token pending.
+forge_json schema show --id game-art-manifest@1.0.0 \
+  | jq -e '.data.title == "Forge Game Art Manifest V1"' >/dev/null
+PROJECT_X="${TEST_ROOT}/project-xai-offline"
+cp -R "${PROJECT_A}" "${PROJECT_X}"
+jq '.projectId = "project-xai-offline" | .name = "Project xAI Offline" | .provider.id = "xai"' \
+  "${PROJECT_X}/forge-project.json" > "${TEST_ROOT}/project-xai.json"
+cp "${TEST_ROOT}/project-xai.json" "${PROJECT_X}/forge-project.json"
+jq '.projectId = "project-xai-offline" | .name = "Project xAI Offline" | .provider.id = "xai" | .assets = [.assets[] | select(.id == "hud-icons")]' \
+  "${PROJECT_X}/game-art.json" > "${TEST_ROOT}/manifest-xai.json"
+cp "${TEST_ROOT}/manifest-xai.json" "${PROJECT_X}/game-art.json"
+STYLE_LOCK_X="$(find "${PROJECT_X}/.forge/styles" -name style-lock.json -type f -print -quit)"
+STYLE_BOARD_X="$(dirname "${STYLE_LOCK_X}")/style-board.png"
+jq --arg board "${STYLE_BOARD_X}" \
+  '.providerId = "xai" | .boardPath = $board' \
+  "${STYLE_LOCK_X}" > "${TEST_ROOT}/style-lock-xai.json"
+cp "${TEST_ROOT}/style-lock-xai.json" "${STYLE_LOCK_X}"
+SECRET_SENTINEL="FORGE_STAGE2_SECRET_SENTINEL_7dbe0a9c"
+PLAN_X="$(XAI_API_KEY="${SECRET_SENTINEL}" forge_json project plan-build --project "${PROJECT_X}" --manifest "${PROJECT_X}/game-art.json")"
+TOKEN_X="$(printf '%s' "${PLAN_X}" | jq -r '.data.token')"
+test -f "${FORGE_PLAN_STORE}/${TOKEN_X}.pending.json"
+COUNT_BEFORE_GUARD="$(job_count)"
+EXEC_GUARD="$(env -u FORGE_REAL_PROVIDER_ACCEPT -u FORGE_REAL_PROVIDER_MAX_REQUESTS -u FORGE_REAL_PROVIDER_MAX_COST_TICKS "${FORGE}" plan execute --token "${TOKEN_X}" --wait --json || true)"
+printf '%s' "${EXEC_GUARD}" | jq -e '(.ok | not) and .error.code == "real_provider_not_accepted"' >/dev/null
+test -f "${FORGE_PLAN_STORE}/${TOKEN_X}.pending.json"
+test "$(job_count)" = "${COUNT_BEFORE_GUARD}"
+EXEC_BUDGET="$(FORGE_REAL_PROVIDER_ACCEPT=1 FORGE_REAL_PROVIDER_MAX_REQUESTS=1 FORGE_REAL_PROVIDER_MAX_COST_TICKS=1 "${FORGE}" plan execute --token "${TOKEN_X}" --wait --json || true)"
+printf '%s' "${EXEC_BUDGET}" | jq -e '(.ok | not) and .error.code == "provider_budget_exceeded"' >/dev/null
+test -f "${FORGE_PLAN_STORE}/${TOKEN_X}.pending.json"
+test "$(job_count)" = "${COUNT_BEFORE_GUARD}"
+if rg -F "${SECRET_SENTINEL}" "${FORGE_PLAN_STORE}" "${FORGE_JOB_STORE}" >/dev/null 2>&1; then
+  echo "offline xAI planning persisted the secret sentinel" >&2
+  exit 1
+fi
+echo "CHECK 1B PASS: game-art schema is available; xAI plan is credential-free; missing/undersized real-provider guards leave token pending and stage no job"
+
 # CHECK 2 — reuse without provider jobs: build 1 character + 1 icon_set +
 # 1 prop_set, then re-plan/re-execute the unchanged manifest.
 PLAN_BUILD="$(forge_json project plan-build --project "${PROJECT_A}" --manifest "${MANIFEST_A}")"
@@ -123,6 +179,14 @@ COUNT_ONE="$(job_count)"
 test "${COUNT_ONE}" = "5"
 jq -e '.summary.built == 3 and .summary.reused == 0 and .summary.failed == 0 and .summary.skipped == 0' \
   "$(build_report_path "${PARENT_ONE}")" >/dev/null
+test ! -e "${FORGE_JOB_STORE}/${PARENT_ONE}/provider-usage.json"
+CHILD_REQUESTS=0
+while IFS= read -r child_id; do
+  requests="$(jq -r '.usage.requests // 0' "${FORGE_JOB_STORE}/${child_id}/provider-usage.json")"
+  CHILD_REQUESTS="$((CHILD_REQUESTS + requests))"
+done < <(forge_json job list --recent 1000 | jq -r --arg parent "${PARENT_ONE}" '.data[] | select(.parent_job_id == $parent) | .job_id')
+REPORT_REQUESTS="$(jq -r '.providerUsage.requests' "$(build_report_path "${PARENT_ONE}")")"
+test "${REPORT_REQUESTS}" = "${CHILD_REQUESTS}"
 PLAN_REUSE="$(forge_json project plan-build --project "${PROJECT_A}" --manifest "${MANIFEST_A}")"
 printf '%s' "${PLAN_REUSE}" | jq -e \
   '([.data.plan.actions[] | select(.action == "reuse")] | length) == 3
@@ -141,6 +205,51 @@ forge_json job list --recent 1000 | jq -e --arg parent "${PARENT_TWO}" \
 COUNT_TWO="$(job_count)"
 test "${COUNT_TWO}" = "6"
 echo "CHECK 2 PASS: reuse without provider jobs — 5 jobs after first build (1 style + 1 parent + 3 children); re-execution reused 3/3 with 0 provider requests and 0 new child jobs (count 5 → 6, parent only)"
+
+# CHECK 2A — a reuse token binds both catalog bytes and the exact pack tree.
+# Replace hero's pack with the icon pack and synchronize catalog packSha256;
+# pure planSha remains structurally identical, but claim must still reject the
+# unreviewed asset bytes before staging a job.
+PLAN_PACK_DRIFT="$(forge_json project plan-build --project "${PROJECT_A}" --manifest "${MANIFEST_A}")"
+TOKEN_PACK_DRIFT="$(printf '%s' "${PLAN_PACK_DRIFT}" | jq -r '.data.token')"
+COUNT_BEFORE_PACK_DRIFT="$(job_count)"
+CATALOG_A="${PROJECT_A}/.forge/catalog.json"
+cp "${CATALOG_A}" "${TEST_ROOT}/catalog-before-pack-drift.json"
+HERO_PACK="$(jq -r '.assets.hero.packPath' "${CATALOG_A}")"
+ICON_PACK="$(jq -r '.assets["hud-icons"].packPath' "${CATALOG_A}")"
+ICON_PACK_SHA="$(jq -r '.assets["hud-icons"].packSha256' "${CATALOG_A}")"
+mv "${HERO_PACK}" "${HERO_PACK}.original-for-drift-test"
+cp -R "${ICON_PACK}" "${HERO_PACK}"
+jq --arg sha "${ICON_PACK_SHA}" '.assets.hero.packSha256 = $sha' "${CATALOG_A}" \
+  > "${TEST_ROOT}/catalog-pack-drift.json"
+cp "${TEST_ROOT}/catalog-pack-drift.json" "${CATALOG_A}"
+EXEC_PACK_DRIFT="$("${FORGE}" plan execute --token "${TOKEN_PACK_DRIFT}" --wait --json || true)"
+printf '%s' "${EXEC_PACK_DRIFT}" | jq -e '(.ok | not)' >/dev/null
+test "$(job_count)" = "${COUNT_BEFORE_PACK_DRIFT}"
+mv "${HERO_PACK}" "${HERO_PACK}.injected-for-drift-test"
+mv "${HERO_PACK}.original-for-drift-test" "${HERO_PACK}"
+cp "${TEST_ROOT}/catalog-before-pack-drift.json" "${CATALOG_A}"
+
+# Style board + lock mutation after planning is also part of the immutable
+# source closure. Updating boardSha256 cannot hide the change.
+PLAN_STYLE_DRIFT="$(forge_json project plan-build --project "${PROJECT_A}" --manifest "${MANIFEST_A}")"
+TOKEN_STYLE_DRIFT="$(printf '%s' "${PLAN_STYLE_DRIFT}" | jq -r '.data.token')"
+COUNT_BEFORE_STYLE_DRIFT="$(job_count)"
+STYLE_LOCK_A="$(find "${PROJECT_A}/.forge/styles" -name style-lock.json -type f -print -quit)"
+STYLE_BOARD_A="$(jq -r '.boardPath' "${STYLE_LOCK_A}")"
+cp "${STYLE_LOCK_A}" "${TEST_ROOT}/style-lock-before-drift.json"
+cp "${STYLE_BOARD_A}" "${TEST_ROOT}/style-board-before-drift.png"
+printf 'forge-style-drift' >> "${STYLE_BOARD_A}"
+STYLE_BOARD_SHA="$(shasum -a 256 "${STYLE_BOARD_A}" | cut -d' ' -f1)"
+jq --arg sha "${STYLE_BOARD_SHA}" '.boardSha256 = $sha' "${STYLE_LOCK_A}" \
+  > "${TEST_ROOT}/style-lock-drift.json"
+cp "${TEST_ROOT}/style-lock-drift.json" "${STYLE_LOCK_A}"
+EXEC_STYLE_DRIFT="$("${FORGE}" plan execute --token "${TOKEN_STYLE_DRIFT}" --wait --json || true)"
+printf '%s' "${EXEC_STYLE_DRIFT}" | jq -e '(.ok | not)' >/dev/null
+test "$(job_count)" = "${COUNT_BEFORE_STYLE_DRIFT}"
+cp "${TEST_ROOT}/style-board-before-drift.png" "${STYLE_BOARD_A}"
+cp "${TEST_ROOT}/style-lock-before-drift.json" "${STYLE_LOCK_A}"
+echo "CHECK 2A PASS: catalog+reuse pack and StyleLock closure drift both invalidate tokens before job staging; parent usage is not double-counted"
 
 # CHECK 3 — targeted invalidation: touch one icon's prompt; only its icon_set
 # rebuilds (spec_changed), everything else reuses, exactly one new child job.
@@ -387,6 +496,18 @@ cargo test -q -p core --manifest-path "${ROOT}/Cargo.toml" \
 cargo test -q -p core --manifest-path "${ROOT}/Cargo.toml" \
   concurrent >/dev/null
 echo "CHECK 6 PASS: crash recovery — cargo test -p core --test game_art_build_tests reconcile + cargo test -p core concurrent (catalog::tests::concurrent_registers_do_not_lose_updates)"
+
+# CHECK 6A — a project reached through a symlink must canonicalize before the
+# reviewed source fingerprint is created. Planning and executing unchanged
+# bytes through the same alias must not invalidate its own token.
+PROJECT_A_LINK="${TEST_ROOT}/project-a-link"
+ln -s "${PROJECT_A}" "${PROJECT_A_LINK}"
+PLAN_LINK="$(forge_json project plan-build --project "${PROJECT_A_LINK}" --manifest "${PROJECT_A_LINK}/game-art.json")"
+TOKEN_LINK="$(printf '%s' "${PLAN_LINK}" | jq -r '.data.token')"
+EXEC_LINK="$(forge_json plan execute --token "${TOKEN_LINK}" --wait)"
+printf '%s' "${EXEC_LINK}" | jq -e \
+  '.data.lifecycle_state == "succeeded"' >/dev/null
+echo "CHECK 6A PASS: symlinked project path plans and executes without self-invalidating the token"
 
 # CHECK 7 — single JSON stdout: every forge invocation above went through
 # forge_json / a jq one-value guard, which fails on anything but exactly one
