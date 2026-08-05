@@ -1,5 +1,5 @@
 import {
-  CheckCircle2,
+  Boxes,
   FolderOpen,
   FolderOutput,
   Hammer,
@@ -8,8 +8,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { createTranslator, resolveAppLocale, type TFunction, type TranslationKey } from "./i18n";
 import { ForgeRoute } from "./routes/ForgeRoute";
+import { CharacterPackRoute } from "./routes/CharacterPackRoute";
 import { SettingsRoute } from "./routes/SettingsRoute";
 import {
   chooseFfmpegBinary,
@@ -19,14 +21,18 @@ import {
 } from "./systemDialogs";
 import {
   inspectLocalPack,
+  loadAutomationJob,
   listLocalPacks,
+  startupAutomationJobId,
+  startupRoute,
+  type JobRecord,
   validateGsfpack,
   type ExportPackOutput,
   type LocalSettings,
   type PackInspectSummary,
 } from "./tauriCommands";
 
-type RouteKey = "forge" | "exports" | "settings";
+type RouteKey = "forge" | "character" | "exports" | "settings";
 
 const navItems: Array<{
   key: RouteKey;
@@ -34,6 +40,7 @@ const navItems: Array<{
   icon: LucideIcon;
   available?: boolean;
 }> = [
+  { key: "character", labelKey: "app.nav.characterPack", icon: Boxes },
   { key: "forge", labelKey: "app.nav.forge", icon: Hammer },
   { key: "exports", labelKey: "app.nav.exports", icon: FolderOutput },
   { key: "settings", labelKey: "app.nav.settings", icon: Settings },
@@ -399,7 +406,7 @@ function RecentExportActions({
 }
 
 export function App() {
-  const [activeRoute, setActiveRoute] = useState<RouteKey>("forge");
+  const [activeRoute, setActiveRoute] = useState<RouteKey>(() => initialRouteFromLocation());
   const [activeWorkflow, setActiveWorkflow] = useState<WorkflowKey>("Import");
   const [recentExports, setRecentExports] = useState<RecordedExport[]>(() => loadRecentExports());
   const [libraryPacks, setLibraryPacks] = useState<PackInspectSummary[]>([]);
@@ -409,6 +416,8 @@ export function App() {
   );
   const [libraryAction, setLibraryAction] = useState<LibraryAction>(null);
   const [queuedGsfpackImportPath, setQueuedGsfpackImportPath] = useState<string | null>(null);
+  const [automationJob, setAutomationJob] = useState<JobRecord | null>(null);
+  const [automationJobError, setAutomationJobError] = useState<string | null>(null);
   const [settings, setSettings] = useState<LocalSettings>(() => loadSettings());
   const locale = resolveAppLocale(settings.languageMode);
   const t = createTranslator(locale);
@@ -417,30 +426,55 @@ export function App() {
   const headerTitle =
     activeRoute === "exports"
       ? t("exports.library.title")
+      : activeRoute === "character"
+        ? locale === "zh-CN" ? "角色工作流" : "Character Workflows"
       : activeRoute === "settings"
         ? t("settings.title")
         : t("app.workbench.title");
   const headerSubtitle =
     activeRoute === "exports"
       ? t("exports.library.subtitle")
+      : activeRoute === "character"
+        ? locale === "zh-CN" ? "从动画来源到项目资产清单" : "From animation sources to a project asset manifest"
       : activeRoute === "settings"
         ? t("settings.subtitle")
         : t("app.workbench.subtitle");
-  const headerStatusLabel = routeShowsWorkflow ? t("app.qualityStatus") : t("app.status.route");
-  const qualityStateLabel =
-    !routeShowsWorkflow
-      ? activeRoute === "exports"
-        ? t("app.status.library")
-        : t("app.status.settings")
-      : workbenchState.qualityStatus === "checked"
-        ? t("app.status.checked")
-        : workbenchState.qualityStatus === "readyToCheck"
-          ? t("app.status.readyToCheck")
-          : t("app.status.pending");
 
   useEffect(() => {
     localStorage.setItem(settingsStorageKey, JSON.stringify(settings));
   }, [settings]);
+
+  useEffect(() => {
+    let disposed = false;
+    void startupRoute()
+      .then((route) => {
+        if (!disposed && route) setActiveRoute(route);
+      })
+      .catch(() => undefined);
+    const showJob = async (jobId: string) => {
+      try {
+        const loaded = await loadAutomationJob(jobId);
+        if (disposed) return;
+        setAutomationJob(loaded);
+        setAutomationJobError(null);
+        setActiveRoute(loaded.operation_kind === "prepare_character_pack" ? "character" : "forge");
+        setActiveWorkflow(loaded.lifecycle_state === "succeeded" ? "Export" : "Import");
+      } catch (error) {
+        if (!disposed) setAutomationJobError(String(error));
+      }
+    };
+    void startupAutomationJobId()
+      .then((jobId) => {
+        if (jobId) void showJob(jobId);
+      })
+      .catch(() => undefined);
+    const unlisten = listen<string>("forge://open-job", (event) => void showJob(event.payload))
+      .catch(() => () => undefined);
+    return () => {
+      disposed = true;
+      void unlisten.then((stop) => stop());
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(exportsStorageKey, JSON.stringify(recentExports));
@@ -594,14 +628,34 @@ export function App() {
           ) : null}
         </div>
 
-        <div className="action-zone" aria-label={t("app.aria.projectActions")}>
-          <div className="quality-status-chip" aria-label={headerStatusLabel}>
-            <CheckCircle2 size={17} />
-            <span>{headerStatusLabel}</span>
-            <strong>{qualityStateLabel}</strong>
-          </div>
-        </div>
       </header>
+
+      {automationJob || automationJobError ? (
+        <aside className="automation-job-banner" role={automationJobError ? "alert" : "status"}>
+          <div>
+            <span>Codex automation job</span>
+            <strong>{automationJob?.lifecycle_state ?? "unavailable"}</strong>
+            <small>{automationJob?.job_id ?? automationJobError}</small>
+          </div>
+          {automationJob?.error_summary ? <p>{automationJob.error_summary}</p> : null}
+          {automationJob?.next_actions?.length ? <p>Next: {automationJob.next_actions.join(" · ")}</p> : null}
+          <div className="automation-job-actions">
+            {automationJob ? (
+              <button className="secondary-button" onClick={() => void openFileOrFolder(automationJob.job_dir)} type="button">
+                Open job folder
+              </button>
+            ) : null}
+            {automationJob?.artifacts?.map((artifact) => (
+              <button className="secondary-button" key={`${artifact.kind}-${artifact.path}`} onClick={() => void openFileOrFolder(artifact.path)} type="button">
+                Open {artifact.kind.split("_").join(" ")}
+              </button>
+            ))}
+            <button className="secondary-button" onClick={() => { setAutomationJob(null); setAutomationJobError(null); }} type="button">
+              Dismiss
+            </button>
+          </div>
+        </aside>
+      ) : null}
 
       <nav className="sidebar-nav" aria-label={t("app.aria.primary")}>
         {navItems.map((item) => {
@@ -645,6 +699,7 @@ export function App() {
           t={t}
         />
       </div>
+      {activeRoute === "character" ? <CharacterPackRoute automationJob={automationJob} locale={locale} /> : null}
       {activeRoute === "settings" ? (
         <SettingsRoute
           onChooseFfmpegPath={handleChooseFfmpegPath}
@@ -672,6 +727,11 @@ export function App() {
       ) : null}
     </div>
   );
+}
+
+function initialRouteFromLocation(): RouteKey {
+  const value = new URLSearchParams(globalThis.location?.search ?? "").get("forgeSmokeRoute");
+  return value === "forge" || value === "character" || value === "exports" || value === "settings" ? value : "character";
 }
 
 function loadSettings(): LocalSettings {

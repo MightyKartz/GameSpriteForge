@@ -29,36 +29,36 @@ assertContains(
   "Forge project skill must preserve the external source boundary.",
 );
 assertContains(
-  "choose file, configure `固定网格` or `透明间隔`, then import",
-  "Forge project skill must preserve the sprite sheet intake flow.",
+  "public command name `forge`",
+  "Forge project skill must preserve the public CLI command contract.",
 );
 assertContains(
-  "/Users/kartz/Development/Forge/target/debug/bundle/macos/Game Sprite Forge.app",
-  "Forge project skill must tell agents to target the workspace debug bundle for real UI QA.",
+  "/Users/kartz/Development/Forge/target/debug/forge",
+  "Forge project skill must target the workspace CLI for real QA.",
 );
 assertContains(
-  "stale `/Applications/Game Sprite Forge.app`",
-  "Forge project skill must warn about stale installed apps with the same bundle id.",
+  "Keep Providers locked per job",
+  "Forge project skill must preserve Provider and credential boundaries.",
 );
 assertContains(
   "docs/qa/",
   "Forge project skill must require QA findings to be recorded under docs/qa.",
 );
 assertContains(
-  "docs/qa/artifacts/",
-  "Forge project skill must keep QA artifacts in the project QA artifacts directory.",
+  "Godot 4.6.x",
+  "Forge project skill must require the supported Godot release line.",
 );
 assertContains(
-  "npm --workspace apps/mac run build",
-  "Forge project skill must include the frontend build verification command.",
+  "bash scripts/test-cli-product.sh",
+  "Forge project skill must include the CLI product contract.",
 );
 assertContains(
-  "npm run test:scripts",
-  "Forge project skill must include the project source guard verification command.",
+  "bash scripts/test-cli-installer.sh",
+  "Forge project skill must include the installer contract.",
 );
 assertContains(
-  "npm --workspace apps/mac run smoke:ui:mvp",
-  "Forge project skill must include the MVP UI smoke verification command.",
+  "do not add Homebrew or manual installation paths",
+  "Forge project skill must preserve the single installation path.",
 );
 assertContains(
   "cargo fmt --manifest-path /Users/kartz/Development/Forge/Cargo.toml --all -- --check",

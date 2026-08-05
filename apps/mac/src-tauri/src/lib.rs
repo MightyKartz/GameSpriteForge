@@ -2,7 +2,12 @@ use base64::Engine;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
-use tauri::Manager;
+use std::sync::Mutex;
+use tauri::{Emitter, Manager};
+
+const OPEN_AUTOMATION_JOB_EVENT: &str = "forge://open-job";
+
+struct PendingAutomationJob(Mutex<Option<String>>);
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -521,8 +526,116 @@ fn inspect_local_pack(path: String) -> Result<forge_pack::PackInspectSummary, St
     forge_pack::inspect_pack(Path::new(&path)).map_err(|error| error.to_string())
 }
 
+#[tauri::command]
+fn startup_automation_job_id(
+    pending: tauri::State<'_, PendingAutomationJob>,
+) -> Result<Option<String>, String> {
+    pending
+        .0
+        .lock()
+        .map(|value| value.clone())
+        .map_err(|_| "automation job state is unavailable".to_string())
+}
+
+#[tauri::command]
+fn startup_route() -> Option<String> {
+    forge_route(std::env::args())
+}
+
+#[tauri::command]
+fn character_workflows() -> forge_core::automation::CharacterWorkflowCatalog {
+    forge_core::automation::character_workflow_catalog()
+}
+
+#[tauri::command]
+fn load_automation_job(job_id: String) -> Result<forge_core::job::types::JobRecord, String> {
+    automation_job_store()?
+        .read_record(&job_id)
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn analyze_repair_job(job_id: String) -> Result<forge_core::automation::RepairAnalysis, String> {
+    let jobs = automation_job_store()?;
+    forge_core::automation::analyze_repair(&jobs, &job_id).map_err(|error| error.to_string())
+}
+
+fn automation_job_store() -> Result<forge_core::job::store::JobStore, String> {
+    if let Some(root) = std::env::var_os("FORGE_JOB_STORE") {
+        forge_core::job::store::JobStore::new(root).map_err(|error| error.to_string())
+    } else {
+        forge_core::job::store::JobStore::default_app_store().map_err(|error| error.to_string())
+    }
+}
+
+#[tauri::command]
+async fn prepare_character_pack(
+    request: forge_core::automation::PrepareCharacterPackRequest,
+) -> Result<forge_core::job::types::JobRecord, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let plan_store = if let Some(root) = std::env::var_os("FORGE_PLAN_STORE") {
+            forge_core::automation::PlanStore::new(root).map_err(|error| error.to_string())?
+        } else {
+            forge_core::automation::PlanStore::default_app_store()
+                .map_err(|error| error.to_string())?
+        };
+        let prepared = plan_store
+            .prepare(forge_core::automation::AutomationOperation::PrepareCharacterPack(request))
+            .map_err(|error| error.to_string())?;
+        let plan = plan_store
+            .claim(&prepared.token)
+            .map_err(|error| error.to_string())?;
+        let jobs = automation_job_store()?;
+        let queued = forge_core::automation::stage_plan_job(&jobs, &plan)
+            .map_err(|error| error.to_string())?;
+        forge_core::automation::run_operation(&jobs, &queued.job_id, &plan.operation)
+            .map_err(|error| error.to_string())
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+async fn execute_repair_job(job_id: String) -> Result<forge_core::job::types::JobRecord, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let plan_store = if let Some(root) = std::env::var_os("FORGE_PLAN_STORE") {
+            forge_core::automation::PlanStore::new(root).map_err(|error| error.to_string())?
+        } else {
+            forge_core::automation::PlanStore::default_app_store()
+                .map_err(|error| error.to_string())?
+        };
+        let jobs = automation_job_store()?;
+        let prepared = forge_core::automation::prepare_repair_plan(&plan_store, &jobs, &job_id)
+            .map_err(|error| error.to_string())?;
+        let plan = plan_store
+            .claim(&prepared.token)
+            .map_err(|error| error.to_string())?;
+        let queued = forge_core::automation::stage_plan_job(&jobs, &plan)
+            .map_err(|error| error.to_string())?;
+        forge_core::automation::run_operation(&jobs, &queued.job_id, &plan.operation)
+            .map_err(|error| error.to_string())
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
 pub fn run() {
+    let startup_job_id = automation_job_id(std::env::args());
     tauri::Builder::default()
+        .manage(PendingAutomationJob(Mutex::new(startup_job_id)))
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            let Some(job_id) = automation_job_id(args) else {
+                return;
+            };
+            if let Ok(mut pending) = app.state::<PendingAutomationJob>().0.lock() {
+                *pending = Some(job_id.clone());
+            }
+            let _ = app.emit(OPEN_AUTOMATION_JOB_EVENT, &job_id);
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
@@ -546,10 +659,47 @@ pub fn run() {
             validate_gsfpack,
             read_preview_image,
             list_local_packs,
-            inspect_local_pack
+            inspect_local_pack,
+            startup_automation_job_id,
+            startup_route,
+            character_workflows,
+            load_automation_job,
+            analyze_repair_job,
+            prepare_character_pack,
+            execute_repair_job
         ])
         .run(tauri::generate_context!())
         .expect("error while running Game Sprite Forge");
+}
+
+fn automation_job_id(args: impl IntoIterator<Item = String>) -> Option<String> {
+    let mut args = args.into_iter();
+    while let Some(argument) = args.next() {
+        if argument == "--forge-job-id" {
+            return args.next().filter(|job_id| {
+                !job_id.is_empty()
+                    && job_id
+                        .bytes()
+                        .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
+            });
+        }
+    }
+    None
+}
+
+fn forge_route(args: impl IntoIterator<Item = String>) -> Option<String> {
+    let mut args = args.into_iter();
+    while let Some(argument) = args.next() {
+        if argument == "--forge-route" {
+            return args.next().filter(|route| {
+                matches!(
+                    route.as_str(),
+                    "forge" | "character" | "exports" | "settings"
+                )
+            });
+        }
+    }
+    None
 }
 
 fn source_kind_from_code(value: &str) -> Result<forge_core::job::types::SourceKind, String> {
@@ -873,6 +1023,50 @@ mod tests {
             .message
             .unwrap()
             .contains("ffmpeg: configured tool path must point to ffmpeg"));
+    }
+
+    #[test]
+    fn automation_job_argument_accepts_safe_id() {
+        let id = automation_job_id([
+            "Game Sprite Forge".to_string(),
+            "--forge-job-id".to_string(),
+            "job_123-safe".to_string(),
+        ]);
+
+        assert_eq!(id.as_deref(), Some("job_123-safe"));
+    }
+
+    #[test]
+    fn automation_job_argument_rejects_path_traversal() {
+        let id = automation_job_id([
+            "Game Sprite Forge".to_string(),
+            "--forge-job-id".to_string(),
+            "../job".to_string(),
+        ]);
+
+        assert!(id.is_none());
+    }
+
+    #[test]
+    fn startup_route_accepts_known_route() {
+        let route = forge_route([
+            "Game Sprite Forge".to_string(),
+            "--forge-route".to_string(),
+            "character".to_string(),
+        ]);
+
+        assert_eq!(route.as_deref(), Some("character"));
+    }
+
+    #[test]
+    fn startup_route_rejects_unknown_route() {
+        let route = forge_route([
+            "Game Sprite Forge".to_string(),
+            "--forge-route".to_string(),
+            "../../../tmp".to_string(),
+        ]);
+
+        assert!(route.is_none());
     }
 
     #[test]

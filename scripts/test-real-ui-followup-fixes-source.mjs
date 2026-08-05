@@ -50,7 +50,8 @@ assertContains(exportPanelSource, "aria-hidden={!advancedOpen}", "Collapsed expo
 assertNotContains(settingsRouteSource, "npm run install:mac", "Product Settings must not show developer install commands.");
 assertContains(i18nSource, "settings.localRuntime.version", "Settings runtime card must show app version instead of developer sync instructions.");
 assertContains(appSource, "const routeShowsWorkflow", "Header workflow tabs must be route-aware.");
-assertContains(appSource, "routeShowsWorkflow ? t(\"app.qualityStatus\")", "Header status copy must be route-aware.");
+assertNotContains(appSource, "quality-status-chip", "Header must not retain a low-value global status chip.");
+assertNotContains(cssSource, ".quality-status-chip", "Deleted global status-chip UI must not leave dead CSS behind.");
 
 assertNotContains(i18nSource, "IMPORT-ONLY MVP", "Visible English app subtitle must not expose internal MVP wording.");
 assertNotContains(i18nSource, "仅导入 MVP", "Visible Chinese app subtitle must not expose internal MVP wording.");

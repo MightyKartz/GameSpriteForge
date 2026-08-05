@@ -1,0 +1,22 @@
+{
+  "name": "@game-sprite-forge/mcp-server",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "forge-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "esbuild src/index.ts src/cli.ts --bundle --platform=node --format=esm --target=node20 --outdir=dist --banner:js='#!/usr/bin/env node'",
+    "check": "tsc --noEmit",
+    "test": "npm run build && npm run check && node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.0"
+  }
+}

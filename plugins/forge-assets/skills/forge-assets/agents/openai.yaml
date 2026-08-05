@@ -1,0 +1,13 @@
+interface:
+  display_name: "Forge Assets"
+  short_description: "Build, repair, and track Godot character assets"
+  brand_color: "#E36A3D"
+  default_prompt: "Use $forge-assets to build a character asset, repair any quality-gated job safely, and register the result in Godot."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "forge-assets"
+      description: "Local Forge CLI bridge for character preparation, executable repair, project manifests, jobs, and Godot installation"
+      transport: "stdio"
+policy:
+  allow_implicit_invocation: true

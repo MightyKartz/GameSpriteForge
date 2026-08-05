@@ -4,8 +4,9 @@ export type TranslationParams = Record<string, string | number>;
 
 const enUS = {
   "app.name": "Game Sprite Forge",
-  "app.nav.forge": "Forge",
-  "app.nav.exports": "Exports",
+  "app.nav.forge": "Single Animation",
+  "app.nav.characterPack": "Characters",
+  "app.nav.exports": "Asset Library",
   "app.nav.settings": "Settings",
   "app.workbench.title": "Local Workbench",
   "app.workbench.subtitle": "Local Import Workbench",
@@ -598,8 +599,9 @@ export type TFunction = (key: TranslationKey, params?: TranslationParams) => str
 
 const zhCN: Record<TranslationKey, string> = {
   ...enUS,
-  "app.nav.forge": "工作台",
-  "app.nav.exports": "导出",
+  "app.nav.forge": "单动画",
+  "app.nav.characterPack": "角色工作流",
+  "app.nav.exports": "资源库",
   "app.nav.settings": "设置",
   "app.workbench.title": "本地工作台",
   "app.workbench.subtitle": "本地导入工作台",

@@ -8,14 +8,19 @@ const root = path.resolve(import.meta.dirname, "..");
 const outputDir = path.join(root, "smoke-output");
 const url = "http://127.0.0.1:1420";
 const smokeLocale = process.env.FORGE_SMOKE_LOCALE === "zh-CN" ? "zh-CN" : "en-US";
-const targetUrl = `${url}/?forgeSmokeLocale=${encodeURIComponent(smokeLocale)}`;
 const chromePath =
   process.env.CHROME_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const mode = process.argv.includes("--mode=mvp")
   ? "mvp"
   : process.argv.includes("--mode=responsive")
     ? "responsive"
-    : "reference";
+    : process.argv.includes("--mode=repair")
+      ? "repair"
+    : process.argv.includes("--mode=character")
+      ? "character"
+      : "reference";
+const routeParameter = mode === "character" || mode === "repair" ? "&forgeSmokeRoute=character" : "&forgeSmokeRoute=forge";
+const targetUrl = `${url}/?forgeSmokeLocale=${encodeURIComponent(smokeLocale)}${routeParameter}`;
 const staleBuildMessage = "Build output is stale; run npm --workspace apps/mac run build before smoke:ui:mvp";
 
 await assertBuildOutputFresh();
@@ -33,25 +38,43 @@ try {
       ? `forge-workbench-mvp-${smokeLocale}.png`
       : mode === "responsive"
         ? `forge-workbench-responsive-1280-${smokeLocale}.png`
+        : mode === "repair"
+          ? `forge-repair-loop-${smokeLocale}.png`
+        : mode === "character"
+          ? `forge-character-pack-${smokeLocale}.png`
         : `forge-workbench-1568-${smokeLocale}.png`,
   );
   const sourcePath = path.join(
     outputDir,
-    mode === "mvp" ? `forge-workbench-mvp-source-${smokeLocale}.txt` : `forge-workbench-source-${smokeLocale}.txt`,
+    mode === "mvp"
+      ? `forge-workbench-mvp-source-${smokeLocale}.txt`
+      : mode === "repair"
+        ? `forge-repair-loop-source-${smokeLocale}.txt`
+      : mode === "character"
+        ? `forge-character-pack-source-${smokeLocale}.txt`
+        : `forge-workbench-source-${smokeLocale}.txt`,
   );
   const visibleTextPath = path.join(
     outputDir,
-    mode === "mvp" ? `forge-workbench-mvp-visible-text-${smokeLocale}.txt` : `forge-workbench-visible-text-${smokeLocale}.txt`,
+    mode === "mvp"
+      ? `forge-workbench-mvp-visible-text-${smokeLocale}.txt`
+      : mode === "repair"
+        ? `forge-repair-loop-visible-text-${smokeLocale}.txt`
+      : mode === "character"
+        ? `forge-character-pack-visible-text-${smokeLocale}.txt`
+        : `forge-workbench-visible-text-${smokeLocale}.txt`,
   );
   const source = await readBuiltSource();
   await writeFile(sourcePath, source);
 
-  const visibleText = await dumpVisibleText();
-  await writeFile(visibleTextPath, visibleText);
-
-  if (mode === "responsive") {
+  let visibleText;
+  if (mode === "repair") {
+    visibleText = await captureRepairState(userDataDir, screenshotPath);
+  } else if (mode === "responsive") {
+    visibleText = await dumpVisibleText();
     await captureResponsiveScreenshots(userDataDir);
   } else {
+    visibleText = await dumpVisibleText();
     await runChrome(
       [
         "--headless=chrome",
@@ -65,6 +88,7 @@ try {
       { timeoutOkFile: screenshotPath },
     );
   }
+  await writeFile(visibleTextPath, visibleText);
 
   await rm(userDataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   await assertScreenshot(screenshotPath);
@@ -331,6 +355,140 @@ async function dumpVisibleText() {
   }
 }
 
+async function captureRepairState(userDataDir, screenshotPath) {
+  const port = 43000 + Math.floor(Math.random() * 1000);
+  const child = spawn(
+    chromePath,
+    [
+      "--headless=chrome",
+      "--disable-gpu",
+      "--no-first-run",
+      "--remote-debugging-address=127.0.0.1",
+      `--remote-debugging-port=${port}`,
+      `--user-data-dir=${userDataDir}`,
+      "--window-size=1568,1003",
+      "about:blank",
+    ],
+    { cwd: root, stdio: "ignore" },
+  );
+
+  try {
+    const wsUrl = await waitForBlankDebuggerUrl(port, 20_000);
+    const client = await createCdpClient(wsUrl);
+    try {
+      await client.send("Page.enable");
+      await client.send("Emulation.setDeviceMetricsOverride", {
+        width: 1568,
+        height: 1003,
+        deviceScaleFactor: 1,
+        mobile: false,
+      });
+      await client.send("Page.addScriptToEvaluateOnNewDocument", {
+        source: repairTauriMockSource(),
+      });
+      await client.send("Page.navigate", { url: targetUrl });
+      const expected = smokeLocale === "zh-CN" ? "把质量证据转换为新的处理配方" : "Turn quality evidence into a new recipe";
+      const text = await waitForRuntimeText(client, 20_000, expected);
+      await client.send("Runtime.evaluate", {
+        expression: "document.querySelector('.character-repair-panel')?.scrollIntoView({ block: 'center' })",
+      });
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      const capture = await client.send("Page.captureScreenshot", {
+        format: "png",
+        fromSurface: true,
+      });
+      await writeFile(screenshotPath, Buffer.from(capture.data, "base64"));
+      return text.replace(/\s+/g, " ").trim();
+    } finally {
+      client.close();
+    }
+  } finally {
+    child.kill("SIGKILL");
+  }
+}
+
+async function waitForBlankDebuggerUrl(port, timeoutMs) {
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      const response = await fetch(`http://127.0.0.1:${port}/json/list`);
+      if (response.ok) {
+        const pages = await response.json();
+        const page = pages.find((item) => item.type === "page" && item.webSocketDebuggerUrl);
+        if (page) return page.webSocketDebuggerUrl;
+      }
+    } catch {
+      // Chrome is still starting.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error("Chrome DevTools endpoint did not expose the repair smoke page");
+}
+
+function repairTauriMockSource() {
+  return `(() => {
+    let callbackId = 1;
+    const job = {
+      job_id: "repair-source-job",
+      source_kind: "import_frames",
+      state: "quality_checked",
+      job_dir: "/tmp/forge-repair-source",
+      error_summary: null,
+      operation_kind: "prepare_character_pack",
+      lifecycle_state: "awaiting_review",
+      progress: 1,
+      artifacts: [{ kind: "animation_quality_report", path: "/tmp/animation-quality-report.json" }],
+      recoverable: true,
+      next_actions: ["analyze_repair", "plan_repair_job", "open_job"]
+    };
+    const analysis = {
+      schemaVersion: "1",
+      sourceJobId: job.job_id,
+      attempt: 1,
+      canAutoRepair: true,
+      quality: { verdict: "blocked", animations: [] },
+      changes: [{
+        id: "animation:jump:chroma-threshold-reduce",
+        scope: "animation:jump",
+        parameter: "matting.threshold",
+        before: 60,
+        after: 48,
+        reason: "foreground coverage is too low or missing",
+        confidence: "high"
+      }],
+      manualActions: ["animation:idle:review_loop_range"]
+    };
+    const catalog = {
+      schemaVersion: "1",
+      workflows: [{
+        id: "platformer", version: "1.0.0", label: "Platformer",
+        description: "Side-view movement with a compact core animation set.", defaultAnimation: "idle",
+        requiredAnimations: [
+          { name: "idle", fps: 8, loop: true },
+          { name: "walk", fps: 12, loop: true },
+          { name: "jump", fps: 12, loop: false }
+        ],
+        optionalAnimations: []
+      }]
+    };
+    window.__TAURI_INTERNALS__ = {
+      transformCallback() { return callbackId++; },
+      unregisterCallback() {},
+      convertFileSrc(value) { return value; },
+      async invoke(command) {
+        if (command === "startup_route") return "character";
+        if (command === "startup_automation_job_id") return job.job_id;
+        if (command === "load_automation_job") return job;
+        if (command === "character_workflows") return catalog;
+        if (command === "analyze_repair_job") return analysis;
+        if (command === "plugin:event|listen") return 1;
+        if (command === "plugin:event|unlisten") return true;
+        throw new Error("Unsupported repair smoke command: " + command);
+      }
+    };
+  })();`;
+}
+
 async function waitForDebuggerUrl(port, timeoutMs) {
   const startedAt = Date.now();
   let createdTarget = false;
@@ -408,7 +566,7 @@ function createCdpClient(wsUrl) {
   });
 }
 
-async function waitForRuntimeText(client, timeoutMs) {
+async function waitForRuntimeText(client, timeoutMs, requiredText = "Game Sprite Forge") {
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs) {
     const result = await client.send("Runtime.evaluate", {
@@ -416,7 +574,7 @@ async function waitForRuntimeText(client, timeoutMs) {
       returnByValue: true,
     });
     const text = result.result?.value ?? "";
-    if (text.includes("Game Sprite Forge") && text.length > 100) {
+    if (text.includes("Game Sprite Forge") && text.includes(requiredText) && text.length > 100) {
       return text;
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
@@ -425,6 +583,35 @@ async function waitForRuntimeText(client, timeoutMs) {
 }
 
 function assertVisibleText(text, smokeMode, locale) {
+  if (smokeMode === "character" || smokeMode === "repair") {
+    const required = locale === "zh-CN"
+      ? ["角色工作流", "构建完整角色，而不是堆放几张精灵表", "选择游戏工作流合同", "平台跳跃", "角色包名称", "默认动画", "选择 PNG 序列", "选择精灵表", "编译角色资源包"]
+      : ["Character Workflows", "Compile a complete character, not a pile of sheets", "Choose the gameplay contract", "Platformer", "Pack name", "Default animation", "Choose PNG sequence", "Choose sprite sheet", "Compile Character Pack"];
+    for (const value of required) {
+      if (!text.includes(value)) {
+        throw new Error(`${locale} Character Pack visible text is missing required copy: ${value}`);
+      }
+    }
+    if (smokeMode === "repair") {
+      const repairRequired = locale === "zh-CN"
+        ? ["可执行修复", "把质量证据转换为新的处理配方", "修复轮次", "安全调整", "仍需人工判断", "执行安全修复", "60 → 48"]
+        : ["EXECUTABLE REPAIR", "Turn quality evidence into a new recipe", "Repair attempt", "SAFE CHANGES", "STILL NEEDS JUDGMENT", "Run safe repair", "60 → 48"];
+      for (const value of repairRequired) {
+        if (!text.includes(value)) {
+          throw new Error(`${locale} repair-loop visible text is missing required copy: ${value}`);
+        }
+      }
+    }
+    if (locale === "zh-CN") {
+      for (const value of ["animations ready", "Creator", "License", "Animation 1", "Name", "Loop"]) {
+        if (text.includes(value)) {
+          throw new Error(`zh-CN Character Pack visible text still contains English UI copy: ${value}`);
+        }
+      }
+    }
+    return;
+  }
+
   if (locale !== "zh-CN") {
     return;
   }
@@ -582,6 +769,25 @@ function assertSource(source, smokeMode, locale) {
     "Split sheets when needed",
     "Show Info",
   ];
+  const characterRequired = [
+    "Character workflow",
+    "Compile a complete character, not a pile of sheets",
+    "Compile Character Pack",
+    "角色工作流",
+    "构建完整角色，而不是堆放几张精灵表",
+    "编译角色资源包",
+    "prepare_character_pack",
+  ];
+  const repairRequired = [
+    "Executable repair",
+    "Turn quality evidence into a new recipe",
+    "Run safe repair",
+    "可执行修复",
+    "把质量证据转换为新的处理配方",
+    "执行安全修复",
+    "analyze_repair_job",
+    "execute_repair_job",
+  ];
   const localeRequired = locale === "zh-CN"
     ? [
         "本地工作台",
@@ -638,6 +844,20 @@ function assertSource(source, smokeMode, locale) {
     for (const text of mvpRequired) {
       if (!source.includes(text)) {
         throw new Error(`MVP UI smoke missing required boundary text: ${text}`);
+      }
+    }
+  }
+  if (smokeMode === "character" || smokeMode === "repair") {
+    for (const text of characterRequired) {
+      if (!source.includes(text)) {
+        throw new Error(`Character Pack UI smoke missing required text: ${text}`);
+      }
+    }
+  }
+  if (smokeMode === "repair") {
+    for (const text of repairRequired) {
+      if (!source.includes(text)) {
+        throw new Error(`Repair-loop UI smoke missing required text: ${text}`);
       }
     }
   }

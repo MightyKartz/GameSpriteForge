@@ -1,0 +1,27 @@
+{
+  "name": "forge-assets",
+  "version": "0.4.0",
+  "description": "Build, repair, and register versioned 2D character assets for Godot projects.",
+  "author": {
+    "name": "Game Sprite Forge"
+  },
+  "keywords": ["godot", "sprite", "pixel-art", "game-assets", "codex"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Forge Assets",
+    "shortDescription": "Build, repair, and track Godot character assets",
+    "longDescription": "A local Codex workflow for preparing single animations or versioned Character Workflows, turning quality evidence into bounded repair jobs, and registering Forge-owned resources in existing Godot projects.",
+    "developerName": "Game Sprite Forge",
+    "category": "Developer Tools",
+    "capabilities": ["Local", "Write"],
+    "defaultPrompt": [
+      "Prepare this PNG sequence as a Godot sprite pack.",
+      "Build idle, walk, and attack into one Character Pack.",
+      "Inspect this .gsfpack and install it into my Godot project.",
+      "Show the Forge assets already registered in this Godot project.",
+      "Analyze this awaiting-review job and run only its safe automatic repairs."
+    ],
+    "brandColor": "#E36A3D"
+  },
+  "mcpServers": "./.mcp.json"
+}

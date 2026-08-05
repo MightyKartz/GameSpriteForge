@@ -29,6 +29,15 @@ export async function chooseSpriteSheetFile(defaultPath?: string) {
   return singlePath(path);
 }
 
+export async function choosePngSpriteSheetFile(defaultPath?: string) {
+  const path = await openDialog({
+    title: "Choose PNG Sprite Sheet",
+    defaultPath: defaultPath || undefined,
+    filters: [{ name: "PNG Sprite Sheet", extensions: ["png"] }],
+  });
+  return singlePath(path);
+}
+
 export async function chooseGsfpackFolder(defaultPath?: string) {
   const path = await openDialog({
     title: "Choose .gsfpack Folder",

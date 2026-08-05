@@ -1,48 +1,36 @@
 ---
 name: forge-dev
-description: Use when working on Forge, the local Tauri macOS sprite animation workbench, especially import, sprite sheet, export, real UI QA, release packaging, or project documentation tasks.
+description: Use when working on Forge, the agent-first Rust CLI for consistent game assets and Godot delivery, including Providers, Style Locks, packs, engine installation, release packaging, or project documentation.
 ---
 
 # Forge Dev
 
 ## Overview
 
-Forge is a local-first Tauri macOS app for turning video, PNG sequences, sprite sheets, and `.gsfpack` folders into game-ready sprite animation assets. Keep product behavior local, inspectable, and verified through the real app when UI behavior changes.
+Forge is a local-first Rust CLI for generating and processing characters, icon sets, prop sets, and `.gsfpack` assets for Godot. Keep behavior agent-readable, inspectable, model-neutral, and verified through the real CLI and Godot headless installation.
 
 ## Core Rules
 
-- Prefer existing Forge patterns in `apps/mac/src`, `packages/core`, `scripts`, and `docs/qa`.
-- Do not copy external project source. External tools may inform product research only; Forge behavior must be implemented in Forge's own local Rust/Tauri architecture.
-- Keep sprite sheet intake as: choose file, configure `固定网格` or `透明间隔`, then import.
-- Keep MCP/CLI tooling out of the product UI; use it only for development and QA evidence.
+- Prefer existing Forge patterns in `packages/cli`, `packages/core`, `packages/providers`, `packages/pack`, `scripts`, and `docs/qa`.
+- Do not copy external project source. External tools may inform product research only; Forge behavior must be implemented in Forge's own local Rust architecture.
+- Keep the public command name `forge`, one-JSON-value stdout contract, diagnostics on stderr, durable jobs, and single-use write plans.
+- Keep Providers locked per job; never put credentials into plans, jobs, packs, logs, or ordinary output.
+- Keep desktop and MCP sources out of default builds and releases. Do not delete their retained sources without explicit authorization.
 - Write QA findings under `docs/qa/`; put screenshots and generated fixtures under `docs/qa/artifacts/`.
 
-## Real UI QA
+## CLI and Godot QA
 
-When testing the macOS app UI, make sure you are testing the workspace build, not a stale installed app with the same bundle id.
-
-Preferred flow:
-
-```bash
-npm --workspace apps/mac run tauri -- build --debug --bundles app
-```
-
-Launch and test:
-
-```text
-/Users/kartz/Development/Forge/target/debug/bundle/macos/Game Sprite Forge.app
-```
-
-Before relying on Computer Use evidence, close stale `/Applications/Game Sprite Forge.app` windows or explicitly target the workspace bundle path. Record the app path, UI driver, fixture path, and result in the QA note.
+Use the workspace binary at `/Users/kartz/Development/Forge/target/debug/forge` or `target/release/forge`, not a stale installed command. Redirect JobStore and PlanStore for tests. Verify generated packs with `forge pack validate`, install into a temporary Godot 4.6.x project, and reject embedded `PackedByteArray` image resources or `.tres/.tscn` files at or above 1 MiB.
 
 ## Verification
 
-Choose the smallest reliable set for the change, but UI/import/export work usually needs:
+Choose the smallest reliable set for the change. Product and release work usually needs:
 
 ```bash
-npm --workspace apps/mac run build
-npm run test:scripts
-npm --workspace apps/mac run smoke:ui:mvp
+cargo fmt --manifest-path /Users/kartz/Development/Forge/Cargo.toml --all -- --check
+cargo test --manifest-path /Users/kartz/Development/Forge/Cargo.toml
+bash scripts/test-cli-product.sh
+bash scripts/test-cli-installer.sh
 ```
 
 For Rust media-processing changes, add the focused Cargo test, for example:
@@ -52,4 +40,4 @@ cargo fmt --manifest-path /Users/kartz/Development/Forge/Cargo.toml --all -- --c
 cargo test --manifest-path /Users/kartz/Development/Forge/Cargo.toml sprite_sheet_transparent
 ```
 
-For release work, use the existing packaging and verification scripts instead of hand-rolling signing or notarization steps.
+For release work, use the tag-driven GitHub workflow and installer contract. The public README exposes only the command-line installer; do not add Homebrew or manual installation paths.

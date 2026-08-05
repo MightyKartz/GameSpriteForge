@@ -9,6 +9,8 @@
     "preview": "vite preview --host 127.0.0.1",
     "smoke:ui": "node scripts/smoke-ui.mjs",
     "smoke:ui:mvp": "node scripts/smoke-ui.mjs --mode=mvp",
+    "smoke:ui:character": "node scripts/smoke-ui.mjs --mode=character",
+    "smoke:ui:repair": "node scripts/smoke-ui.mjs --mode=repair",
     "smoke:ui:responsive": "node scripts/smoke-ui.mjs --mode=responsive",
     "tauri": "tauri"
   },

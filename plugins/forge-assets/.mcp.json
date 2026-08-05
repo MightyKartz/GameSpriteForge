@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "forge-assets": {
+      "command": "node",
+      "args": ["./mcp/server.bundle.mjs"],
+      "cwd": "."
+    }
+  }
+}

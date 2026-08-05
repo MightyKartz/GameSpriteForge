@@ -22,6 +22,48 @@ export type JobRecord = {
   state: string;
   job_dir: string;
   error_summary: string | null;
+  asset_id?: string | null;
+  operation_kind?: "legacy_pipeline" | "prepare_asset" | "prepare_character_pack" | "install_godot";
+  lifecycle_state?: "idle" | "queued" | "running" | "awaiting_review" | "succeeded" | "failed" | "cancelled";
+  progress?: number;
+  artifacts?: Array<{ kind: string; path: string; sha256?: string | null }>;
+  error_code?: string | null;
+  recoverable?: boolean;
+  next_actions?: string[];
+  repair?: RepairContext;
+};
+
+export type RepairChange = {
+  id: string;
+  scope: string;
+  parameter: string;
+  before: unknown;
+  after: unknown;
+  reason: string;
+  confidence: string;
+};
+
+export type RepairQualitySnapshot = {
+  verdict: QualityReport["verdict"];
+  animations: Array<{ name: string; report: QualityReport }>;
+};
+
+export type RepairContext = {
+  sourceJobId: string;
+  attempt: number;
+  changes: RepairChange[];
+  baseline: RepairQualitySnapshot;
+};
+
+export type RepairAnalysis = {
+  schemaVersion: "1";
+  sourceJobId: string;
+  attempt: number;
+  canAutoRepair: boolean;
+  quality: RepairQualitySnapshot;
+  changes: RepairChange[];
+  manualActions: string[];
+  proposedOperation?: unknown;
 };
 
 export type VideoProbe = {
@@ -165,6 +207,58 @@ export type PackInspectSummary = PackSummary & {
   manifestPath: string;
   atlasPath: string;
   qualityReportPath: string;
+  defaultAnimation?: string;
+  animations?: Array<{ name: string; frameCount: number; fps: number; loop: boolean }>;
+};
+
+export type CharacterAnimationRequest = {
+  name: string;
+  input:
+    | { kind: "png_sequence"; paths: string[] }
+    | {
+        kind: "sprite_sheet";
+        path: string;
+        split:
+          | { mode: "fixed_grid"; frameWidth: number; frameHeight: number; columns: number; rows: number }
+          | { mode: "transparent_gutters"; alpha_threshold: number; min_gap_px: number };
+      };
+  fps: number;
+  loop: boolean;
+  matting: { mode: "preserve_alpha" };
+};
+
+export type CharacterWorkflowAnimation = {
+  name: string;
+  fps: number;
+  loop: boolean;
+};
+
+export type CharacterWorkflowPreset = {
+  id: string;
+  version: string;
+  label: string;
+  description: string;
+  defaultAnimation: string;
+  requiredAnimations: CharacterWorkflowAnimation[];
+  optionalAnimations: CharacterWorkflowAnimation[];
+};
+
+export type CharacterWorkflowCatalog = {
+  schemaVersion: "1";
+  workflows: CharacterWorkflowPreset[];
+};
+
+export type PrepareCharacterPackRequest = {
+  schemaVersion: "2";
+  metadata: {
+    name: string;
+    defaultAnimation: string;
+    creator: string;
+    license: string;
+  };
+  workflow: { id: string; version: string };
+  animations: CharacterAnimationRequest[];
+  quality?: { requireGameReady: boolean };
 };
 
 export type ImportedPack = {
@@ -188,6 +282,34 @@ export const defaultChromaParameters: ChromaParameters = {
   despillStrength: 0.5,
   haloPixels: 0,
 };
+
+export function startupAutomationJobId() {
+  return invoke<string | null>("startup_automation_job_id");
+}
+
+export function startupRoute() {
+  return invoke<"forge" | "character" | "exports" | "settings" | null>("startup_route");
+}
+
+export function loadAutomationJob(jobId: string) {
+  return invoke<JobRecord>("load_automation_job", { jobId });
+}
+
+export function analyzeRepairJob(jobId: string) {
+  return invoke<RepairAnalysis>("analyze_repair_job", { jobId });
+}
+
+export function executeRepairJob(jobId: string) {
+  return invoke<JobRecord>("execute_repair_job", { jobId });
+}
+
+export function prepareCharacterPack(request: PrepareCharacterPackRequest) {
+  return invoke<JobRecord>("prepare_character_pack", { request });
+}
+
+export function loadCharacterWorkflows() {
+  return invoke<CharacterWorkflowCatalog>("character_workflows");
+}
 
 export function readPreviewImage(path: string) {
   return invoke<string>("read_preview_image", { path });
