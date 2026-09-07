@@ -10,7 +10,7 @@
    可选人工审核记录格式、渲染合同校验，以及 Godot 原生时长和渲染参数导入。
 2. [PR #12](https://github.com/MightyKartz/GameSpriteForge/pull/12)：零生成准备、
    运行验证和打包工具、Godot 审核场景、7 项离线完整性测试及 CI 入口。
-3. 使用入口、[操作说明](../architecture/forge-existing-animation-reuse-plan.md)和本次精简 QA 证据。
+3. [PR #13](https://github.com/MightyKartz/GameSpriteForge/pull/13)：使用入口、[操作说明](../architecture/forge-existing-animation-reuse-plan.md)和本次精简 QA 证据。
 
 这些提交提供实验辅助流程。源人工批准只适用于对应源帧，不批准新的运行时校准。
 up 方向原始尺度门禁失败仍保留；本次固定倍率约 0.939902 是数学拟合，
@@ -23,7 +23,10 @@ up 方向原始尺度门禁失败仍保留；本次固定倍率约 0.939902 是�
 命中了 main 原有代码。本轮将三处固定四字节分组改为等价的 `as_chunks` /
 `as_chunks_mut` 写法，涉及组件 fixture、Provider fixture 和其测试 fixture。
 本地 Rust 1.98 的默认及 Consistency/World Clippy、完整 workspace 测试均通过。
-首次远端其余五组矩阵已通过；最终远端结果见各 PR 的最新 Checks。
+修复后的两批远端矩阵均通过全部六组门禁：
+[第一批 CI](https://github.com/MightyKartz/GameSpriteForge/actions/runs/34092056565)、
+[第二批 CI](https://github.com/MightyKartz/GameSpriteForge/actions/runs/34092060365)。
+第二批的新增 Python 完整性检查也已通过。
 
 ## 本轮检查
 
