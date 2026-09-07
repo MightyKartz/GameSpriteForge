@@ -1,0 +1,95 @@
+{
+  "preflightRun": 34097802584,
+  "qualityRun": 34097805718,
+  "candidateHead": "57ef8d84a64aca6c436c54ba67448a603c08025b",
+  "preflightArchiveSha256": "97520bd335ada47225350a5437bb3a764b41457d9e3fce853b695ee14c75b7be",
+  "preflightBuildInfo": {
+    "version": "0.2.1-rc.1",
+    "commit": "57ef8d84a64aca6c436c54ba67448a603c08025b",
+    "target": "aarch64-apple-darwin",
+    "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+    "appleSigned": false,
+    "notarized": false
+  },
+  "reuse": {
+    "status": "passed",
+    "sourceFrameCount": 52,
+    "sourceAssetsUnchanged": true,
+    "installedTextureCount": 13,
+    "textResourceCount": 7,
+    "pixelCheckCount": 52,
+    "providerRequests": 0,
+    "visualReview": "pending",
+    "productionPromoted": false,
+    "runtimeContractSha256": "9855b39031084606d0251015ed0e02b251409daeb6d3d30fdfa35c7d45f956f3",
+    "verificationReportSha256": "1d8dd23fddf85a68fca6e21f0d84c619c2929b0fc31f6cad3fce7385737f687f"
+  },
+  "rustTests": {
+    "passed": 242,
+    "failed": 0,
+    "ignored": 0
+  },
+  "rc": {
+    "releaseRun": 34099232812,
+    "buildInfo": {
+      "version": "0.2.1-rc.1",
+      "commit": "90d935ae83c121cc85e38f9fe2e5ca3f3223b6f9",
+      "target": "aarch64-apple-darwin",
+      "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+      "appleSigned": false,
+      "notarized": false
+    },
+    "archiveSha256": "05ff4f021a29892e57829f21099e6b4d7b2bb11074508f76ec28335bc8d9bb35",
+    "binarySha256": "54574b4a3a9453f58a1c9cdebc06442f9efbc8482f69c075f0da0aab2f7595b3",
+    "sameBinaryAsPreflight": true,
+    "attestationPredicate": "https://cyclonedx.org/bom",
+    "attestationVerified": true,
+    "isPrerelease": true,
+    "stableLatestUnchanged": "v0.2.0-cli.1",
+    "downloadedArtifactContract": "passed"
+  },
+  "stableQualityRun": 34099299508,
+  "stableCandidateHead": "b6be6b060919dfa9da6f02dff7c2eb98f1ebabea",
+  "stable": {
+    "releaseRun": 34100750035,
+    "buildInfo": {
+      "version": "0.2.1",
+      "commit": "e6045c12623410a18ede1cba3744a0d6e8554d8c",
+      "target": "aarch64-apple-darwin",
+      "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+      "appleSigned": false,
+      "notarized": false
+    },
+    "archiveSha256": "2a3f21dd82a5ff273de15413e5d8d5cb42505a8ac17b860d6d44de863058189e",
+    "binarySha256": "761e72dbc16992d272486671bead6cdfdbe72a8a54ea309ecdcf4c50185e5d7e",
+    "attestationPredicate": "https://cyclonedx.org/bom",
+    "attestationVerified": true,
+    "sbomVersionVerified": true,
+    "installerMatchesSource": true,
+    "rustTests": {
+      "passed": 242,
+      "failed": 0,
+      "ignored": 0
+    },
+    "downloadedArtifactContract": "passed",
+    "upgradeBaseline": "v0.2.1-rc.1",
+    "ciUpgradeBaseline": "v0.2.0-cli.1",
+    "defaultLatestInstaller": "passed",
+    "latestTag": "v0.2.1",
+    "isPrerelease": false,
+    "isDraft": false,
+    "reuse": {
+      "status": "passed",
+      "sourceFrameCount": 52,
+      "sourceAssetsUnchanged": true,
+      "installedTextureCount": 13,
+      "textResourceCount": 7,
+      "pixelCheckCount": 52,
+      "providerRequests": 0,
+      "visualReview": "pending",
+      "productionPromoted": false,
+      "runtimeContractSha256": "9855b39031084606d0251015ed0e02b251409daeb6d3d30fdfa35c7d45f956f3",
+      "verificationReportSha256": "ed976c5d95c3c75ea705f3c8f01bbd222c001b2c89f7a6cfeb64059c3a23afe7"
+    }
+  }
+}
