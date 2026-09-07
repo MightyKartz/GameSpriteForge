@@ -369,6 +369,8 @@ fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreEr
                 AssetInput::SpriteSheet { path, split } => {
                     validate_png(path)?;
                     if let super::types::SpriteSheetSplit::FixedGrid(grid) = split {
+                        super::source_transform::validate(path, grid)
+                            .map_err(PlanStoreError::InvalidRequest)?;
                         if grid.frame_width == 0
                             || grid.frame_height == 0
                             || grid.columns == 0
@@ -1256,6 +1258,8 @@ fn validate_character_pack_request(
             AssetInput::SpriteSheet { path, split } => {
                 validate_png(path)?;
                 if let super::types::SpriteSheetSplit::FixedGrid(grid) = split {
+                    super::source_transform::validate(path, grid)
+                        .map_err(PlanStoreError::InvalidRequest)?;
                     if grid.frame_width == 0
                         || grid.frame_height == 0
                         || grid.columns == 0

@@ -426,10 +426,25 @@ pub enum SpriteSheetSplit {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct FixedGridSplit {
+    #[serde(default, skip_serializing_if = "is_zero_u32")]
+    pub source_padding_right_px: u32,
+    #[serde(default, skip_serializing_if = "is_zero_u32")]
+    pub source_padding_bottom_px: u32,
+    #[serde(default, skip_serializing_if = "is_zero_i32")]
+    pub source_offset_x: i32,
+    #[serde(default, skip_serializing_if = "is_zero_i32")]
+    pub source_offset_y: i32,
     pub frame_width: u32,
     pub frame_height: u32,
     pub columns: u32,
     pub rows: u32,
+}
+
+fn is_zero_u32(value: &u32) -> bool {
+    *value == 0
+}
+fn is_zero_i32(value: &i32) -> bool {
+    *value == 0
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]

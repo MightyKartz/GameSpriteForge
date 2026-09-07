@@ -4687,6 +4687,12 @@ fn run_prepare_character_pack(
     if let Some(artifact) = repair_artifact {
         artifacts.push(artifact);
     }
+    for animation in &request.animations {
+        append_source_transform_artifact(
+            &mut artifacts,
+            &record.job_dir.join("animations").join(&animation.name),
+        )?;
+    }
     for (name, path) in output.animation_preview_paths {
         artifacts.push(JobArtifactRecord {
             kind: format!("preview_{name}"),
@@ -4960,6 +4966,7 @@ fn run_prepare_asset(
             sha256: None,
         },
     ];
+    append_source_transform_artifact(&mut artifacts, &record.job_dir)?;
     if let Some(artifact) = repair_artifact {
         artifacts.push(artifact);
     }
@@ -5729,6 +5736,21 @@ fn apply_loop_selection_quality(quality: &mut QualityReport, selection: &LoopSel
     };
 }
 
+fn append_source_transform_artifact(
+    artifacts: &mut Vec<JobArtifactRecord>,
+    workspace: &Path,
+) -> Result<(), AutomationRunError> {
+    let path = workspace.join("source-preprocessing/source-transform.json");
+    if path.is_file() {
+        artifacts.push(JobArtifactRecord {
+            kind: "source_transform".into(),
+            sha256: Some(hash_file(&path)?),
+            path,
+        });
+    }
+    Ok(())
+}
+
 fn ingest_frames(job_dir: &Path, input: &AssetInput) -> Result<Vec<PathBuf>, AutomationRunError> {
     match input {
         AssetInput::PngSequence { paths } => {
@@ -5745,8 +5767,10 @@ fn ingest_frames(job_dir: &Path, input: &AssetInput) -> Result<Vec<PathBuf>, Aut
         AssetInput::SpriteSheet { path, split } => {
             let result = match split {
                 SpriteSheetSplit::FixedGrid(grid) => {
+                    let sheet_path = super::source_transform::prepare(job_dir, path, grid)
+                        .map_err(AutomationRunError::Processing)?;
                     slice_sprite_sheet_grid(&SliceSpriteSheetParams {
-                        sheet_path: path.clone(),
+                        sheet_path,
                         output_directory: job_dir.to_path_buf(),
                         frame_width: grid.frame_width,
                         frame_height: grid.frame_height,

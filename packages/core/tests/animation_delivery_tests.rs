@@ -232,3 +232,144 @@ fn omitted_new_options_keep_legacy_defaults_and_payload_shape() {
     .unwrap();
     assert!(character.rendering.is_none());
 }
+
+fn sheet_recipe(root: &Path, offset: i32, bottom_padding: u32) -> Value {
+    let mut sheet = RgbaImage::new(128, 128 - bottom_padding);
+    for row in 0..2 {
+        for column in 0..2 {
+            for y in (row * 64 + 20)..(row * 64 + 52) {
+                for x in (column * 64 + 22)..(column * 64 + 38) {
+                    sheet.put_pixel(x, y, Rgba([200, 70, 90, 255]));
+                }
+            }
+        }
+    }
+    let path = root.join("sheet.png");
+    sheet.save(&path).unwrap();
+    let mut value = recipe(&[]);
+    value["metadata"]["frameDurationsMs"] = json!([100, 110, 120, 130]);
+    value["input"] = json!({"kind":"sprite_sheet","path":path,"split":{
+        "mode":"fixed_grid","frameWidth":64,"frameHeight":64,"columns":2,"rows":2,
+        "sourcePaddingBottomPx":bottom_padding,"sourceOffsetX":offset
+    }});
+    value
+}
+
+#[test]
+fn whole_sheet_padding_and_offset_keep_source_hash_and_exact_cell_coordinates() {
+    let temp = tempfile::tempdir().unwrap();
+    let value = sheet_recipe(temp.path(), -4, 1);
+    let source = temp.path().join("sheet.png");
+    let original_bytes = fs::read(&source).unwrap();
+    let (pack, job) = run(
+        temp.path(),
+        AutomationOperation::PrepareAsset(serde_json::from_value(value).unwrap()),
+    );
+    let report = read(job.join("source-preprocessing/source-transform.json"));
+    assert_eq!(report["sourceWidth"], 128);
+    assert_eq!(report["sourceHeight"], 127);
+    assert_eq!(report["derivedWidth"], 128);
+    assert_eq!(report["derivedHeight"], 128);
+    assert_eq!(report["sourceOffsetX"], -4);
+    assert_eq!(report["discardedNontransparentPixels"], 0);
+    assert_eq!(fs::read(&source).unwrap(), original_bytes);
+    assert_eq!(
+        fs::read(job.join("source-preprocessing/original.png")).unwrap(),
+        original_bytes
+    );
+    assert_eq!(
+        report["sourceSha256"],
+        forge_core::asset_project::hash_file(&source).unwrap()
+    );
+    let derived_path = job.join("source-preprocessing/derived.png");
+    assert_eq!(
+        report["derivedSha256"],
+        forge_core::asset_project::hash_file(&derived_path).unwrap()
+    );
+    let derived = image::open(derived_path).unwrap().to_rgba8();
+    let source_image = image::open(&source).unwrap().to_rgba8();
+    for (x, y, pixel) in derived.enumerate_pixels() {
+        let expected = if x + 4 < 128 && y < 127 {
+            *source_image.get_pixel(x + 4, y)
+        } else {
+            Rgba([0, 0, 0, 0])
+        };
+        assert_eq!(*pixel, expected);
+    }
+    for index in 0..4 {
+        let frame = image::open(pack.join(format!("assets/frames/frame_{:03}.png", index + 1)))
+            .unwrap()
+            .to_rgba8();
+        assert_eq!(
+            frame,
+            image::imageops::crop_imm(&derived, (index % 2) * 64, (index / 2) * 64, 64, 64)
+                .to_image()
+        );
+    }
+}
+
+#[test]
+fn sheet_offset_rejects_even_alpha_one_loss_before_creating_a_job() {
+    let temp = tempfile::tempdir().unwrap();
+    let value = sheet_recipe(temp.path(), -4, 0);
+    let path = temp.path().join("sheet.png");
+    let mut sheet = image::open(&path).unwrap().to_rgba8();
+    sheet.put_pixel(1, 3, Rgba([0, 0, 0, 1]));
+    sheet.save(&path).unwrap();
+    let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+    let error = plans
+        .prepare(AutomationOperation::PrepareAsset(
+            serde_json::from_value(value).unwrap(),
+        ))
+        .unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("discard a nontransparent pixel at (1, 3); alpha=1"),
+        "{error}"
+    );
+    assert!(!temp.path().join("source-preprocessing").exists());
+}
+
+#[test]
+fn sheet_preprocessing_rejects_implicit_grid_crop_and_padding_overflow() {
+    let temp = tempfile::tempdir().unwrap();
+    let value = sheet_recipe(temp.path(), 0, 1);
+    let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+    for (key, bad, message) in [
+        ("frameWidth", json!(63), "exactly match fixed_grid"),
+        (
+            "sourcePaddingRightPx",
+            json!(u32::MAX),
+            "source padding width overflows",
+        ),
+    ] {
+        let mut invalid = value.clone();
+        invalid["input"]["split"][key] = bad;
+        let error = plans
+            .prepare(AutomationOperation::PrepareAsset(
+                serde_json::from_value(invalid).unwrap(),
+            ))
+            .unwrap_err();
+        assert!(error.to_string().contains(message), "{error}");
+    }
+}
+
+#[test]
+fn omitted_sheet_preprocessing_retains_legacy_recipe_and_no_derived_file() {
+    let temp = tempfile::tempdir().unwrap();
+    let mut value = sheet_recipe(temp.path(), 0, 0);
+    value["input"]["split"]
+        .as_object_mut()
+        .unwrap()
+        .remove("sourceOffsetX");
+    value["input"]["split"]
+        .as_object_mut()
+        .unwrap()
+        .remove("sourcePaddingBottomPx");
+    let request: PrepareAssetRequest = serde_json::from_value(value.clone()).unwrap();
+    let serialized = serde_json::to_value(&request).unwrap();
+    assert_eq!(serialized["input"]["split"], value["input"]["split"]);
+    let (_, job) = run(temp.path(), AutomationOperation::PrepareAsset(request));
+    assert!(!job.join("source-preprocessing").exists());
+}

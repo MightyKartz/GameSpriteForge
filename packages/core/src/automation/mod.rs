@@ -1,6 +1,7 @@
 mod plan;
 mod repair;
 mod runner;
+mod source_transform;
 mod static_assets;
 mod types;
 
