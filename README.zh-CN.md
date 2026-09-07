@@ -1,197 +1,142 @@
-# Forge CLI
+# Forge
 
-[English README](README.md)
+[English](./README.md) | 简体中文
 
-Forge 是一个开源、面向智能体的命令行游戏资产流水线。Codex、Claude、脚本和
-CI 可以通过同一套稳定 JSON 协议生成一致的 2D 游戏资产，并安装到 Godot 4.6.x。
+**面向智能体的 2D 游戏资产 CLI：生成、处理与复用素材，保留来源记录并交付 Godot。**
 
-当前 macOS Apple Silicon 版本支持：
+Forge 为 Codex、Claude、脚本和 CI 提供统一的 JSON 接口。你可以生成角色、图标和道具，
+在本地处理已有媒体，也可以复用已批准的动画帧而不再生成新视频，最终交付可检查的
+`.gsfpack` 资产与 Godot 原生资源。
 
-- 不可变的项目 Style Lock；
-- 带 `idle`、`walk_up`、`walk_right`、`walk_down` 的一致性俯视 Character Pack；
-- 从同一风格板和 anchor 派生的图标集与道具集；
-- 通过 API Key 或 Preview OAuth 直连 xAI REST，不依赖 Grok Build CLI；
-- 确定性抠图、规范化、一致性门禁、阶段级重试、Loop Selection V2、来源记录和 `.gsfpack` 验证；
-- 使用外部纹理、原子覆盖、所有权检查和失败回滚的 Godot 安装。
+[最新发布](https://github.com/MightyKartz/GameSpriteForge/releases/latest) ·
+[CLI 参考](docs/automation/forge-cli.md) ·
+[示例](examples/cli) ·
+[参与开发](CONTRIBUTING.md)
 
-已有批准的方向动画可使用[零生成复用审核流程](docs/architecture/forge-existing-animation-reuse-plan.md)组合成 Godot 候选。该实验脚本保留原帧、原生时长和来源记录；候选仍需独立视觉审核。
+## 核心能力
+
+- **一致性资产：**使用不可变 Style Lock 引导角色、图标集和道具集生成。
+- **本地处理：**抠图、帧规范化、循环选取、精灵图集与 Pack 校验。
+- **已有动画复用：**保留已批准的源像素、帧序、原生时长和来源记录，组合成独立的方向动画审核候选。
+- **可检查任务：**持久化 Job、结构化报告、计划与执行流程，以及定向重试。
+- **Godot 交付：**外部 PNG/atlas 纹理、原生动画资源、安装所有权检查和使用记录。
+- **智能体集成：**stdout 输出单个 JSON envelope，诊断与交互式认证使用 stderr/TTY。
+
+Forge 负责视觉资产和引擎交付；玩法与游戏逻辑由消费这些资产的项目负责。
 
 ## 安装
+
+已发布 CLI 面向 **macOS Apple Silicon**。需要引擎交付时，另行安装 **Godot 4.6.x**。
 
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/MightyKartz/GameSpriteForge/main/install.sh | sh
 ```
 
-重新打开终端后验证：
+重新打开终端，检查安装：
 
 ```bash
+forge --version
 forge doctor --json
 ```
 
-安装器会把 `forge`、`ffmpeg`、`ffprobe` 安装到版本化用户目录，只把 `forge`
-暴露到 `PATH`；切换版本前会同时验证 Release 压缩包和包内逐文件 SHA-256 清单。
-首个 CLI Release 不带 Apple 签名或公证。Forge 不附带 Godot；引擎安装功能需要
-Godot 4.6.x。
+安装器会验证 SHA-256 清单，将 `forge`、`ffmpeg` 和 `ffprobe` 安装到版本化用户目录，
+仅把 `forge` 暴露到 `PATH`。当前已发布版本为
+[`v0.2.0-cli.1`](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.2.0-cli.1)，
+尚未签名或公证。`main` 上的新能力可能需要从源码构建。
 
-## 五分钟 xAI → Godot
+## 生成第一个角色
 
-通过隐藏输入保存 API Key，不把密钥写入 shell 历史：
+参考 [Style 示例](examples/cli/style.json)和[角色示例](examples/cli/character.json)，
+保存自己的规格文件，并替换下面的绝对路径。API Key 是稳定的 xAI 认证方式，OAuth 为
+Preview。真实 Provider 生成可能产生费用；执行前核对计划及请求上限，详见
+[CLI 参考](docs/automation/forge-cli.md)。
 
 ```bash
 forge provider login --provider xai --method api-key
 forge project init --path "$PWD/game-assets" --name "My Game"
+
+# 先规划 Style Lock，再使用返回的 token 执行。
+forge style create --project "$PWD/game-assets" \
+  --spec /absolute/style.json --plan-only --json
+forge plan execute --token STYLE_PLAN_TOKEN --wait --json
+
+# 单独规划角色，再使用对应的 token 执行。
+forge generate character --project "$PWD/game-assets" \
+  --spec /absolute/character.json --plan-only --json
+forge plan execute --token CHARACTER_PLAN_TOKEN --wait --json
 ```
 
-创建 `game-assets/specs/style.json`：
-
-```json
-{
-  "schemaVersion": "1",
-  "prompt": "带深色轮廓的紧凑宝石色像素风",
-  "referenceImages": [],
-  "perspective": "topdown",
-  "lighting": "upper_left",
-  "outline": "dark",
-  "background": "transparent",
-  "sampling": "nearest",
-  "characterCanvasSize": 256,
-  "iconCanvasSize": 128,
-  "propCanvasSize": 256
-}
-```
+用每次计划响应中的实际值替换 token 占位符。生成默认使用持久化异步 Job；`--wait`
+会等待完成。从 Job 的 artifacts 获取真实 Pack 路径：
 
 ```bash
-forge style create \
-  --project "$PWD/game-assets" \
-  --spec "$PWD/game-assets/specs/style.json" \
-  --wait --json
+forge job report --id JOB_ID --json
+forge pack validate --path /absolute/Character.gsfpack --json
 ```
 
-创建 `game-assets/specs/ranger.json`：
+制作背包和场景资产时，使用 `forge generate icon-set` 或 `forge generate prop-set`，
+并提供对应的[图标规格](examples/cli/icons.json)或[道具规格](examples/cli/props.json)。
 
-```json
-{
-  "schemaVersion": "1",
-  "kind": "character",
-  "id": "forest-ranger",
-  "name": "Forest Ranger",
-  "prompt": "一个戴绿色兜帽的紧凑森林游侠",
-  "license": "private"
-}
-```
+## 交付到 Godot
+
+使用已有 Godot 项目，以及已完成 Job 返回的 Pack 路径：
 
 ```bash
-forge generate character \
-  --project "$PWD/game-assets" \
-  --spec "$PWD/game-assets/specs/ranger.json" \
-  --wait --json
-
 forge godot plan-install \
-  --pack /absolute/path/Forest-Ranger.gsfpack \
-  --project /absolute/path/my-godot-game \
-  --asset-key forest_ranger --json
+  --pack /absolute/Character.gsfpack \
+  --project /absolute/my-godot-game \
+  --asset-key my_character --json
 
-forge plan execute --token <返回的-token> --wait --json
+forge plan execute --token INSTALL_PLAN_TOKEN --wait --json
 ```
 
-## 图标集与道具集
+Forge 使用外部纹理，安装到 `addons/forge_assets`，并追踪由 Forge 管理的输出。
+用于游戏前，检查安装资源并在 Godot 中审核动画效果。
 
-```json
-{
-  "schemaVersion": "1",
-  "kind": "icon_set",
-  "id": "inventory-icons",
-  "name": "Inventory Icons",
-  "items": [
-    { "id": "potion", "name": "Potion", "prompt": "红色治疗药水" },
-    { "id": "key", "name": "Key", "prompt": "一把小黄铜钥匙" }
-  ],
-  "license": "private"
-}
-```
+## 不再生成新视频的动画复用
+
+源码仓库提供实验性的[三方向复用流程](docs/architecture/forge-existing-animation-reuse-plan.md)：
+将已有、已批准的 right/down/up 恢复 Pack 组合到独立 Godot 审核项目中，保留源帧和原生
+时序，并按方向应用整段固定缩放。安装计划必须明确预计与最大 Provider 请求均为零。
+
+辅助工具需要 Python 3.9+、Pillow、从当前源码构建的 Forge CLI、Godot 4.6.x，以及符合
+输入约定的来源批准和尺度证据。它适用于现有三方向恢复素材；完整源媒体不随仓库分发。
+
+可查阅[集成验证](docs/qa/forge-directional-reuse-main-integration-2026-09-07.md)与
+[人工审核通过记录](docs/qa/forge-directional-human-review-2026-09-07.md)。批准绑定具体候选；
+修改后的候选需要独立审核。工具不会补出缺失的左向或 idle 动画。
+
+## 发布版本与源码能力
+
+以 [CLI feature 定义](packages/cli/Cargo.toml)为准，默认构建使用 `default = []`。
+
+| 能力 | 可用范围 |
+| --- | --- |
+| Style Lock、角色/图标/道具生成、本地资产准备、Job、Pack 校验、Godot 安装 | 默认 CLI |
+| 三方向复用辅助工具、原生逐帧时长与渲染参数支持 | 已进入 `main`，与当前发布二进制分开 |
+| Subject Lock 与 Character 一致性 V2 | 按需启用 `consistency-v2` 源码 feature |
+| Environment、Terrain、Building、Map 工作流 | 按需启用 World features；`world-assets` 启用整组 |
+| 资产清单驱动的项目 diff 与构建计划 | 按需启用 `game-art-manifest` 源码 feature |
+
+可选功能和 fixture 检查不能代替真实 Provider 或人工视觉验收。当前产品重心是 CLI 和
+Rust 工作区；保留的桌面/MCP 代码不属于默认发布范围。
+
+## 开发
 
 ```bash
-forge generate icon-set --project "$PWD/game-assets" --spec /absolute/icons.json --json
-forge generate prop-set --project "$PWD/game-assets" --spec /absolute/props.json --json
-forge job report --id <job-id> --json
-forge job retry --id <job-id> --item potion --wait --json
-
-# 使用当前 Style Lock 本地重评既有图标/道具像素，不调用 Provider。
-forge job retry --id <static-job> --stage consistency --wait --json
-
-# 角色专用重试：loop / matting 只重跑本地阶段，不调用 Provider。
-forge job retry --id <character-job> --item walk_right --stage loop --wait --json
-forge job report --id <new-job-id> --json
+cargo build -p forge-cli
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+python3 scripts/character/test_prepare_directional_reuse.py -v
 ```
 
-生成默认作为可恢复的异步任务运行；增加 `--wait` 可同步等待。公开命令只在
-stdout 写一个 JSON envelope，诊断和交互认证进入 stderr/TTY。
+环境配置与适用检查见 [CONTRIBUTING.md](CONTRIBUTING.md)，CI 范围见
+[质量矩阵](.github/workflows/v03-quality.yml)，证据保存遵循
+[QA 产物政策](docs/qa/forge-qa-artifact-policy.md)。不提交凭证或临时媒体 URL；
+Provider 输出应在本地落盘并计算哈希，重试和派生结果须保留源 Job/Pack 的来源链。
 
-Style Lock 使用版本化的 `style-baseline@2.3.0` 前景感知调色板。基线升级时，Forge
-保留旧的不可变 revision，并在校验通过后复用原风格板，因此迁移无需重新生成图片。
+## 许可证
 
-角色生成会覆盖完整视频搜索真实闭合周期，只导出选中 `[start, end)` 内的帧；
-用于证明闭合的边界帧不会重复进入动画。`job report` 会直接返回选中索引、评分组成、
-重试方法，以及本次重试是否产生了 Provider 请求和费用。
-
-角色发布门槛已经完成：连续三次真实 xAI Character → Pack → Godot 运行均无需人工
-审核，四个动作全部达到 `game_ready`。Provider 费用、重试方式和 Godot 证据记录在
-[`docs/qa/forge-character-loop-v2-2026-08-03.md`](docs/qa/forge-character-loop-v2-2026-08-03.md)。
-`v0.2.0-cli.1` 已在 GitHub Releases 正式发布（2026-08-03，未签名、未公证，附带 SBOM 与
-Artifact Attestation）。最后一项发布操作检查——从该 Release 进行全新账户安装验证——尚未
-记录于 `docs/qa/`。
-
-## 尚未发布的角色一致性 V2
-
-源码树包含面向 v0.3 CLI 发布线的可选 `consistency-v2` 构建：不可变 Subject Lock、语义化图片
-参考、每动作 8 帧的显式关键帧、类型化 WorkflowGraph 重放、内容寻址缓存和
-`.forge/catalog.json`。在真实 xAI 验收完成之前，这些命令不会进入默认发布
-二进制。v0.3 fixture/合同矩阵已于 2026-08-04 六门全过
-（[`docs/qa/forge-v03-test-matrix.md`](docs/qa/forge-v03-test-matrix.md)）；真实模型
-身份晋级门槛仍未完成。SAM/DINO/LPIPS 组件在许可证和阈值校准审计通过前保持未发布，
-`forge component install` 不会静默安装未经审计的权重。
-离线合同、Godot 验证和仍待完成的外部门槛记录在
-[`docs/qa/forge-consistency-v2-and-world-implementation-2026-08-03.md`](docs/qa/forge-consistency-v2-and-world-implementation-2026-08-03.md)。
-
-## 尚未发布的世界资产流水线
-
-后续 CLI 里程碑通过尚未发布的世界功能特性和 `.gsfpack` V3 合同实现；这些命令不会
-进入默认发布二进制，并保持 experimental；v0.3 矩阵已记录其 fixture 级通过。Terrain、Building、Map 会在角色一致性 V2 之后分版发布：
-
-- 不可变的俯视 Environment Lock；
-- 从两张 Provider 材质板确定性合成的 16/32px dual-grid Terrain Set；
-- 使用固定屋顶、墙体、门窗模块的外观 Building Kit；
-- 不调用 Provider、输出自包含 Godot 世界的 JSON Map Compiler。
-
-```bash
-forge environment create --project /absolute/assets --spec /absolute/environment.json --wait --json
-forge generate terrain-set --project /absolute/assets --spec /absolute/terrain.json --wait --json
-forge generate building-kit --project /absolute/assets --spec /absolute/buildings.json --wait --json
-```
-
-Map 只接受 JSON。Forge 不调用文本模型，也不把自然语言转换为地图；Codex、Claude
-或用户负责生成 `MapSpecV1`，Forge 只负责校验和确定性编译：
-
-```bash
-forge map schema --json
-forge map compile --project /absolute/assets --spec /absolute/map.json --wait --json
-forge map validate --pack /absolute/Forest-Village.gsfpack --json
-```
-
-V1 只覆盖俯视户外地图、dual-grid Terrain、3×3–8×6 的矩形建筑外观、南向入口和
-Godot 4.6.x；不包含室内、等距、平台跳跃、3D、Tiled、Unity 或 Unreal。可运行 JSON
-示例位于 [`examples/cli/world`](examples/cli/world)。
-
-## 安全与来源
-
-- Provider 输出先落地、校验格式并计算 SHA-256，之后才进入本地处理。
-- 每个 Job 锁定一个 Provider、Profile、模型选择和 Style revision。
-- 凭据保存在 Keychain，不进入 Job、Pack、日志或普通 JSON 输出。
-- OAuth 为 Preview；API Key 是稳定商业认证路径。
-- Godot 写入限定在 `addons/forge_assets`，只覆盖 Forge-owned 目录。
-
-## 开发与许可证
-
-开发说明见 [CONTRIBUTING.md](CONTRIBUTING.md)。Forge 使用
-[MIT License](LICENSE)。随 CLI 分发的 FFmpeg helper 使用独立 LGPL 声明并在每个
-Release 同时提供对应源码，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+[MIT](LICENSE)。附带 FFmpeg 工具有独立 LGPL 声明和对应源码分发，详见
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
