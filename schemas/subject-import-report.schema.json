@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/subject-import-report.schema.json",
+  "title": "Forge Subject Import Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "inputSha256",
+    "canonicalSha256",
+    "maskSha256",
+    "sourceDimensions",
+    "outputDimensions",
+    "transformation",
+    "alphaPresent",
+    "cellBoundarySafe",
+    "subjectCount",
+    "identityProfile",
+    "identityVerdict",
+    "identityReasons",
+    "approvalNote"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "subject-import@1.0.0" },
+    "inputSha256": { "$ref": "#/$defs/sha256" },
+    "canonicalSha256": { "$ref": "#/$defs/sha256" },
+    "maskSha256": { "$ref": "#/$defs/sha256" },
+    "sourceDimensions": { "$ref": "#/$defs/dimensions" },
+    "outputDimensions": { "$ref": "#/$defs/dimensions" },
+    "transformation": { "enum": ["passthrough", "normalized"] },
+    "alphaPresent": { "const": true },
+    "cellBoundarySafe": { "const": true },
+    "subjectCount": { "const": 1 },
+    "identityProfile": { "type": "string", "minLength": 1 },
+    "identityVerdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+    "identityReasons": { "type": "array", "items": { "type": "string" } },
+    "approvalNote": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "dimensions": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "integer", "minimum": 1 },
+        { "type": "integer", "minimum": 1 }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    }
+  }
+}

@@ -80,6 +80,9 @@ fn fixture_generates_consistent_icon_set_pack() {
         schema_version: "4".into(),
         project_path: project_root.clone(),
         style_lock_path: style_lock_path.clone(),
+        collection_lock_path: None,
+        subject_lock_path: None,
+        source_spec_path: None,
         provider_id: "fixture".into(),
         profile_id: "default".into(),
         asset: StaticAssetSetSpecV1 {
@@ -103,11 +106,18 @@ fn fixture_generates_consistent_icon_set_pack() {
             ],
             license: "private".into(),
         },
+        framing_profile: None,
+        item_metadata: Default::default(),
         max_attempts_per_item: 2,
         image_model: None,
         reuse_from_job_dir: None,
         retry_item_ids: vec![],
+        replacement_item_paths: Default::default(),
         consistency_recheck_only: false,
+        resume_incomplete_static: false,
+        portrait_phase: Default::default(),
+        neutral_reference_policy: Default::default(),
+        portrait_base_parent_job_id: None,
     };
     let prepared = plans
         .prepare(AutomationOperation::GenerateStaticAssetSet(request.clone()))
@@ -178,7 +188,7 @@ fn fixture_generates_consistent_icon_set_pack() {
         &fs::read(rechecked.job_dir.join("consistency-report.json")).unwrap(),
     )
     .unwrap();
-    assert_eq!(recheck_report["profile"], "consistency@1.3.0");
+    assert_eq!(recheck_report["profile"], "consistency@1.5.0");
     assert_eq!(
         recheck_report["styleBaselineProfile"],
         "style-baseline@2.3.0"
@@ -228,6 +238,9 @@ fn fixture_generates_consistent_icon_set_pack() {
         schema_version: "4".into(),
         project_path: project_root,
         style_lock_path,
+        collection_lock_path: None,
+        subject_lock_path: None,
+        source_spec_path: None,
         provider_id: "fixture".into(),
         profile_id: "default".into(),
         asset: StaticAssetSetSpecV1 {
@@ -243,11 +256,18 @@ fn fixture_generates_consistent_icon_set_pack() {
             }],
             license: "private".into(),
         },
+        framing_profile: None,
+        item_metadata: Default::default(),
         max_attempts_per_item: 2,
         image_model: None,
         reuse_from_job_dir: None,
         retry_item_ids: vec![],
+        replacement_item_paths: Default::default(),
         consistency_recheck_only: false,
+        resume_incomplete_static: false,
+        portrait_phase: Default::default(),
+        neutral_reference_policy: Default::default(),
+        portrait_base_parent_job_id: None,
     };
     let prepared = plans
         .prepare(AutomationOperation::GenerateStaticAssetSet(prop_request))

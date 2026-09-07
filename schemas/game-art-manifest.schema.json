@@ -38,14 +38,14 @@
         "required": ["id", "kind", "spec"],
         "properties": {
           "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
-          "kind": { "enum": ["character", "icon_set", "prop_set"] },
+          "kind": { "enum": ["character", "icon_set", "prop_set", "portrait_set", "equipment_set", "decal_set"] },
           "spec": { "type": "string", "minLength": 1 },
           "required": { "type": "boolean", "default": true },
           "dependsOn": {
             "type": "array",
             "items": {
               "type": "string",
-              "pattern": "^([A-Za-z0-9_-]+|(style|subject):[A-Za-z0-9_-]+@[A-Za-z0-9_.-]+)$"
+              "pattern": "^([A-Za-z0-9_-]+|(style|subject|collection):[A-Za-z0-9_-]+@[A-Za-z0-9_.-]+)$"
             }
           },
           "tags": {

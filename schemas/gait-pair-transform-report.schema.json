@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamespriteforge.dev/schemas/gait-pair-transform-report.schema.json",
+  "title": "Forge Gait Pair Transform Spike Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "splitY",
+    "upperBodyChangedPixels",
+    "lowerBodyChangedRatio",
+    "boundarySeamChangedRatio",
+    "sourceContactSignal",
+    "transformedContactSignal",
+    "contactSignalInverted",
+    "verdict",
+    "reasons"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "gait-pair-transform-spike@1.0.0" },
+    "splitY": { "type": "integer", "minimum": 0 },
+    "upperBodyChangedPixels": { "type": "integer", "minimum": 0 },
+    "lowerBodyChangedRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "boundarySeamChangedRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "sourceContactSignal": { "type": "number", "minimum": -1, "maximum": 1 },
+    "transformedContactSignal": { "type": "number", "minimum": -1, "maximum": 1 },
+    "contactSignalInverted": { "type": "boolean" },
+    "verdict": { "enum": ["game_ready", "blocked"] },
+    "reasons": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

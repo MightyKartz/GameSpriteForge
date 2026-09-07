@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/provider-request-ledger.schema.json",
+  "title": "Forge Provider Request Ledger V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "authorizationId", "nextSequence", "updatedAt", "requests"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "authorizationId": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,128}$" },
+    "nextSequence": { "type": "integer", "minimum": 1 },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "requests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "requestId",
+          "targetId",
+          "operation",
+          "model",
+          "state",
+          "reservedCostTicks",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "requestId": { "type": "string", "minLength": 1 },
+          "targetId": { "type": "string", "minLength": 1 },
+          "operation": { "type": "string", "minLength": 1 },
+          "operationClass": { "enum": ["model_generation", "transport", "poll", "cleanup"] },
+          "model": { "type": "string", "minLength": 1 },
+          "state": { "enum": ["reserved", "submitted", "settled", "ambiguous", "released"] },
+          "reservedCostTicks": { "type": "integer", "minimum": 0 },
+          "observedCostTicks": { "type": "integer", "minimum": 0 },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "jobId": { "type": "string", "minLength": 1 },
+          "lineageRootJobId": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

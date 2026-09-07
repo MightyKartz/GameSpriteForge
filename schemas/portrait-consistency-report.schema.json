@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/portrait-consistency-report.schema.json",
+  "title": "Forge Portrait Local Consistency Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "baseItemId", "baseSha256", "faceScope", "verdict", "items"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "enum": ["portrait-local@1.0.0", "portrait-local@1.1.0"] },
+    "baseItemId": { "const": "neutral" },
+    "baseSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "faceScope": { "$ref": "#/$defs/faceScope" },
+    "verdict": { "$ref": "#/$defs/verdict" },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/item" }
+    }
+  },
+  "$defs": {
+    "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+    "faceScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canvasWidth", "canvasHeight", "centerX", "centerY", "radiusX", "radiusY", "featherPx"],
+      "properties": {
+        "canvasWidth": { "type": "integer", "minimum": 1 },
+        "canvasHeight": { "type": "integer", "minimum": 1 },
+        "centerX": { "type": "integer", "minimum": 0 },
+        "centerY": { "type": "integer", "minimum": 0 },
+        "radiusX": { "type": "integer", "minimum": 1 },
+        "radiusY": { "type": "integer", "minimum": 1 },
+        "featherPx": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "verdict", "metrics", "reasons"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "verdict": { "$ref": "#/$defs/verdict" },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "rawOutsideFaceChangedRatio", "outputOutsideFaceChangedRatio", "faceChangedRatio",
+            "skinToneDeltaE", "skinSampleCount", "protectedSkinArtifactRatio",
+            "protectedSkinSevereArtifactRatio", "protectedSkinSampleCount",
+            "faceEdgeDensityRatio", "facePerceptualSimilarity"
+          ],
+          "properties": {
+            "rawOutsideFaceChangedRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+            "outputOutsideFaceChangedRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+            "faceChangedRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+            "skinToneDeltaE": { "type": "number", "minimum": 0 },
+            "skinSampleCount": { "type": "integer", "minimum": 0 },
+            "skinCorrespondenceRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+            "protectedSkinArtifactRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+            "protectedSkinSevereArtifactRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+            "protectedSkinSampleCount": { "type": "integer", "minimum": 0 },
+            "faceEdgeDensityRatio": { "type": "number", "minimum": 0 },
+            "facePerceptualSimilarity": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "reasons": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

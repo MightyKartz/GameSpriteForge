@@ -12,6 +12,8 @@ path = "src/main.rs"
 [features]
 default = []
 consistency-v2 = []
+subject-import = ["consistency-v2", "forge_core/subject-import"]
+grid-generation = ["subject-import", "forge_core/grid-generation"]
 # Post-v0.3 world pipeline. Release builds enable each milestone independently.
 terrain-assets = []
 building-assets = ["terrain-assets"]
@@ -20,6 +22,8 @@ map-compiler = ["building-assets"]
 world-assets = ["map-compiler"]
 # Stage 2 game art manifest pipeline. Release builds enable each milestone independently.
 game-art-manifest = []
+# Stage 3 project-level static visual assets. Portraits depend on SubjectLock.
+collection-assets = ["game-art-manifest", "consistency-v2"]
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
@@ -27,6 +31,7 @@ clap = { version = "4", features = ["derive"] }
 forge_core = { package = "core", path = "../core" }
 forge_pack = { package = "pack", path = "../pack" }
 forge_providers = { package = "providers", path = "../providers" }
+image = { version = "0.25", default-features = false, features = ["png"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rpassword = "7"

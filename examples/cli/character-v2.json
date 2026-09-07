@@ -1,15 +1,19 @@
 {
   "schemaVersion": "2",
   "kind": "character",
-  "id": "fixture-ranger-keyframes",
-  "name": "Fixture Ranger Keyframes",
+  "id": "fixture-ranger-video",
+  "name": "Fixture Ranger Video",
   "subject": {
     "id": "fixture-ranger",
     "revision": "REPLACE_WITH_SUBJECT_REVISION"
   },
   "workflow": {
-    "id": "topdown-keyframes",
+    "id": "topdown-video",
     "version": "2.0.0"
+  },
+  "cameraProfile": "topdown-orthographic@2.0.0",
+  "equipment": {
+    "kind": "none"
   },
   "license": "MIT"
 }

@@ -384,21 +384,32 @@ fn color_distance(color: [u8; 3], key: [u8; 3]) -> f32 {
 }
 
 fn despill(pixel: &mut Rgba<u8>, key: [u8; 3], strength: f32, alpha_factor: f32) {
-    let dominant_channel = if key[1] >= key[0] && key[1] >= key[2] {
-        1
-    } else if key[0] >= key[2] {
-        0
-    } else {
-        2
-    };
-
-    let spill = pixel[dominant_channel] as f32;
+    let maximum_key = key.iter().copied().max().unwrap_or_default();
+    let minimum_key = key.iter().copied().min().unwrap_or_default();
+    let mut spill_channels = (0..3)
+        .filter(|channel| {
+            key[*channel] >= maximum_key.saturating_sub(8)
+                && key[*channel] >= minimum_key.saturating_add(24)
+        })
+        .collect::<Vec<_>>();
+    if spill_channels.is_empty() {
+        spill_channels.push(
+            key.iter()
+                .enumerate()
+                .max_by_key(|(_, value)| **value)
+                .map(|(channel, _)| channel)
+                .unwrap_or(1),
+        );
+    }
     let other_max = (0..3)
-        .filter(|channel| *channel != dominant_channel)
+        .filter(|channel| !spill_channels.contains(channel))
         .map(|channel| pixel[channel] as f32)
         .fold(0.0, f32::max);
-    let reduction = (spill - other_max).max(0.0) * strength * (1.0 - alpha_factor * 0.5);
-    pixel[dominant_channel] = (spill - reduction).round().clamp(0.0, 255.0) as u8;
+    for channel in spill_channels {
+        let spill = pixel[channel] as f32;
+        let reduction = (spill - other_max).max(0.0) * strength * (1.0 - alpha_factor * 0.5);
+        pixel[channel] = (spill - reduction).round().clamp(0.0, 255.0) as u8;
+    }
 }
 
 fn apply_halo_cleanup(image: &RgbaImage, radius: u8) -> RgbaImage {

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/collection-spec.schema.json",
+  "title": "Forge Collection Spec V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "name", "assetKind", "prompt", "license"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "assetKind": { "enum": ["icon_set", "prop_set", "portrait_set", "equipment_set", "decal_set"] },
+    "prompt": { "type": "string", "minLength": 1, "maxLength": 4000 },
+    "materials": { "type": "array", "maxItems": 16, "items": { "type": "string", "minLength": 1 } },
+    "scale": { "type": "string", "minLength": 1 },
+    "perspective": { "type": "string", "minLength": 1 },
+    "grounding": { "enum": ["center", "feet", "surface"] },
+    "framingProfile": { "enum": ["dialogue_bust@1.0.0", "full_body@1.0.0"] },
+    "canvasSize": { "enum": [64, 128, 256, 512] },
+    "anchorImage": { "type": "string", "minLength": 1 },
+    "license": { "type": "string", "minLength": 1 },
+    "imageModel": { "type": "string", "minLength": 1 }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["framingProfile"],
+        "properties": { "assetKind": { "not": { "const": "portrait_set" } } }
+      },
+      "then": false
+    },
+    {
+      "if": { "properties": { "framingProfile": { "const": "full_body@1.0.0" } }, "required": ["framingProfile"] },
+      "then": { "properties": { "grounding": { "const": "feet" } } }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/collection-static-spec.schema.json",
+  "title": "Forge Collection-backed Icon or Prop Set V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "id", "name", "collection", "items", "license"],
+  "properties": {
+    "schemaVersion": { "const": "2" },
+    "kind": { "enum": ["icon_set", "prop_set"] },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "collection": { "$ref": "#/$defs/revision" },
+    "items": { "type": "array", "minItems": 1, "maxItems": 64, "items": { "$ref": "#/$defs/item" } },
+    "license": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "revision": {
+      "type": "object", "additionalProperties": false, "required": ["id", "revision"],
+      "properties": { "id": { "type": "string", "minLength": 1 }, "revision": { "type": "string", "minLength": 1 } }
+    },
+    "item": {
+      "type": "object", "additionalProperties": false, "required": ["id", "name", "prompt"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "prompt": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "referenceImage": { "type": "string" }
+      }
+    }
+  }
+}

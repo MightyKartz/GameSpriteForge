@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/character-direction-motion-approval.schema.json",
+  "title": "Forge Direction Motion Approval V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "sourceJobId", "lockSha256", "nodeSha256", "accepted", "reason", "reviewedAt"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "direction-motion-approval@1.0.0" },
+    "sourceJobId": { "type": "string", "minLength": 1 },
+    "lockSha256": { "$ref": "#/$defs/sha256" },
+    "nodeSha256": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["front_idle", "back_idle", "right_idle", "left_idle", "front_walk", "back_walk", "right_walk", "left_walk"],
+      "properties": {
+        "front_idle": { "$ref": "#/$defs/sha256" },
+        "back_idle": { "$ref": "#/$defs/sha256" },
+        "right_idle": { "$ref": "#/$defs/sha256" },
+        "left_idle": { "$ref": "#/$defs/sha256" },
+        "front_walk": { "$ref": "#/$defs/sha256" },
+        "back_walk": { "$ref": "#/$defs/sha256" },
+        "right_walk": { "$ref": "#/$defs/sha256" },
+        "left_walk": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "accepted": { "const": true },
+    "reason": { "type": "string", "minLength": 1 },
+    "reviewedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

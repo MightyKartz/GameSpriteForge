@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamespriteforge.dev/schemas/character-scale-lock.schema.json",
+  "title": "Forge Character Scale Lock V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "profile", "workflow", "directionGridLockSha256",
+    "sharedScale", "anchorX", "anchorY", "maxBodyWidthDriftRatio",
+    "maxBodyHeightDriftRatio", "maxTorsoWidthDriftRatio", "maxTorsoAreaDriftRatio",
+    "maxCenterDriftPx", "maxFootBaselineDriftPx", "verdict", "reasons", "frames"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "character-scale-lock@1.0.0" },
+    "workflow": { "enum": ["topdown-cycle@10.0.0", "topdown-cycle@10.1.0"] },
+    "directionGridLockSha256": { "$ref": "#/$defs/sha256" },
+    "sharedScale": { "type": "number", "exclusiveMinimum": 0 },
+    "anchorX": { "type": "number", "minimum": 0 },
+    "anchorY": { "type": "number", "minimum": 0 },
+    "maxBodyWidthDriftRatio": { "type": "number", "minimum": 0 },
+    "maxBodyHeightDriftRatio": { "type": "number", "minimum": 0 },
+    "maxTorsoWidthDriftRatio": { "type": "number", "minimum": 0 },
+    "maxTorsoAreaDriftRatio": { "type": "number", "minimum": 0 },
+    "maxCenterDriftPx": { "type": "number", "minimum": 0 },
+    "maxFootBaselineDriftPx": { "type": "number", "minimum": 0 },
+    "verdict": { "enum": ["game_ready", "blocked"] },
+    "reasons": { "type": "array", "items": { "type": "string" } },
+    "frames": {
+      "type": "array",
+      "minItems": 8,
+      "items": { "$ref": "#/$defs/frame" }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "animation", "frameIndex", "canvasWidth", "canvasHeight", "bodyWidth",
+        "bodyHeight", "bodyCenterX", "bodyBottomY", "torsoWidth", "torsoArea"
+      ],
+      "properties": {
+        "animation": { "enum": ["idle_down", "idle_up", "idle_right", "idle_left", "walk_down", "walk_up", "walk_right", "walk_left"] },
+        "frameIndex": { "type": "integer", "minimum": 0, "maximum": 11 },
+        "canvasWidth": { "type": "integer", "minimum": 1 },
+        "canvasHeight": { "type": "integer", "minimum": 1 },
+        "bodyWidth": { "type": "number", "exclusiveMinimum": 0 },
+        "bodyHeight": { "type": "number", "exclusiveMinimum": 0 },
+        "bodyCenterX": { "type": "number", "minimum": 0 },
+        "bodyBottomY": { "type": "number", "minimum": 0 },
+        "torsoWidth": { "type": "number", "exclusiveMinimum": 0 },
+        "torsoArea": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    }
+  }
+}

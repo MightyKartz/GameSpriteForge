@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/video-candidate-lock.schema.json",
+  "title": "Forge Video Candidate Lock V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "id", "acquisition", "provider", "model", "providerRequestCount", "importedWithoutProviderRequest", "motionDriverLockPath", "motionDriverLockSha256", "promptPath", "promptSha256", "sourceVideoPath", "sourceVideoSha256", "probe"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "video-candidate-lock@1.0.0" },
+    "id": { "type": "string", "minLength": 1 },
+    "acquisition": { "enum": ["browser", "api", "external_import"] },
+    "provider": { "type": "string", "minLength": 1 },
+    "model": { "type": "string", "minLength": 1 },
+    "providerTaskId": { "type": "string" },
+    "providerRequestCount": { "type": "integer", "minimum": 0 },
+    "importedWithoutProviderRequest": { "type": "boolean" },
+    "motionDriverLockPath": { "type": "string", "minLength": 1 },
+    "motionDriverLockSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "promptPath": { "type": "string", "minLength": 1 },
+    "promptSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "sourceVideoPath": { "type": "string", "minLength": 1 },
+    "sourceVideoSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "probe": { "type": "object" },
+    "quota": { "type": "object" }
+  }
+}

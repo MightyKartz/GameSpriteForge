@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/character-direction-motion-lock.schema.json",
+  "title": "Forge Direction Motion Lock V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "workflow", "providerId", "profileId", "imageModel", "styleRevision", "motionProfile", "canonicalNodeId", "canonicalSha256", "nodes"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "direction-motion-lock@1.0.0" },
+    "workflow": { "const": "topdown-direction-motion@8.0.0" },
+    "providerId": { "type": "string", "minLength": 1 },
+    "profileId": { "type": "string", "minLength": 1 },
+    "imageModel": { "type": "string", "minLength": 1 },
+    "styleRevision": { "type": "string", "minLength": 1 },
+    "motionProfile": {
+      "enum": ["freeform_motion@1.0.0", "biped_walk@1.0.0", "quadruped_walk@1.0.0", "flying_cycle@1.0.0", "slither_cycle@1.0.0"]
+    },
+    "canonicalNodeId": { "const": "front_idle" },
+    "canonicalSha256": { "$ref": "#/$defs/sha256" },
+    "nodes": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/node" }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "feedback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "profile", "verdict", "reasons"],
+      "properties": {
+        "schemaVersion": { "const": "1" },
+        "profile": { "const": "visual-generation-feedback@1.0.0" },
+        "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+        "reasons": { "type": "array", "items": { "type": "string" } },
+        "parentPaletteOverlap": { "type": "number", "minimum": 0, "maximum": 1 },
+        "parentScaleRatio": { "type": "number", "minimum": 0 },
+        "parentForegroundRatio": { "type": "number", "minimum": 0 },
+        "parentOccupancySimilarity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "parentComponentCount": { "type": "integer", "minimum": 0 },
+        "candidateComponentCount": { "type": "integer", "minimum": 0 },
+        "permanentFeatureMissing": { "type": "boolean" },
+        "canonicalBottomSupportCount": { "type": "integer", "minimum": 0 },
+        "canonicalBottomSpanRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "canonicalLowerCentroidDriftRatio": { "type": "number", "minimum": 0 },
+        "parentLowerCoveringWidthRatio": { "type": "number", "minimum": 0 },
+        "candidateLowerCoveringWidthRatio": { "type": "number", "minimum": 0 },
+        "parentLowerCoveringAreaShare": { "type": "number", "minimum": 0, "maximum": 1 },
+        "candidateLowerCoveringAreaShare": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodeId", "role", "direction", "canonicalNodeId", "canonicalSha256", "attempt", "providerRequestOccurred", "path", "sha256", "generationMasterPath", "generationMasterSha256", "feedback"],
+      "properties": {
+        "nodeId": { "enum": ["front_idle", "back_idle", "right_idle", "left_idle", "front_walk", "back_walk", "right_walk", "left_walk"] },
+        "role": { "enum": ["front_idle", "direction_idle", "direction_walk_pose"] },
+        "direction": { "enum": ["front", "rear", "right", "left"] },
+        "animation": { "enum": ["walk_down", "walk_up", "walk_right", "walk_left"] },
+        "parentNodeId": { "type": "string", "minLength": 1 },
+        "parentSha256": { "$ref": "#/$defs/sha256" },
+        "canonicalNodeId": { "const": "front_idle" },
+        "canonicalSha256": { "$ref": "#/$defs/sha256" },
+        "attempt": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "providerRequestOccurred": { "type": "boolean" },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "generationMasterPath": { "type": "string", "minLength": 1 },
+        "generationMasterSha256": { "$ref": "#/$defs/sha256" },
+        "feedback": { "$ref": "#/$defs/feedback" }
+      }
+    }
+  }
+}

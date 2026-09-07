@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/character-motion-semantics-report.schema.json",
+  "title": "Forge Character Motion Semantics Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "thresholds", "verdict", "animations"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "enum": ["motion-semantics@1.0.0", "motion-semantics@1.1.0", "motion-semantics@1.2.0", "motion-semantics@1.3.0", "motion-semantics@1.4.0", "motion-semantics@1.5.0"] },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "walkMinLowerBodyDynamicDegree",
+        "walkMinOpposingContactChangeRatio",
+        "walkMinDistinctPoseCount",
+        "walkMinPhaseOrderScore",
+        "idleMinForegroundDynamicDegree",
+        "maximumStableUpperBodyFlickerRatio",
+        "lowerEdgeGhostMinimumRatio",
+        "lowerEdgeGhostMinimumOutlierRatio",
+        "maximumFootLobeCount"
+      ],
+      "properties": {
+        "walkMinLowerBodyDynamicDegree": { "type": "number", "minimum": 0, "maximum": 1 },
+        "walkMaxLowerBodyDynamicDegree": { "type": "number", "minimum": 0, "maximum": 1 },
+        "walkMinOpposingContactChangeRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "walkMinDistinctPoseCount": { "type": "integer", "minimum": 1 },
+        "walkMinPhaseOrderScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "idleMinForegroundDynamicDegree": { "type": "number", "minimum": 0, "maximum": 1 },
+        "maximumStableUpperBodyFlickerRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "maximumStableUpperBodyAlphaDriftRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "lowerEdgeGhostMinimumRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "lowerEdgeGhostMinimumOutlierRatio": { "type": "number", "minimum": 0 },
+        "maximumFootLobeCount": { "type": "integer", "minimum": 1 },
+        "walkSideMinKneeShinDynamicDegree": { "type": "number", "minimum": 0, "maximum": 1 },
+        "walkSideMaxKneeShinDynamicDegree": { "type": "number", "minimum": 0, "maximum": 1 },
+        "walkSideMaxFootToKneeShinMotionRatio": { "type": "number", "minimum": 0 },
+        "walkSideMinContactPassingCadenceScore": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "verdict": { "enum": ["game_ready", "blocked"] },
+    "animations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "frameCount",
+          "foregroundDynamicDegree",
+          "lowerBodyDynamicDegree",
+          "opposingContactChangeRatio",
+          "distinctPoseCount",
+          "phaseOrderScore",
+          "stableUpperBodyFlickerRatioMax",
+          "unsupportedLowerEdgeRatioMax",
+          "lowerEdgeOutlierRatioMax",
+          "footLobeCountMax",
+          "verdict",
+          "reasons"
+        ],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "frameCount": { "type": "integer", "minimum": 1 },
+          "foregroundDynamicDegree": { "type": "number", "minimum": 0, "maximum": 1 },
+          "lowerBodyDynamicDegree": { "type": "number", "minimum": 0, "maximum": 1 },
+          "opposingContactChangeRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+          "distinctPoseCount": { "type": "integer", "minimum": 0 },
+          "phaseOrderScore": { "type": "number", "minimum": 0, "maximum": 1 },
+          "stableUpperBodyFlickerRatioMax": { "type": "number", "minimum": 0, "maximum": 1 },
+          "stableUpperBodyAlphaDriftRatioMax": { "type": "number", "minimum": 0, "maximum": 1 },
+          "stableUpperBodyColorFlickerRatioMax": { "type": "number", "minimum": 0, "maximum": 1 },
+          "unsupportedLowerEdgeRatioMax": { "type": "number", "minimum": 0, "maximum": 1 },
+          "lowerEdgeOutlierRatioMax": { "type": "number", "minimum": 0 },
+          "footLobeCountMax": { "type": "integer", "minimum": 0 },
+          "proximalLegDynamicDegree": { "type": "number", "minimum": 0, "maximum": 1 },
+          "kneeShinDynamicDegree": { "type": "number", "minimum": 0, "maximum": 1 },
+          "footDynamicDegree": { "type": "number", "minimum": 0, "maximum": 1 },
+          "footToKneeShinMotionRatio": { "type": "number", "minimum": 0 },
+          "sideContactPassingSpreadRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+          "sideContactPassingCadenceScore": { "type": "number", "minimum": 0, "maximum": 1 },
+          "sideLateralityReviewRequired": { "type": "boolean" },
+          "verdict": { "enum": ["game_ready", "blocked"] },
+          "reasons": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "recommendedRetryFrames": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "integer", "minimum": 0, "maximum": 23 }
+          }
+        }
+      }
+    }
+  }
+}

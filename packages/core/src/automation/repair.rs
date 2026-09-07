@@ -222,7 +222,9 @@ fn read_quality_snapshot(
             Ok(character_quality_snapshot(&report))
         }
         AutomationOperation::CreateStyleLock(_)
+        | AutomationOperation::ImportDirectionGrid(_)
         | AutomationOperation::CreateSubjectLock(_)
+        | AutomationOperation::CreateCollectionLock(_)
         | AutomationOperation::GenerateStaticAssetSet(_)
         | AutomationOperation::CreateEnvironmentLock(_)
         | AutomationOperation::GenerateTerrainSet(_)
@@ -295,7 +297,9 @@ fn apply_safe_repairs(
             );
         }
         AutomationOperation::CreateStyleLock(_)
+        | AutomationOperation::ImportDirectionGrid(_)
         | AutomationOperation::CreateSubjectLock(_)
+        | AutomationOperation::CreateCollectionLock(_)
         | AutomationOperation::GenerateStaticAssetSet(_)
         | AutomationOperation::CreateEnvironmentLock(_)
         | AutomationOperation::GenerateTerrainSet(_)

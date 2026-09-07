@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "2",
+  "kind": "character",
+  "id": "fixture-ranger-grid-asymmetric-gait",
+  "name": "Fixture Ranger Grid Asymmetric Gait",
+  "subject": {
+    "id": "fixture-ranger",
+    "revision": "REPLACE_WITH_SUBJECT_REVISION"
+  },
+  "workflow": {
+    "id": "topdown-grid",
+    "version": "9.3.0"
+  },
+  "cameraProfile": "topdown-three-quarter@1.0.0",
+  "equipment": {
+    "kind": "none"
+  },
+  "poseGuidance": "grayscale",
+  "license": "MIT"
+}

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/checkerboard-sheet-matting-report.schema.json",
+  "title": "Forge Checkerboard Sheet Matting Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "strategy",
+    "width",
+    "height",
+    "sourceAlphaPresent",
+    "borderCheckerCandidateRatio",
+    "darkerCheckerLuma",
+    "lighterCheckerLuma",
+    "backgroundPixelsRemoved",
+    "fringePixelsRemoved",
+    "cleanedAlphaCoverage",
+    "cleanedBorderOpaqueRatio",
+    "significantComponentCount",
+    "neutralEdgeResidualPixels",
+    "verdict",
+    "reasons"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "enum": ["checkerboard-sheet-matting@1.0.0", "checkerboard-sheet-matting@1.1.0"] },
+    "strategy": { "enum": ["native_alpha_passthrough", "border_connected_light_checkerboard", "border_connected_light_checkerboard_soft_alpha"] },
+    "width": { "type": "integer", "minimum": 1 },
+    "height": { "type": "integer", "minimum": 1 },
+    "sourceAlphaPresent": { "type": "boolean" },
+    "borderCheckerCandidateRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "darkerCheckerLuma": { "type": "integer", "minimum": 0, "maximum": 255 },
+    "lighterCheckerLuma": { "type": "integer", "minimum": 0, "maximum": 255 },
+    "backgroundPixelsRemoved": { "type": "integer", "minimum": 0 },
+    "fringePixelsRemoved": { "type": "integer", "minimum": 0 },
+    "softAlphaPixelsReconstructed": { "type": "integer", "minimum": 0 },
+    "decontaminatedEdgePixels": { "type": "integer", "minimum": 0 },
+    "transparencyOrigin": { "enum": ["native_alpha", "deterministic_checkerboard_postprocess"] },
+    "cleanedAlphaCoverage": { "type": "number", "minimum": 0, "maximum": 1 },
+    "cleanedBorderOpaqueRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "significantComponentCount": { "type": "integer", "minimum": 0 },
+    "neutralEdgeResidualPixels": { "type": "integer", "minimum": 0 },
+    "verdict": { "enum": ["game_ready", "awaiting_review", "blocked", "regenerate"] },
+    "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "profile": { "const": "checkerboard-sheet-matting@1.1.0" } }, "required": ["profile"] },
+      "then": { "required": ["softAlphaPixelsReconstructed", "decontaminatedEdgePixels", "transparencyOrigin"] }
+    }
+  ]
+}

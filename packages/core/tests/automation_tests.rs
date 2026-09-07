@@ -1,5 +1,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, Barrier};
+use std::thread;
 
 use forge_core::automation::{
     automation_profile, run_operation, stage_plan_job, AssetInput, AssetMetadata,
@@ -7,6 +9,8 @@ use forge_core::automation::{
     CharacterWorkflowSelection, FixedGridSplit, GodotInstallRequest, MattingRecipe, PlanStore,
     PrepareAssetRequest, PrepareCharacterPackRequest, QualityPolicy, SpriteSheetSplit,
 };
+use forge_core::character_camera::CharacterCameraProfileV1;
+use forge_core::export::{CharacterMirrorPolicyV1, GodotRenderingContractV1, GodotTextureFilterV1};
 use forge_core::job::{JobLifecycleState, JobOperationKind, JobStore};
 use image::{Rgba, RgbaImage};
 use tempfile::tempdir;
@@ -57,6 +61,38 @@ fn changed_input_invalidates_prepared_plan() {
 }
 
 #[test]
+fn tampered_pending_plan_operation_estimate_or_effects_cannot_be_claimed() {
+    let temp = tempdir().unwrap();
+    let input = temp.path().join("input");
+    fs::create_dir(&input).unwrap();
+    let paths = write_identical_frames(&input);
+    let store = PlanStore::new(temp.path().join("plans")).unwrap();
+
+    for mutation in ["operation", "estimate", "effects"] {
+        let prepared = store
+            .prepare(AutomationOperation::PrepareAsset(request(paths.clone())))
+            .unwrap();
+        let pending_path = store
+            .root()
+            .join(format!("{}.pending.json", prepared.token));
+        let mut pending: serde_json::Value =
+            serde_json::from_slice(&fs::read(&pending_path).unwrap()).unwrap();
+        match mutation {
+            "operation" => pending["operation"]["request"]["metadata"]["name"] = "tampered".into(),
+            "estimate" => pending["estimate"]["maximumProviderRequests"] = 99.into(),
+            "effects" => pending["effects"] = serde_json::json!(["tampered effect"]),
+            _ => unreachable!(),
+        }
+        fs::write(&pending_path, serde_json::to_vec_pretty(&pending).unwrap()).unwrap();
+        let error = store.claim(&prepared.token).unwrap_err();
+        assert!(
+            error.to_string().contains("input changed"),
+            "{mutation}: {error}"
+        );
+    }
+}
+
+#[test]
 fn prepare_asset_job_exports_valid_pack() {
     let temp = tempdir().unwrap();
     let input = temp.path().join("input");
@@ -87,6 +123,101 @@ fn prepare_asset_job_exports_valid_pack() {
 }
 
 #[test]
+fn concurrent_workers_execute_a_staged_job_exactly_once() {
+    let temp = tempdir().unwrap();
+    let input = temp.path().join("input");
+    fs::create_dir(&input).unwrap();
+    let operation = AutomationOperation::PrepareAsset(request(write_identical_frames(&input)));
+    let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+    let prepared = plans.prepare(operation).unwrap();
+    let plan = plans.claim(&prepared.token).unwrap();
+    let jobs = JobStore::new(temp.path().join("jobs")).unwrap();
+    let queued = stage_plan_job(&jobs, &plan).unwrap();
+
+    let barrier = Arc::new(Barrier::new(3));
+    let mut workers = Vec::new();
+    for _ in 0..2 {
+        let jobs = jobs.clone();
+        let job_id = queued.job_id.clone();
+        let operation = plan.operation.clone();
+        let barrier = barrier.clone();
+        workers.push(thread::spawn(move || {
+            barrier.wait();
+            run_operation(&jobs, &job_id, &operation)
+        }));
+    }
+    barrier.wait();
+    let results = workers
+        .into_iter()
+        .map(|worker| worker.join().unwrap())
+        .collect::<Vec<_>>();
+
+    assert_eq!(results.iter().filter(|result| result.is_ok()).count(), 1);
+    assert_eq!(results.iter().filter(|result| result.is_err()).count(), 1);
+    assert!(results
+        .iter()
+        .filter_map(|result| result.as_ref().err())
+        .all(|error| error.to_string().contains("job_execution_not_queued")));
+    let completed = jobs.read_record(&queued.job_id).unwrap();
+    assert_eq!(completed.lifecycle_state, JobLifecycleState::Succeeded);
+    assert_eq!(
+        completed
+            .artifacts
+            .iter()
+            .filter(|artifact| artifact.kind == "gsfpack")
+            .count(),
+        1
+    );
+}
+
+#[test]
+fn staged_job_rejects_a_different_operation_before_running() {
+    let temp = tempdir().unwrap();
+    let input = temp.path().join("input");
+    fs::create_dir(&input).unwrap();
+    let operation = AutomationOperation::PrepareAsset(request(write_identical_frames(&input)));
+    let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+    let prepared = plans.prepare(operation).unwrap();
+    let plan = plans.claim(&prepared.token).unwrap();
+    let jobs = JobStore::new(temp.path().join("jobs")).unwrap();
+    let queued = stage_plan_job(&jobs, &plan).unwrap();
+    let mut different_operation = plan.operation.clone();
+    let AutomationOperation::PrepareAsset(request) = &mut different_operation else {
+        unreachable!("test fixture must stage PrepareAsset");
+    };
+    request.metadata.name = "Operation substitution".into();
+
+    let error = run_operation(&jobs, &queued.job_id, &different_operation).unwrap_err();
+
+    assert!(error.to_string().contains("job_execution_not_queued"));
+    let record = jobs.read_record(&queued.job_id).unwrap();
+    assert_eq!(record.lifecycle_state, JobLifecycleState::Queued);
+    assert!(record.artifacts.is_empty());
+}
+
+#[test]
+fn queued_cancellation_prevents_operation_execution() {
+    let temp = tempdir().unwrap();
+    let input = temp.path().join("input");
+    fs::create_dir(&input).unwrap();
+    let operation = AutomationOperation::PrepareAsset(request(write_identical_frames(&input)));
+    let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+    let prepared = plans.prepare(operation).unwrap();
+    let plan = plans.claim(&prepared.token).unwrap();
+    let jobs = JobStore::new(temp.path().join("jobs")).unwrap();
+    let queued = stage_plan_job(&jobs, &plan).unwrap();
+    jobs.request_cancellation(&queued.job_id).unwrap();
+
+    let error = run_operation(&jobs, &queued.job_id, &plan.operation).unwrap_err();
+
+    assert!(error.to_string().contains("job_execution_not_queued"));
+    let record = jobs.read_record(&queued.job_id).unwrap();
+    assert_eq!(record.lifecycle_state, JobLifecycleState::Queued);
+    assert!(record.cancellation_requested);
+    assert!(record.artifacts.is_empty());
+}
+
+#[test]
 fn character_pack_uses_shared_canvas_and_exports_multiple_animations() {
     let temp = tempdir().unwrap();
     let idle = temp.path().join("idle");
@@ -101,6 +232,7 @@ fn character_pack_uses_shared_canvas_and_exports_multiple_animations() {
             default_animation: "attack".into(),
             creator: "Game Sprite Forge".into(),
             license: "private".into(),
+            rendering: Default::default(),
         },
         workflow: CharacterWorkflowSelection::default(),
         animations: vec![
@@ -123,9 +255,14 @@ fn character_pack_uses_shared_canvas_and_exports_multiple_animations() {
                 matting: MattingRecipe::PreserveAlpha,
             },
         ],
+        character_prompt: None,
+        camera_profile: None,
+        equipment: Default::default(),
         normalize: profile.normalize,
         sheet: profile.sheet,
         quality: QualityPolicy::default(),
+        source_cycle_sampling_profile: None,
+        source_cycle_sampling_preview: false,
     };
     let plans = PlanStore::new(temp.path().join("plans")).unwrap();
     let prepared = plans
@@ -315,6 +452,7 @@ fn guided_character_workflow_requires_its_core_animations() {
             default_animation: "idle".into(),
             creator: "Game Sprite Forge".into(),
             license: "private".into(),
+            rendering: Default::default(),
         },
         workflow: CharacterWorkflowSelection {
             id: "platformer".into(),
@@ -340,9 +478,14 @@ fn guided_character_workflow_requires_its_core_animations() {
                 matting: MattingRecipe::PreserveAlpha,
             },
         ],
+        character_prompt: None,
+        camera_profile: None,
+        equipment: Default::default(),
         normalize: profile.normalize,
         sheet: profile.sheet,
         quality: QualityPolicy::default(),
+        source_cycle_sampling_profile: None,
+        source_cycle_sampling_preview: false,
     };
 
     let error = PlanStore::new(temp.path().join("plans"))
@@ -351,6 +494,102 @@ fn guided_character_workflow_requires_its_core_animations() {
         .unwrap_err();
 
     assert!(error.to_string().contains("requires animations: jump"));
+}
+
+#[test]
+fn external_keyframes_plan_accepts_independent_transparent_pngs_without_provider_budget() {
+    let temp = tempdir().unwrap();
+    let request =
+        external_keyframe_request(temp.path(), CharacterMirrorPolicyV1::MirrorRightToLeft);
+    let prepared = PlanStore::new(temp.path().join("plans"))
+        .unwrap()
+        .prepare(AutomationOperation::PrepareCharacterPack(request))
+        .unwrap();
+
+    assert_eq!(prepared.estimate.provider_request_estimate, 0);
+    assert_eq!(prepared.estimate.maximum_provider_requests, 0);
+    assert_eq!(
+        prepared.estimate.workflow.as_deref(),
+        Some("topdown-external-keyframes@11.0.0")
+    );
+}
+
+#[test]
+fn external_keyframes_plan_accepts_explicit_right_only_contract() {
+    let temp = tempdir().unwrap();
+    let request = external_keyframe_request(temp.path(), CharacterMirrorPolicyV1::RightOnly);
+    let prepared = PlanStore::new(temp.path().join("plans"))
+        .unwrap()
+        .prepare(AutomationOperation::PrepareCharacterPack(request))
+        .unwrap();
+
+    assert_eq!(prepared.estimate.provider_request_estimate, 0);
+    assert_eq!(prepared.estimate.maximum_provider_requests, 0);
+}
+
+#[test]
+fn external_keyframes_right_only_rejects_missing_right_animation() {
+    let temp = tempdir().unwrap();
+    let mut request = external_keyframe_request(temp.path(), CharacterMirrorPolicyV1::RightOnly);
+    request
+        .animations
+        .retain(|animation| animation.name != "walk_right");
+    let error = PlanStore::new(temp.path().join("plans"))
+        .unwrap()
+        .prepare(AutomationOperation::PrepareCharacterPack(request))
+        .unwrap_err();
+
+    assert!(error
+        .to_string()
+        .contains("requires animations: walk_right"));
+}
+
+#[test]
+fn external_keyframes_right_only_rejects_left_animations() {
+    let temp = tempdir().unwrap();
+    let mut request = external_keyframe_request(temp.path(), CharacterMirrorPolicyV1::RightOnly);
+    request.animations.extend([
+        CharacterAnimationRecipe {
+            name: "idle_left".into(),
+            input: AssetInput::PngSequence {
+                paths: write_external_frames(temp.path(), "idle_left", 1),
+            },
+            fps: 1.0,
+            loop_animation: false,
+            matting: MattingRecipe::PreserveAlpha,
+        },
+        CharacterAnimationRecipe {
+            name: "walk_left".into(),
+            input: AssetInput::PngSequence {
+                paths: write_external_frames(temp.path(), "walk_left", 4),
+            },
+            fps: 4.0,
+            loop_animation: true,
+            matting: MattingRecipe::PreserveAlpha,
+        },
+    ]);
+    let error = PlanStore::new(temp.path().join("plans"))
+        .unwrap()
+        .prepare(AutomationOperation::PrepareCharacterPack(request))
+        .unwrap_err();
+
+    assert!(error
+        .to_string()
+        .contains("external_keyframes_left_forbidden"));
+}
+
+#[test]
+fn external_keyframes_plan_requires_explicit_mirror_policy() {
+    let temp = tempdir().unwrap();
+    let request = external_keyframe_request(temp.path(), CharacterMirrorPolicyV1::Auto);
+    let error = PlanStore::new(temp.path().join("plans"))
+        .unwrap()
+        .prepare(AutomationOperation::PrepareCharacterPack(request))
+        .unwrap_err();
+
+    assert!(error
+        .to_string()
+        .contains("external_keyframes_mirror_policy_required"));
 }
 
 #[test]
@@ -569,6 +808,87 @@ fn request(paths: Vec<PathBuf>) -> PrepareAssetRequest {
         sheet: profile.sheet,
         quality: QualityPolicy::default(),
     }
+}
+
+fn external_keyframe_request(
+    root: &Path,
+    mirror_policy: CharacterMirrorPolicyV1,
+) -> PrepareCharacterPackRequest {
+    let profile = automation_profile();
+    let definitions = [
+        ("idle_down", 1, 1.0, false),
+        ("idle_up", 1, 1.0, false),
+        ("idle_right", 1, 1.0, false),
+        ("walk_down", 4, 4.0, true),
+        ("walk_up", 4, 4.0, true),
+        ("walk_right", 4, 4.0, true),
+    ];
+    let animations = definitions
+        .into_iter()
+        .map(
+            |(name, frame_count, fps, loop_animation)| CharacterAnimationRecipe {
+                name: name.into(),
+                input: AssetInput::PngSequence {
+                    paths: write_external_frames(root, name, frame_count),
+                },
+                fps,
+                loop_animation,
+                matting: MattingRecipe::PreserveAlpha,
+            },
+        )
+        .collect();
+    PrepareCharacterPackRequest {
+        schema_version: "2".into(),
+        metadata: CharacterPackMetadata {
+            name: "External Codex Ranger".into(),
+            default_animation: "idle_down".into(),
+            creator: "Game Sprite Forge".into(),
+            license: "private".into(),
+            rendering: GodotRenderingContractV1 {
+                texture_filter: GodotTextureFilterV1::Linear,
+                pixel_snap: false,
+                mirror_policy,
+                ..GodotRenderingContractV1::default()
+            },
+        },
+        workflow: CharacterWorkflowSelection {
+            id: "topdown-external-keyframes".into(),
+            version: "11.0.0".into(),
+        },
+        animations,
+        character_prompt: Some("a hooded ranger with an olive cape and orange scarf".into()),
+        camera_profile: Some(CharacterCameraProfileV1::TopdownThreeQuarter),
+        equipment: Default::default(),
+        normalize: profile.normalize,
+        sheet: profile.sheet,
+        quality: QualityPolicy::default(),
+        source_cycle_sampling_profile: None,
+        source_cycle_sampling_preview: false,
+    }
+}
+
+fn write_external_frames(root: &Path, animation: &str, frame_count: usize) -> Vec<PathBuf> {
+    let directory = root.join(animation);
+    fs::create_dir_all(&directory).unwrap();
+    let seed = animation.bytes().fold(0_u8, u8::wrapping_add);
+    (0..frame_count)
+        .map(|index| {
+            let path = directory.join(format!("frame_{index}.png"));
+            let mut image = RgbaImage::from_pixel(64, 64, Rgba([0, 0, 0, 0]));
+            let offset = index as u32;
+            for y in 12..58 {
+                for x in (20 + offset)..(44 + offset) {
+                    image.put_pixel(
+                        x.min(62),
+                        y,
+                        Rgba([seed, 80_u8.wrapping_add(index as u8), 40, 255]),
+                    );
+                }
+            }
+            image.save(&path).unwrap();
+            path
+        })
+        .collect()
 }
 
 fn write_identical_frames(directory: &std::path::Path) -> Vec<PathBuf> {

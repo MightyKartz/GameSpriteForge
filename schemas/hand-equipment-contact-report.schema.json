@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/hand-equipment-contact-report.schema.json",
+  "title": "Forge Hand Equipment Contact Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "equipmentKind", "verdict", "locks", "animations"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "enum": ["hand-equipment-contact@1.0.0", "hand-equipment-contact@1.1.0"] },
+    "equipmentKind": { "type": "string", "minLength": 1 },
+    "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+    "locks": { "type": "array", "items": { "$ref": "#/$defs/lock" } },
+    "animations": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/animation" } }
+  },
+  "$defs": {
+    "lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["animation", "equipmentKind", "side", "referenceFrame", "gripAnchorXPx", "gripAnchorYPx", "shaftAxisXPx", "shaftVisibleLengthPx"],
+      "properties": {
+        "animation": { "type": "string", "minLength": 1 },
+        "equipmentKind": { "type": "string", "minLength": 1 },
+        "side": { "enum": ["left", "right", "unknown"] },
+        "referenceFrame": { "type": "integer", "minimum": 0 },
+        "gripAnchorXPx": { "type": "number" },
+        "gripAnchorYPx": { "type": "number" },
+        "shaftAxisXPx": { "type": "number" },
+        "shaftVisibleLengthPx": { "type": "number", "minimum": 0 }
+      }
+    },
+    "animation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "frameCount", "equipmentExpected", "equipmentDetectedFrames", "gripContactFrames", "equipmentSideFlipFrames", "longThinProtrusionFrames", "maximumGripAnchorDriftPx", "maximumHandRegionAreaOutlierRatio", "verdict", "reasons"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "frameCount": { "type": "integer", "minimum": 1 },
+        "equipmentExpected": { "type": "boolean" },
+        "equipmentDetectedFrames": { "type": "integer", "minimum": 0 },
+        "gripContactFrames": { "type": "integer", "minimum": 0 },
+        "equipmentSideFlipFrames": { "type": "integer", "minimum": 0 },
+        "longThinProtrusionFrames": { "type": "integer", "minimum": 0 },
+        "maximumGripAnchorDriftPx": { "type": "number", "minimum": 0 },
+        "maximumHandRegionAreaOutlierRatio": { "type": "number", "minimum": 0 },
+        "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+        "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    }
+  }
+}

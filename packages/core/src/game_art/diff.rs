@@ -36,6 +36,7 @@ use crate::asset_project::{
     STYLE_LOCK_FILE,
 };
 use crate::catalog::{read_project_catalog, CatalogError, ProjectCatalogEntryV2};
+use crate::collection::{collection_lock_path, read_collection_lock, CollectionLockV1};
 use crate::subject::{read_subject_lock, subject_lock_path, SubjectLockV1};
 
 /// Only schema version emitted by this stage.
@@ -421,6 +422,10 @@ pub fn project_source_sha256(
                     .join(".forge/subjects")
                     .join(&reference.id)
                     .join(&reference.revision),
+                LockKind::Collection => project_root
+                    .join(".forge/collections")
+                    .join(&reference.id)
+                    .join(&reference.revision),
             };
             lock_directories.insert(directory);
         }
@@ -661,6 +666,54 @@ fn resolve_lock_ref(
                 lock_sha256: semantic_lock_sha256(project_root, &lock_path)?,
             })
         }
+        LockKind::Collection => {
+            let lock_path = collection_lock_path(project_root, &reference.id, &reference.revision);
+            if !lock_path.is_file() {
+                return Err(GameArtError::UnknownLock(format!(
+                    "collection lock \"{reference}\" not found at {}",
+                    lock_path.display()
+                )));
+            }
+            ensure_lock_stays_in_project(project_root, &lock_path, &reference.to_string())?;
+            let parsed: CollectionLockV1 = read_lock_json(&lock_path, &reference.to_string())?;
+            if parsed.id != reference.id || parsed.revision != reference.revision {
+                return Err(GameArtError::LockRevisionMismatch(format!(
+                    "collection lock at {} records \"{}@{}\", expected \"{reference}\"",
+                    lock_path.display(),
+                    parsed.id,
+                    parsed.revision
+                )));
+            }
+            ensure_lock_stays_in_project(
+                project_root,
+                &parsed.anchor_path,
+                &format!("{reference} anchor"),
+            )?;
+            ensure_lock_stays_in_project(
+                project_root,
+                &parsed.medoid_path,
+                &format!("{reference} medoid"),
+            )?;
+            let lock = read_collection_lock(&lock_path).map_err(|error| {
+                GameArtError::InvalidLockRef(format!(
+                    "collection lock \"{reference}\" failed integrity validation: {error}"
+                ))
+            })?;
+            ensure_lock_provider(
+                &reference.to_string(),
+                &lock.provider_id,
+                &lock.profile_id,
+                provider,
+            )?;
+            Ok(ResolvedLockRefV1 {
+                kind: LockKind::Collection,
+                id: reference.id.clone(),
+                revision: reference.revision.clone(),
+                provider_id: lock.provider_id,
+                profile_id: lock.profile_id,
+                lock_sha256: semantic_lock_sha256(project_root, &lock_path)?,
+            })
+        }
     }
 }
 
@@ -873,6 +926,11 @@ fn recorded_lock_revisions_match(
             LockKind::Style => {
                 recorded_style_revision(entry).as_deref() == Some(reference.revision.as_str())
             }
+            LockKind::Collection => entry
+                .locks
+                .as_ref()
+                .and_then(|locks| locks.collection.as_ref())
+                .is_some_and(|revision| revision == &reference.revision),
         }
     })
 }
@@ -886,7 +944,11 @@ fn recorded_provider_matches(entry: &ProjectCatalogEntryV2, provider: &GameArtPr
 fn expected_workflow(kind: super::types::AssetKind) -> &'static str {
     match kind {
         super::types::AssetKind::Character => "topdown@1.0.0",
-        super::types::AssetKind::IconSet | super::types::AssetKind::PropSet => "static-set@1.0.0",
+        super::types::AssetKind::IconSet
+        | super::types::AssetKind::PropSet
+        | super::types::AssetKind::PortraitSet
+        | super::types::AssetKind::EquipmentSet
+        | super::types::AssetKind::DecalSet => "static-set@1.0.0",
     }
 }
 
@@ -1164,6 +1226,7 @@ mod tests {
             output_dir: PathBuf::from("build"),
             current_style_revision: current_style_revision.map(str::to_string),
             current_environment_revision: None,
+            current_collection_revisions: Default::default(),
         };
         fs::write(
             root.join(FORGE_PROJECT_FILE),
@@ -1313,6 +1376,7 @@ mod tests {
             reviewed_at: None,
             license: None,
             provenance_summary: None,
+            review: None,
         }
     }
 

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "2",
+  "kind": "character",
+  "id": "ayla-locked-video",
+  "name": "Ayla Direction-Locked Video",
+  "subject": {
+    "id": "ayla-ranger",
+    "revision": "REPLACE_WITH_SUBJECT_REVISION"
+  },
+  "workflow": {
+    "id": "topdown-video-locked",
+    "version": "5.0.0"
+  },
+  "cameraProfile": "topdown-three-quarter@1.0.0",
+  "equipment": {
+    "kind": "none"
+  },
+  "license": "private"
+}

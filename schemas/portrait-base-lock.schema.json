@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/portrait-base-lock.schema.json",
+  "title": "Forge Portrait Base Lock V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "profile", "assetId", "itemId", "imageSha256",
+    "providerEditSourceSha256", "providerId", "profileId",
+    "styleRevision", "subjectId", "subjectRevision", "collectionId", "collectionRevision",
+    "framingProfile", "faceScope", "createdAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "portrait-base-lock@1.0.0" },
+    "assetId": { "type": "string", "minLength": 1 },
+    "itemId": { "const": "neutral" },
+    "imagePath": { "type": "string", "minLength": 1 },
+    "imageSha256": { "$ref": "#/$defs/sha256" },
+    "providerEditSourcePath": { "type": "string", "minLength": 1 },
+    "providerEditSourceSha256": { "$ref": "#/$defs/sha256" },
+    "providerId": { "type": "string", "minLength": 1 },
+    "profileId": { "type": "string", "minLength": 1 },
+    "model": { "type": "string", "minLength": 1 },
+    "styleRevision": { "type": "string", "minLength": 1 },
+    "subjectId": { "type": "string", "minLength": 1 },
+    "subjectRevision": { "type": "string", "minLength": 1 },
+    "collectionId": { "type": "string", "minLength": 1 },
+    "collectionRevision": { "type": "string", "minLength": 1 },
+    "framingProfile": { "enum": ["dialogue_bust@1.0.0", "full_body@1.0.0"] },
+    "neutralReferencePolicy": {
+      "enum": [
+        "subject-style@1.0.0",
+        "subject-edit@1.0.0",
+        "legacy-three-reference@1.0.0"
+      ]
+    },
+    "neutralReferenceRoles": {
+      "type": "array",
+      "items": {
+        "enum": ["subject_identity", "style", "pose_structure", "edit_target", "start_keyframe", "end_keyframe"]
+      }
+    },
+    "neutralReferenceSha256": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sha256" }
+    },
+    "faceScope": { "$ref": "#/$defs/faceScope" },
+    "createdAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "faceScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canvasWidth", "canvasHeight", "centerX", "centerY", "radiusX", "radiusY", "featherPx"],
+      "properties": {
+        "canvasWidth": { "type": "integer", "minimum": 1 },
+        "canvasHeight": { "type": "integer", "minimum": 1 },
+        "centerX": { "type": "integer", "minimum": 0 },
+        "centerY": { "type": "integer", "minimum": 0 },
+        "radiusX": { "type": "integer", "minimum": 1 },
+        "radiusY": { "type": "integer", "minimum": 1 },
+        "featherPx": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

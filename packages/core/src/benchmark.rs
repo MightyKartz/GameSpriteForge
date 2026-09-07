@@ -492,6 +492,8 @@ pub fn run_character_benchmark(
                 spec_path: subject_spec_path,
                 provider_id: options.provider_id.clone(),
                 profile_id: options.profile_id.clone(),
+                canonical_import_path: None,
+                import_approval_note: None,
             }),
             Some(provider),
         )?;
@@ -549,6 +551,9 @@ pub fn run_character_benchmark(
                     prompt: case.subject.prompt.clone(),
                     reference_image_path: Some(canonical_path.clone()),
                 },
+                camera_profile: Default::default(),
+                equipment: Default::default(),
+                equipment_explicit: *workflow == BenchmarkWorkflow::Keyframes,
                 style_lock_path: Some(style_lock_path.clone()),
                 subject_lock_path: (*workflow == BenchmarkWorkflow::Keyframes)
                     .then(|| subject_lock_path.clone()),
@@ -556,11 +561,17 @@ pub fn run_character_benchmark(
                 retry_animations: Vec::new(),
                 retry_stages: BTreeMap::new(),
                 retry_frames: BTreeMap::new(),
+                direction_grid_cape_contract: None,
+                validation_only: false,
+                validation_animations: Vec::new(),
+                motion_profile: Default::default(),
+                direction_motion_stage: Default::default(),
                 metadata: CharacterPackMetadata {
                     name: format!("{} {} benchmark", case.subject.name, workflow.as_str()),
                     default_animation: "idle".into(),
                     creator: "Game Sprite Forge benchmark".into(),
                     license: case.subject.license.clone(),
+                    rendering: Default::default(),
                 },
                 workflow: selection,
                 generation: GenerationPolicy {

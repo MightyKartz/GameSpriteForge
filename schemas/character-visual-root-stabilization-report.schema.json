@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamespriteforge.dev/schemas/character-visual-root-stabilization-report.schema.json",
+  "title": "Forge Character Visual Root Stabilization Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "animation",
+    "translationOnly",
+    "bodyFraction",
+    "targetVisualRootY",
+    "maximumTranslationPx",
+    "maximumClippedForegroundRatio",
+    "inputBodyHeightDriftPx",
+    "inputBodyHeightDriftRatio",
+    "outputVisualRootDriftPx",
+    "outputBodyTopDriftPx",
+    "outputFootBaselineDriftPx",
+    "verdict",
+    "reasons",
+    "frames"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "character-visual-root-stabilization@1.0.0" },
+    "animation": { "type": "string", "minLength": 1 },
+    "translationOnly": { "const": true },
+    "bodyFraction": { "type": "number", "minimum": 0, "maximum": 1 },
+    "targetVisualRootY": { "type": "number", "minimum": 0 },
+    "maximumTranslationPx": { "type": "integer", "minimum": 0 },
+    "maximumClippedForegroundRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "inputBodyHeightDriftPx": { "type": "number", "minimum": 0 },
+    "inputBodyHeightDriftRatio": { "type": "number", "minimum": 0 },
+    "outputVisualRootDriftPx": { "type": "number", "minimum": 0 },
+    "outputBodyTopDriftPx": { "type": "number", "minimum": 0 },
+    "outputFootBaselineDriftPx": { "type": "number", "minimum": 0 },
+    "verdict": { "enum": ["game_ready", "blocked"] },
+    "reasons": { "type": "array", "items": { "type": "string" } },
+    "frames": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 24,
+      "items": { "$ref": "#/$defs/frame" }
+    }
+  },
+  "$defs": {
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frameIndex",
+        "canvasWidth",
+        "canvasHeight",
+        "inputBodyTopY",
+        "inputBodyBottomY",
+        "inputBodyHeight",
+        "inputVisualRootY",
+        "translationY",
+        "outputBodyTopY",
+        "outputBodyBottomY",
+        "outputBodyHeight",
+        "outputVisualRootY",
+        "clippedForegroundPixelCount",
+        "clippedForegroundRatio"
+      ],
+      "properties": {
+        "frameIndex": { "type": "integer", "minimum": 0, "maximum": 23 },
+        "canvasWidth": { "type": "integer", "minimum": 1 },
+        "canvasHeight": { "type": "integer", "minimum": 1 },
+        "inputBodyTopY": { "type": "number", "minimum": 0 },
+        "inputBodyBottomY": { "type": "number", "minimum": 0 },
+        "inputBodyHeight": { "type": "number", "minimum": 1 },
+        "inputVisualRootY": { "type": "number", "minimum": 0 },
+        "translationY": { "type": "integer" },
+        "outputBodyTopY": { "type": "number", "minimum": 0 },
+        "outputBodyBottomY": { "type": "number", "minimum": 0 },
+        "outputBodyHeight": { "type": "number", "minimum": 1 },
+        "outputVisualRootY": { "type": "number", "minimum": 0 },
+        "clippedForegroundPixelCount": { "type": "integer", "minimum": 0 },
+        "clippedForegroundRatio": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

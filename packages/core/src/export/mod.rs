@@ -10,11 +10,15 @@ use std::path::{Path, PathBuf};
 
 use crate::quality::{LoopSelectionReport, QualityReport, QualityVerdict};
 
-pub use gif::{build_preview_gif, GifBackground, PreviewGifOutput, PreviewGifParameters};
+pub use gif::{
+    build_preview_contact_sheet, build_preview_gif, build_preview_gif_with_durations,
+    GifBackground, PreviewGifOutput, PreviewGifParameters,
+};
 pub use godot::{export_godot_project, GodotProjectExportOutput, GodotProjectExportParams};
 pub use manifest::{
-    export_metadata, CharacterPackMetadataParams, EngineManifest, ExportMetadata,
-    PackMetadataParams,
+    export_metadata, CharacterMirrorPolicyV1, CharacterPackMetadataParams, EngineManifest,
+    ExportMetadata, GodotRenderingContractV1, GodotTextureFilterV1, PackMetadataParams,
+    GODOT_RENDERING_PROFILE_V1,
 };
 pub use sheet::{build_sprite_sheet, Atlas, AtlasFrame, SpriteSheetOutput, SpriteSheetParameters};
 pub use sheet_layout::{
@@ -181,6 +185,14 @@ pub fn export_pack(params: ExportPackParams) -> Result<ExportPackOutput, ExportE
     if params.metadata.quality_report.verdict == QualityVerdict::Blocked {
         return Err(ExportError::QualityBlocked);
     }
+    if !params.metadata.frame_durations_ms.is_empty()
+        && (params.metadata.frame_durations_ms.len() != params.frame_paths.len()
+            || params.metadata.frame_durations_ms.contains(&0))
+    {
+        return Err(ExportError::InvalidParameter(
+            "frame durations must be empty or contain one positive value per frame".into(),
+        ));
+    }
 
     let sequence =
         export_frame_sequence(&params.frame_paths, &params.exports_dir, &params.export_id)?;
@@ -288,6 +300,23 @@ pub fn export_character_pack(
         if animation.quality_report.verdict == QualityVerdict::Blocked {
             return Err(ExportError::QualityBlocked);
         }
+        if let Some(timing) = animation
+            .loop_selection
+            .as_ref()
+            .and_then(|selection| selection.timing.as_ref())
+        {
+            if timing.frame_durations_ms.len() != animation.frame_paths.len()
+                || timing.frame_durations_ms.contains(&0)
+                || timing.playback_duration_ms
+                    != timing.frame_durations_ms.iter().copied().sum::<u64>()
+                || !(0.5..=2.0).contains(&timing.playback_speed_ratio)
+            {
+                return Err(ExportError::InvalidParameter(format!(
+                    "animation timing is inconsistent: {}",
+                    animation.name
+                )));
+            }
+        }
         names.push(animation.name.clone());
     }
 
@@ -310,20 +339,33 @@ pub fn export_character_pack(
         let end = offset + animation.frame_paths.len();
         let exported_frames = &sequence.frame_paths[offset..end];
         let preview_path = previews_dir.join(format!("{}.gif", animation.name));
-        build_preview_gif(
+        let timing = animation
+            .loop_selection
+            .as_ref()
+            .and_then(|selection| selection.timing.as_ref());
+        let playback_fps = timing
+            .map(|timing| timing.playback_fps)
+            .filter(|fps| *fps > 0.0)
+            .unwrap_or(animation.fps);
+        build_preview_gif_with_durations(
             exported_frames,
             &preview_path,
             PreviewGifParameters {
-                fps: animation.fps,
+                fps: playback_fps,
                 loop_animation: animation.loop_animation,
                 background: GifBackground::Transparent,
+                scale: 1,
             },
+            timing.map(|timing| timing.frame_durations_ms.as_slice()),
         )?;
         animation_preview_paths.insert(animation.name.clone(), preview_path);
         manifest_animations.push(manifest::ManifestAnimation {
             name: animation.name.clone(),
             frames: (offset..end).collect(),
-            fps: animation.fps,
+            fps: playback_fps,
+            frame_durations_ms: timing
+                .map(|timing| timing.frame_durations_ms.clone())
+                .unwrap_or_default(),
             loop_animation: animation.loop_animation,
         });
         quality_entries.push(AnimationQualityEntry {
@@ -380,7 +422,15 @@ pub fn export_character_pack(
     fs::write(
         &loop_selection_report_path,
         serde_json::to_vec_pretty(&serde_json::json!({
-            "profile": crate::quality::LOOP_SELECTION_PROFILE,
+            "profile": if character_quality.animations.iter().any(|entry| {
+                entry.loop_selection.as_ref().is_some_and(|report| {
+                    report.profile == crate::quality::ANCHORED_LOOP_SELECTION_PROFILE
+                })
+            }) {
+                crate::quality::ANCHORED_LOOP_SELECTION_PROFILE
+            } else {
+                crate::quality::LOOP_SELECTION_PROFILE
+            },
             "animations": character_quality.animations.iter().filter_map(|entry| {
                 entry.loop_selection.as_ref().map(|report| serde_json::json!({
                     "name": entry.name,
@@ -500,7 +550,8 @@ fn godot_import_helper(manifest: &manifest::EngineManifest) -> serde_json::Value
             "columns": manifest.sheet.columns,
             "rows": manifest.sheet.rows,
             "animations": manifest.animations,
-            "anchor": manifest.anchor
+            "anchor": manifest.anchor,
+            "rendering": manifest.rendering
         },
         "importSteps": [
             "Copy every texture listed in this helper's spriteFrames.textures into the Godot project.",
@@ -586,6 +637,7 @@ mod tests {
                 fps: 12.0,
                 loop_animation: true,
                 background: GifBackground::Checkerboard,
+                scale: 1,
             },
             metadata: PackMetadataParams {
                 id: "hero".to_string(),
@@ -599,8 +651,10 @@ mod tests {
                 animation_name: "idle".to_string(),
                 animation_frames: Some(vec![1, 2]),
                 fps: 12.0,
+                frame_durations_ms: Vec::new(),
                 loop_animation: true,
                 anchor: default_foot_anchor(4, 4, 0),
+                rendering: GodotRenderingContractV1::default(),
                 quality_report: quality_report(2),
             },
         })
@@ -685,6 +739,7 @@ mod tests {
                 fps: 12.0,
                 loop_animation: true,
                 background: GifBackground::Transparent,
+                scale: 1,
             },
             metadata: PackMetadataParams {
                 id: "hero".to_string(),
@@ -698,8 +753,10 @@ mod tests {
                 animation_name: "idle".to_string(),
                 animation_frames: None,
                 fps: 12.0,
+                frame_durations_ms: Vec::new(),
                 loop_animation: true,
                 anchor: default_foot_anchor(1304, 696, 0),
+                rendering: GodotRenderingContractV1::default(),
                 quality_report: quality_report(30),
             },
         })
@@ -755,6 +812,7 @@ mod tests {
                 name: "walk".to_string(),
                 frames: vec![0, 1],
                 fps: 12.0,
+                frame_durations_ms: Vec::new(),
                 loop_animation: true,
             }],
             anchor: manifest::ManifestAnchor {
@@ -762,6 +820,7 @@ mod tests {
                 x: 32.0,
                 y: 64.0,
             },
+            rendering: manifest::GodotRenderingContractV1::default(),
         };
 
         let helper = godot_import_helper(&manifest);
@@ -772,6 +831,11 @@ mod tests {
         assert_eq!(textures[1].as_str().unwrap(), "assets/sprite_sheet_002.png");
         assert_eq!(helper["spriteFrames"]["frameWidth"].as_u64().unwrap(), 64);
         assert_eq!(helper["spriteFrames"]["frameHeight"].as_u64().unwrap(), 64);
+        assert_eq!(
+            helper["spriteFrames"]["rendering"]["textureFilter"],
+            "nearest"
+        );
+        assert_eq!(helper["spriteFrames"]["rendering"]["pixelSnap"], true);
     }
 
     #[test]
@@ -795,6 +859,7 @@ mod tests {
                 fps: 12.0,
                 loop_animation: true,
                 background: GifBackground::Checkerboard,
+                scale: 1,
             },
             metadata: PackMetadataParams {
                 id: "hero".to_string(),
@@ -808,8 +873,10 @@ mod tests {
                 animation_name: "idle".to_string(),
                 animation_frames: Some(vec![1]),
                 fps: 12.0,
+                frame_durations_ms: Vec::new(),
                 loop_animation: true,
                 anchor: default_foot_anchor(4, 4, 0),
+                rendering: GodotRenderingContractV1::default(),
                 quality_report: quality_report_with_verdict(1, QualityVerdict::Blocked),
             },
         })
@@ -817,6 +884,78 @@ mod tests {
 
         assert!(matches!(error, ExportError::QualityBlocked));
         assert!(!temp.path().join("exports/export_1").exists());
+    }
+
+    #[test]
+    fn export_pack_preserves_twenty_four_native_frame_durations() {
+        let temp = tempfile::tempdir().unwrap();
+        let mut sources = Vec::new();
+        for index in 0..24 {
+            let source = temp.path().join(format!("frame_{index:02}.png"));
+            write_frame(&source, [index as u8, 40, 80, 255]);
+            sources.push(source);
+        }
+        let durations = (0..24)
+            .map(|index| if index % 3 == 1 { 84 } else { 83 })
+            .collect::<Vec<_>>();
+        let output = export_pack(ExportPackParams {
+            exports_dir: temp.path().join("exports"),
+            export_id: "walk_right_24".into(),
+            frame_paths: sources,
+            sheet: SpriteSheetParameters {
+                columns: 6,
+                padding_px: 0,
+                margin_px: 0,
+                max_texture_size: 256,
+                allow_multi_sheet: false,
+            },
+            gif: PreviewGifParameters {
+                fps: 12.0,
+                loop_animation: true,
+                background: GifBackground::Transparent,
+                scale: 1,
+            },
+            metadata: PackMetadataParams {
+                id: "walk-right-24".into(),
+                name: "Walk Right 24".into(),
+                version: "0.1.0".into(),
+                creator_name: "Game Sprite Forge".into(),
+                license_type: "private".into(),
+                source_kind: "deterministic_compiler".into(),
+                source_name: None,
+                source_metadata: None,
+                animation_name: "walk_right".into(),
+                animation_frames: None,
+                fps: 12.0,
+                frame_durations_ms: durations.clone(),
+                loop_animation: true,
+                anchor: default_foot_anchor(4, 4, 0),
+                rendering: GodotRenderingContractV1 {
+                    texture_filter: GodotTextureFilterV1::Linear,
+                    pixel_snap: false,
+                    ..Default::default()
+                },
+                quality_report: quality_report_with_verdict(24, QualityVerdict::PrototypeUsable),
+            },
+        })
+        .unwrap();
+
+        let manifest: serde_json::Value =
+            serde_json::from_slice(&fs::read(output.manifest_path).unwrap()).unwrap();
+        assert_eq!(
+            manifest["animations"][0]["frames"]
+                .as_array()
+                .unwrap()
+                .len(),
+            24
+        );
+        assert_eq!(
+            manifest["animations"][0]["frameDurationsMs"],
+            serde_json::json!(durations)
+        );
+        assert_eq!(manifest["rendering"]["textureFilter"], "linear");
+        assert_eq!(manifest["rendering"]["pixelSnap"], false);
+        forge_pack::validate_pack_layout(&output.pack_dir).unwrap();
     }
 
     fn write_frame(path: &Path, rgba: [u8; 4]) {

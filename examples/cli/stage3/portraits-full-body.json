@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "2",
+  "kind": "portrait_set",
+  "id": "hero-full-body-portraits",
+  "name": "Hero Full-body Portraits",
+  "collection": { "id": "full-body-portraits", "revision": "REPLACE_WITH_COLLECTION_REVISION" },
+  "subject": { "id": "hero", "revision": "REPLACE_WITH_SUBJECT_REVISION" },
+  "framingProfile": "full_body@1.0.0",
+  "expressions": [
+    { "id": "neutral", "name": "Neutral", "prompt": "neutral expression, complete body visible from head through both feet" },
+    { "id": "happy", "name": "Happy", "prompt": "warm happy expression, complete body visible from head through both feet" },
+    { "id": "angry", "name": "Angry", "prompt": "controlled angry expression, complete body visible from head through both feet" },
+    { "id": "hurt", "name": "Hurt", "prompt": "hurt but conscious expression, complete body visible from head through both feet" },
+    { "id": "surprised", "name": "Surprised", "prompt": "surprised expression, complete body visible from head through both feet" }
+  ],
+  "license": "private"
+}

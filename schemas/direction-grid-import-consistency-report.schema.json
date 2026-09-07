@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/direction-grid-import-consistency-report.schema.json",
+  "title": "Forge DirectionGrid Import Consistency Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "absoluteAppearanceProfile", "absoluteAppearanceSha256", "nodes", "verdict", "reasons"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "direction-grid-import-consistency@1.0.0" },
+    "absoluteAppearanceProfile": { "const": "direction-grid-appearance@1.0.0" },
+    "absoluteAppearanceSha256": { "$ref": "#/$defs/sha256" },
+    "nodes": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "nodeId", "sourcePath", "sourceSha256", "candidatePath", "candidateSha256",
+          "identityScores", "bodyWidthRatio", "bodyHeightRatio", "centerDriftPx", "footBaselineDriftPx", "addedForegroundRatio", "removedForegroundRatio",
+          "faceHairChangeRatio", "upperCoveringChangeRatio", "torsoDetailChangeRatio",
+          "beltPouchChangeRatio", "sleeveHandChangeRatio", "capeExteriorChangeRatio",
+          "sourceExteriorElongationScore", "candidateExteriorElongationScore",
+          "exteriorElongationDelta", "newTorsoLinearComponentCount", "verdict", "reasons"
+        ],
+        "properties": {
+          "nodeId": { "enum": ["front_idle", "back_idle", "right_idle", "left_idle"] },
+          "sourcePath": { "type": "string", "minLength": 1 },
+          "sourceSha256": { "$ref": "#/$defs/sha256" },
+          "candidatePath": { "type": "string", "minLength": 1 },
+          "candidateSha256": { "$ref": "#/$defs/sha256" },
+          "identityScores": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["hogSimilarity", "regionalPaletteEmd", "silhouetteIou", "perceptualSimilarity", "occupancySimilarity", "composite"],
+            "properties": {
+              "hogSimilarity": { "$ref": "#/$defs/ratio" },
+              "regionalPaletteEmd": { "$ref": "#/$defs/ratio" },
+              "silhouetteIou": { "$ref": "#/$defs/ratio" },
+              "perceptualSimilarity": { "$ref": "#/$defs/ratio" },
+              "occupancySimilarity": { "$ref": "#/$defs/ratio" },
+              "composite": { "$ref": "#/$defs/ratio" }
+            }
+          },
+          "bodyWidthRatio": { "type": "number", "minimum": 0 },
+          "bodyHeightRatio": { "type": "number", "minimum": 0 },
+          "centerDriftPx": { "type": "number", "minimum": 0 },
+          "footBaselineDriftPx": { "type": "number", "minimum": 0 },
+          "addedForegroundRatio": { "$ref": "#/$defs/ratio" },
+          "removedForegroundRatio": { "$ref": "#/$defs/ratio" },
+          "faceHairChangeRatio": { "$ref": "#/$defs/ratio" },
+          "upperCoveringChangeRatio": { "$ref": "#/$defs/ratio" },
+          "torsoDetailChangeRatio": { "$ref": "#/$defs/ratio" },
+          "beltPouchChangeRatio": { "$ref": "#/$defs/ratio" },
+          "sleeveHandChangeRatio": { "$ref": "#/$defs/ratio" },
+          "capeExteriorChangeRatio": { "$ref": "#/$defs/ratio" },
+          "sourceExteriorElongationScore": { "type": "number", "minimum": 0 },
+          "candidateExteriorElongationScore": { "type": "number", "minimum": 0 },
+          "exteriorElongationDelta": { "type": "number", "minimum": 0 },
+          "newTorsoLinearComponentCount": { "type": "integer", "minimum": 0 },
+          "verdict": { "$ref": "#/$defs/verdict" },
+          "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+        }
+      }
+    },
+    "verdict": { "$ref": "#/$defs/verdict" },
+    "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "verdict": { "enum": ["game_ready", "awaiting_review", "blocked", "regenerate"] }
+  }
+}

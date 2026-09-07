@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/grid-action-report.schema.json",
+  "title": "Forge Grid Action Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "animation", "attempt", "poseGuidance", "sheetPath", "sheetSha256", "cells"],
+  "allOf": [
+    {
+      "if": { "properties": { "profile": { "const": "grid-action-report@1.1.0" } } },
+      "then": { "required": ["phaseProfile", "phaseEvidence", "generationMethod"] }
+    },
+    {
+      "if": { "properties": { "generationMethod": { "const": "diagnostic_edit_retry" } }, "required": ["generationMethod"] },
+      "then": {
+        "required": ["inputSheetSha256", "repairReasons", "repairedFrames"],
+        "properties": {
+          "repairReasons": { "minItems": 1 },
+          "repairedFrames": { "minItems": 1 }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "enum": ["grid-action-report@1.0.0", "grid-action-report@1.1.0"] },
+    "animation": { "enum": ["walk_down", "walk_up", "walk_right", "walk_left"] },
+    "attempt": { "type": "integer", "minimum": 1 },
+    "poseGuidance": { "enum": ["enabled", "disabled"] },
+    "phaseProfile": { "const": "grid-action-phases@1.0.0" },
+    "phaseEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "verifiedCyclicOrder", "distinctPoseCount", "phaseOrderScore", "opposingContactChangeRatio"],
+      "properties": {
+        "profile": { "const": "grid-action-phase-evidence@1.0.0" },
+        "verifiedCyclicOrder": { "const": true },
+        "distinctPoseCount": { "type": "integer", "minimum": 4 },
+        "phaseOrderScore": { "type": "number", "minimum": 0.45, "maximum": 1 },
+        "opposingContactChangeRatio": { "type": "number", "minimum": 0.04, "maximum": 1 }
+      }
+    },
+    "generationMethod": { "enum": ["legacy_action_grid", "legacy_local_recheck", "fresh_action_grid", "diagnostic_edit_retry", "targeted_cell_retry"] },
+    "repairReasons": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "repairedFrames": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "integer", "minimum": 0, "maximum": 3 }
+    },
+    "inputSheetSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "sheetPath": { "type": "string", "minLength": 1 },
+    "sheetSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "cells": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["frameIndex", "path", "sha256", "reused", "providerRequestOccurred"],
+        "properties": {
+          "frameIndex": { "type": "integer", "minimum": 0, "maximum": 3 },
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "reused": { "type": "boolean" },
+          "providerRequestOccurred": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

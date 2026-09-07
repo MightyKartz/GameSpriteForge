@@ -48,7 +48,8 @@ use sha2::{Digest, Sha256};
 use super::diff::{DiffActionKindV1, ProjectDiffV1, ResolvedLockRefV1};
 use super::types::{AssetKind, GameArtError};
 use super::ValidatedManifest;
-use crate::asset_project::{CharacterAssetSpecV1, StaticAssetSetSpecV1};
+use crate::asset_project::{CharacterAssetSpecV1, StaticAssetKind, StaticAssetSetSpecV1};
+use crate::collection::read_static_collection_spec;
 
 /// On-disk discriminator stored in the plan `kind` field.
 pub const PROJECT_BUILD_PLAN_KIND: &str = "project_build_plan";
@@ -324,7 +325,11 @@ pub fn compute_build_plan(
 fn workflow_for(kind: AssetKind) -> &'static str {
     match kind {
         AssetKind::Character => CHARACTER_VIDEO_WORKFLOW,
-        AssetKind::IconSet | AssetKind::PropSet => STATIC_SET_WORKFLOW,
+        AssetKind::IconSet
+        | AssetKind::PropSet
+        | AssetKind::PortraitSet
+        | AssetKind::EquipmentSet
+        | AssetKind::DecalSet => STATIC_SET_WORKFLOW,
     }
 }
 
@@ -336,7 +341,11 @@ fn workflow_for(kind: AssetKind) -> &'static str {
 fn required_capabilities_for(kind: AssetKind) -> &'static [&'static str] {
     match kind {
         AssetKind::Character => &["edit_image", "image_to_video"],
-        AssetKind::IconSet | AssetKind::PropSet => &["edit_image"],
+        AssetKind::IconSet
+        | AssetKind::PropSet
+        | AssetKind::PortraitSet
+        | AssetKind::EquipmentSet
+        | AssetKind::DecalSet => &["edit_image"],
     }
 }
 
@@ -377,12 +386,28 @@ fn estimate_for_asset(
             ))
         }
         AssetKind::IconSet | AssetKind::PropSet => {
-            let spec: StaticAssetSetSpecV1 = serde_json::from_slice(&bytes).map_err(|error| {
+            let value: serde_json::Value = serde_json::from_slice(&bytes).map_err(|error| {
                 GameArtError::InvalidJson(format!(
                     "static asset set spec {}: {error}",
                     canonical_spec_path.display()
                 ))
             })?;
+            let schema = value
+                .get("schemaVersion")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or_default();
+            let spec: StaticAssetSetSpecV1 = if schema == "1" {
+                serde_json::from_value(value).map_err(|error| {
+                    GameArtError::InvalidJson(format!(
+                        "static asset set spec {}: {error}",
+                        canonical_spec_path.display()
+                    ))
+                })?
+            } else {
+                read_static_collection_spec(canonical_spec_path, static_kind(kind))
+                    .map_err(|error| GameArtError::InvalidManifest(error.to_string()))?
+                    .asset
+            };
             if spec.kind.as_str() != kind.as_str() {
                 return Err(GameArtError::InvalidManifest(format!(
                     "spec {} declares kind \"{}\", manifest declares \"{kind}\"",
@@ -393,6 +418,23 @@ fn estimate_for_asset(
             let items = spec.items.len() as u32;
             Ok((items, items.saturating_mul(2)))
         }
+        AssetKind::PortraitSet | AssetKind::EquipmentSet | AssetKind::DecalSet => {
+            let spec = read_static_collection_spec(canonical_spec_path, static_kind(kind))
+                .map_err(|error| GameArtError::InvalidManifest(error.to_string()))?;
+            let items = spec.asset.items.len() as u32;
+            Ok((items, items.saturating_mul(2)))
+        }
+    }
+}
+
+fn static_kind(kind: AssetKind) -> StaticAssetKind {
+    match kind {
+        AssetKind::IconSet => StaticAssetKind::IconSet,
+        AssetKind::PropSet => StaticAssetKind::PropSet,
+        AssetKind::PortraitSet => StaticAssetKind::PortraitSet,
+        AssetKind::EquipmentSet => StaticAssetKind::EquipmentSet,
+        AssetKind::DecalSet => StaticAssetKind::DecalSet,
+        AssetKind::Character => unreachable!("character is not a static kind"),
     }
 }
 
@@ -454,6 +496,7 @@ mod tests {
             output_dir: PathBuf::from("build"),
             current_style_revision: Some("style-rev-1".into()),
             current_environment_revision: None,
+            current_collection_revisions: Default::default(),
         };
         fs::write(
             root.join(FORGE_PROJECT_FILE),
@@ -642,6 +685,7 @@ mod tests {
             reviewed_at: None,
             license: None,
             provenance_summary: None,
+            review: None,
         };
         register_catalog_asset_v2(root, entry).unwrap();
     }
@@ -976,6 +1020,7 @@ mod tests {
             reviewed_at: None,
             license: None,
             provenance_summary: None,
+            review: None,
         };
         register_catalog_asset_v2(temp.path(), orphan).unwrap();
 

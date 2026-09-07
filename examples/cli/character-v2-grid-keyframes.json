@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "2",
+  "kind": "character",
+  "id": "fixture-ranger-grid-keyframes",
+  "name": "Fixture Ranger Grid Keyframes",
+  "subject": {
+    "id": "fixture-ranger",
+    "revision": "REPLACE_WITH_SUBJECT_REVISION"
+  },
+  "workflow": {
+    "id": "topdown-grid",
+    "version": "9.1.0"
+  },
+  "cameraProfile": "topdown-three-quarter@1.0.0",
+  "equipment": {
+    "kind": "none"
+  },
+  "poseGuidance": "disabled",
+  "license": "MIT"
+}

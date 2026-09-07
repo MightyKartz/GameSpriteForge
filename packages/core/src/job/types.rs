@@ -120,8 +120,10 @@ pub enum JobOperationKind {
     PrepareAsset,
     PrepareCharacterPack,
     GenerateCharacterPack,
+    ImportDirectionGrid,
     CreateStyleLock,
     CreateSubjectLock,
+    CreateCollectionLock,
     GenerateStaticAssetSet,
     CreateEnvironmentLock,
     GenerateTerrainSet,
@@ -197,6 +199,19 @@ pub struct JobRecord {
     pub asset_id: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parent_job_id: Option<String>,
+    /// Non-secret durable grant used for every real Provider request made by
+    /// this Job. Child/retry/replay Jobs inherit it unless the caller creates
+    /// an explicitly new authorization.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub authorization_id: Option<String>,
+    /// SHA-256 of the exact durable authorization manifest reviewed when the
+    /// grant was attached. V9.3 Provider binding fails closed on mismatch.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub authorization_manifest_sha256: Option<String>,
+    /// Stable root of the immutable Job lineage. This avoids reconstructing a
+    /// potentially branching lineage while enforcing per-authorization caps.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lineage_root_job_id: Option<String>,
     #[serde(default)]
     pub operation_kind: JobOperationKind,
     #[serde(default)]

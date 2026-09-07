@@ -5,6 +5,11 @@
   "oneOf": [
     { "$ref": "#/$defs/character" },
     { "$ref": "#/$defs/staticSet" },
+    { "$ref": "collection-static-spec.schema.json" },
+    { "$ref": "portrait-set-spec.schema.json" },
+    { "$ref": "portrait-set-v2.schema.json" },
+    { "$ref": "equipment-set-spec.schema.json" },
+    { "$ref": "decal-set-spec.schema.json" },
     { "$ref": "terrain-set-spec.schema.json" },
     { "$ref": "building-kit-spec.schema.json" }
   ],
@@ -14,7 +19,7 @@
       "required": ["schemaVersion", "kind", "id", "name", "license"],
       "properties": {
         "schemaVersion": { "const": "1" },
-        "kind": { "enum": ["character", "icon_set", "prop_set", "terrain_set", "building_kit"] },
+        "kind": { "enum": ["character", "icon_set", "prop_set", "portrait_set", "equipment_set", "decal_set", "terrain_set", "building_kit"] },
         "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
         "name": { "type": "string", "minLength": 1 },
         "license": { "type": "string", "minLength": 1 }

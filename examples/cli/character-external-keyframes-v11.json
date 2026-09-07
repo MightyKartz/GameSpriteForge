@@ -1,0 +1,86 @@
+{
+  "schemaVersion": "2",
+  "metadata": {
+    "name": "Codex Subscription Ranger",
+    "defaultAnimation": "idle_down",
+    "creator": "Game Sprite Forge",
+    "license": "private",
+    "rendering": {
+      "profile": "godot-sprite-rendering@1.0.0",
+      "textureFilter": "linear",
+      "pixelSnap": false,
+      "mirrorPolicy": "mirror_right_to_left"
+    }
+  },
+  "workflow": {
+    "id": "topdown-external-keyframes",
+    "version": "11.0.0"
+  },
+  "characterPrompt": "a hooded ranger with an olive cape and orange scarf",
+  "cameraProfile": "topdown-three-quarter@1.0.0",
+  "equipment": {
+    "kind": "none"
+  },
+  "animations": [
+    {
+      "name": "idle_down",
+      "input": { "kind": "png_sequence", "paths": ["/absolute/frames/idle_down/0.png"] },
+      "fps": 1,
+      "loop": false
+    },
+    {
+      "name": "idle_up",
+      "input": { "kind": "png_sequence", "paths": ["/absolute/frames/idle_up/0.png"] },
+      "fps": 1,
+      "loop": false
+    },
+    {
+      "name": "idle_right",
+      "input": { "kind": "png_sequence", "paths": ["/absolute/frames/idle_right/0.png"] },
+      "fps": 1,
+      "loop": false
+    },
+    {
+      "name": "walk_down",
+      "input": {
+        "kind": "png_sequence",
+        "paths": [
+          "/absolute/frames/walk_down/0.png",
+          "/absolute/frames/walk_down/1.png",
+          "/absolute/frames/walk_down/2.png",
+          "/absolute/frames/walk_down/3.png"
+        ]
+      },
+      "fps": 4,
+      "loop": true
+    },
+    {
+      "name": "walk_up",
+      "input": {
+        "kind": "png_sequence",
+        "paths": [
+          "/absolute/frames/walk_up/0.png",
+          "/absolute/frames/walk_up/1.png",
+          "/absolute/frames/walk_up/2.png",
+          "/absolute/frames/walk_up/3.png"
+        ]
+      },
+      "fps": 4,
+      "loop": true
+    },
+    {
+      "name": "walk_right",
+      "input": {
+        "kind": "png_sequence",
+        "paths": [
+          "/absolute/frames/walk_right/0.png",
+          "/absolute/frames/walk_right/1.png",
+          "/absolute/frames/walk_right/2.png",
+          "/absolute/frames/walk_right/3.png"
+        ]
+      },
+      "fps": 4,
+      "loop": true
+    }
+  ]
+}

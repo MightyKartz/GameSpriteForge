@@ -8,7 +8,7 @@
   "properties": {
     "assetType": {
       "type": "string",
-      "enum": ["animation", "character", "icon_set", "prop_set"]
+      "enum": ["animation", "character", "icon_set", "prop_set", "portrait_set", "equipment_set", "decal_set"]
     },
     "name": {
       "type": "string",
@@ -73,6 +73,9 @@
         }
       }
     },
+    "rendering": {
+      "$ref": "#/$defs/rendering"
+    },
     "items": {
       "type": "array",
       "minItems": 1,
@@ -85,12 +88,24 @@
           "name": { "type": "string", "minLength": 1 },
           "frame": { "type": "integer", "minimum": 0 },
           "texture": { "type": "string", "minLength": 1 },
-          "provenance": { "$ref": "#/$defs/itemProvenance" }
+          "provenance": { "$ref": "#/$defs/itemProvenance" },
+          "metadata": { "$ref": "#/$defs/staticItemMetadata" }
         }
       }
     }
   },
   "$defs": {
+    "rendering": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "textureFilter", "pixelSnap", "mirrorPolicy"],
+      "properties": {
+        "profile": { "const": "godot-sprite-rendering@1.0.0" },
+        "textureFilter": { "enum": ["nearest", "linear"] },
+        "pixelSnap": { "type": "boolean" },
+        "mirrorPolicy": { "enum": ["auto", "right_only", "explicit_left", "mirror_right_to_left"] }
+      }
+    },
     "itemProvenance": {
       "type": "object",
       "additionalProperties": false,
@@ -100,6 +115,25 @@
         "styleRevision": { "type": "string", "minLength": 1 },
         "attempt": { "type": "integer", "minimum": 1 },
         "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "staticItemMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "role": { "enum": ["icon", "world_prop", "equipped_preview", "portrait_expression", "decal"] },
+        "groupId": { "type": "string", "minLength": 1 },
+        "expression": { "type": "string", "minLength": 1 },
+        "footprint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "integer", "minimum": 1, "maximum": 32 },
+            "height": { "type": "integer", "minimum": 1, "maximum": 32 }
+          }
+        },
+        "blend": { "enum": ["mix", "multiply", "add"] }
       }
     },
     "animation": {
@@ -122,6 +156,14 @@
         "fps": {
           "type": "number",
           "exclusiveMinimum": 0
+        },
+        "frameDurationsMs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
         },
         "loop": {
           "type": "boolean"

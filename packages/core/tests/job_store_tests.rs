@@ -164,3 +164,163 @@ fn job_ids_are_filesystem_safe() {
         .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_'));
     assert_eq!(record.job_dir, temp.path().join(&record.job_id));
 }
+
+#[test]
+fn named_child_scope_is_atomic_and_single_use() {
+    let temp = tempdir().unwrap();
+    let store = JobStore::new(temp.path()).unwrap();
+    let source = store.create_job(SourceKind::FromCode).unwrap();
+    let scope = "topdown-grid@9.3.0:walk_down:frame:2";
+    let source_entries_before = fs::read_dir(&source.job_dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect::<std::collections::BTreeSet<_>>();
+
+    let first = store
+        .create_claimed_child_job(&source.job_dir, &source.job_id, scope, SourceKind::FromCode)
+        .unwrap();
+    let error = store
+        .create_claimed_child_job(&source.job_dir, &source.job_id, scope, SourceKind::FromCode)
+        .unwrap_err();
+
+    assert!(error.to_string().contains(&first.job_id));
+    assert_eq!(store.list_records().unwrap().len(), 2);
+    let source_entries_after = fs::read_dir(&source.job_dir)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name())
+        .collect::<std::collections::BTreeSet<_>>();
+    assert_eq!(source_entries_after, source_entries_before);
+    assert!(source
+        .job_dir
+        .parent()
+        .unwrap()
+        .join(".forge-child-scope-claims")
+        .join(format!("{}.json", source.job_id))
+        .is_file());
+}
+
+#[test]
+fn named_child_scope_rejects_unsafe_or_directory_mismatched_source_ids() {
+    let temp = tempdir().unwrap();
+    let source_store = JobStore::new(temp.path().join("source-store")).unwrap();
+    let destination = JobStore::new(temp.path().join("destination")).unwrap();
+    let source = source_store.create_job(SourceKind::FromCode).unwrap();
+
+    let unsafe_error = destination
+        .create_claimed_child_job(
+            &source.job_dir,
+            "../../escape",
+            "topdown-grid@9.3.0:walk_down:frame:2",
+            SourceKind::FromCode,
+        )
+        .unwrap_err();
+    assert!(matches!(
+        unsafe_error,
+        forge_core::job::JobStoreError::UnsafeJobId(_)
+    ));
+
+    let mismatch_error = destination
+        .create_claimed_child_job(
+            &source.job_dir,
+            "different-safe-id",
+            "topdown-grid@9.3.0:walk_down:frame:2",
+            SourceKind::FromCode,
+        )
+        .unwrap_err();
+    assert!(matches!(
+        mismatch_error,
+        forge_core::job::JobStoreError::JobNotFound(_)
+    ));
+    assert!(destination.list_records().unwrap().is_empty());
+}
+
+#[test]
+fn concurrent_named_child_scope_creates_exactly_one_child() {
+    let temp = tempdir().unwrap();
+    let store = JobStore::new(temp.path()).unwrap();
+    let source = store.create_job(SourceKind::FromCode).unwrap();
+    let barrier = Arc::new(Barrier::new(3));
+    let mut workers = Vec::new();
+    for _ in 0..2 {
+        let store = store.clone();
+        let source_dir = source.job_dir.clone();
+        let source_id = source.job_id.clone();
+        let barrier = barrier.clone();
+        workers.push(thread::spawn(move || {
+            barrier.wait();
+            store.create_claimed_child_job(
+                &source_dir,
+                &source_id,
+                "topdown-grid@9.3.0:walk_down:frame:2",
+                SourceKind::FromCode,
+            )
+        }));
+    }
+    barrier.wait();
+    let results = workers
+        .into_iter()
+        .map(|worker| worker.join().unwrap())
+        .collect::<Vec<_>>();
+
+    assert_eq!(results.iter().filter(|result| result.is_ok()).count(), 1);
+    assert_eq!(results.iter().filter(|result| result.is_err()).count(), 1);
+    assert_eq!(store.list_records().unwrap().len(), 2);
+}
+
+#[test]
+fn named_child_scope_is_single_use_across_distinct_job_stores() {
+    let temp = tempdir().unwrap();
+    let source_store = JobStore::new(temp.path().join("source-store")).unwrap();
+    let destination_a = JobStore::new(temp.path().join("destination-a")).unwrap();
+    let destination_b = JobStore::new(temp.path().join("destination-b")).unwrap();
+    let source = source_store.create_job(SourceKind::FromCode).unwrap();
+    let scope = "topdown-grid@9.3.0:walk_down:frame:2";
+
+    let first = destination_a
+        .create_claimed_child_job(&source.job_dir, &source.job_id, scope, SourceKind::FromCode)
+        .unwrap();
+    let error = destination_b
+        .create_claimed_child_job(&source.job_dir, &source.job_id, scope, SourceKind::FromCode)
+        .unwrap_err();
+
+    assert!(error.to_string().contains(&first.job_id));
+    assert_eq!(destination_a.list_records().unwrap().len(), 1);
+    assert!(destination_b.list_records().unwrap().is_empty());
+}
+
+#[test]
+fn concurrent_distinct_job_stores_create_only_one_child_for_source_scope() {
+    let temp = tempdir().unwrap();
+    let source_store = JobStore::new(temp.path().join("source-store")).unwrap();
+    let destination_a = JobStore::new(temp.path().join("destination-a")).unwrap();
+    let destination_b = JobStore::new(temp.path().join("destination-b")).unwrap();
+    let source = source_store.create_job(SourceKind::FromCode).unwrap();
+    let barrier = Arc::new(Barrier::new(3));
+    let mut workers = Vec::new();
+    for store in [destination_a.clone(), destination_b.clone()] {
+        let source_dir = source.job_dir.clone();
+        let source_id = source.job_id.clone();
+        let barrier = barrier.clone();
+        workers.push(thread::spawn(move || {
+            barrier.wait();
+            store.create_claimed_child_job(
+                &source_dir,
+                &source_id,
+                "topdown-grid@9.3.0:walk_down:frame:2",
+                SourceKind::FromCode,
+            )
+        }));
+    }
+    barrier.wait();
+    let results = workers
+        .into_iter()
+        .map(|worker| worker.join().unwrap())
+        .collect::<Vec<_>>();
+
+    assert_eq!(results.iter().filter(|result| result.is_ok()).count(), 1);
+    assert_eq!(results.iter().filter(|result| result.is_err()).count(), 1);
+    assert_eq!(
+        destination_a.list_records().unwrap().len() + destination_b.list_records().unwrap().len(),
+        1
+    );
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/alpha-edge-halo-report.schema.json",
+  "title": "Forge Alpha Edge Halo Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "transparencyOrigin",
+    "softEdgePixelCount",
+    "opaqueEdgePixelCount",
+    "neutralHaloPixelCount",
+    "darkOutlineDiscontinuityPixelCount",
+    "darkOutlineDiscontinuityBudget",
+    "borderOpaqueRatio",
+    "verdict",
+    "reasons"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "alpha-edge-halo@1.0.0" },
+    "transparencyOrigin": { "enum": ["native_alpha", "deterministic_checkerboard_postprocess"] },
+    "softEdgePixelCount": { "type": "integer", "minimum": 0 },
+    "opaqueEdgePixelCount": { "type": "integer", "minimum": 0 },
+    "neutralHaloPixelCount": { "type": "integer", "minimum": 0 },
+    "darkOutlineDiscontinuityPixelCount": { "type": "integer", "minimum": 0 },
+    "darkOutlineDiscontinuityBudget": { "type": "integer", "minimum": 0 },
+    "borderOpaqueRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "verdict": { "enum": ["game_ready", "awaiting_review", "blocked", "regenerate"] },
+    "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+  }
+}

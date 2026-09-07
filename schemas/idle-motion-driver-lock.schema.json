@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/idle-motion-driver-lock.schema.json",
+  "title": "Forge Idle Motion Driver Lock V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "id",
+    "action",
+    "direction",
+    "sourceKind",
+    "identityAnchorPath",
+    "identityAnchorSha256",
+    "requestedDurationMs",
+    "expectedCyclesMinimum",
+    "cameraFixed",
+    "rootFixed",
+    "feetPlanted",
+    "identityLocked",
+    "breathingLoop",
+    "phaseMarkers",
+    "maximumTorsoVerticalExcursionRatio",
+    "maximumLimbDisplacementRatio",
+    "backgroundHex",
+    "aspectRatio"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "idle-motion-driver-lock@1.0.0" },
+    "id": { "type": "string", "minLength": 1 },
+    "action": { "enum": ["idle_right", "idle_left", "idle_up", "idle_down"] },
+    "direction": { "enum": ["right", "left", "up", "down"] },
+    "sourceKind": { "enum": ["identity_anchor", "driving_video"] },
+    "identityAnchorPath": { "type": "string", "minLength": 1 },
+    "identityAnchorSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "driverSourcePath": { "type": "string", "minLength": 1 },
+    "driverSourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "requestedDurationMs": { "type": "integer", "minimum": 2000, "maximum": 10000 },
+    "expectedCyclesMinimum": { "type": "integer", "minimum": 1, "maximum": 4 },
+    "cameraFixed": { "const": true },
+    "rootFixed": { "const": true },
+    "feetPlanted": { "const": true },
+    "identityLocked": { "const": true },
+    "breathingLoop": { "const": true },
+    "phaseMarkers": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "prefixItems": [
+        { "$ref": "#/$defs/neutralStart" },
+        { "$ref": "#/$defs/inhalePeak" },
+        { "$ref": "#/$defs/neutralMid" },
+        { "$ref": "#/$defs/exhalePeak" },
+        { "$ref": "#/$defs/closure" }
+      ],
+      "items": false
+    },
+    "maximumTorsoVerticalExcursionRatio": { "type": "number", "minimum": 0.001, "maximum": 0.03 },
+    "maximumLimbDisplacementRatio": { "type": "number", "minimum": 0.0, "maximum": 0.02 },
+    "backgroundHex": { "const": "#FF00FF" },
+    "aspectRatio": { "const": "1:1" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "sourceKind": { "const": "identity_anchor" } } },
+      "then": { "not": { "anyOf": [{ "required": ["driverSourcePath"] }, { "required": ["driverSourceSha256"] }] } }
+    },
+    {
+      "if": { "properties": { "sourceKind": { "const": "driving_video" } } },
+      "then": { "required": ["driverSourcePath", "driverSourceSha256"] }
+    },
+    {
+      "if": { "properties": { "direction": { "const": "right" } } },
+      "then": { "properties": { "action": { "const": "idle_right" } } }
+    },
+    {
+      "if": { "properties": { "direction": { "const": "left" } } },
+      "then": { "properties": { "action": { "const": "idle_left" } } }
+    },
+    {
+      "if": { "properties": { "direction": { "const": "up" } } },
+      "then": { "properties": { "action": { "const": "idle_up" } } }
+    },
+    {
+      "if": { "properties": { "direction": { "const": "down" } } },
+      "then": { "properties": { "action": { "const": "idle_down" } } }
+    }
+  ],
+  "$defs": {
+    "phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "normalizedTime"],
+      "properties": {
+        "role": { "type": "string" },
+        "normalizedTime": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "neutralStart": {
+      "allOf": [{ "$ref": "#/$defs/phase" }, { "properties": { "role": { "const": "neutral_start" }, "normalizedTime": { "const": 0.0 } } }]
+    },
+    "inhalePeak": {
+      "allOf": [{ "$ref": "#/$defs/phase" }, { "properties": { "role": { "const": "inhale_peak" }, "normalizedTime": { "const": 0.25 } } }]
+    },
+    "neutralMid": {
+      "allOf": [{ "$ref": "#/$defs/phase" }, { "properties": { "role": { "const": "neutral_mid" }, "normalizedTime": { "const": 0.5 } } }]
+    },
+    "exhalePeak": {
+      "allOf": [{ "$ref": "#/$defs/phase" }, { "properties": { "role": { "const": "exhale_peak" }, "normalizedTime": { "const": 0.75 } } }]
+    },
+    "closure": {
+      "allOf": [{ "$ref": "#/$defs/phase" }, { "properties": { "role": { "const": "closure" }, "normalizedTime": { "const": 1.0 } } }]
+    }
+  }
+}

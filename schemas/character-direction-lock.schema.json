@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamespriteforge.dev/schemas/character-direction-lock.schema.json",
+  "title": "Forge DirectionLockV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "workflow",
+    "providerId",
+    "profileId",
+    "model",
+    "styleRevision",
+    "subjectId",
+    "subjectRevision",
+    "subjectSha256",
+    "equipmentKind",
+    "entries"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "enum": ["direction-lock@1.0.0", "direction-lock@1.1.0", "cycle-direction-lock-adapter@1.0.0"] },
+    "workflow": { "enum": ["topdown-keyframes@2.3.0", "topdown-keyposes@2.4.0", "topdown-keyposes@2.5.0", "topdown-frames@4.0.0", "topdown-video-locked@5.0.0", "topdown-video-cycle@6.0.0", "topdown-direction-poses@7.0.0", "topdown-cycle@10.0.0", "topdown-cycle@10.1.0"] },
+    "providerId": { "type": "string", "minLength": 1 },
+    "profileId": { "type": "string", "minLength": 1 },
+    "model": { "type": "string", "minLength": 1 },
+    "styleRevision": { "type": "string", "minLength": 1 },
+    "subjectId": { "type": "string", "minLength": 1 },
+    "subjectRevision": { "type": "string", "minLength": 1 },
+    "subjectSha256": { "$ref": "#/$defs/sha256" },
+    "equipmentKind": { "enum": ["none", "staff_like"] },
+    "equipmentReferenceSha256": { "$ref": "#/$defs/sha256" },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "direction",
+        "animation",
+        "frame",
+        "attempt",
+        "path",
+        "sha256",
+        "assessment"
+      ],
+      "properties": {
+        "direction": { "enum": ["front", "rear", "right", "left"] },
+        "animation": { "enum": ["idle", "idle_down", "idle_up", "idle_right", "idle_left", "walk_up", "walk_right", "walk_down", "walk_left", "direction_front", "direction_rear", "direction_right", "direction_left"] },
+        "frame": { "const": 0 },
+        "attempt": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "generationMasterPath": { "type": "string", "minLength": 1 },
+        "generationMasterSha256": { "$ref": "#/$defs/sha256" },
+        "assessment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schemaVersion", "profile", "direction", "metrics", "verdict", "reasons"],
+          "properties": {
+            "schemaVersion": { "const": "1" },
+            "profile": { "const": "direction-anchor@1.2.0" },
+            "direction": { "enum": ["front", "rear", "right", "left"] },
+            "metrics": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "bodyPresent",
+                "visibleFaceProxy",
+                "enclosedFeatureCount",
+                "warmUpperPixelRatio"
+              ],
+              "properties": {
+                "bodyPresent": { "type": "boolean" },
+                "visibleFaceProxy": { "type": "boolean" },
+                "enclosedFeatureCount": { "type": "integer", "minimum": 0 },
+                "warmUpperPixelRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+                "warmUpperCentroidOffsetRatio": { "type": "number", "minimum": -1, "maximum": 1 },
+                "warmUpperCentroidYRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+                "warmUpperVerticalSpanRatio": { "type": "number", "minimum": 0, "maximum": 1 }
+              }
+            },
+            "verdict": { "enum": ["game_ready", "blocked"] },
+            "reasons": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}

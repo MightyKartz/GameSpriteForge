@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/collection-consistency-report.schema.json",
+  "title": "Forge Collection Consistency Report V1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "collectionId", "collectionRevision", "medoidItemId", "medoidSha256", "pairwiseMeanSimilarity", "verdict", "items"],
+  "properties": {
+    "schemaVersion": { "const": "1" }, "profile": { "enum": ["collection-consistency@1.0.0", "collection-consistency@1.1.0"] },
+    "collectionId": { "type": "string", "minLength": 1 }, "collectionRevision": { "type": "string", "minLength": 1 },
+    "medoidItemId": { "type": "string", "minLength": 1 }, "medoidSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "pairwiseMeanSimilarity": { "type": "number", "minimum": 0, "maximum": 1 },
+    "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+    "items": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["id", "attempt", "anchorSimilarity", "medoidSimilarity", "collectionScore", "verdict", "reasons"], "properties": {
+      "id": { "type": "string", "minLength": 1 }, "attempt": { "type": "integer", "minimum": 1 },
+      "comparable": { "type": "boolean", "default": true },
+      "anchorSimilarity": { "type": "number", "minimum": 0, "maximum": 1 }, "medoidSimilarity": { "type": "number", "minimum": 0, "maximum": 1 }, "collectionScore": { "type": "number", "minimum": 0, "maximum": 1 },
+      "shapeSimilarity": { "type": "number", "minimum": 0, "maximum": 1 }, "framingSimilarity": { "type": "number", "minimum": 0, "maximum": 1 },
+      "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] }, "reasons": { "type": "array", "items": { "type": "string" } }
+    } } }
+  }
+}

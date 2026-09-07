@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/character-alpha-repair-report.schema.json",
+  "title": "Forge Character Alpha Repair Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "verdict", "maxBoundaryDistancePx", "changedPixels", "changedForegroundRatio", "frames", "reasons"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "boundary-alpha-repair@1.0.0" },
+    "verdict": { "enum": ["game_ready", "blocked"] },
+    "maxBoundaryDistancePx": { "type": "integer", "minimum": 0, "maximum": 2 },
+    "changedPixels": { "type": "integer", "minimum": 0 },
+    "changedForegroundRatio": { "type": "number", "minimum": 0 },
+    "frames": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["frameIndex", "sourceForegroundPixels", "removedPixels", "filledPixels", "changedPixels", "changedForegroundRatio", "maxBoundaryDistancePx"],
+        "properties": {
+          "frameIndex": { "type": "integer", "minimum": 0 },
+          "sourceForegroundPixels": { "type": "integer", "minimum": 0 },
+          "removedPixels": { "type": "integer", "minimum": 0 },
+          "filledPixels": { "type": "integer", "minimum": 0 },
+          "changedPixels": { "type": "integer", "minimum": 0 },
+          "changedForegroundRatio": { "type": "number", "minimum": 0 },
+          "maxBoundaryDistancePx": { "type": "integer", "minimum": 0, "maximum": 2 }
+        }
+      }
+    },
+    "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  }
+}

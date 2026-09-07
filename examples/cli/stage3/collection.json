@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "id": "inventory",
+  "name": "Inventory Collection",
+  "assetKind": "icon_set",
+  "prompt": "compact jewel-tone fantasy inventory art",
+  "materials": ["painted metal", "glass", "leather"],
+  "scale": "consistent",
+  "perspective": "inherit_style",
+  "grounding": "center",
+  "canvasSize": 128,
+  "anchorImage": "inventory-anchor.png",
+  "license": "private"
+}

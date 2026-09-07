@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/character-side-walk-laterality-approval.schema.json",
+  "title": "Forge Character Side-Walk Laterality Approval V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "animation",
+    "sourceFrameSha256",
+    "frameRoles",
+    "checks",
+    "reviewer",
+    "approved",
+    "reviewNote"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "side-walk-laterality-approval@1.0.0" },
+    "animation": { "enum": ["walk_left", "walk_right"] },
+    "sourceFrameSha256": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+    },
+    "frameRoles": {
+      "type": "array",
+      "prefixItems": [
+        { "const": "contact_foreground_forward" },
+        { "const": "passing_background_low" },
+        { "const": "contact_background_forward" },
+        { "const": "passing_foreground_low" }
+      ],
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "foregroundBackgroundSwapVisible",
+        "sameLegRepeatDetected",
+        "normalWalkAmplitude"
+      ],
+      "properties": {
+        "foregroundBackgroundSwapVisible": { "type": "boolean" },
+        "sameLegRepeatDetected": { "type": "boolean" },
+        "normalWalkAmplitude": { "type": "boolean" }
+      }
+    },
+    "reviewer": { "const": "human" },
+    "approved": { "type": "boolean" },
+    "reviewNote": { "type": "string", "minLength": 1 }
+  }
+}

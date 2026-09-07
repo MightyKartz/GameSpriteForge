@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/character-silhouette-temporal-report.schema.json",
+  "title": "Forge Character Silhouette Temporal Report V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "evaluationStage", "verdict", "animations"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "silhouette-temporal@2.0.0" },
+    "evaluationStage": { "enum": ["source", "post_repair"] },
+    "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+    "animations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "frameCount",
+          "adjacentCoreMaskIouMin",
+          "adjacentCoreMaskIouMedian",
+          "adjacentContourDistancePxMax",
+          "persistentCoreUncertaintyRatio",
+          "unsupportedCoreEdgeRatioMax",
+          "unsupportedFullEdgeRatioMax",
+          "edgeColorFlickerRatioMax",
+          "bodyWidthVariationRatio",
+          "bodyHeightVariationRatio",
+          "bodyCenterStepPxMax",
+          "footAnchorStepPxMax",
+          "transitions",
+          "verdict",
+          "reasons"
+        ],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "frameCount": { "type": "integer", "minimum": 1 },
+          "adjacentCoreMaskIouMin": { "type": "number", "minimum": 0, "maximum": 1 },
+          "adjacentCoreMaskIouMedian": { "type": "number", "minimum": 0, "maximum": 1 },
+          "adjacentContourDistancePxMax": { "type": "number", "minimum": 0 },
+          "persistentCoreUncertaintyRatio": { "type": "number", "minimum": 0 },
+          "unsupportedCoreEdgeRatioMax": { "type": "number", "minimum": 0, "maximum": 1 },
+          "unsupportedFullEdgeRatioMax": { "type": "number", "minimum": 0, "maximum": 1 },
+          "edgeColorFlickerRatioMax": { "type": "number", "minimum": 0, "maximum": 1 },
+          "bodyWidthVariationRatio": { "type": "number", "minimum": 0 },
+          "bodyHeightVariationRatio": { "type": "number", "minimum": 0 },
+          "bodyCenterStepPxMax": { "type": "number", "minimum": 0 },
+          "footAnchorStepPxMax": { "type": "number", "minimum": 0 },
+          "transitions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["fromFrame", "toFrame", "coreMaskIou", "contourDistancePx", "unsupportedCoreEdgeRatio", "unsupportedFullEdgeRatio", "edgeColorFlickerRatio"],
+              "properties": {
+                "fromFrame": { "type": "integer", "minimum": 0 },
+                "toFrame": { "type": "integer", "minimum": 0 },
+                "coreMaskIou": { "type": "number", "minimum": 0, "maximum": 1 },
+                "contourDistancePx": { "type": "number", "minimum": 0 },
+                "unsupportedCoreEdgeRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+                "unsupportedFullEdgeRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+                "edgeColorFlickerRatio": { "type": "number", "minimum": 0, "maximum": 1 }
+              }
+            }
+          },
+          "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+          "reasons": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

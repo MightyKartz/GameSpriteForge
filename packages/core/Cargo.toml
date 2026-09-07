@@ -8,6 +8,12 @@ authors.workspace = true
 [lib]
 name = "forge_core"
 
+[features]
+pixel-delivery-v2 = []
+identity-metric-v2 = []
+subject-import = []
+grid-generation = []
+
 [dependencies]
 base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }

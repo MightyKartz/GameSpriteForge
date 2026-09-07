@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/portrait-set-v2.schema.json",
+  "title": "Forge Portrait Set V2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "name",
+    "collection",
+    "subject",
+    "framingProfile",
+    "expressions",
+    "license"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "2" },
+    "kind": { "const": "portrait_set" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "collection": { "$ref": "#/$defs/revision" },
+    "subject": { "$ref": "#/$defs/revision" },
+    "framingProfile": {
+      "enum": ["dialogue_bust@1.0.0", "full_body@1.0.0"]
+    },
+    "expressions": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "prefixItems": [
+        {
+          "type": "object",
+          "properties": { "id": { "const": "neutral" } },
+          "required": ["id"]
+        }
+      ],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "prompt"],
+        "properties": {
+          "id": { "enum": ["neutral", "happy", "angry", "hurt", "surprised"] },
+          "name": { "type": "string", "minLength": 1 },
+          "prompt": { "type": "string", "minLength": 1 },
+          "referenceImage": { "type": "string" }
+        }
+      }
+    },
+    "license": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "revision"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "revision": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

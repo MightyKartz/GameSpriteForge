@@ -74,6 +74,24 @@ fn manual_key_color_overrides_corner_sampling() {
 }
 
 #[test]
+fn magenta_despill_reduces_both_key_channels() {
+    let mut image = RgbaImage::from_pixel(3, 3, Rgba([255, 0, 255, 255]));
+    image.put_pixel(1, 1, Rgba([210, 70, 210, 255]));
+    let params = ChromaParameters {
+        despill_strength: 0.5,
+        ..ChromaParameters::default()
+    };
+
+    let processed = apply_chroma_key(&image, &params).unwrap();
+    let pixel = processed.get_pixel(1, 1);
+
+    assert_eq!(pixel[3], 255);
+    assert!(pixel[0] < 210);
+    assert!(pixel[2] < 210);
+    assert_eq!(pixel[0], pixel[2]);
+}
+
+#[test]
 fn batch_processed_frame_dimensions_match_raw_before_normalization() {
     let temp = tempfile::tempdir().unwrap();
     let raw_dir = temp.path().join("raw");

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamespriteforge.dev/schemas/character-gait-cycle-report-aggregate.schema.json",
+  "title": "Forge Character Gait Cycle Report Aggregate V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "animations"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "gait-cycle@1.0.0" },
+    "animations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/gaitCycleReport" }
+    }
+  },
+  "$defs": {
+    "gaitCycleReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "profile",
+        "animation",
+        "direction",
+        "candidateFrameCount",
+        "candidateFps",
+        "selectedStartFrame",
+        "selectedEndBoundaryFrame",
+        "contactFrames",
+        "passingFrames",
+        "outputFrameIndices",
+        "phaseLabels",
+        "sourceFrameIndices",
+        "sourceDurationMs",
+        "phaseOrderScore",
+        "closureScore",
+        "motionScore",
+        "maximumFootLobeCount",
+        "verdict",
+        "reasons"
+      ],
+      "properties": {
+        "schemaVersion": { "const": "1" },
+        "profile": { "const": "gait-cycle@1.0.0" },
+        "animation": { "enum": ["walk_up", "walk_right", "walk_down", "walk_left"] },
+        "direction": { "enum": ["front", "rear", "right", "left"] },
+        "candidateFrameCount": { "type": "integer", "minimum": 1 },
+        "candidateFps": { "type": "number", "exclusiveMinimum": 0 },
+        "selectedStartFrame": { "type": "integer", "minimum": 0 },
+        "selectedEndBoundaryFrame": { "type": "integer", "minimum": 1 },
+        "contactFrames": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer", "minimum": 0 } },
+        "passingFrames": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "integer", "minimum": 0 } },
+        "outputFrameIndices": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "type": "integer", "minimum": 0 } },
+        "phaseLabels": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "prefixItems": [
+            { "const": "contact_a" },
+            { "const": "contact_a_release" },
+            { "const": "passing_a" },
+            { "const": "contact_b_approach" },
+            { "const": "contact_b" },
+            { "const": "contact_b_release" },
+            { "const": "passing_b" },
+            { "const": "contact_a_approach" }
+          ],
+          "items": false
+        },
+        "sourceFrameIndices": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "type": "integer", "minimum": 0 } },
+        "sourceDurationMs": { "type": "integer", "minimum": 700, "maximum": 1200 },
+        "phaseOrderScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "closureScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "motionScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "maximumFootLobeCount": { "type": "integer", "minimum": 0 },
+        "verdict": { "enum": ["game_ready", "regenerate", "blocked"] },
+        "reasons": { "type": "array", "items": { "type": "string" } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "animation": { "const": "walk_up" } }, "required": ["animation"] },
+          "then": { "properties": { "direction": { "const": "rear" } } }
+        },
+        {
+          "if": { "properties": { "animation": { "const": "walk_right" } }, "required": ["animation"] },
+          "then": { "properties": { "direction": { "const": "right" } } }
+        },
+        {
+          "if": { "properties": { "animation": { "const": "walk_down" } }, "required": ["animation"] },
+          "then": { "properties": { "direction": { "const": "front" } } }
+        },
+        {
+          "if": { "properties": { "animation": { "const": "walk_left" } }, "required": ["animation"] },
+          "then": { "properties": { "direction": { "const": "left" } } }
+        }
+      ]
+    }
+  }
+}

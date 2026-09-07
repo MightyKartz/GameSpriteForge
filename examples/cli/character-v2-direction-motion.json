@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "2",
+  "kind": "character",
+  "id": "forest-scout-v8",
+  "name": "Forest Scout V8",
+  "prompt": "One complete, readable top-down fantasy forest scout designed as a game character",
+  "workflow": {
+    "id": "topdown-direction-motion",
+    "version": "8.0.0"
+  },
+  "cameraProfile": "topdown-three-quarter@1.0.0",
+  "motionProfile": "biped_walk@1.0.0",
+  "license": "MIT"
+}

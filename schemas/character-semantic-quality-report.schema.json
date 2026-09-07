@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/character-semantic-quality-report.schema.json",
+  "title": "Forge Character Semantic Quality Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "directionProfile",
+    "cameraProfile",
+    "framingProfile",
+    "equipmentEffectProfile",
+    "verdict",
+    "animations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "directionProfile": {
+      "enum": ["direction-quality@1.0.0", "direction-quality@1.1.0", "direction-quality@1.2.0"]
+    },
+    "cameraProfile": {
+      "enum": ["topdown-3q-orthographic@1.0.0", "topdown-three-quarter@1.0.0", "topdown-orthographic@2.0.0"]
+    },
+    "framingProfile": { "const": "body-framing@1.0.0" },
+    "equipmentEffectProfile": {
+      "enum": [
+        "equipment-effect-consistency@1.0.0",
+        "equipment-effect-consistency@1.1.0"
+      ]
+    },
+    "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+    "animations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "expectedDirection",
+          "frameCount",
+          "visibleFaceFrames",
+          "visibleFaceRatio",
+          "detachedEmissiveEffectFrames",
+          "maximumDetachedEmissiveComponents",
+          "attachedEmissiveHaloFrames",
+          "maximumAttachedEmissiveHaloPixels",
+          "bodyTopMarginRatio",
+          "bodyHeightRatio",
+          "bodyCenterXPx",
+          "footAnchorYPx",
+          "verdict",
+          "reasons"
+        ],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "expectedDirection": { "enum": ["down", "up", "right", "unspecified"] },
+          "frameCount": { "type": "integer", "minimum": 1 },
+          "visibleFaceFrames": { "type": "integer", "minimum": 0 },
+          "visibleFaceRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+          "directionMatchFrames": { "type": "integer", "minimum": 0 },
+          "directionMatchRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+          "maximumConsecutiveDirectionMismatchFrames": { "type": "integer", "minimum": 0 },
+          "detachedEmissiveEffectFrames": { "type": "integer", "minimum": 0 },
+          "maximumDetachedEmissiveComponents": { "type": "integer", "minimum": 0 },
+          "attachedEmissiveHaloFrames": { "type": "integer", "minimum": 0 },
+          "maximumAttachedEmissiveHaloPixels": { "type": "integer", "minimum": 0 },
+          "bodyTopMarginRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+          "bodyHeightRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+          "bodyCenterXPx": { "type": "number", "minimum": 0 },
+          "footAnchorYPx": { "type": "number", "minimum": 0 },
+          "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+          "reasons": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

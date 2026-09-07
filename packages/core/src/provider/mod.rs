@@ -106,6 +106,9 @@ pub struct GenerateImageRequest {
     pub model: Option<String>,
     pub aspect_ratio: String,
     pub resolution: String,
+    /// Non-secret logical target used by a durable real-provider grant (for
+    /// example `happy` or `walk_right`). Fixture/loopback callers may omit it.
+    pub authorization_target: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -115,12 +118,15 @@ pub struct EditImageRequest {
     pub references: Vec<ProviderImageReference>,
     pub aspect_ratio: String,
     pub resolution: String,
+    pub authorization_target: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ReferenceRole {
     SubjectIdentity,
+    DirectionAnchor,
+    EquipmentIdentity,
     Style,
     PoseStructure,
     EditTarget,
@@ -166,6 +172,7 @@ pub struct GenerateVideoRequest {
     pub duration_seconds: u32,
     pub aspect_ratio: String,
     pub resolution: String,
+    pub authorization_target: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -180,6 +187,7 @@ pub struct EditVideoRequest {
     pub prompt: String,
     pub model: Option<String>,
     pub video: ProviderInputRef,
+    pub authorization_target: Option<String>,
 }
 
 #[derive(Debug, Error)]
@@ -237,6 +245,60 @@ pub trait MediaGenerationProvider: Send + Sync {
     fn id(&self) -> &'static str;
     fn capabilities(&self) -> Vec<ProviderCapability>;
     fn health_check(&self) -> ProviderHealth;
+    /// Bind non-secret Job attribution for subsequent durable authorization
+    /// reservations. Offline Providers may keep the default no-op behavior.
+    fn set_authorization_job_context(
+        &self,
+        _job_id: &str,
+        _lineage_root_job_id: &str,
+    ) -> Result<(), ProviderError> {
+        Ok(())
+    }
+    /// Bind the complete non-secret identity required by a V9.3 durable
+    /// authorization. Implementations that only support attribution may keep
+    /// the default no-op behavior.
+    fn set_authorization_execution_context(
+        &self,
+        _job_id: &str,
+        _lineage_root_job_id: &str,
+        _recipe_hash: &str,
+        _input_fingerprint: &str,
+    ) -> Result<(), ProviderError> {
+        Ok(())
+    }
+    /// Return the durable authorization id bound to a real Provider session.
+    /// Offline/test Providers use the default `None`; security-sensitive
+    /// workflows may require `Some` before any Provider operation is claimed.
+    fn durable_authorization_id(&self) -> Result<Option<String>, ProviderError> {
+        Ok(None)
+    }
+    /// Return the SHA-256 of the exact authorization manifest snapshot bound
+    /// to this Provider session. V9.3 compares it with the staged Job digest.
+    fn durable_authorization_manifest_sha256(&self) -> Result<Option<String>, ProviderError> {
+        Ok(None)
+    }
+    /// Verify that a durable Provider session is bound to this exact
+    /// execution identity and least-privilege request scope. The default is
+    /// deliberately fail-closed: a real Provider must implement this proof
+    /// explicitly. Offline Providers never reach this hook in V9.3.
+    #[allow(clippy::too_many_arguments)]
+    fn validate_durable_authorization_scope(
+        &self,
+        _provider_id: &str,
+        _profile_id: &str,
+        _model: &str,
+        _target: &str,
+        _max_requests: u32,
+        _max_operations: u32,
+        _max_cost_ticks: u64,
+        _lineage_root_job_id: &str,
+        _recipe_hash: &str,
+        _input_fingerprint: &str,
+    ) -> Result<(), ProviderError> {
+        Err(ProviderError::AuthenticationRequired(
+            "durable authorization scope validation is not implemented by this Provider".into(),
+        ))
+    }
     fn resolved_image_model(&self, requested: Option<&str>) -> Option<String> {
         requested.map(str::to_owned)
     }

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/cape-hem-consistency-report.schema.json",
+  "title": "Forge Cape Hem Consistency Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "contract", "nodes", "verdict", "reasons"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "cape-hem-consistency@1.0.0" },
+    "contract": { "enum": ["continuous_gold_lower_hem", "front_authoritative_no_skirt_hem"] },
+    "nodes": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        { "$ref": "#/$defs/node", "properties": { "nodeId": { "const": "front_idle" } } },
+        { "$ref": "#/$defs/node", "properties": { "nodeId": { "const": "back_idle" } } },
+        { "$ref": "#/$defs/node", "properties": { "nodeId": { "const": "right_idle" } } },
+        { "$ref": "#/$defs/node", "properties": { "nodeId": { "const": "left_idle" } } }
+      ],
+      "items": false
+    },
+    "verdict": { "enum": ["game_ready", "regenerate"] },
+    "reasons": { "type": "array", "items": { "type": "string" } }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodeId", "path", "sha256", "bodyWidth", "bodyHeight", "lowerHemStartRatio", "lowerHemEndRatio", "goldAdjacentToCapePixelCount", "goldAdjacentToCapeRatio", "minimumGoldAdjacentToCapeRatio", "verdict", "reasons"],
+      "properties": {
+        "nodeId": { "enum": ["front_idle", "back_idle", "right_idle", "left_idle"] },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bodyWidth": { "type": "number", "exclusiveMinimum": 0 },
+        "bodyHeight": { "type": "number", "exclusiveMinimum": 0 },
+        "lowerHemStartRatio": { "const": 0.68 },
+        "lowerHemEndRatio": { "const": 0.9 },
+        "goldAdjacentToCapePixelCount": { "type": "integer", "minimum": 0 },
+        "goldAdjacentToCapeRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "minimumGoldAdjacentToCapeRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "maximumGoldAdjacentToCapeRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "verdict": { "enum": ["game_ready", "regenerate"] },
+        "reasons": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "contract": { "const": "continuous_gold_lower_hem" } } },
+      "then": {
+        "properties": {
+          "nodes": {
+            "contains": {
+              "properties": { "minimumGoldAdjacentToCapeRatio": { "const": 0.004 } },
+              "not": { "required": ["maximumGoldAdjacentToCapeRatio"] }
+            },
+            "minContains": 4,
+            "maxContains": 4
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "contract": { "const": "front_authoritative_no_skirt_hem" } } },
+      "then": {
+        "properties": {
+          "nodes": {
+            "contains": {
+              "required": ["maximumGoldAdjacentToCapeRatio"],
+              "properties": {
+                "minimumGoldAdjacentToCapeRatio": { "const": 0 },
+                "maximumGoldAdjacentToCapeRatio": { "const": 0.004 }
+              }
+            },
+            "minContains": 4,
+            "maxContains": 4
+          }
+        }
+      }
+    }
+  ]
+}

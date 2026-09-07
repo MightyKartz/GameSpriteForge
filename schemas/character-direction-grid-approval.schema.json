@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/character-direction-grid-approval.schema.json",
+  "title": "Forge Character Direction Grid Approval V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "sourceJobId", "lockSha256", "nodeSha256", "accepted", "reason", "reviewedAt"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "direction-grid-approval@1.0.0" },
+    "sourceJobId": { "type": "string", "minLength": 1 },
+    "lockSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "nodeSha256": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+      "required": ["front_idle", "back_idle", "right_idle", "left_idle"],
+      "properties": {
+        "front_idle": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "back_idle": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "right_idle": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "left_idle": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "accepted": { "type": "boolean" },
+    "reason": { "type": "string", "minLength": 1 },
+    "reviewedAt": { "type": "string", "format": "date-time" }
+  }
+}

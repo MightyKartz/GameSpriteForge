@@ -106,6 +106,9 @@ pub enum AssetKind {
     Character,
     IconSet,
     PropSet,
+    PortraitSet,
+    EquipmentSet,
+    DecalSet,
 }
 
 impl AssetKind {
@@ -114,6 +117,9 @@ impl AssetKind {
             Self::Character => "character",
             Self::IconSet => "icon_set",
             Self::PropSet => "prop_set",
+            Self::PortraitSet => "portrait_set",
+            Self::EquipmentSet => "equipment_set",
+            Self::DecalSet => "decal_set",
         }
     }
 }
@@ -132,8 +138,11 @@ impl FromStr for AssetKind {
             "character" => Ok(Self::Character),
             "icon_set" => Ok(Self::IconSet),
             "prop_set" => Ok(Self::PropSet),
+            "portrait_set" => Ok(Self::PortraitSet),
+            "equipment_set" => Ok(Self::EquipmentSet),
+            "decal_set" => Ok(Self::DecalSet),
             other => Err(GameArtError::InvalidKind(format!(
-                "unsupported asset kind \"{other}\" (stage 2 supports character, icon_set, prop_set)"
+                "unsupported asset kind \"{other}\""
             ))),
         }
     }
@@ -146,6 +155,7 @@ impl FromStr for AssetKind {
 pub enum LockKind {
     Style,
     Subject,
+    Collection,
 }
 
 impl LockKind {
@@ -153,6 +163,7 @@ impl LockKind {
         match self {
             Self::Style => "style",
             Self::Subject => "subject",
+            Self::Collection => "collection",
         }
     }
 }
@@ -188,10 +199,9 @@ impl LockRef {
         let kind = match kind_raw {
             "style" => LockKind::Style,
             "subject" => LockKind::Subject,
+            "collection" => LockKind::Collection,
             other => {
-                return Err(invalid(&format!(
-                    "unsupported lock kind \"{other}\" (stage 2 supports style, subject)"
-                )));
+                return Err(invalid(&format!("unsupported lock kind \"{other}\"")));
             }
         };
         let (id, revision) = rest
@@ -325,14 +335,17 @@ mod tests {
         assert_eq!(subject.kind, LockKind::Subject);
         assert_eq!(subject.id, "forest-ranger");
         assert_eq!(subject.revision, "1.0.0_beta");
+        let collection = LockRef::parse("collection:inventory@r1").unwrap();
+        assert_eq!(collection.kind, LockKind::Collection);
+        assert_eq!(collection.id, "inventory");
+        assert_eq!(collection.revision, "r1");
     }
 
     #[test]
     fn lock_ref_rejects_invalid_references() {
         for raw in [
-            // Stage 2 closes the lock kind set to style and subject.
+            // Unsupported future lock kinds stay closed.
             "environment:forest@r1",
-            "collection:pack@r1",
             // Missing separators.
             "style-no-colon",
             "subject:no-revision",

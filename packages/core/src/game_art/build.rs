@@ -23,7 +23,7 @@
 //!
 //! [`ProjectBuildPlanV1`]: super::ProjectBuildPlanV1
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -39,7 +39,8 @@ use super::plan::{
 use super::types::{AssetKind, GameArtError, GameArtManifestV1};
 use super::{compute_build_plan, compute_project_diff, project_source_sha256};
 use crate::asset_project::{
-    read_style_lock, resolve_relative, CharacterAssetSpecV1, StaticAssetSetSpecV1, STYLE_LOCK_FILE,
+    read_style_lock, resolve_relative, CharacterAssetSpecV1, StaticAssetKind, StaticAssetSetSpecV1,
+    STYLE_LOCK_FILE,
 };
 use crate::automation::{
     run_operation_with_provider, stage_plan_job, AutomationOperation, AutomationRunError,
@@ -51,8 +52,13 @@ use crate::catalog::{
     CatalogLockRevisionsV1, CatalogProviderRefV1, CatalogStyleRefV1, CatalogSubjectRefV1,
     ProjectCatalogEntryV2,
 };
+use crate::collection::{
+    collection_lock_path, read_collection_lock, read_static_collection_spec, StaticItemMetadataV1,
+    COLLECTION_LOCK_FILE,
+};
 use crate::job::{JobLifecycleState, JobOperationKind, JobRecord, JobState, JobStore};
 use crate::provider::{MediaGenerationProvider, ProviderError, ProviderUsage};
+use crate::subject::{read_subject_lock, subject_lock_path};
 
 /// On-disk discriminator stored in the report `kind` field.
 pub const PROJECT_BUILD_REPORT_KIND: &str = "project_build_report";
@@ -926,6 +932,9 @@ enum SpecMeta {
     },
     StaticSet {
         spec: StaticAssetSetSpecV1,
+        collection_lock_path: Option<PathBuf>,
+        subject_lock_path: Option<PathBuf>,
+        item_metadata: BTreeMap<String, StaticItemMetadataV1>,
     },
 }
 
@@ -933,14 +942,14 @@ impl SpecMeta {
     fn name(&self) -> &str {
         match self {
             Self::Character { name, .. } => name,
-            Self::StaticSet { spec } => &spec.name,
+            Self::StaticSet { spec, .. } => &spec.name,
         }
     }
 
     fn license(&self) -> &str {
         match self {
             Self::Character { license, .. } => license,
-            Self::StaticSet { spec } => &spec.license,
+            Self::StaticSet { spec, .. } => &spec.license,
         }
     }
 }
@@ -980,7 +989,12 @@ fn snapshot_spec_meta_inputs(
                 )?);
             }
         }
-        SpecMeta::StaticSet { spec } => {
+        SpecMeta::StaticSet {
+            spec,
+            collection_lock_path,
+            subject_lock_path,
+            ..
+        } => {
             for item in &mut spec.items {
                 if let Some(source) = item.reference_image.as_ref() {
                     let extension = source
@@ -992,6 +1006,31 @@ fn snapshot_spec_meta_inputs(
                         &snapshot_root.join(format!("{}-reference.{extension}", item.id)),
                     )?);
                 }
+            }
+            if let Some(source) = collection_lock_path.as_ref() {
+                let mut lock = read_collection_lock(source)
+                    .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
+                let root = snapshot_root.join("collection");
+                fs::create_dir_all(&root)?;
+                lock.anchor_path =
+                    snapshot_file_stable(&lock.anchor_path, &root.join("anchor.png"))?;
+                lock.medoid_path =
+                    snapshot_file_stable(&lock.medoid_path, &root.join("medoid.png"))?;
+                let target = root.join(COLLECTION_LOCK_FILE);
+                write_json_atomic(&target, &lock)?;
+                *collection_lock_path = Some(target);
+            }
+            if let Some(source) = subject_lock_path.as_ref() {
+                let mut lock = read_subject_lock(source)
+                    .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
+                let root = snapshot_root.join("subject");
+                fs::create_dir_all(&root)?;
+                lock.canonical_path =
+                    snapshot_file_stable(&lock.canonical_path, &root.join("canonical.png"))?;
+                lock.mask_path = snapshot_file_stable(&lock.mask_path, &root.join("mask.png"))?;
+                let target = root.join("subject-lock.json");
+                write_json_atomic(&target, &lock)?;
+                *subject_lock_path = Some(target);
             }
         }
     }
@@ -1100,26 +1139,115 @@ fn parse_spec_meta(
                 reference_image,
             })
         }
-        AssetKind::IconSet | AssetKind::PropSet => {
-            let mut spec: StaticAssetSetSpecV1 =
-                serde_json::from_slice(&bytes).map_err(|error| {
-                    GameArtError::InvalidJson(format!(
-                        "static asset set spec {}: {error}",
-                        action.canonical_spec_path.display()
+        AssetKind::IconSet
+        | AssetKind::PropSet
+        | AssetKind::PortraitSet
+        | AssetKind::EquipmentSet
+        | AssetKind::DecalSet => {
+            let static_kind = match action.kind {
+                AssetKind::IconSet => StaticAssetKind::IconSet,
+                AssetKind::PropSet => StaticAssetKind::PropSet,
+                AssetKind::PortraitSet => StaticAssetKind::PortraitSet,
+                AssetKind::EquipmentSet => StaticAssetKind::EquipmentSet,
+                AssetKind::DecalSet => StaticAssetKind::DecalSet,
+                AssetKind::Character => unreachable!(),
+            };
+            let schema = serde_json::from_slice::<serde_json::Value>(&bytes)
+                .ok()
+                .and_then(|value| {
+                    value
+                        .get("schemaVersion")
+                        .and_then(serde_json::Value::as_str)
+                        .map(str::to_owned)
+                })
+                .unwrap_or_default();
+            let resolved = if schema == "1"
+                && matches!(action.kind, AssetKind::IconSet | AssetKind::PropSet)
+            {
+                let mut spec: StaticAssetSetSpecV1 =
+                    serde_json::from_slice(&bytes).map_err(|error| {
+                        GameArtError::InvalidJson(format!(
+                            "static asset set spec {}: {error}",
+                            action.canonical_spec_path.display()
+                        ))
+                    })?;
+                for item in &mut spec.items {
+                    if let Some(reference) = item.reference_image.take() {
+                        item.reference_image = Some(resolve_relative(&spec_dir, &reference));
+                    }
+                }
+                (spec, None, None, BTreeMap::new())
+            } else {
+                let resolved =
+                    read_static_collection_spec(&action.canonical_spec_path, static_kind)
+                        .map_err(|error| GameArtError::InvalidManifest(error.to_string()))?;
+                let declared_collection = action
+                    .lock_refs
+                    .iter()
+                    .find(|reference| reference.kind == super::types::LockKind::Collection)
+                    .ok_or_else(|| {
+                        GameArtError::InvalidLockRef(format!(
+                            "collection-backed asset {} must declare collection:{}@{} in dependsOn",
+                            action.asset_id, resolved.collection.id, resolved.collection.revision
+                        ))
+                    })?;
+                if declared_collection.id != resolved.collection.id
+                    || declared_collection.revision != resolved.collection.revision
+                {
+                    return Err(GameArtError::InvalidLockRef(format!(
+                        "asset {} spec Collection revision differs from dependsOn",
+                        action.asset_id
                     ))
-                })?;
+                    .into());
+                }
+                let collection_path = collection_lock_path(
+                    project_root,
+                    &resolved.collection.id,
+                    &resolved.collection.revision,
+                );
+                let subject_path = resolved
+                    .subject
+                    .as_ref()
+                    .map(|subject| subject_lock_path(project_root, &subject.id, &subject.revision));
+                if let Some(subject) = &resolved.subject {
+                    let declared = action
+                        .lock_refs
+                        .iter()
+                        .find(|reference| reference.kind == super::types::LockKind::Subject)
+                        .ok_or_else(|| {
+                            GameArtError::InvalidLockRef(format!(
+                                "portrait asset {} must declare subject:{}@{} in dependsOn",
+                                action.asset_id, subject.id, subject.revision
+                            ))
+                        })?;
+                    if declared.id != subject.id || declared.revision != subject.revision {
+                        return Err(GameArtError::InvalidLockRef(format!(
+                            "asset {} spec Subject revision differs from dependsOn",
+                            action.asset_id
+                        ))
+                        .into());
+                    }
+                }
+                (
+                    resolved.asset,
+                    Some(collection_path),
+                    subject_path,
+                    resolved.item_metadata,
+                )
+            };
+            let (spec, collection_lock_path, subject_lock_path, item_metadata) = resolved;
             if spec.kind.as_str() != action.kind.as_str() {
                 return Err(kind_mismatch(spec.kind.as_str()).into());
             }
             if spec.id != action.asset_id {
                 return Err(id_mismatch(&spec.id).into());
             }
-            for item in &mut spec.items {
-                if let Some(reference) = item.reference_image.take() {
-                    item.reference_image = Some(resolve_relative(&spec_dir, &reference));
-                }
-            }
-            Ok(SpecMeta::StaticSet { spec })
+            Ok(SpecMeta::StaticSet {
+                spec,
+                collection_lock_path,
+                subject_lock_path,
+                item_metadata,
+            })
         }
     }
 }
@@ -1175,19 +1303,34 @@ fn child_operation(
                 }))?;
             Ok(AutomationOperation::GenerateCharacterPack(request))
         }
-        SpecMeta::StaticSet { spec } => {
+        SpecMeta::StaticSet {
+            spec,
+            collection_lock_path,
+            subject_lock_path,
+            item_metadata,
+        } => {
             let request = GenerateStaticAssetSetRequest {
                 schema_version: "4".into(),
                 project_path: project_root.to_path_buf(),
                 style_lock_path: style_lock_path.to_path_buf(),
+                collection_lock_path: collection_lock_path.clone(),
+                subject_lock_path: subject_lock_path.clone(),
+                source_spec_path: Some(action.canonical_spec_path.clone()),
                 provider_id: manifest.provider.id.clone(),
                 profile_id: manifest.provider.profile_id.clone(),
                 asset: spec.clone(),
+                framing_profile: None,
+                item_metadata: item_metadata.clone(),
                 max_attempts_per_item: 2,
                 image_model: plan.provider.image_model.clone(),
                 reuse_from_job_dir: None,
                 retry_item_ids: vec![],
+                replacement_item_paths: Default::default(),
                 consistency_recheck_only: false,
+                resume_incomplete_static: false,
+                portrait_phase: Default::default(),
+                neutral_reference_policy: Default::default(),
+                portrait_base_parent_job_id: None,
             };
             Ok(AutomationOperation::GenerateStaticAssetSet(request))
         }
@@ -1275,8 +1418,14 @@ fn execute_child(
     let prepared = plans.prepare(operation)?;
     let claimed = plans.claim(&prepared.token)?;
     let child = stage_plan_job(store, &claimed)?;
+    let parent = store.read_record(parent_job_id)?;
     store.update_record(&child.job_id, |record| {
         record.parent_job_id = Some(parent_job_id.to_string());
+        record.authorization_id = parent.authorization_id.clone();
+        record.lineage_root_job_id = parent
+            .lineage_root_job_id
+            .clone()
+            .or_else(|| Some(parent.job_id.clone()));
     })?;
     transition(
         state_path,
@@ -1363,6 +1512,10 @@ fn register_built_asset(
         .lock_refs
         .iter()
         .find(|reference| reference.kind == super::types::LockKind::Subject);
+    let collection = action
+        .lock_refs
+        .iter()
+        .find(|reference| reference.kind == super::types::LockKind::Collection);
     let entry = ProjectCatalogEntryV2 {
         asset_id: action.asset_id.clone(),
         name: meta.name().to_string(),
@@ -1392,6 +1545,7 @@ fn register_built_asset(
         locks: Some(CatalogLockRevisionsV1 {
             style: style_revision.clone(),
             subject: subject.map(|reference| reference.revision.clone()),
+            collection: collection.map(|reference| reference.revision.clone()),
             ..CatalogLockRevisionsV1::default()
         }),
         workflow_profile,
@@ -1409,6 +1563,7 @@ fn register_built_asset(
             model.unwrap_or_else(|| "default-model".into()),
             action.workflow
         )),
+        review: None,
     };
     register_catalog_asset_v2(project_root, entry)
         .map_err(|error| AutomationRunError::Processing(error.to_string()))?;

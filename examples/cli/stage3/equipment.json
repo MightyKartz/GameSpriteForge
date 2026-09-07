@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1",
+  "kind": "equipment_set",
+  "id": "ranger-equipment",
+  "name": "Ranger Equipment",
+  "collection": { "id": "equipment", "revision": "REPLACE_WITH_COLLECTION_REVISION" },
+  "items": [
+    {
+      "id": "bow",
+      "name": "Ranger Bow",
+      "prompt": "a compact yew ranger bow with green wrapping",
+      "equippedPreview": true
+    }
+  ],
+  "license": "private"
+}

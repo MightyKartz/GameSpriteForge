@@ -1,0 +1,20 @@
+config_version=5
+
+[application]
+
+config/name="Forge V9.5 Isolated Walk Smoke"
+config/features=PackedStringArray("4.6")
+
+[display]
+
+window/size/viewport_width=640
+window/size/viewport_height=640
+window/size/window_width_override=640
+window/size/window_height_override=640
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+environment/defaults/default_clear_color=Color(0.055, 0.063, 0.082, 1)

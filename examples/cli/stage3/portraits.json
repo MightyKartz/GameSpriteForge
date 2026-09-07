@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "1",
+  "kind": "portrait_set",
+  "id": "hero-portraits",
+  "name": "Hero Portraits",
+  "collection": { "id": "portraits", "revision": "REPLACE_WITH_COLLECTION_REVISION" },
+  "subject": { "id": "hero", "revision": "REPLACE_WITH_SUBJECT_REVISION" },
+  "expressions": [
+    { "id": "neutral", "name": "Neutral", "prompt": "neutral expression" },
+    { "id": "happy", "name": "Happy", "prompt": "warm happy expression" },
+    { "id": "angry", "name": "Angry", "prompt": "controlled angry expression" },
+    { "id": "hurt", "name": "Hurt", "prompt": "hurt but conscious expression" },
+    { "id": "surprised", "name": "Surprised", "prompt": "surprised expression" }
+  ],
+  "license": "private"
+}

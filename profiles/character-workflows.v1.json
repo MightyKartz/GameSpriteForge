@@ -22,9 +22,9 @@
     {
       "id": "topdown",
       "version": "1.0.0",
-      "label": "Top-down",
-      "description": "Directional movement for RPG and action-adventure characters.",
-      "status": "stable",
+      "label": "Top-down Video (Legacy)",
+      "description": "Backward-compatible video workflow for existing Character V1 specs.",
+      "status": "legacy",
       "targetFrameCount": 8,
       "estimatedProviderRequests": 8,
       "maximumProviderRequests": 12,
@@ -42,10 +42,28 @@
       ]
     },
     {
-      "id": "topdown-keyframes",
+      "id": "topdown-video",
       "version": "2.0.0",
+      "label": "Top-down Video",
+      "description": "Stable direction-locked workflow: validate one canonical still per cardinal direction, generate image-to-video motion, search the full clip for a closed cycle, then export native Godot SpriteFrames.",
+      "status": "stable",
+      "targetFrameCount": 8,
+      "estimatedProviderRequests": 8,
+      "maximumProviderRequests": 16,
+      "defaultAnimation": "idle",
+      "requiredAnimations": [
+        { "name": "idle", "fps": 8, "loop": true },
+        { "name": "walk_up", "fps": 8, "loop": true },
+        { "name": "walk_right", "fps": 8, "loop": true },
+        { "name": "walk_down", "fps": 8, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-keyframes",
+      "version": "2.3.0",
       "label": "Top-down Keyframes",
-      "description": "Experimental identity-locked animation using eight explicit image edits per action.",
+      "description": "Experimental direction-locked animation using a Subject edit target, front/rear/right DirectionLock anchors, immediate deterministic background cleanup, cleaned in-between references, a text-only Style descriptor, transparent pose guides, and explicit equipment.",
       "status": "experimental",
       "targetFrameCount": 8,
       "estimatedProviderRequests": 32,
@@ -53,8 +71,332 @@
       "defaultAnimation": "idle",
       "requiredAnimations": [
         { "name": "idle", "fps": 8, "loop": true },
+        { "name": "walk_up", "fps": 8, "loop": true },
+        { "name": "walk_right", "fps": 8, "loop": true },
+        { "name": "walk_down", "fps": 8, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-keyposes",
+      "version": "2.4.0",
+      "label": "Top-down Key Poses",
+      "description": "Experimental four-pose locomotion workflow with direction-specific pose guides, sequential appearance continuity, no neighbor blending, and the motion-semantics@1.1.0 hard gate.",
+      "status": "experimental",
+      "targetFrameCount": 4,
+      "estimatedProviderRequests": 16,
+      "maximumProviderRequests": 32,
+      "defaultAnimation": "idle",
+      "requiredAnimations": [
+        { "name": "idle", "fps": 6, "loop": true },
+        { "name": "walk_up", "fps": 6, "loop": true },
+        { "name": "walk_right", "fps": 6, "loop": true },
+        { "name": "walk_down", "fps": 6, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-keyposes",
+      "version": "2.5.0",
+      "label": "Top-down Isolated Key Poses",
+      "description": "Experimental four-pose locomotion workflow that derives every phase independently from one DirectionLock plus a left/right semantic pose guide, preventing previous-frame pose copying and serial drift while retaining the motion-semantics@1.1.0 hard gate.",
+      "status": "experimental",
+      "targetFrameCount": 4,
+      "estimatedProviderRequests": 16,
+      "maximumProviderRequests": 32,
+      "defaultAnimation": "idle",
+      "requiredAnimations": [
+        { "name": "idle", "fps": 6, "loop": true },
+        { "name": "walk_up", "fps": 6, "loop": true },
+        { "name": "walk_right", "fps": 6, "loop": true },
+        { "name": "walk_down", "fps": 6, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-spritesheet",
+      "version": "3.0.0",
+      "label": "Top-down Sprite Sheet",
+      "description": "Experimental four-frame workflow that asks the locked image Provider for one 2x2 sheet per action, then deterministically slices, mattes, aligns, validates, packs, and installs it with native Godot SpriteFrames.",
+      "status": "experimental",
+      "targetFrameCount": 4,
+      "estimatedProviderRequests": 1,
+      "maximumProviderRequests": 1,
+      "defaultAnimation": "idle",
+      "requiredAnimations": [
+        { "name": "idle", "fps": 4, "loop": true },
+        { "name": "walk_up", "fps": 5, "loop": true },
+        { "name": "walk_right", "fps": 5, "loop": true },
+        { "name": "walk_down", "fps": 5, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-frames",
+      "version": "4.0.0",
+      "label": "Top-down Locked Frames",
+      "description": "Experimental image-only workflow: generate and validate one four-view DirectionLock sheet, then author one four-phase action sheet per animation, apply deterministic onion-skin alignment, targeted frame repair, quality gates, Pack export, and native Godot SpriteFrames delivery.",
+      "status": "experimental",
+      "targetFrameCount": 4,
+      "estimatedProviderRequests": 5,
+      "maximumProviderRequests": 10,
+      "defaultAnimation": "idle",
+      "requiredAnimations": [
+        { "name": "idle", "fps": 4, "loop": true },
+        { "name": "walk_up", "fps": 6, "loop": true },
+        { "name": "walk_right", "fps": 6, "loop": true },
+        { "name": "walk_down", "fps": 6, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-video-locked",
+      "version": "5.0.0",
+      "label": "Direction-Locked Top-down Video",
+      "description": "Experimental hybrid workflow: create or reuse one cleaned four-view DirectionLock, use the mapped cardinal anchor directly as each image-to-video first frame, search the full clip for a closed cycle, select eight frames, apply one shared scale plus translation-only foot anchoring, and export native Godot SpriteFrames.",
+      "status": "experimental",
+      "targetFrameCount": 8,
+      "estimatedProviderRequests": 5,
+      "maximumProviderRequests": 10,
+      "defaultAnimation": "idle",
+      "requiredAnimations": [
+        { "name": "idle", "fps": 6, "loop": true },
+        { "name": "walk_up", "fps": 8, "loop": true },
+        { "name": "walk_right", "fps": 8, "loop": true },
+        { "name": "walk_down", "fps": 8, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-video-cycle",
+      "version": "6.0.0",
+      "label": "Gait-Locked Top-down Video",
+      "description": "Experimental image-to-video workflow that preserves a high-resolution DirectionLock generation master, requests repeated constant-cadence motion, proves a complete gait before loop closure, phase-samples eight frames, and delivers one shared timing contract to Preview, Pack, and Godot.",
+      "status": "experimental",
+      "targetFrameCount": 8,
+      "estimatedProviderRequests": 5,
+      "maximumProviderRequests": 10,
+      "defaultAnimation": "idle",
+      "playbackProfile": "playback-cadence@1.0.0",
+      "requiredAnimations": [
+        { "name": "idle", "fps": 5, "loop": true, "cycleDurationMs": 1600 },
+        { "name": "walk_up", "fps": 10, "loop": true, "cycleDurationMs": 800 },
+        { "name": "walk_right", "fps": 10, "loop": true, "cycleDurationMs": 800 },
+        { "name": "walk_down", "fps": 10, "loop": true, "cycleDurationMs": 800 }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-direction-poses",
+      "version": "7.0.0",
+      "label": "Direction Pose Chain",
+      "description": "Experimental hybrid workflow: keep the SubjectLock front view as the idle sprite, edit independent rear and right DirectionLocks, edit one mid-walk PoseLock per movement direction, generate repeated motion only from those pose locks, select eight gated frames, and mirror right for left in Godot.",
+      "status": "experimental",
+      "targetFrameCount": 8,
+      "estimatedProviderRequests": 8,
+      "maximumProviderRequests": 16,
+      "defaultAnimation": "idle",
+      "playbackProfile": "playback-cadence@1.0.0",
+      "requiredAnimations": [
+        { "name": "idle", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "walk_up", "fps": 10, "loop": true, "cycleDurationMs": 800 },
+        { "name": "walk_right", "fps": 10, "loop": true, "cycleDurationMs": 800 },
+        { "name": "walk_down", "fps": 10, "loop": true, "cycleDurationMs": 800 }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-direction-motion",
+      "version": "8.0.0",
+      "label": "Canonical Direction Motion",
+      "description": "Experimental staged workflow: generate one canonical front idle, derive explicit rear/right/left idles, derive one same-direction walk pose per cardinal direction, review the immutable eight-image lock before video, preserve complete source-cycle timing, and deliver four directional idles plus four directional walks to Godot.",
+      "status": "experimental",
+      "targetFrameCount": 12,
+      "estimatedProviderRequests": 12,
+      "maximumProviderRequests": 24,
+      "defaultAnimation": "idle_down",
+      "playbackProfile": "source-cycle-timing@1.0.0",
+      "requiredAnimations": [
+        { "name": "idle_down", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_up", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_right", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_left", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "walk_down", "fps": 12, "loop": true },
         { "name": "walk_up", "fps": 12, "loop": true },
         { "name": "walk_right", "fps": 12, "loop": true },
+        { "name": "walk_left", "fps": 12, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-grid",
+      "version": "9.0.0",
+      "label": "Single-pass Direction Grid",
+      "description": "Experimental staged workflow: generate one 2x2 direction grid, review the immutable direction lock, then generate one 2x2 four-phase action grid per walk direction. No video requests are used.",
+      "status": "experimental",
+      "targetFrameCount": 4,
+      "estimatedProviderRequests": 5,
+      "maximumProviderRequests": 10,
+      "defaultAnimation": "idle_down",
+      "playbackProfile": "grid-phase-frames@1.0.0",
+      "requiredAnimations": [
+        { "name": "idle_down", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_up", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_right", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_left", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "walk_down", "fps": 4, "loop": true },
+        { "name": "walk_up", "fps": 4, "loop": true },
+        { "name": "walk_right", "fps": 4, "loop": true },
+        { "name": "walk_left", "fps": 4, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-grid",
+      "version": "9.1.0",
+      "label": "Approved Grid Independent Keyframes",
+      "description": "Experimental complete-only workflow: reuse one explicitly approved topdown-grid@9.0.0 DirectionGridLock and independently generate four ordered keyframes from each direction idle. Frames never depend on another generated walk frame and no video or Action Grid request is used.",
+      "status": "experimental",
+      "targetFrameCount": 4,
+      "estimatedProviderRequests": 16,
+      "maximumProviderRequests": 32,
+      "defaultAnimation": "idle_down",
+      "playbackProfile": "grid-phase-frames@1.0.0",
+      "requiredAnimations": [
+        { "name": "idle_down", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_up", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_right", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_left", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "walk_down", "fps": 4, "loop": true },
+        { "name": "walk_up", "fps": 4, "loop": true },
+        { "name": "walk_right", "fps": 4, "loop": true },
+        { "name": "walk_left", "fps": 4, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-grid",
+      "version": "9.2.0",
+      "label": "Structured Gait Validation",
+      "description": "Validation-only walk_down workflow that derives four independent keyframes from one approved V9 direction anchor and a transparent grayscale PoseStructure, then enforces viewer-space gait laterality before native review. No video or Pack is generated.",
+      "status": "experimental",
+      "targetFrameCount": 4,
+      "estimatedProviderRequests": 4,
+      "maximumProviderRequests": 8,
+      "defaultAnimation": "walk_down",
+      "playbackProfile": "grid-phase-frames@1.0.0",
+      "requiredAnimations": [
+        { "name": "walk_down", "fps": 4, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-grid",
+      "version": "9.3.0",
+      "label": "Asymmetric Structured Gait Validation",
+      "description": "Validation-only successor for one approved V9 direction lock. It uses viewer-space screen-side phases and an asymmetric grayscale PoseStructure whose bright wide sole marks the grounded leg and dark compact boot marks the raised leg. A remediation child retries only the evidence-selected walk_down frame once; no video or Pack is generated.",
+      "status": "experimental",
+      "targetFrameCount": 4,
+      "estimatedProviderRequests": 1,
+      "maximumProviderRequests": 1,
+      "defaultAnimation": "walk_down",
+      "playbackProfile": "grid-phase-frames@1.0.0",
+      "requiredAnimations": [
+        { "name": "walk_down", "fps": 4, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-grid",
+      "version": "9.4.0",
+      "label": "Platform-Safe Structured Gait Validation",
+      "description": "Validation-only successor for the rejected V9.3 frame-2 candidate. It reuses frames 0, 1, and 3 byte-for-byte, regenerates only walk_down frame 2 from the approved DirectionAnchor plus PoseStructure V1.2, and hard-blocks platform or skate silhouettes. The V1.2 guide has no horizontal sole, floor, or platform primitive. No video or Pack is generated.",
+      "status": "experimental",
+      "targetFrameCount": 4,
+      "estimatedProviderRequests": 1,
+      "maximumProviderRequests": 1,
+      "defaultAnimation": "walk_down",
+      "playbackProfile": "grid-phase-frames@1.0.0",
+      "requiredAnimations": [
+        { "name": "walk_down", "fps": 4, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-grid",
+      "version": "9.5.0",
+      "label": "Footwear Cleanup Validation",
+      "description": "Validation-only successor for a manually rejected V9.4 frame-2 candidate with a localized neutral-gray boot/ankle leak. It edits only that immutable frame from EditTarget plus DirectionAnchor, sends no PoseStructure, reuses frames 0, 1, and 3 byte-for-byte, and hard-blocks platform and neutral-gray footwear contamination. No video or Pack is generated.",
+      "status": "experimental",
+      "targetFrameCount": 4,
+      "estimatedProviderRequests": 1,
+      "maximumProviderRequests": 1,
+      "defaultAnimation": "walk_down",
+      "playbackProfile": "grid-phase-frames@1.0.0",
+      "requiredAnimations": [
+        { "name": "walk_down", "fps": 4, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-external-keyframes",
+      "version": "11.0.0",
+      "label": "External Independent Keyframes",
+      "description": "Zero-Provider production intake for individually authored or Codex-subscription PNG frames. It rejects sprite sheets and video as source authority, requires one transparent idle per available direction plus four independent walk key poses, applies deterministic shared-canvas/foot-anchor normalization, and exports native Godot SpriteFrames.",
+      "status": "experimental",
+      "targetFrameCount": 4,
+      "estimatedProviderRequests": 0,
+      "maximumProviderRequests": 0,
+      "defaultAnimation": "idle_down",
+      "playbackProfile": "external-independent-keyframes@1.0.0",
+      "requiredAnimations": [
+        { "name": "idle_down", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_up", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_right", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "walk_down", "fps": 4, "loop": true },
+        { "name": "walk_up", "fps": 4, "loop": true },
+        { "name": "walk_right", "fps": 4, "loop": true }
+      ],
+      "optionalAnimations": [
+        { "name": "idle_left", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "walk_left", "fps": 4, "loop": true }
+      ]
+    },
+    {
+      "id": "topdown-cycle",
+      "version": "10.0.0",
+      "label": "Approved Direction Continuous Cycle",
+      "description": "Experimental fixture-only workflow that reuses one approved V9 DirectionGridLock without regenerating directions, creates one continuous in-place gait clip per walk direction, selects one complete 8/10/12-frame source cycle from decoded PTS, normalizes every frame with one shared scale, and delivers four static direction idles plus four directional walks to Pack and Godot.",
+      "status": "experimental",
+      "targetFrameCount": 12,
+      "estimatedProviderRequests": 4,
+      "maximumProviderRequests": 4,
+      "defaultAnimation": "idle_down",
+      "playbackProfile": "source-cycle-timing@1.0.0",
+      "requiredAnimations": [
+        { "name": "idle_down", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_up", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_right", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "idle_left", "fps": 1, "loop": false, "cycleDurationMs": 1000 },
+        { "name": "walk_down", "fps": 12, "loop": true },
+        { "name": "walk_up", "fps": 12, "loop": true },
+        { "name": "walk_right", "fps": 12, "loop": true },
+        { "name": "walk_left", "fps": 12, "loop": true }
+      ],
+      "optionalAnimations": []
+    },
+    {
+      "id": "topdown-cycle",
+      "version": "10.1.0",
+      "label": "Anchor-Stabilized Cycle Replay",
+      "description": "Zero-request validation replay of one immutable failed V10 walk_down clip. It applies integer translation only to align body center and foot baseline, preserves scale, palette, pixels and frame order, then reruns the complete motion and silhouette gates. It never exports a partial Pack.",
+      "status": "experimental",
+      "targetFrameCount": 12,
+      "estimatedProviderRequests": 0,
+      "maximumProviderRequests": 0,
+      "defaultAnimation": "walk_down",
+      "playbackProfile": "source-cycle-timing@1.0.0",
+      "requiredAnimations": [
         { "name": "walk_down", "fps": 12, "loop": true }
       ],
       "optionalAnimations": []

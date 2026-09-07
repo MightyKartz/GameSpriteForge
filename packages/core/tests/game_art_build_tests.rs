@@ -36,10 +36,14 @@ use tempfile::tempdir;
 // Fixture provider (mirror of packages/providers/src/fixture.rs)
 // ---------------------------------------------------------------------------
 
-struct FixtureTicket;
+struct FixtureTicket {
+    back_facing: bool,
+    idle: bool,
+}
 
 struct FixtureProvider {
     tickets: Mutex<HashMap<String, FixtureTicket>>,
+    next_ticket: Mutex<u64>,
     usage: Mutex<ProviderUsage>,
 }
 
@@ -47,6 +51,7 @@ impl Default for FixtureProvider {
     fn default() -> Self {
         Self {
             tickets: Mutex::new(HashMap::new()),
+            next_ticket: Mutex::new(1),
             usage: Mutex::new(ProviderUsage::default()),
         }
     }
@@ -67,6 +72,8 @@ impl FixtureProvider {
         } else {
             Rgba([130, 60, 210, 255])
         };
+        let back_facing = prompt.contains("Face directly up and away from the viewer");
+        let right_facing = prompt.contains("Strict right-facing profile");
         if prompt.contains("[fixture:hard_multiple_subjects]") {
             for offset in [16_u32, 54_u32] {
                 for y in 28..68 {
@@ -81,6 +88,55 @@ impl FixtureProvider {
                     for x in (offset + 16)..(offset + 24) {
                         image.put_pixel(x, y, color);
                     }
+                }
+            }
+        } else if prompt.contains("full-body") || prompt.contains("Full body") {
+            for y in 28..68 {
+                for x in 34..62 {
+                    image.put_pixel(x, y, color);
+                }
+            }
+            for y in 68..84 {
+                for x in 32..40 {
+                    image.put_pixel(x, y, color);
+                }
+                for x in 54..62 {
+                    image.put_pixel(x, y, color);
+                }
+            }
+            // Character reference fixtures must model the production
+            // contract: a visible face region with stable identity features.
+            // Keeping the old featureless rectangle would make the fixture
+            // exercise an invalid Provider response rather than the build
+            // orchestrator behavior these tests cover.
+            let face_left = if right_facing { 48 } else { 39 };
+            let face_right = if right_facing { 62 } else { 57 };
+            for y in 34..51 {
+                for x in face_left..face_right {
+                    image.put_pixel(
+                        x,
+                        y,
+                        if back_facing {
+                            Rgba([40, 110, 80, 255])
+                        } else {
+                            Rgba([190, 126, 88, 255])
+                        },
+                    );
+                }
+            }
+            if !back_facing {
+                let eyes = if right_facing {
+                    vec![57_u32]
+                } else {
+                    vec![43_u32, 52_u32]
+                };
+                for x in eyes {
+                    image.put_pixel(x, 39, Rgba([35, 22, 18, 255]));
+                }
+                let mouth_left = if right_facing { 56 } else { 45 };
+                let mouth_right = if right_facing { 60 } else { 51 };
+                for x in mouth_left..mouth_right {
+                    image.put_pixel(x, 48, Rgba([70, 36, 28, 255]));
                 }
             }
         } else {
@@ -101,7 +157,12 @@ impl FixtureProvider {
         })
     }
 
-    fn write_video(&self, output_path: &Path) -> Result<ProviderMedia, ProviderError> {
+    fn write_video(
+        &self,
+        output_path: &Path,
+        back_facing: bool,
+        idle: bool,
+    ) -> Result<ProviderMedia, ProviderError> {
         let gif_path = output_path.with_extension("gif");
         if let Some(parent) = gif_path.parent() {
             fs::create_dir_all(parent)?;
@@ -118,7 +179,9 @@ impl FixtureProvider {
                 pixel.copy_from_slice(&[0, 255, 0, 255]);
             }
             let phase = index % 8;
-            let swing = if phase <= 4 {
+            let swing = if idle {
+                0
+            } else if phase <= 4 {
                 phase as usize
             } else {
                 (8 - phase) as usize
@@ -129,7 +192,32 @@ impl FixtureProvider {
                     pixels[start..start + 4].copy_from_slice(&[210, 70, 90, 255]);
                 }
             }
-            let left_leg = 32 + swing.min(18);
+            if idle {
+                let pulse = if phase <= 4 { phase } else { 8 - phase };
+                for y in 52..64 {
+                    for x in 38..58 {
+                        let start = (y * 96 + x) * 4;
+                        pixels[start..start + 4].copy_from_slice(&[210 - pulse * 20, 70, 90, 255]);
+                    }
+                }
+            }
+            if !back_facing {
+                for y in 34..51 {
+                    for x in 39..57 {
+                        let start = (y * 96 + x) * 4;
+                        pixels[start..start + 4].copy_from_slice(&[190, 126, 88, 255]);
+                    }
+                }
+                for x in [43usize, 52usize] {
+                    let start = (39 * 96 + x) * 4;
+                    pixels[start..start + 4].copy_from_slice(&[35, 22, 18, 255]);
+                }
+                for x in 45..51 {
+                    let start = (48 * 96 + x) * 4;
+                    pixels[start..start + 4].copy_from_slice(&[70, 36, 28, 255]);
+                }
+            }
+            let left_leg = 34 + swing.min(18);
             let right_leg = 54usize.saturating_sub(swing.min(18));
             for y in 68..84 {
                 for x in left_leg..(left_leg + 8) {
@@ -226,13 +314,19 @@ impl MediaGenerationProvider for FixtureProvider {
 
     fn generate_video(
         &self,
-        _request: &GenerateVideoRequest,
+        request: &GenerateVideoRequest,
     ) -> Result<ProviderTicket, ProviderError> {
-        let id = format!("fixture-{}", self.tickets.lock().unwrap().len() + 1);
-        self.tickets
-            .lock()
-            .unwrap()
-            .insert(id.clone(), FixtureTicket);
+        let mut next_ticket = self.next_ticket.lock().unwrap();
+        let id = format!("fixture-{}", *next_ticket);
+        *next_ticket = next_ticket.saturating_add(1);
+        drop(next_ticket);
+        self.tickets.lock().unwrap().insert(
+            id.clone(),
+            FixtureTicket {
+                back_facing: request.prompt.contains("facing up"),
+                idle: request.prompt.contains("idle loop"),
+            },
+        );
         self.usage.lock().unwrap().requests += 1;
         Ok(ProviderTicket {
             provider_id: self.id().into(),
@@ -240,12 +334,18 @@ impl MediaGenerationProvider for FixtureProvider {
         })
     }
 
-    fn edit_video(&self, _request: &EditVideoRequest) -> Result<ProviderTicket, ProviderError> {
-        let id = format!("fixture-edit-{}", self.tickets.lock().unwrap().len() + 1);
-        self.tickets
-            .lock()
-            .unwrap()
-            .insert(id.clone(), FixtureTicket);
+    fn edit_video(&self, request: &EditVideoRequest) -> Result<ProviderTicket, ProviderError> {
+        let mut next_ticket = self.next_ticket.lock().unwrap();
+        let id = format!("fixture-edit-{}", *next_ticket);
+        *next_ticket = next_ticket.saturating_add(1);
+        drop(next_ticket);
+        self.tickets.lock().unwrap().insert(
+            id.clone(),
+            FixtureTicket {
+                back_facing: request.prompt.contains("facing up"),
+                idle: request.prompt.contains("idle loop"),
+            },
+        );
         let mut usage = self.usage.lock().unwrap();
         usage.requests += 1;
         usage.edited_videos += 1;
@@ -261,15 +361,19 @@ impl MediaGenerationProvider for FixtureProvider {
         output_path: &Path,
     ) -> Result<ProviderPoll, ProviderError> {
         let mut tickets = self.tickets.lock().unwrap();
-        if tickets.remove(&ticket.request_id).is_none() {
+        let Some(fixture_ticket) = tickets.remove(&ticket.request_id) else {
             return Ok(ProviderPoll::Failed {
                 code: "unknown_fixture_ticket".into(),
                 message: "fixture ticket was not found".into(),
             });
-        }
+        };
         drop(tickets);
         self.usage.lock().unwrap().generated_videos += 1;
-        Ok(ProviderPoll::Succeeded(self.write_video(output_path)?))
+        Ok(ProviderPoll::Succeeded(self.write_video(
+            output_path,
+            fixture_ticket.back_facing,
+            fixture_ticket.idle,
+        )?))
     }
 
     fn cancel(&self, ticket: &ProviderTicket) -> Result<(), ProviderError> {
@@ -525,6 +629,8 @@ fn build_project_end_to_end_registers_catalog_and_report() {
     jobs.update_record(&parent_id, |record| {
         record.lifecycle_state = JobLifecycleState::Running;
         record.worker_pid = Some(std::process::id());
+        record.authorization_id = Some("fixture-build-auth".into());
+        record.lineage_root_job_id = Some(parent_id.clone());
     })
     .unwrap();
     let report = run_build_project(
@@ -534,7 +640,12 @@ fn build_project_end_to_end_registers_catalog_and_report() {
         &build_request(&root),
         Some(&provider),
     )
-    .unwrap();
+    .unwrap_or_else(|error| {
+        panic!(
+            "{error:?}; child jobs: {:#?}",
+            children_of(&jobs, &parent_id)
+        )
+    });
 
     assert_eq!(report.kind, "project_build_report");
     assert_eq!(report.schema_version, "1");
@@ -549,6 +660,14 @@ fn build_project_end_to_end_registers_catalog_and_report() {
     assert_eq!(children.len(), 3);
     for child in &children {
         assert_eq!(child.parent_job_id.as_deref(), Some(parent_id.as_str()));
+        assert_eq!(
+            child.authorization_id.as_deref(),
+            Some("fixture-build-auth")
+        );
+        assert_eq!(
+            child.lineage_root_job_id.as_deref(),
+            Some(parent_id.as_str())
+        );
         assert_eq!(child.lifecycle_state, JobLifecycleState::Succeeded);
     }
     let kinds = children

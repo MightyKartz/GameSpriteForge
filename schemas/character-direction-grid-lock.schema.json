@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/character-direction-grid-lock.schema.json",
+  "title": "Forge Character Direction Grid Lock V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "workflow", "providerId", "profileId", "imageModel", "styleRevision", "sheetSha256", "nodes"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "enum": ["direction-grid-lock@1.0.0", "direction-grid-lock@1.1.0", "direction-grid-lock@1.2.0"] },
+    "workflow": { "const": "topdown-grid@9.0.0" },
+    "providerId": { "type": "string", "minLength": 1 },
+    "profileId": { "type": "string", "minLength": 1 },
+    "imageModel": { "type": "string", "minLength": 1 },
+    "styleRevision": { "type": "string", "minLength": 1 },
+    "subjectId": { "type": "string", "minLength": 1 },
+    "subjectRevision": { "type": "string", "minLength": 1 },
+    "subjectCanonicalSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "equipmentKind": { "enum": ["none", "staff_like"] },
+    "cameraProfile": { "enum": ["topdown-3q-orthographic@1.0.0", "topdown-three-quarter@1.0.0", "topdown-orthographic@2.0.0"] },
+    "sheetSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "appearanceReportPath": { "type": "string", "minLength": 1 },
+    "appearanceReportSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "importConsistencyReportPath": { "type": "string", "minLength": 1 },
+    "importConsistencyReportSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "alphaEdgeReportPath": { "type": "string", "minLength": 1 },
+    "alphaEdgeReportSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "capeHemContract": { "enum": ["continuous_gold_lower_hem", "front_authoritative_no_skirt_hem"] },
+    "capeHemReportPath": { "type": "string", "minLength": 1 },
+    "capeHemReportSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "generator", "providerRequestOccurred", "inputSha256", "mattedSha256", "evidencePath", "evidenceSha256"],
+      "properties": {
+        "kind": { "const": "external_import" },
+        "generator": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+        "providerRequestOccurred": { "const": false },
+        "inputSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "mattedSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "evidencePath": { "type": "string", "minLength": 1 },
+        "evidenceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "downstreamBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["providerId", "profileId", "imageModel"],
+      "properties": {
+        "providerId": { "type": "string", "minLength": 1 },
+        "profileId": { "type": "string", "minLength": 1 },
+        "imageModel": { "type": "string", "minLength": 1 }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["nodeId", "direction", "cellIndex", "path", "sha256", "generationMasterPath", "generationMasterSha256", "providerRequestOccurred"],
+        "properties": {
+          "nodeId": { "enum": ["front_idle", "back_idle", "right_idle", "left_idle"] },
+          "direction": { "enum": ["front", "rear", "right", "left"] },
+          "cellIndex": { "type": "integer", "minimum": 0, "maximum": 3 },
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "generationMasterPath": { "type": "string", "minLength": 1 },
+          "generationMasterSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "providerRequestOccurred": { "type": "boolean" }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "profile": { "const": "direction-grid-lock@1.1.0" } }, "required": ["profile"] },
+      "then": { "required": ["subjectId", "subjectRevision", "subjectCanonicalSha256", "equipmentKind", "cameraProfile", "appearanceReportPath", "appearanceReportSha256"] }
+    },
+    {
+      "if": { "properties": { "profile": { "const": "direction-grid-lock@1.2.0" } }, "required": ["profile"] },
+      "then": {
+        "required": ["subjectId", "subjectRevision", "subjectCanonicalSha256", "equipmentKind", "cameraProfile", "appearanceReportPath", "appearanceReportSha256", "importConsistencyReportPath", "importConsistencyReportSha256", "alphaEdgeReportPath", "alphaEdgeReportSha256", "producer", "downstreamBinding"]
+      }
+    },
+    {
+      "if": { "required": ["capeHemContract"] },
+      "then": { "required": ["capeHemReportPath", "capeHemReportSha256"] },
+      "else": {
+        "not": {
+          "anyOf": [
+            { "required": ["capeHemReportPath"] },
+            { "required": ["capeHemReportSha256"] }
+          ]
+        }
+      }
+    }
+  ]
+}

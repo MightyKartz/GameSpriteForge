@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File, OpenOptions};
 use std::path::{Path, PathBuf};
 
@@ -12,6 +12,7 @@ const APP_SUPPORT_DIR: &str = "Game Sprite Forge";
 const JOBS_DIR: &str = "jobs";
 const JOB_JSON: &str = "job.json";
 const JOB_LOCK: &str = ".job.lock";
+const CHILD_SCOPE_CLAIMS_DIR: &str = ".forge-child-scope-claims";
 pub const JOB_WORKSPACE_JSON: &str = "workspace.json";
 const JOB_SUBDIRS: [&str; 9] = [
     "source",
@@ -51,6 +52,8 @@ pub enum JobStoreError {
         #[source]
         source: serde_json::Error,
     },
+    #[error("child scope {scope} was already claimed by job {child_job_id}")]
+    ChildScopeAlreadyClaimed { scope: String, child_job_id: String },
 }
 
 #[derive(Debug, Clone)]
@@ -81,46 +84,7 @@ impl JobStore {
     }
 
     pub fn create_job(&self, source_kind: SourceKind) -> Result<JobRecord, JobStoreError> {
-        let job_id = Uuid::new_v4().to_string();
-        let job_dir = self.job_dir(&job_id)?;
-        fs::create_dir_all(&job_dir).map_err(|source| JobStoreError::Io {
-            path: job_dir.clone(),
-            source,
-        })?;
-
-        for subdir in JOB_SUBDIRS {
-            let path = job_dir.join(subdir);
-            fs::create_dir_all(&path).map_err(|source| JobStoreError::Io { path, source })?;
-        }
-
-        let now = Utc::now();
-        let record = JobRecord {
-            job_id,
-            source_kind,
-            state: JobState::Created,
-            created_at: now,
-            updated_at: now,
-            job_dir,
-            error_summary: None,
-            asset_id: Some(Uuid::new_v4().to_string()),
-            parent_job_id: None,
-            operation_kind: JobOperationKind::LegacyPipeline,
-            lifecycle_state: JobLifecycleState::Idle,
-            progress: 0.0,
-            input_hash: None,
-            recipe_hash: None,
-            recipe: None,
-            repair: None,
-            steps: Vec::new(),
-            artifacts: Vec::new(),
-            error_code: None,
-            recoverable: false,
-            cancellation_requested: false,
-            worker_pid: None,
-            next_actions: Vec::new(),
-        };
-        self.write_record(&record)?;
-        Ok(record)
+        self.create_job_with_id(source_kind, Uuid::new_v4().to_string())
     }
 
     pub fn mark_failed(
@@ -194,6 +158,179 @@ impl JobStore {
         update(&mut record);
         record.updated_at = Utc::now();
         self.write_record_unlocked(&record)?;
+        Ok(record)
+    }
+
+    /// Atomically reserve and create the sole child allowed to consume a named
+    /// source scope. The claim lives in a registry beside (never inside) the
+    /// canonical source Job, so two different destination JobStore roots still
+    /// serialize on the same source without mutating the source Job or Pack.
+    pub fn create_claimed_child_job(
+        &self,
+        source_job_dir: &Path,
+        expected_source_job_id: &str,
+        scope: &str,
+        source_kind: SourceKind,
+    ) -> Result<JobRecord, JobStoreError> {
+        if !is_filesystem_safe_job_id(expected_source_job_id) {
+            return Err(JobStoreError::UnsafeJobId(
+                expected_source_job_id.to_string(),
+            ));
+        }
+        let canonical_source =
+            fs::canonicalize(source_job_dir).map_err(|source| JobStoreError::Io {
+                path: source_job_dir.to_path_buf(),
+                source,
+            })?;
+        if canonical_source.file_name().and_then(|name| name.to_str())
+            != Some(expected_source_job_id)
+        {
+            return Err(JobStoreError::JobNotFound(
+                expected_source_job_id.to_string(),
+            ));
+        }
+        let source_store_root = canonical_source.parent().ok_or_else(|| JobStoreError::Io {
+            path: canonical_source.clone(),
+            source: std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "source Job directory has no parent registry location",
+            ),
+        })?;
+        let claims_dir = source_store_root.join(CHILD_SCOPE_CLAIMS_DIR);
+        fs::create_dir_all(&claims_dir).map_err(|source| JobStoreError::Io {
+            path: claims_dir.clone(),
+            source,
+        })?;
+        let lock_path = claims_dir.join(format!("{expected_source_job_id}.lock"));
+        let lock = OpenOptions::new()
+            .create(true)
+            .read(true)
+            .write(true)
+            .truncate(false)
+            .open(&lock_path)
+            .map_err(|source| JobStoreError::Io {
+                path: lock_path.clone(),
+                source,
+            })?;
+        lock.lock().map_err(|source| JobStoreError::Io {
+            path: lock_path,
+            source,
+        })?;
+        // Re-read the source identity while holding the source-scoped claim
+        // lock. This closes the validation-to-staging window for the parent id;
+        // the full artifact closure is independently revalidated by the runner
+        // immediately before any Provider request.
+        let source_record_path = canonical_source.join(JOB_JSON);
+        let source_record: JobRecord =
+            serde_json::from_slice(&fs::read(&source_record_path).map_err(|source| {
+                JobStoreError::Io {
+                    path: source_record_path.clone(),
+                    source,
+                }
+            })?)
+            .map_err(|source| JobStoreError::Deserialize {
+                path: source_record_path.clone(),
+                source,
+            })?;
+        if source_record.job_id != expected_source_job_id
+            || fs::canonicalize(&source_record.job_dir).map_err(|source| JobStoreError::Io {
+                path: source_record.job_dir.clone(),
+                source,
+            })? != canonical_source
+        {
+            return Err(JobStoreError::JobNotFound(
+                expected_source_job_id.to_string(),
+            ));
+        }
+        let claims_path = claims_dir.join(format!("{expected_source_job_id}.json"));
+        let mut claims = if claims_path.is_file() {
+            serde_json::from_slice::<BTreeMap<String, String>>(&fs::read(&claims_path).map_err(
+                |source| JobStoreError::Io {
+                    path: claims_path.clone(),
+                    source,
+                },
+            )?)
+            .map_err(|source| JobStoreError::Deserialize {
+                path: claims_path.clone(),
+                source,
+            })?
+        } else {
+            BTreeMap::new()
+        };
+        let claim_key = scope.to_string();
+        if let Some(child_job_id) = claims.get(&claim_key) {
+            return Err(JobStoreError::ChildScopeAlreadyClaimed {
+                scope: scope.to_string(),
+                child_job_id: child_job_id.clone(),
+            });
+        }
+        let child_job_id = Uuid::new_v4().to_string();
+        claims.insert(claim_key, child_job_id.clone());
+        let bytes =
+            serde_json::to_vec_pretty(&claims).map_err(|source| JobStoreError::Serialize {
+                path: claims_path.clone(),
+                source,
+            })?;
+        let temporary =
+            claims_dir.join(format!(".{expected_source_job_id}.{}.tmp", Uuid::new_v4()));
+        fs::write(&temporary, bytes).map_err(|source| JobStoreError::Io {
+            path: temporary.clone(),
+            source,
+        })?;
+        fs::rename(&temporary, &claims_path).map_err(|source| JobStoreError::Io {
+            path: claims_path,
+            source,
+        })?;
+        // If child creation fails, the durable source claim remains
+        // fail-closed. A later audit can reconcile the reserved child id
+        // without ever creating a sibling.
+        self.create_job_with_id(source_kind, child_job_id)
+    }
+
+    fn create_job_with_id(
+        &self,
+        source_kind: SourceKind,
+        job_id: String,
+    ) -> Result<JobRecord, JobStoreError> {
+        let job_dir = self.job_dir(&job_id)?;
+        fs::create_dir_all(&job_dir).map_err(|source| JobStoreError::Io {
+            path: job_dir.clone(),
+            source,
+        })?;
+        for subdir in JOB_SUBDIRS {
+            let path = job_dir.join(subdir);
+            fs::create_dir_all(&path).map_err(|source| JobStoreError::Io { path, source })?;
+        }
+        let now = Utc::now();
+        let record = JobRecord {
+            job_id,
+            source_kind,
+            state: JobState::Created,
+            created_at: now,
+            updated_at: now,
+            job_dir,
+            error_summary: None,
+            asset_id: Some(Uuid::new_v4().to_string()),
+            parent_job_id: None,
+            authorization_id: None,
+            authorization_manifest_sha256: None,
+            lineage_root_job_id: None,
+            operation_kind: JobOperationKind::LegacyPipeline,
+            lifecycle_state: JobLifecycleState::Idle,
+            progress: 0.0,
+            input_hash: None,
+            recipe_hash: None,
+            recipe: None,
+            repair: None,
+            steps: Vec::new(),
+            artifacts: Vec::new(),
+            error_code: None,
+            recoverable: false,
+            cancellation_requested: false,
+            worker_pid: None,
+            next_actions: Vec::new(),
+        };
+        self.write_record(&record)?;
         Ok(record)
     }
 

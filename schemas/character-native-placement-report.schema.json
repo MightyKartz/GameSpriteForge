@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamespriteforge.dev/schemas/character-native-placement-report.schema.json",
+  "title": "Forge Character Native Placement Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "animation",
+    "nativeCoordinatesPreserved",
+    "transformsApplied",
+    "maximumTranslationPx",
+    "scaleX",
+    "scaleY",
+    "bodyTopRangePx",
+    "bodyBottomRangePx",
+    "bodyHeightRangePx",
+    "torsoWidthDriftRatio",
+    "torsoAreaDriftRatio",
+    "verdict",
+    "reasons",
+    "frames"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "character-native-placement@1.0.0" },
+    "animation": { "type": "string", "minLength": 1 },
+    "nativeCoordinatesPreserved": { "const": true },
+    "transformsApplied": { "const": false },
+    "maximumTranslationPx": { "const": 0 },
+    "scaleX": { "const": 1.0 },
+    "scaleY": { "const": 1.0 },
+    "bodyTopRangePx": { "type": "number", "minimum": 0 },
+    "bodyBottomRangePx": { "type": "number", "minimum": 0 },
+    "bodyHeightRangePx": { "type": "number", "minimum": 0 },
+    "torsoWidthDriftRatio": { "type": "number", "minimum": 0 },
+    "torsoAreaDriftRatio": { "type": "number", "minimum": 0 },
+    "verdict": { "enum": ["game_ready", "blocked"] },
+    "reasons": { "type": "array", "items": { "type": "string" } },
+    "frames": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 24,
+      "items": { "$ref": "#/$defs/frame" }
+    }
+  },
+  "$defs": {
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frameIndex",
+        "canvasWidth",
+        "canvasHeight",
+        "bodyTopY",
+        "bodyBottomY",
+        "bodyHeight",
+        "bodyCenterX",
+        "torsoWidth",
+        "torsoArea",
+        "translationX",
+        "translationY",
+        "scaleX",
+        "scaleY"
+      ],
+      "properties": {
+        "frameIndex": { "type": "integer", "minimum": 0, "maximum": 23 },
+        "canvasWidth": { "type": "integer", "minimum": 1 },
+        "canvasHeight": { "type": "integer", "minimum": 1 },
+        "bodyTopY": { "type": "number", "minimum": 0 },
+        "bodyBottomY": { "type": "number", "minimum": 0 },
+        "bodyHeight": { "type": "number", "minimum": 1 },
+        "bodyCenterX": { "type": "number", "minimum": 0 },
+        "torsoWidth": { "type": "number", "minimum": 0 },
+        "torsoArea": { "type": "number", "minimum": 0 },
+        "translationX": { "const": 0 },
+        "translationY": { "const": 0 },
+        "scaleX": { "const": 1.0 },
+        "scaleY": { "const": 1.0 }
+      }
+    }
+  }
+}

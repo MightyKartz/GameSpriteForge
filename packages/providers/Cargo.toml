@@ -8,6 +8,9 @@ authors.workspace = true
 [lib]
 name = "forge_providers"
 
+[features]
+grid-generation = ["forge_core/grid-generation"]
+
 [dependencies]
 base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }

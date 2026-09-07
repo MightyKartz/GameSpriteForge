@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/collection-anchor-quality-report.schema.json",
+  "title": "Forge Collection Anchor Quality Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "assetKind",
+    "verdict",
+    "subjectCount",
+    "detachedComponentRatio",
+    "bottomBandSpanRatio",
+    "bottomBandAreaShare",
+    "platformOverhangRatio",
+    "foregroundAreaRatio",
+    "foregroundWidthRatio",
+    "foregroundHeightRatio",
+    "reasons"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "collection-anchor@1.1.0" },
+    "assetKind": { "enum": ["icon_set", "prop_set", "portrait_set", "equipment_set", "decal_set"] },
+    "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+    "subjectCount": { "type": "integer", "minimum": 0 },
+    "detachedComponentRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "bottomBandSpanRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "bottomBandAreaShare": { "type": "number", "minimum": 0, "maximum": 1 },
+    "platformOverhangRatio": { "type": "number", "minimum": 0 },
+    "foregroundAreaRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "foregroundWidthRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "foregroundHeightRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "geometry": { "$ref": "consistency-report.schema.json#/$defs/geometryReport" },
+    "reasons": { "type": "array", "items": { "type": "string" } }
+  }
+}

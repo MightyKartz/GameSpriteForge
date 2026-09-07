@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "3",
+  "projectPath": "/absolute/path/to/forge-project",
+  "assetId": "character-grid-platform-safe",
+  "providerId": "fixture",
+  "profileId": "default",
+  "workflow": { "id": "topdown-grid", "version": "9.4.0" },
+  "directionMotionStage": "complete",
+  "character": {
+    "prompt": "Preserve the approved character identity, costume and ordinary compact boots."
+  },
+  "equipment": { "kind": "none" },
+  "equipmentExplicit": true,
+  "styleLockPath": "/absolute/path/to/style-lock.json",
+  "subjectLockPath": "/absolute/path/to/subject-lock.json",
+  "reuseFromJobDir": "/absolute/path/to/rejected-topdown-grid-v9.3-job",
+  "generation": {
+    "targetFrameCount": 4,
+    "maxAttemptsPerAnimation": 2,
+    "videoDurationSeconds": 4,
+    "poseGuidance": "grayscale"
+  },
+  "retryAnimations": ["walk_down"],
+  "retryStages": { "walk_down": "frame" },
+  "retryFrames": { "walk_down": [2] },
+  "validationOnly": true,
+  "validationAnimations": ["walk_down"],
+  "metadata": {
+    "name": "Platform-safe gait request shape",
+    "creator": "Game Sprite Forge",
+    "license": "private",
+    "defaultAnimation": "walk_down"
+  }
+}

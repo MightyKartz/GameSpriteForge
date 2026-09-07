@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamespriteforge.dev/schemas/source-cycle-sampling-report.schema.json",
+  "title": "Forge SourceCycleSamplingReportV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "selectedStartFrame",
+    "selectedEndBoundaryFrame",
+    "sourceCycleFrameCount",
+    "sourceTimestampsMs",
+    "mandatoryFrameIndices",
+    "outputFrameIndices",
+    "outputTimestampsMs",
+    "outputFrameCount",
+    "reconstructionErrorThreshold",
+    "normalizedReconstructionError",
+    "decision"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "enum": ["source-cycle-sampling@1.0.0", "source-cycle-sampling@1.1.0"] },
+    "selectedStartFrame": { "type": "integer", "minimum": 0 },
+    "selectedEndBoundaryFrame": { "type": "integer", "minimum": 1 },
+    "sourceCycleFrameCount": { "type": "integer", "minimum": 8 },
+    "sourceTimestampsMs": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 121,
+      "items": { "type": "integer", "minimum": 0 }
+    },
+    "mandatoryFrameIndices": {
+      "type": "array",
+      "maxItems": 24,
+      "items": { "type": "integer", "minimum": 0 },
+      "uniqueItems": true
+    },
+    "outputFrameIndices": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 24,
+      "items": { "type": "integer", "minimum": 0 },
+      "uniqueItems": true
+    },
+    "outputTimestampsMs": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 24,
+      "items": { "type": "integer", "minimum": 0 }
+    },
+    "outputFrameCount": { "enum": [8, 10, 12, 16, 24] },
+    "reconstructionErrorThreshold": { "type": "number", "minimum": 0 },
+    "normalizedReconstructionError": { "type": "number", "minimum": 0 },
+    "decision": {
+      "enum": [
+        "minimum_count_sufficient",
+        "promoted_for_motion_complexity",
+        "maximum_count_required"
+      ]
+    }
+  }
+}

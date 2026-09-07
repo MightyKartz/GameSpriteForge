@@ -11,6 +11,7 @@ pub enum CanvasMode {
     SquareBottom,
     SquareCenter,
     AutoWidthCenter,
+    PreserveCanvas,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -98,6 +99,7 @@ fn canvas_size(frames: &[RgbaImage], bboxes: &[FrameBbox], options: NormalizeOpt
                 CanvasMode::SquareBottom => max_source_height.saturating_add(options.margin_bottom),
                 CanvasMode::SquareCenter => max_source_height.saturating_add(margin),
                 CanvasMode::AutoWidthCenter => max_source_height,
+                CanvasMode::PreserveCanvas => max_source_height,
             };
             let side = max_source_width
                 .max(max_source_height)
@@ -115,6 +117,9 @@ fn canvas_size(frames: &[RgbaImage], bboxes: &[FrameBbox], options: NormalizeOpt
                 .max(max_bbox_height.saturating_add(margin))
                 .max(1),
         ),
+        CanvasMode::PreserveCanvas => {
+            FrameSize::new(max_source_width.max(1), max_source_height.max(1))
+        }
     }
 }
 
@@ -139,10 +144,14 @@ fn normalize_one(
             size.height as f32 / 2.0,
             size.height as f32,
         ),
+        CanvasMode::PreserveCanvas => (0.0, 0.0, 0.0),
     };
 
     let offset_x = if source_bbox.has_foreground() {
-        (target_center_x - source_bbox.center_x).round() as i32
+        match options.mode {
+            CanvasMode::PreserveCanvas => 0,
+            _ => (target_center_x - source_bbox.center_x).round() as i32,
+        }
     } else {
         (size.width as i32 - source.width() as i32) / 2
     };
@@ -152,6 +161,7 @@ fn normalize_one(
             CanvasMode::SquareCenter | CanvasMode::AutoWidthCenter => {
                 (target_center_y - source_bbox.center_y).round() as i32
             }
+            CanvasMode::PreserveCanvas => 0,
         }
     } else {
         (size.height as i32 - source.height() as i32) / 2

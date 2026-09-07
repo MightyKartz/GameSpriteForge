@@ -24,6 +24,9 @@
         "character",
         "icon_set",
         "prop_set",
+        "portrait_set",
+        "equipment_set",
+        "decal_set",
         "terrain_set",
         "building_kit",
         "map"
@@ -88,7 +91,37 @@
         "manifest": { "type": "string", "minLength": 1 },
         "godotHelper": { "type": "string", "minLength": 1 },
         "qualityReport": { "type": "string", "minLength": 1 },
+        "animationHumanReview": { "type": "string", "minLength": 1 },
         "consistencyReport": { "type": "string", "minLength": 1 },
+        "characterSemanticQualityReport": { "type": "string", "minLength": 1 },
+        "handEquipmentContactReport": { "type": "string", "minLength": 1 },
+        "characterSilhouetteTemporalReport": { "type": "string", "minLength": 1 },
+        "characterSilhouetteTemporalSourceReport": { "type": "string", "minLength": 1 },
+        "characterMotionSemanticsReport": { "type": "string", "minLength": 1 },
+        "characterGaitCycleReport": { "type": "string", "minLength": 1 },
+        "animationSheetReport": { "type": "string", "minLength": 1 },
+        "characterAlphaRepairReport": { "type": "string", "minLength": 1 },
+        "characterScaleLock": { "type": "string", "minLength": 1 },
+        "characterDirectionLock": { "type": "string", "minLength": 1 },
+        "characterDirectionPoseLock": { "type": "string", "minLength": 1 },
+        "characterDirectionMotionLock": { "type": "string", "minLength": 1 },
+        "characterDirectionMotionApproval": { "type": "string", "minLength": 1 },
+        "directionMotionProviderManifest": { "type": "string", "minLength": 1 },
+        "characterDirectionGridLock": { "type": "string", "minLength": 1 },
+        "characterDirectionGridApproval": { "type": "string", "minLength": 1 },
+        "directionGridAppearanceReport": { "type": "string", "minLength": 1 },
+        "gridKeyframeProviderManifest": { "type": "string", "minLength": 1 },
+        "gridKeyframeActionReports": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "keyframeLoopTrimReport": { "type": "string", "minLength": 1 },
+        "portraitBaseLock": { "type": "string", "minLength": 1 },
+        "portraitBaseApproval": { "type": "string", "minLength": 1 },
+        "portraitConsistencyReport": { "type": "string", "minLength": 1 },
         "terrainManifest": { "type": "string", "minLength": 1 },
         "buildingManifest": { "type": "string", "minLength": 1 },
         "mapManifest": { "type": "string", "minLength": 1 },
@@ -119,6 +152,8 @@
           "frame": { "type": "integer", "minimum": 0 },
           "texture": { "type": "string", "minLength": 1 },
           "provenance": { "$ref": "#/$defs/itemProvenance" }
+          ,
+          "metadata": { "$ref": "#/$defs/staticItemMetadata" }
         }
       }
     },
@@ -172,6 +207,25 @@
         "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
       }
     },
+    "staticItemMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "role": { "enum": ["icon", "world_prop", "equipped_preview", "portrait_expression", "decal"] },
+        "groupId": { "type": "string", "minLength": 1 },
+        "expression": { "type": "string", "minLength": 1 },
+        "footprint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "integer", "minimum": 1, "maximum": 32 },
+            "height": { "type": "integer", "minimum": 1, "maximum": 32 }
+          }
+        },
+        "blend": { "enum": ["mix", "multiply", "add"] }
+      }
+    },
     "animation": {
       "type": "object",
       "additionalProperties": false,
@@ -184,6 +238,11 @@
           "items": { "type": "integer", "minimum": 0 }
         },
         "fps": { "type": "number", "exclusiveMinimum": 0 },
+        "frameDurationsMs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "integer", "minimum": 1 }
+        },
         "loop": { "type": "boolean" }
       }
     }

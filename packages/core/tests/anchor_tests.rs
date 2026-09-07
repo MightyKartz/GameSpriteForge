@@ -108,3 +108,32 @@ fn square_bottom_can_use_manual_anchor() {
     assert!(normalized[0].anchor.locked_by_user);
     assert!((normalized[0].bbox.bottom_y - 18.0).abs() <= 0.5);
 }
+
+#[test]
+fn preserve_canvas_keeps_source_coordinates() {
+    let frames = vec![
+        frame_with_rect(24, 24, 2, 3, 8, 14),
+        frame_with_rect(24, 24, 11, 7, 19, 22),
+    ];
+
+    let normalized = normalize_frames(
+        &frames,
+        NormalizeOptions {
+            mode: CanvasMode::PreserveCanvas,
+            margin: 9,
+            margin_bottom: 5,
+            alpha_threshold: 0,
+            manual_anchor: None,
+        },
+    );
+
+    assert_eq!(normalized.len(), 2);
+    assert_eq!(normalized[0].image, frames[0]);
+    assert_eq!(normalized[1].image, frames[1]);
+    assert_eq!(normalized[0].offset_x, 0);
+    assert_eq!(normalized[0].offset_y, 0);
+    assert_eq!(normalized[1].offset_x, 0);
+    assert_eq!(normalized[1].offset_y, 0);
+    assert_eq!(normalized[0].source_bbox, normalized[0].bbox);
+    assert_eq!(normalized[1].source_bbox, normalized[1].bbox);
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "2",
+  "kind": "character",
+  "id": "fixture-ranger-cycle-v10",
+  "name": "Fixture Ranger Cycle V10",
+  "subject": {
+    "id": "fixture-ranger",
+    "revision": "REPLACE_WITH_SUBJECT_REVISION"
+  },
+  "workflow": {
+    "id": "topdown-cycle",
+    "version": "10.0.0"
+  },
+  "cameraProfile": "topdown-three-quarter@1.0.0",
+  "equipment": {
+    "kind": "none"
+  },
+  "motionProfile": "biped_walk@1.0.0",
+  "poseGuidance": "disabled",
+  "license": "MIT"
+}

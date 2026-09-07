@@ -1,0 +1,4857 @@
+{
+  "schemaVersion": "1",
+  "status": "unreviewed historical WIP; not merged into main",
+  "baseCommit": "23e5b905024942024f3f461d14cdb589c603c444",
+  "sourceBranch": "codex/stage3-static-assets",
+  "sourceFiles": [
+    {
+      "status": " M",
+      "path": ".agents/skills/forge-dev/SKILL.md",
+      "size": 7720,
+      "sha256": "ed4d82a1ab96f8e7654e04492b8c8fd7f36ce806048167a018f0d1795182e0d3",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": ".github/workflows/v03-quality.yml",
+      "size": 4422,
+      "sha256": "1351d12a9e7de1cbc8d9dbee46e4a310d91962293bf25c3f2feb5c70d07e0ec3",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "CONTRIBUTING.md",
+      "size": 4148,
+      "sha256": "1d246afafa936010f6f6548bcbdb989b7566c735e9dc73f57f7c81f3124df51f",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "Cargo.lock",
+      "size": 91465,
+      "sha256": "cfb1d9179b5a303b0a25039c3c458d4fe36b5860cd8aacaa0672392237e517bd",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "README.md",
+      "size": 23962,
+      "sha256": "ffaec81252c61ba85943e99fce545166ff93aa5fe916a6ada38d703dacc92d2b",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "README.zh-CN.md",
+      "size": 22078,
+      "sha256": "a1a9df8b18082c0703f217ce1d7b1e78ced53ea1ab39e0231d523a6eaa470a3b",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "docs/automation/forge-cli.md",
+      "size": 55990,
+      "sha256": "44762a50102e05d9453d05dd76b53213939fa921badd9dcbbadaea7723d5963d",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "docs/qa/forge-complete-visual-implementation-status.md",
+      "size": 28639,
+      "sha256": "06a351891c1e3baf36d5ae93a8108ae5533df559580bde282ed5254cba9451c0",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "examples/cli/character-v2.json",
+      "size": 393,
+      "sha256": "796d8471eccd2dd71fb0d70a61ade3c56305ec7a5d0b53f2d047cc7a2f3e5049",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/cli/Cargo.toml",
+      "size": 1330,
+      "sha256": "4cc72225e9e46551e744626d3ea614f778bc99d55dd8c211bca99f37aa09e99a",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/cli/src/main.rs",
+      "size": 391474,
+      "sha256": "6c0f3623211749cba412fdf770b7dd0f733849d7d5ecec2c417a8d23e677cd41",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/Cargo.toml",
+      "size": 741,
+      "sha256": "ec4e9c1ff7215411b95bf19c6ff7469320662339c49e0a096ce994f796497501",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/examples/generate_godot_smoke_pack.rs",
+      "size": 5677,
+      "sha256": "238f30399a1126344c5d3c5e3b39c35606437dc39a77f84d2bb8a3436fa2fcbd",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/asset_project.rs",
+      "size": 155694,
+      "sha256": "829bcc751e8f90143404247702359fd1339d84a2c0c73d80175035e132a6772d",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/automation/mod.rs",
+      "size": 1984,
+      "sha256": "f21d06e673363c3f99cfe25488ed54b6b7b789d2c2554f7dd8bef693360dc217",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/automation/plan.rs",
+      "size": 214046,
+      "sha256": "e34907bf35a2742e7b1e11156de568c5eb21d001d2abb8ef82bf080f886b71c0",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/automation/repair.rs",
+      "size": 16887,
+      "sha256": "c1cb75fc710fa7b71d3acb1dc5e23a35aa8274f2f7dad0f5bfc442006847e2b9",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/automation/runner.rs",
+      "size": 1126746,
+      "sha256": "29d8e1bff6682606904a255528554d0680f2c7f4793d701180d9ede120952306",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/automation/types.rs",
+      "size": 30085,
+      "sha256": "dd438209643abc2f524044a1ce246fe6606f086a6c1ab9451eb9c9b834ed5ae9",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/benchmark.rs",
+      "size": 45092,
+      "sha256": "68a18712393bf429c4516ea210fa91cef403971965c9fd27509365a2dfba7ec2",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/catalog.rs",
+      "size": 30403,
+      "sha256": "63fa0497fcca8738c9a5924a4136359561eb47cb6441c568c3e6e25cc6b52d93",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/export/gif.rs",
+      "size": 14616,
+      "sha256": "f80606dfe270fc2518e882d67a146a9a7001e927da37c59ca2d5bf3a3d68d20e",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/export/manifest.rs",
+      "size": 11875,
+      "sha256": "8ccd6ae3aebcb132814c6c7ab85884e841a621da24ecf69b30a3625d3bba3765",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/export/mod.rs",
+      "size": 36031,
+      "sha256": "5cb1d52e9ca8606478d696080d50d92665b645f604b4327484d49437edbdd2aa",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/frames/normalize.rs",
+      "size": 6364,
+      "sha256": "1d4cc3b7d68ff548b32b6bb6fe720409533a98114f648376a547b6b5f568ddee",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/game_art/build.rs",
+      "size": 75121,
+      "sha256": "662f9bcc58aacec0b827fbf6d5cfd71c1e14e017e2a1876cab48d3384cc2936b",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/game_art/diff.rs",
+      "size": 92204,
+      "sha256": "ccec62ed24f6a2ada9e9f7e4b86ab5f7088f4d99fca564f75073a0f66817cb56",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/game_art/manifest.rs",
+      "size": 47054,
+      "sha256": "5fd1bc3d00ae7203fc4f7b9e013ceba4189d39d6fdf1f025381aa4d3ef4ed761",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/game_art/plan.rs",
+      "size": 45892,
+      "sha256": "ca23804198f4e945295102851cf2a3cca12aae5976a9deca4709e3be2de0ffc5",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/game_art/types.rs",
+      "size": 12679,
+      "sha256": "2c206ba54f5f60f4bdcad1e2353fbcf02107a292ba04f2040bf637b24eaedf87",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/job/store.rs",
+      "size": 15820,
+      "sha256": "4691b029b17817d89184fd90c67592b3b5e1cded12c48e3a67e6daa450f8755c",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/job/types.rs",
+      "size": 7576,
+      "sha256": "f39c493723d092b7773f1b45afea5d92a41bf8a6056246c228607a3be472cfb0",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/lib.rs",
+      "size": 929,
+      "sha256": "dd5b2ba094198900e6acf9fa500363996b59cf13dfdfbf6c7cca2564953fa599",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/matting/chroma.rs",
+      "size": 13511,
+      "sha256": "15f0498b0285c8de1d6a74f8e0fa043deff3c8f4c322ae0e5933486a42a675fa",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/project/mod.rs",
+      "size": 11869,
+      "sha256": "0a9fce6a9bd481cce84065f8001c25753693ac7edbb1d943ffa16ea198b27226",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/provider/mod.rs",
+      "size": 11069,
+      "sha256": "2d11a1e0e7af9a59a2b0ea69adc07ca407926526d367340281d4b696a29609e2",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/quality/loop_selection.rs",
+      "size": 37359,
+      "sha256": "3c158dcd104c67840077a7ab4fd3eda0980a7ae80fe26cd5fe1b51a88eb4ab2f",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/quality/mod.rs",
+      "size": 1542,
+      "sha256": "20f16a07716f1b57dc9bcd0faecf088dfaac2a895af751c3ced68fc7e7d78ce6",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/subject.rs",
+      "size": 26491,
+      "sha256": "80fa329fa39e2557247faff7ef603d78ade0fca7653eeab94ede1adf387e3a3e",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/video/extract.rs",
+      "size": 18839,
+      "sha256": "9eabe6bf6b6754ca90dbd998f86d4f8d4a0ff875139cae11e04c5c02e1fc813f",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/workflow_graph.rs",
+      "size": 14692,
+      "sha256": "c060a94e1cf996103f6488f35ed0a2a5057ca95830e37aa8ba94d9a0d60bac10",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/src/world.rs",
+      "size": 103579,
+      "sha256": "b55d2f4e33a74c4082dc4145c488dc59b5df63e91a2840ca11c51e5e646c5faa",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/tests/anchor_tests.rs",
+      "size": 3675,
+      "sha256": "3f66ef2ed10759c2c9effc66abbd8b05159297e85b87ce1488164d3c8192f25e",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/tests/automation_tests.rs",
+      "size": 32789,
+      "sha256": "3d182bc863b2369e59e7bcf83037f3e9d9124714e8cf6891f083b4d863f6f0b9",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/tests/chroma_tests.rs",
+      "size": 4579,
+      "sha256": "114a5aa4f24ee75392bebdb51a552c46780c83ecf84ca3181117b27717cbf439",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/tests/consistency_v2_foundation_tests.rs",
+      "size": 7584,
+      "sha256": "3e11eda53b77e3b3b3ff264dcd906d7750a48b318e2d94c686c21ec1bf14feb0",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/tests/game_art_build_tests.rs",
+      "size": 55831,
+      "sha256": "e5a228a48f2b542de081a744ab97e851b532eda4b02f087b6681f9c10fca55ed",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/tests/job_store_tests.rs",
+      "size": 11098,
+      "sha256": "b368c71e894db8a59a70f2e13ae273b7b015c0cb94c61daf6ba01753dbcbabc5",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/core/tests/video_tests.rs",
+      "size": 7786,
+      "sha256": "2194a4f903b851967084193f2d1a24a87b5f9ad7787e71ddaefc7c5f4fab93cf",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/pack/Cargo.toml",
+      "size": 374,
+      "sha256": "0f574bb281a1b36ba2a3673a2693cbc5f259799c88e5e91236805b4d79916598",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/pack/src/lib.rs",
+      "size": 89634,
+      "sha256": "14bf61b0e225f4a3b670ddd81770dcdd06c64c7b849d646b78404a8c6e706da0",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/pack/tests/pack_tests.rs",
+      "size": 44800,
+      "sha256": "05f9777151ab1e71a2db8d4560edd014d081f2ef554e188a6554ce0104f52af9",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/providers/Cargo.toml",
+      "size": 1246,
+      "sha256": "2f6a1669ebf52b338ef0624bc3fb3750a1879b626304b7de008af5deb69f3a7b",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/providers/src/fixture.rs",
+      "size": 55186,
+      "sha256": "2e8df685a19fb42cbd54fc3c0d222ead85eeea0359cc1fdc540ae090b2edd227",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/providers/src/lib.rs",
+      "size": 14337,
+      "sha256": "271d8240f159ec40a7d5037b1dd0c4acf90aaee35eae2f89d64597ce027392f2",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/providers/src/xai.rs",
+      "size": 117774,
+      "sha256": "d148f4878bb48f7d722ca0e7631495d43897c03e7719ea9e95f04e8dc471f846",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/providers/tests/character_generation_contract.rs",
+      "size": 44210,
+      "sha256": "9a377f91b9cfb0c8d1c38cb1ecc801e011fd2df205beb7126ccb5479e42f775f",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/providers/tests/keyframe_generation_contract.rs",
+      "size": 43650,
+      "sha256": "7647e9cb048c2f16200c0ecb8fb53c3498df7ad23cf45744abf118f5e75d5c51",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "packages/providers/tests/static_generation_contract.rs",
+      "size": 12210,
+      "sha256": "4564cfb1c19064599c2405433ded10a1fd9f78fe3366c191971e7690ef43ca89",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "profiles/character-workflows.v1.json",
+      "size": 21237,
+      "sha256": "79bc7017d1562ac2dfc690be9167eafd93fd70a4de87d079c2c3108fec5f2fa9",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "schemas/asset-spec.schema.json",
+      "size": 2857,
+      "sha256": "193106823eb1d6ff02390f9781508581daffee4cf324868227525372c5440057",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "schemas/character-v2.schema.json",
+      "size": 6762,
+      "sha256": "db18cde001cc2f90eb50d3c301fab7c87f2412dbccdfb11c02bbfc185a067c67",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "schemas/consistency-report.schema.json",
+      "size": 3584,
+      "sha256": "1f982459dca4564e0a769aa2b95b98455fee7e1b55e5fc76e2943639b0eeb20d",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "schemas/forge-project.schema.json",
+      "size": 1094,
+      "sha256": "8b7589f34e9bb2c5182266948b86299dff7baed0ad8379fcec41f50ed0566802",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "schemas/game-art-manifest.schema.json",
+      "size": 2121,
+      "sha256": "3faeff9135c9a7c97250648dca993633b322b1326e437025c124e6213abfacd1",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "schemas/gsfpack.schema.json",
+      "size": 8897,
+      "sha256": "fa860edf375cfdb34a3667b1d8b1688d8d9725f8ba5c9beeba98218b0eac4236",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "schemas/manifest.schema.json",
+      "size": 4866,
+      "sha256": "3c3299d58f3613630e52ea07024bc1128779098d9266311de321ca51dc4a5fbd",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "scripts/godot/import_forge_pack.gd",
+      "size": 8690,
+      "sha256": "86a18776662b859ada5fc4a2be5e3e3592679b7e1fa9b11e663c18cdb8684674",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "scripts/godot/install_forge_pack.gd",
+      "size": 23125,
+      "sha256": "9149eb0a742275471e8f4b9b5d0b06ad8adeb72f334a116d6a6d199ce10c8615",
+      "mode": 420
+    },
+    {
+      "status": " M",
+      "path": "scripts/test-cli-product.sh",
+      "size": 11287,
+      "sha256": "867d3dab91818a2d7d8a010bfbc684d36350d50b8f29fadfa0627051d0b13171",
+      "mode": 493
+    },
+    {
+      "status": " M",
+      "path": "scripts/test-consistency-v2.sh",
+      "size": 10346,
+      "sha256": "14f9316607b4457be7dc25f46fbc3edc8a7d802084f99771059b6533dd6ba41c",
+      "mode": 493
+    },
+    {
+      "status": " M",
+      "path": "scripts/test-v03-release-matrix.sh",
+      "size": 4699,
+      "sha256": "94dd39271a3565e68c6af87941336ffa2e351ca82dafbe663e14d96db5fbecab",
+      "mode": 493
+    },
+    {
+      "status": "??",
+      "path": ".agents/skills/forge-use/SKILL.md",
+      "size": 5278,
+      "sha256": "fb43741ff976ed34a828c9dd6d2d335f3b256f1dbe3a512af791e482e5c100aa",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": ".agents/skills/forge-use/agents/openai.yaml",
+      "size": 288,
+      "sha256": "00f11cd019c50b5f3f35fa0ee6c0dc1ee8f95b8933d5aac2d6e2ec1549fb29ca",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": ".agents/skills/forge-use/references/jobs-and-delivery.md",
+      "size": 10034,
+      "sha256": "232b8da1cbf0996de6912e8217dbc30c13de8778602268901a56d5fad70c711c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": ".agents/skills/forge-use/references/optional-workflows.md",
+      "size": 6847,
+      "sha256": "35f197e4c982a625a1853267f0ff991ea09ccbeb888675c54c5803a953629d0f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": ".agents/skills/forge-use/references/workflows.md",
+      "size": 6429,
+      "sha256": "3052afe8b5e75d997b95cbf4bcfb4ad7bd32012f98da221c5e31b2a9d2cd0c40",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "AGENTS.md",
+      "size": 3544,
+      "sha256": "654ae1014f8f76e0b6a4103c04855cc8d83246522eb4c03e78f017ab972d7470",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-cape-hem-v101-godot-plan.md",
+      "size": 3795,
+      "sha256": "9bcca168323e2d3a870068c4a310cd878e5e761e1dd30b5c41e6039b9b120db7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-camera-fx-framing-plan.md",
+      "size": 3648,
+      "sha256": "0010939f526ef4a1d3bcf88b7503796135d79cdbcd77a2696f3e8e5e28996c50",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-direction-equipment-semantics-plan.md",
+      "size": 4975,
+      "sha256": "d7f11c456f15f45367c745550a74d2702a9e566b947fcb2be1e1afe6bb6383d8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-direction-lock-background-cleanup-v23-plan.md",
+      "size": 4843,
+      "sha256": "85cecf756ef65858b3b549d3b49a0316fa9acf39bd0cfe89d762f27fb53d493f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-direction-motion-v8-plan.md",
+      "size": 10706,
+      "sha256": "42f1820c8fb5cf29fab59a82835b9a39f03bc42a7fc9f34750fa0cace69f780a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-full-body-keyframe-timeline-v13-plan.md",
+      "size": 2541,
+      "sha256": "7c3350a8cdf1f359c9b9afec99bda152951dc868290341c243ed0744416c4c8d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-generation-method-remediation-plan.md",
+      "size": 19441,
+      "sha256": "ebbf9df245d598f35ee188eaa7b7f97d12083883b8b5a45bd373a84b7c65e5d4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-keyframe-timing-equipment-plan.md",
+      "size": 2852,
+      "sha256": "f88607bc51ca1c9c0d0a75cf2445b2d3ae99808e4f2d0ba12766147e89bc908e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-normal-walk-amplitude-v14-plan.md",
+      "size": 1530,
+      "sha256": "d3484ff2ceee8660ee15253e4d73a10229fe9b9353bdf7ec3e73251e3f9a8450",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-reference-isolation-equipment-v22-plan.md",
+      "size": 4119,
+      "sha256": "0148c120e43e780c3e3f6dad125745b164400da9acb8b7f67486e0ecb3a94d6b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-semantic-core-stabilization-v151-plan.md",
+      "size": 1642,
+      "sha256": "0ec3d2dd8328ca1aa8d0d9f10221846ab809f7dbed501fc6bb540ca5c5f874f8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-side-walk-cadence-v15-plan.md",
+      "size": 1917,
+      "sha256": "5b9d8779c17f4d8ac986ccdfeb6e26d9f5dc4204c5fb88563cbe6da304920217",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-silhouette-temporal-plan.md",
+      "size": 2986,
+      "sha256": "2c3e2669ebedf7881c69c4bb42bc230ea9d5e6995da9bf1d18ef9d392839c2e8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-character-silhouette-temporal-v2-plan.md",
+      "size": 2187,
+      "sha256": "1c5b9ec535ac049f817e023d7ed790a956275c95674d1e698f5edbbee7fa059e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-codex-external-keyframes-godot-plan.md",
+      "size": 3110,
+      "sha256": "25d080a0fa8898c614fbb9146c26a8a13bc13352526ce4fb4e4c784075f5d326",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-core-real-blockers-remediation-plan.md",
+      "size": 5098,
+      "sha256": "0345c50d41e53cfed68e6e7e90664d869e6a29ab0fe3c996c1b194aa776b1a01",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-deterministic-rig-spike.md",
+      "size": 2970,
+      "sha256": "18da25dbf3d24e3788216b8cd1de789a9fe3506d976694927ef1fcb3b8c96a4e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-existing-animation-reuse-plan.md",
+      "size": 4493,
+      "sha256": "1a6f05a11a0bf497cd5b9cdcafa3d664b106dbb514bf491a08e85765de4471e6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-external-direction-grid-identity-remediation-plan.md",
+      "size": 11651,
+      "sha256": "3926e401f587cc4c769072b94efd31a6c715ae205cd156ed8d37bdb50bc4d696",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-external-direction-grid-import-plan.md",
+      "size": 2762,
+      "sha256": "7b60d934891c436006d60d0de25727c3806b9ae91c089b0c4daf876346c221f1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-framing-authorization-p0-plan.md",
+      "size": 6899,
+      "sha256": "44e3cceceac87d776cdc06c6a75c4da22d759596c02a55962b6600e22cc356dc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-front-authoritative-direction-grid-plan.md",
+      "size": 3160,
+      "sha256": "80bf72dc2124eed25a4d7ba7f6b73fd22d8fa9c76e35012049598c49ad3b67ce",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-motion-driver-video-intake-plan.md",
+      "size": 3201,
+      "sha256": "0af1f4128d14738ce57065bddcb0f1cf62b8cc3f789bf24cf7250b8830ee594d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-native-cycle-sampling-v81-plan.md",
+      "size": 4461,
+      "sha256": "f910f087864b0702a0e7efad9266dc7e02d6318b2e65f6d88d7c35c3aa01242e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-portrait-base-consistency-p0-plan.md",
+      "size": 4525,
+      "sha256": "05294b420774bdb061c6c4d01885594ccd5f53a66d1dd98428b39bb5fb5d0035",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-portrait-expression-aware-skin-gate-plan.md",
+      "size": 2656,
+      "sha256": "54c6b3b59524c18c7ed22977561c5010c4029139611c581b951eeaa2a325480d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-portrait-two-phase-neutral-approval-plan.md",
+      "size": 4441,
+      "sha256": "687418dd2481a825265c8c7a70c63a1d21435d6c51f1ecd7c550fd944775a4b1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-provider-selection-adr.md",
+      "size": 4996,
+      "sha256": "026f251945f4c75f37ef2651dc3032521986219f4ee4dbddbe151fd89584ec5f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-stage3-real-blocker-remediation-plan.md",
+      "size": 6354,
+      "sha256": "c84a41a54107d0921ebaddcdc5f7a7fa64136feb02f102e0394724761cb35765",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-stage3-static-assets-implementation-plan.md",
+      "size": 6346,
+      "sha256": "0adbbef64680a13a1e607c175b77471876ab4df11d5f7a53628161770a4cceb7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-cycle-v10-plan.md",
+      "size": 3274,
+      "sha256": "3b4a31a50bfd43d86ca2b45ce8b8bd4ef1979db211056216f427bd562a4d7672",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-direction-poses-v7-plan.md",
+      "size": 5308,
+      "sha256": "0a9058b33e1c4b604add93a45a51dac41fba7488e71481463a684822894a1214",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-frames-v4-plan.md",
+      "size": 5269,
+      "sha256": "0ef6d6f1484e8cea00d61eb6b89dc3094737b63196a33e418e7a7144bb340a82",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-grid-v9-action-phase-remediation-plan.md",
+      "size": 3290,
+      "sha256": "3c64c4ee571a7af022efc19129ea9c6e428d428ab3a366304293e607f7ee8bba",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-grid-v9-equipment-hand-remediation-plan.md",
+      "size": 4362,
+      "sha256": "048990cc2a15a88e4816150f3b55de1b34fcf1da06366bd0c1f7265d7ffd2001",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-grid-v91-independent-keyframes-plan.md",
+      "size": 4931,
+      "sha256": "4844ced372235d6683ce072a1bc9696270f2df60f542f5e8df744059fc4e4101",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-grid-v92-structured-gait-plan.md",
+      "size": 6787,
+      "sha256": "abaa06877afd6e04df1a2c8bf832dedc66b33a6ff1b809a10b19ce877f95a9f7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-grid-v93-asymmetric-gait-plan.md",
+      "size": 7470,
+      "sha256": "e3a588ec8c8c9a58a8303dbe8529ec02e52cb0fba53c125a0694635e329ce2d0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-grid-v94-platform-safe-gait-plan.md",
+      "size": 2471,
+      "sha256": "fd540e7dc19d3f5319df72f4981bad6538b0f932bb53d51bde8cacd2b93c67a2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-keyposes-v24-motion-semantics-plan.md",
+      "size": 4528,
+      "sha256": "e3cf6b60fbc180b847082f58d082e89d1ab28e8f4b467016632379004818cd59",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-keyposes-v25-isolation-state-plan.md",
+      "size": 1941,
+      "sha256": "b39e3adcb079194ea097f184a90a1b5a19085a61af256aefed207baa0ec831d6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-spritesheet-v3-plan.md",
+      "size": 3741,
+      "sha256": "5ef18c063b43a911edbf664bf832ea5d082c4dc71c9697f3c80aefa710a65aff",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-video-cycle-v6-plan.md",
+      "size": 4029,
+      "sha256": "2ffebe58ae837ed69bb2c0c0c31d908fbf5bd1b40b7791be7875c5fa6b5449dd",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-video-locked-v5-plan.md",
+      "size": 4747,
+      "sha256": "d9d4ff7640ba94ca1d73fb9a1135b12bbd9115b544c1129ae3e5d1f17543be51",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-video-locked-v5-real-remediation-plan.md",
+      "size": 3186,
+      "sha256": "e4f166a716f072898f11993459007d260b9f6e2b98c7b65d7a35dab33445afa1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-topdown-video-v2-plan.md",
+      "size": 2123,
+      "sha256": "e950afadc23234301e9fef5a810d28ab8568729b5f87132b69cdf8688536b961",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-v17-24frame-review-delivery-plan.md",
+      "size": 1415,
+      "sha256": "e9eb5c296de155daf68038ec84a332b0565fe8df5ef8040cfdd4d9b3cb077fbb",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-workflow-boundaries.md",
+      "size": 8296,
+      "sha256": "638963cf3b0879af3da5485a4e04cf4db8436463d2706c712193cb27ea774e93",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/architecture/forge-xai-image2-candidate-plan.md",
+      "size": 2754,
+      "sha256": "fff88d128596f1c438e4171c18ca510933167c7108b56b2cc8ccbf9940491b7f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-cape-hem-v101-offline-2026-08-16.md",
+      "size": 3109,
+      "sha256": "652dbea09cada5f8afee826c5c64534c5e5ff4811ab2fd2c2f9eb2a768dac670",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-camera-fx-framing-real-2026-08-07.md",
+      "size": 3018,
+      "sha256": "44e5ac1ff4ae8c739bc9356f5d68f4ac76263e052836121698894e437e13f5e9",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-direction-equipment-semantics-2026-08-07.md",
+      "size": 3754,
+      "sha256": "0859f27b3a471477cb5e33d6f9080d6627ec4d13c9487b4c2fb367c12c728fed",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-direction-lock-background-cleanup-offline-2026-08-08.md",
+      "size": 3961,
+      "sha256": "3d5b85f249cbc90387b072af3970992783aab209470053eea39a25039a80cc52",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-direction-motion-v8-offline-2026-08-10.md",
+      "size": 3499,
+      "sha256": "64867108298b599357d53e31c60133badbc75b23ea632e5d943c6671292555c9",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-four-directions-real-2026-08-07.md",
+      "size": 3607,
+      "sha256": "232cdf18a20f18d05e419d5e2688392add8a06397d1e76e77c92ad2bd1645645",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-four-directions-real-2026-08-08.md",
+      "size": 4284,
+      "sha256": "320e3236b9a168b2e1b19999cef3507416a5d1b7674ea04bd51493bc48442ef6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-keyframe-timing-equipment-offline-2026-08-08.md",
+      "size": 2300,
+      "sha256": "378c945ba1fb45054d5f783d37e07c68f84c9517643ea1424285644778465e2b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-keyframes-v22-real-acceptance-2026-08-08.md",
+      "size": 4051,
+      "sha256": "12e32b16e3e6dfc287f36e3c532e6eaea2464ca83c4b577a03907c81fd309f2d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-keyframes-v23-real-acceptance-2026-08-08.md",
+      "size": 2701,
+      "sha256": "f997eb5dce0c2954aca10f018738169efd825829334b2e5d5f247a198f4da8e3",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-keyposes-v24-real-acceptance-2026-08-08.md",
+      "size": 1950,
+      "sha256": "c5b7fb3e1dd927e39796b773d8de0f9fa0034a9a61da13692d692f83f69acb7b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-keyposes-v25-real-acceptance-2026-08-08.md",
+      "size": 2928,
+      "sha256": "460a7cf77fbc813993df324a136dfe76fa2ea3a849eb103989aec968a0b9cbe6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-reference-isolation-equipment-offline-2026-08-08.md",
+      "size": 4083,
+      "sha256": "4ee94a20362d2da02a656f2580a587aafc4d6420e9a2af925e4d5a4fe09b7eeb",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-silhouette-temporal-real-2026-08-07.md",
+      "size": 3714,
+      "sha256": "8c2dc71e656e9ff8a11633739dc3554823d3749d07c684faa0cf5bec58b7d2a7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-silhouette-temporal-v2-real-2026-08-07.md",
+      "size": 3717,
+      "sha256": "f2d361390dc83dbe89400ec6a3f12621c1fa5b59905b5caa7af8a44f40730802",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-spritesheet-v3-real-acceptance-2026-08-08.md",
+      "size": 3215,
+      "sha256": "f53abec4dcd468551f19e0838284c517ce14a2890a53ffbe087695eef9864d43",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-walk-right-keyframe-preflight-2026-08-08.md",
+      "size": 1916,
+      "sha256": "f474d5af8350edb164362a188527af467a0398bb187cdc4c658c9c3434b80e1d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-character-walk-right-keyframe-real-2026-08-08.md",
+      "size": 4514,
+      "sha256": "b2f8f1ecf49a3fde1cf202e16a2d4afb9efc56f9a3727aa719c6f08373a616de",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-direction-action-sheet-v12-pilot-real-2026-08-18.md",
+      "size": 6165,
+      "sha256": "739b0bdc4816f9de01fa432ad1351b2d4caf990a21f7f48d8e13d2fee0bdb183",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-external-keyframes-godot-offline-2026-08-17.md",
+      "size": 2862,
+      "sha256": "bd0ca4c7207833357db8805a6fed3121e1191a7a105fff63aa84c56ab5ae91f7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-external-keyframes-v11-real-pack-2026-08-18.md",
+      "size": 3629,
+      "sha256": "4a388678b98d3b04b4adfba1b358ef50118f8e21dbc8a6bf72b5089502309005",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-external-keyframes-walk-right-godot-real-2026-08-18.md",
+      "size": 2470,
+      "sha256": "1e3fba490a03db9c9b57a5512b25dd427043fe73e26a468b61f5f9ab3b41eac9",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-external-keyframes-walk-up-godot-real-2026-08-17.md",
+      "size": 2515,
+      "sha256": "6dd2bce7266246fda2f2433d54bf78790a0d9603ff1d0d191b6cde8e49771adf",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-imagegen-direction-grid-experiment-2026-08-15.md",
+      "size": 2914,
+      "sha256": "071d0e83157a5b8dd9d913e9b945325815899545e01a12fa26e1874624412541",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-imagegen-front-authoritative-real-2026-08-16.md",
+      "size": 3296,
+      "sha256": "ad99cbf2b3b13388590a402e97a404f6e93aba0101585b5d3b8014061edafc3c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-imagegen-independent-directions-real-2026-08-16.md",
+      "size": 3947,
+      "sha256": "ca83a7f513b674237005f80bb1f964a20828d8f49a45dc29b8172f57dc8f989c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-locked-upper-body-v12-real-2026-08-18.md",
+      "size": 5373,
+      "sha256": "32e99a184431a0ec6fb7c7bb4ee934604ecca5bcff456998ad72059d3e187c7b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-walk-right-v13-full-body-keyframes-real-2026-08-18.md",
+      "size": 6530,
+      "sha256": "db904fedeeb002d182a4fa058f68a40ffaab10ce5191c81b41331326c69356be",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-walk-right-v14-normal-amplitude-real-2026-08-18.md",
+      "size": 5400,
+      "sha256": "07ff8c73e4af6f3884c3e53450ebd905b6b5022e966695768240d92abc9e3463",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-walk-right-v15-side-cadence-real-2026-08-18.md",
+      "size": 5358,
+      "sha256": "dac5afc36f3673103ce1d393c3fba4249d5e9e5e9c2d83ad6d7e4a8ad9be7fc4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-codex-walk-right-v151-semantic-stabilization-offline-2026-08-19.md",
+      "size": 4321,
+      "sha256": "99ba0a55f9fa27d96c1fd761f578b536ca2984d6b987a50a193418fab2909adb",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-core-character-icon-prop-real-acceptance-2026-08-06.md",
+      "size": 8079,
+      "sha256": "8a8c7a088fa595e94c75a06b0d49d1872532096aee7ab57b476a676bada26df9",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-core-character-icon-prop-real-revalidation-2026-08-07.md",
+      "size": 5163,
+      "sha256": "6b45bc92cd1847396d57aa2875d0a1489fe9124ed609f910714e0de469adbf0f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-core-character-icon-prop-validation-2026-08-06.md",
+      "size": 6239,
+      "sha256": "85ada017c98402a52673f94d3e5fe58f49684d51bad72a7b2282dcba5624db97",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-core-real-blockers-remediation-2026-08-07.md",
+      "size": 5238,
+      "sha256": "af24d679bac377f0041a367302dd246452a42da7dd2ccb5bd529690b598e9ed1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-directional-reuse-2026-09-07.md",
+      "size": 6720,
+      "sha256": "88e76ec3f7d050768487ddab25bffbf97f3e329aedc3572065e722caa792b17f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-engineering-closure-2026-09-05.md",
+      "size": 6122,
+      "sha256": "5a878bd190f6e7c6951142eb906167e1b2793e3931bc8455042ae2b878d8c9d8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-external-direction-grid-identity-remediation-2026-08-15.md",
+      "size": 4517,
+      "sha256": "543c88b953b6a56221adf671630880dea9e4ac20e573826d1b15854aeee7a75a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-external-direction-grid-import-real-2026-08-15.md",
+      "size": 3274,
+      "sha256": "9f10bdbc658e87c3f90820eecbcca02258e0719bc86701d2f91661be52e66fe5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-framing-authorization-p0-2026-08-06.md",
+      "size": 3859,
+      "sha256": "2a990e4bc1e0379d9eadb0add5bcb2ba71f8ad6c3055c4495f762c02bc836fca",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-front-authoritative-direction-grid-offline-2026-08-16.md",
+      "size": 2570,
+      "sha256": "0c373c7a4ffee80614b33247019419ef1741f9f87e2bfcbcb95363e7b94f3f22",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-full-body-real-acceptance-2026-08-06.md",
+      "size": 5779,
+      "sha256": "2e90c90e5291ef5411728a46b32e155ce7d9fb94079132e1edc40774d3e852ed",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-identity-metric-calibration-2026-08-11.md",
+      "size": 3119,
+      "sha256": "68566c54825a0cc8166419095f2c1c88c144e5b17dab271dd131416f7fc2a364",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-motion-driver-video-intake-offline-2026-08-19.md",
+      "size": 2635,
+      "sha256": "04ca38808683c42380804803960c7d6980b76023e0f7693dd15853b24a358a64",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-motion-video-browser-benchmark-real-2026-08-19.md",
+      "size": 4155,
+      "sha256": "5d6518b2d93db96099e8d71c9982a14820654cf379657235a3aabd90a7f4bcd7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-native-cycle-sampling-v81-existing-video-2026-08-10.md",
+      "size": 4269,
+      "sha256": "fd40830d65f14bab73353ebe61c0f3f02d6847426db50c480e8871af79207ba9",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-native-cycle-sampling-v81-offline-2026-08-10.md",
+      "size": 4896,
+      "sha256": "0ac7b8da35ec1f4236ef616ec91265417ff6be995dda86fd8c013f75e8e7f37b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-pixel-delivery-v2-offline-2026-08-11.md",
+      "size": 2851,
+      "sha256": "d3dd50eefceeae398e6e951db9b7d5ced12591ab337a679f6aa7faaf3b9790b0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-portrait-base-consistency-p0-2026-08-06.md",
+      "size": 3357,
+      "sha256": "602c223f5c20dcdcce55dbc1c2f65e7ffbd7d03128a802384bf56b8063aa9685",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-portrait-expression-aware-skin-gate-2026-08-06.md",
+      "size": 2998,
+      "sha256": "bcb91630b9f82343178a8a2a4b20b6641318376cc483704a04dc800e5e8859a4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-portrait-two-phase-neutral-approval-2026-08-06.md",
+      "size": 3496,
+      "sha256": "26b9f4729086a4d94ffcd6228fa3505bcf067e0056f3fdca9822299b0b071c37",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-portrait-v2-real-acceptance-2026-08-06.md",
+      "size": 3506,
+      "sha256": "3fea69b08d43013e5fa91dfe9ea81ef0f7db55a798afacbbaba35393cf8ec406",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-stage3-blocker-remediation-2026-08-05.md",
+      "size": 6948,
+      "sha256": "ca000eba4e4899c60c041fd5f8589025018e5abeeed191a0860e0da835f5c9af",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-stage3-offline-acceptance-2026-08-05.md",
+      "size": 3652,
+      "sha256": "c1100c7d44f6163322a4a5e37efac5c97df58ca9de68070c22d9e75ebbe646c2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-stage3-real-acceptance-2026-08-05.md",
+      "size": 7214,
+      "sha256": "06a491421eeecd07733223108feae36218371781e76476fb07cdc7f22868e158",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-subject-import-style-closure-2026-08-11.md",
+      "size": 4856,
+      "sha256": "e868934494199a8057cf3fce9c613d06291b3d537c671988a5f20dc53a35b987",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-cycle-v10-offline-2026-08-13.md",
+      "size": 3442,
+      "sha256": "53715d0b35910d70c5739cea413869abc6f001d415f123e9506144d3f54b60a9",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-cycle-v10-real-acceptance-2026-08-14.md",
+      "size": 3579,
+      "sha256": "cb36550dd1669aab04bcc61c81fba19aa3bb4d6328c892e7a4656ae630f98955",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-direction-poses-v7-real-acceptance-2026-08-10.md",
+      "size": 4360,
+      "sha256": "22621374e88f2d8626a5b944e710d05627bd1373af46607be63f67b6c987d78f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-frames-v4-offline-2026-08-09.md",
+      "size": 2766,
+      "sha256": "5f20260f551e3b590d33caddb108f078e9eee81a1f78a661d469fd02470abfcd",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-frames-v4-real-acceptance-2026-08-09.md",
+      "size": 3569,
+      "sha256": "fa4140d1739ff62fa20cf3f54bd41c7e4d7f9fd412a43a398470eeaeb2d4567e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v9-equipment-hand-remediation-2026-08-11.md",
+      "size": 11178,
+      "sha256": "6a38b6dc55c331072ab36b512182b9b5cfa6843a657f2caa31fe25207a79db8d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v9-offline-2026-08-11.md",
+      "size": 3591,
+      "sha256": "026cf7857fbad5a06e75deb358b23bf94d05b9211c137674999db4fc3db00175",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v9-real-preflight-2026-08-11.md",
+      "size": 6556,
+      "sha256": "6d2b92db83774e78374826dbf56565c3a3bc3af9420a5d8b256d0bbb114f4374",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v91-independent-keyframes-offline-2026-08-12.md",
+      "size": 3035,
+      "sha256": "35300c246c787001dd73a43fdc4cdda8cbcf131a5b32f68e726fdd05ee81d5fa",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v91-independent-keyframes-real-acceptance-2026-08-12.md",
+      "size": 5070,
+      "sha256": "2fe89e92c6041b065d76803d30c6cc1652707a01be0e6c4d47ed42a4ed5ce917",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v92-laterality-fresh-retry-offline-2026-08-12.md",
+      "size": 5549,
+      "sha256": "0db495fe352d0ca0931a0e4d8ef78661e8b46db32793dd9a7dc89a0166380a28",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v92-laterality-fresh-retry-real-acceptance-2026-08-12.md",
+      "size": 6496,
+      "sha256": "8ff6e2521e87877ab00efec9f53714bb32e6aa34fbbc4af9baf9eec69ec5d89b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v92-structured-gait-offline-2026-08-12.md",
+      "size": 4879,
+      "sha256": "262d8ac96976a5920951198edbb4e0799a019b68b0e62f64ea4a40d40c564bde",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v92-structured-gait-real-acceptance-2026-08-12.md",
+      "size": 6050,
+      "sha256": "ceb4f98fec4396daeb13255a584a790e9fae32888324cf14ae4c25e5baf2ad85",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v93-asymmetric-gait-offline-2026-08-12.md",
+      "size": 5746,
+      "sha256": "f0bf5a92045ccdab2270fa0018933b54b555eb7c6ef4c2fba8d5b896882434e0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v93-asymmetric-gait-real-acceptance-2026-08-13.md",
+      "size": 4641,
+      "sha256": "9d1e80de8375fa4e22d2eba4b12da98b33f0b08b559ff2780db96249a530962d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v93-real-source-preflight-2026-08-13.md",
+      "size": 3522,
+      "sha256": "d0bb975d26c49b7796724e4038d057b28cfbac2c9c2a45d3593f40fb83de7edd",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v94-platform-safe-gait-offline-2026-08-13.md",
+      "size": 2663,
+      "sha256": "c5ab44c014c8d74cc746e75a0e70a7a7646b6eb800bd9ba38f7251b0e96f2232",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v94-platform-safe-gait-real-acceptance-2026-08-13.md",
+      "size": 5093,
+      "sha256": "daab36a63b8d7855d088cbb9f7a441df7ac9ed82c8a24800b0621f6c9912fc82",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v95-footwear-cleanup-real-2026-08-13.md",
+      "size": 6040,
+      "sha256": "834c1655c46407541ab08055a19404c3e1a9107f71812ba6a21cb2a41540560d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-grid-v95-godot-smoke-2026-08-13.md",
+      "size": 3996,
+      "sha256": "e231f1034685f72a0fd22c7d2fd0318c18845f9bda77610cfa1d7e3294d6b03b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-keyposes-v24-motion-semantics-offline-2026-08-08.md",
+      "size": 2358,
+      "sha256": "8edc58251a4f69a43399f2b4736805f81259772e4b348e17529272a2b997f23e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-keyposes-v25-isolation-offline-2026-08-08.md",
+      "size": 2270,
+      "sha256": "5ea6ee1b6b4eb80892a2a75d4f9910ea9bff10825e22da56a3e354195afea81e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-spritesheet-v3-offline-2026-08-08.md",
+      "size": 1841,
+      "sha256": "1fc407879f1ab01c02e9d6ef14ea6e11fd2b3cea3e8224ec9fec27d76144d868",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-video-cycle-v6-offline-2026-08-09.md",
+      "size": 2656,
+      "sha256": "9447f7936eea46e63b04605f945ddaed87123d52c8f2f8f65d285d8350329fcf",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-video-cycle-v6-real-acceptance-2026-08-09.md",
+      "size": 3385,
+      "sha256": "d571cf83f0f6c173b446fbb60e8114a17c0ea5fd5add33269587373822760c7f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-video-locked-v5-offline-2026-08-09.md",
+      "size": 2107,
+      "sha256": "dc2d9458bf3b3e0851d3caa0bd1ffb951aaed335fa2bdc04a33061d9509d5a59",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-video-locked-v5-real-acceptance-2026-08-09.md",
+      "size": 3897,
+      "sha256": "6e5206314f75e794be603431bef75c5f59329091886efa41034e2e4d39499fbc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-video-locked-v5-remediation-offline-2026-08-09.md",
+      "size": 3322,
+      "sha256": "82590f84a337e1c1a6e8482316883929dcede40afa1275a4ad026bae839b8a2a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-video-locked-v5-remediation-real-acceptance-2026-08-09.md",
+      "size": 2632,
+      "sha256": "39da53c39c5cd1e8c6d790c47c7669893b87bbea81e2d5cb4c2a929370dd1c1a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-video-v2-offline-2026-08-09.md",
+      "size": 2569,
+      "sha256": "3ee9cd4a68004a95b23a3e256098652220329ae077d3dbdf947827d74c1d0857",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-topdown-video-v2-real-acceptance-2026-08-09.md",
+      "size": 3881,
+      "sha256": "4b4f5f614dc0241d6a5ff7288ded87057a3822d39b2dbfd0cf3db0d5d38001a0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-use-skill-validation-2026-09-06.md",
+      "size": 3244,
+      "sha256": "1b436ccb0bdf6d3a87c44d481d34ab6d9a48c4568714f7eaeef379e9b048b0c0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-v17-24frame-movement-review-2026-08-19.md",
+      "size": 3449,
+      "sha256": "d399492b00c9d1eebf4d4a79abca401d00c367a27560726d8b41ac5933d396ce",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-v18-approved-walk-right-production-2026-08-19.md",
+      "size": 2507,
+      "sha256": "e793d418fe11795d147eee55e9e836dedb8990f24937a6a80544e08ec4ccc013",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-v8-walk-right-probe-image-lock-rejected-2026-08-10.md",
+      "size": 2969,
+      "sha256": "fa5741cfd6007ca0cb9006d0c1f22d360afd825cfff3be95acf329ff2b5a3406",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-v8-walk-right-probe-regenerated-image-lock-2026-08-10.md",
+      "size": 6793,
+      "sha256": "adf507708a6c45103409642358d57921813c280f73b9ee9513c84070b10f0902",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-vidu-q2-1223-authoritative-prompt-2026-08-19.md",
+      "size": 1837,
+      "sha256": "cb558db05f58f508a5eb8c3da475a0001b02fea4a0767f876be86ec17237e18f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-vidu-q2-fixed-scale-canary-real-2026-08-19.md",
+      "size": 2176,
+      "sha256": "44ff2ce1eb31d8bbd9f06b6f59e729e41040562447ccd3ef076858a7a030a353",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-vidu-q2-godot-cadence-edge-fix-2026-08-19.md",
+      "size": 9504,
+      "sha256": "002c46785139602d17ed8b829cf9e1246ec33232db38d7b846a9d26f0d1fff66",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-xai-image2-candidate-offline-2026-08-14.md",
+      "size": 3306,
+      "sha256": "410a37dbbb6d2a9f4aed005b500b335a1fb25745a5cb1bd3218e6171f877ed97",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/forge-xai-image2-candidate-real-acceptance-2026-08-15.md",
+      "size": 3022,
+      "sha256": "662c5774fece3f0e8df9fd0bb2dce9fd0fc16693ef12b2147fb4ed6a67219522",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-external-keyframes-v11.json",
+      "size": 2166,
+      "sha256": "f42af94aa06c5143e8b866539e05e5705e3492fb5a0e4b137c37a1de044f7517",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-cycle.json",
+      "size": 472,
+      "sha256": "f95a58c35f2f71d3a4d90c6bb909136a9e7b1dde2ed83abeaa5d7a300e8a0ebc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-direction-motion.json",
+      "size": 394,
+      "sha256": "a52dd862315426579a0ea2b965f6ee777eee6d656ad9ceb8d07fb9d564c62c86",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-frames.json",
+      "size": 342,
+      "sha256": "807e1bdbacce90f1b58ea73317049e15c05e3c0ef726cfc5570355abb89a1299",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-grid-asymmetric-gait.json",
+      "size": 454,
+      "sha256": "3146f6450916d1b40f5fe01c654fd4ac57b49f30357263c418ee5075bc663821",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-grid-keyframes.json",
+      "size": 441,
+      "sha256": "e93b7378b92b3b6d5700d708fd26131d4c8b3c9851da51dcee667e1ece96325d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-grid-platform-safe-gait.json",
+      "size": 1143,
+      "sha256": "d826d15f0f458b13a28651fca41620c90a36e13515387a5dce5fe97eec674e0e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-grid-structured-gait.json",
+      "size": 454,
+      "sha256": "f53519cc9a42cbcbf0d5387963b902e3c2cd7e093f4f46ce6fa7362216349377",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-grid.json",
+      "size": 420,
+      "sha256": "d883a8502de886c0f76020a96450c6e99ee7ef75a3d42a1d454fc0a4f3d447a1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-keyframes.json",
+      "size": 356,
+      "sha256": "0e356dc6cf2bc982205b7eb69b4877bad3a5ffd14baa6f050a81e9e88381b196",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-keyposes.json",
+      "size": 354,
+      "sha256": "028c3fd065a13e173856a80586a89004e015862e9bdb14aac513b9be08e5a4ca",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-locked-video.json",
+      "size": 406,
+      "sha256": "9f28fd0875bf7374f6fdd478d416d82134634528c8b82c20cc3eeec351040e1b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-spritesheet.json",
+      "size": 363,
+      "sha256": "3374ba493d2d6f504ce8321d4ab2d9affd41380b2adfb742a69d38d63d3c77ab",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/character-v2-video-cycle.json",
+      "size": 405,
+      "sha256": "13a4834fee60877a34f7a3e20fc5770e004db50c0e5603417eb94f9556ead8a1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/stage3/collection-full-body.json",
+      "size": 462,
+      "sha256": "e44a72da4d73a90ffca0a3b9653e41192b17a7c87892c54147a41304d9fe8bb5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/stage3/collection.json",
+      "size": 389,
+      "sha256": "3c171646bbdd4b99fae981c3aea41b4ba2f2c8ad67fd8e085bfa5d92e4f34920",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/stage3/decals.json",
+      "size": 429,
+      "sha256": "b543794832ad5b155fcae7cc62a160ec2f5759a2e91c7fab29baea1297b93c8d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/stage3/equipment.json",
+      "size": 394,
+      "sha256": "e5e83fe67c5007e17dfe3db85d7a404f44727d5b47be9c7a2c6f49a74f7fe260",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/stage3/portraits-full-body.json",
+      "size": 1036,
+      "sha256": "0115ad02a03c575691bf025080ec3ac5bddd5702b853045c59a3b79be102ac6c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "examples/cli/stage3/portraits.json",
+      "size": 712,
+      "sha256": "4e605131aa52ba5710b1176be1d33c919e717c9d5cc7d6583f2a14f443b3f2dc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/approve_animation_review.rs",
+      "size": 3204,
+      "sha256": "a1262fb7f06a9931d9f559027e76c2f30d00413bfab0e8991665dd548fb2d74e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/approve_character_pack_control_review.rs",
+      "size": 20284,
+      "sha256": "c3c24d60dc685fec231df924122ba5a29f3c9d014a6bd5fd114a65635f57dd46",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/assess_alpha_edge.rs",
+      "size": 1312,
+      "sha256": "6aefab84b42b724750f94e1d0f044ce48a2d7292acdc52e09a448239457a8ca7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/audit_character_frames.rs",
+      "size": 1753,
+      "sha256": "e4c9be090d700761c2c14127e0abdbc35129937f5bc780f398a759dbcf958e57",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/audit_character_job_motion.rs",
+      "size": 1418,
+      "sha256": "3e776f6b675756591c54949ccbbf3fcf6f59968620b58347e285bb64d7a8fcad",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/audit_footwear_platform.rs",
+      "size": 638,
+      "sha256": "90aca6a2b08eda705d012e0ded5402c69b73fc84e603cac0e24b496e325d8293",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/cleanup_keyframe_background.rs",
+      "size": 1372,
+      "sha256": "63f9428ed61bd3b2939af1a75b4b474522689bb4375bd1d31a5528d70395307a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/create_idle_motion_driver_lock.rs",
+      "size": 2299,
+      "sha256": "4c3c2403cf589ebc030bfd0510fa8e45a69e39b1578c8283f312629713fefbc8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/create_locked_godot_preview.rs",
+      "size": 8782,
+      "sha256": "635b326f6cd1b5bcb39b9252f56d3a4faa53fe8d20f040e6f13c69b27172d381",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/create_pending_animation_review.rs",
+      "size": 1881,
+      "sha256": "15cadd64611ebfd055243e6c53d6111d9d816f9dfeab4886afbc81aaf306dc7a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/evaluate_direction_grid_appearance.rs",
+      "size": 5062,
+      "sha256": "b2ab842f268f8b1a9a14b270d3a3be91adf880c57bb004f5eb73483b6e86a0fc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/evaluate_identity_metric.rs",
+      "size": 1164,
+      "sha256": "609827cfb17a03801114d016a0b06cc346ef118f581605fc0130d6751c5716d6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/evaluate_locked_video_identity.rs",
+      "size": 4239,
+      "sha256": "23b0fa50d5abe2e10313557902ef23abd9b8d9a23ede979ed9f1ba2c19470563",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/extract_locked_video_source.rs",
+      "size": 2036,
+      "sha256": "5ad0e3df3c4abb6f5e12fa17a648675cf12c0acac3475501f6d2473fc349c3ba",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/import_browser_motion_video_candidate.rs",
+      "size": 4150,
+      "sha256": "0b0222734ee9cb56ee9fec00080fd0f86c72926816444ab3f95a8798e97f90d4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/import_motion_video_candidate.rs",
+      "size": 2284,
+      "sha256": "a489264b6289cf39b741293393d86ce43c16c0b76908a9ade4227a0e8637e307",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/inspect_direction_anchor.rs",
+      "size": 1990,
+      "sha256": "a8b5ecd0c18b1ef12e1a51dfb5046e8ed564bdd13da61966480dc08473aff8f4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/inspect_loop_ranges.rs",
+      "size": 2605,
+      "sha256": "78f69a27d7317df53fcd49d24eebade4667fc0efaceb0ff41f3c375804d56e73",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/matte_checkerboard_sheet.rs",
+      "size": 2014,
+      "sha256": "c675101cfab3bb9f5c30930f12fd8fc476e5b378afb4d63fcdd70adfd1a3a07b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/package_recovered_approved_animation.rs",
+      "size": 14169,
+      "sha256": "dfed2cc11aaed60e8fe863972c65c8d9209244ec10990f1ea1ca5f41391e58bc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/package_reviewed_animation.rs",
+      "size": 6883,
+      "sha256": "b234819d1b136c28ea977babf8abdfe315fc1c81353b8173a1e07e484af1e3c2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/promote_character_pack_control.rs",
+      "size": 35539,
+      "sha256": "af67d7e6f815206ac67e7dfac9f3cb3af9ebfc0712bdbc96f06dedf9ad4ac440",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/promote_direction_grid_right_walk_12.rs",
+      "size": 12865,
+      "sha256": "b36c88aa3387be0472cc1536a33f0b63be80df723139aa1a9b1d794a26ca1145",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/promote_directional_walk.rs",
+      "size": 29077,
+      "sha256": "4ba8b4baeef2ff3dfdd3b1447f3a044f6824da0886fd319fda1751b3c9759b98",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/promote_reviewed_animation.rs",
+      "size": 20112,
+      "sha256": "3adfdc8878ee9fa1be29892feb92b36cba7fb02767cbf910cb824c1102988d81",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/promote_walk_down_24.rs",
+      "size": 28045,
+      "sha256": "f46e9b7191e0ff9447f7692940bcc13b8a048d4812fc2b10b08b4754c1d0a944",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/render_preview_gif.rs",
+      "size": 1386,
+      "sha256": "b231f43072d66f877d3d62fbc7148da4888d9084dab9f374a4ca2a099c49e1e8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/repair_footwear_neutral_gray.rs",
+      "size": 897,
+      "sha256": "701c9ba13683d579503246c9738f07ed46b3f7914623e2de555055e3c96aeccc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/replay_locked_gait_diagnostic.rs",
+      "size": 10394,
+      "sha256": "bf5d5a32e78f4723dfa5ed7c3b68ad5e9337f5da872a606537a2be87afc0f355",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/replay_locked_idle_diagnostic.rs",
+      "size": 10979,
+      "sha256": "e0c68fab721d30c3b94ec185147a89710ea8d5c08c5915477d81e2f5af534b06",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/replay_locked_video_cycle.rs",
+      "size": 5181,
+      "sha256": "62348de5ebbc9e55754515027be8726c4329e1d34ea5e37b88d1d9c30cc80955",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/select_locked_idle_cycle.rs",
+      "size": 11280,
+      "sha256": "33115e553cd35dd63b0ebe94948076545ddbaae724ab3a0da0034115964d17c6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/select_locked_video_cycle.rs",
+      "size": 10246,
+      "sha256": "bae6082d5400e831c3d41fd9a2fb11a5acba852f386e7655ee856ddc2c8fe452",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/examples/validate_v93_platform_source.rs",
+      "size": 969,
+      "sha256": "c1741d1ad97f113269e090487f497c966aab6fe20881caf527743ba83b547bd8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/animation_sheet.rs",
+      "size": 22370,
+      "sha256": "edca52eb91ea879b087bb5b2f82e2f7225d138f55a7aea2bf8bc320d3d4af090",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/automation/runner/godot_install.rs",
+      "size": 40701,
+      "sha256": "ca5ac45b882d14d68740510c97d7d99d015bdd5646bb9c8903f6cfb18d343bff",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/automation/runner/godot_install/tests/rollback.rs",
+      "size": 13292,
+      "sha256": "9015339ae5dc591e1b9a54e0ebf74cfc8a2b86521dfcd2aaed4ef3fa6f33aa91",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/character_animation_review.rs",
+      "size": 10308,
+      "sha256": "d363174df6cce71a143235b50abcbf7592e29e0f7e31df206f256afd98990b3c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/character_camera.rs",
+      "size": 2184,
+      "sha256": "1e8f210d7bc7e34e8ae9f7e3a65a38631578e89188177155aec2ceb371c98e71",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/character_cycle.rs",
+      "size": 64554,
+      "sha256": "098a634abe3c16d115b8d1f29fa314abe4308c64b5e5dc8a48876e7387a5eaba",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/character_direction.rs",
+      "size": 18750,
+      "sha256": "bf8753ee3ba76e7fd2cc4edc7a63779f2db561c3f14ad91d5635a1687a2ecab5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/character_direction_motion.rs",
+      "size": 16240,
+      "sha256": "910022bde4f62ac2b62d6e342cd52d390a95151d3b49373b36729a4292f87ce5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/character_direction_pose.rs",
+      "size": 1590,
+      "sha256": "33d23e62943d183923aa23112fda7f51374c4e973b6b263355375be3e25a2cc0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/character_grid.rs",
+      "size": 85701,
+      "sha256": "9d0dab51dadf129c3b1957b91e1faceb95a5b7ad0931762dfc7420541188e7ea",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/character_pack_control_review.rs",
+      "size": 25909,
+      "sha256": "2d094a791e160e1685935a641d05ad2a382cdff86249c5bb2e0141b0401b4d1a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/collection.rs",
+      "size": 75601,
+      "sha256": "71658418337ab66ef7f18405fc31cb221f13e97898149eb6d3f25964c244aa4d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/equipment_contact.rs",
+      "size": 20796,
+      "sha256": "3baee331bd17c41b9a99b4f644f82c8010a8f23d231c7227f503a87bc47c778b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/footwear_platform.rs",
+      "size": 19086,
+      "sha256": "61b216edc163693e6a1838e5a1dbe4ce0fedcc6170609c0137f35851eff42f9a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/gait_laterality.rs",
+      "size": 11087,
+      "sha256": "2b19911ba0178c66bb8336f188d0560edbfa3dee19f6fe66a0ea24d03f80eed3",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/gait_pair_transform.rs",
+      "size": 7217,
+      "sha256": "7b641fbec55690ab490246d00b4a854c2a3f654eed832ec566f30de3926f2fe8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/geometry.rs",
+      "size": 14770,
+      "sha256": "17c08bbe8d141eab0caa02be053f67e9bb8d51ba6afe322e917ae4b093f0a97b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/grid_pose_structure.rs",
+      "size": 27219,
+      "sha256": "c7213f2aae9b3cc2916cea327a1c5a83f48f8e91a24e7b127b8dae63100cf9a3",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/grid_retry_source.rs",
+      "size": 41102,
+      "sha256": "9114236f1f28a2c5d1e61cc82cc880c41d9623fa7c5ab12a2f8e57671a4735b0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/keyframe_cleanup.rs",
+      "size": 58336,
+      "sha256": "308658118d05df35067ad3cfd8f932e47dfa3afc13b85541ae778eaaad23b706",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/motion_semantics.rs",
+      "size": 44444,
+      "sha256": "91bca3f5b11408ca96f01635d725cf26b6fc214f953584ac722c2f2f7effb823",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/motion_video.rs",
+      "size": 21631,
+      "sha256": "549f56333d10cf0b72a108f91dfa92d73bb4255d720326c70e1cca59de6c5f18",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/pixel_grid.rs",
+      "size": 21854,
+      "sha256": "e3f9fbcba4961b7c5ee8e4824129a4b1443d1386fd666b909019267bedcf1006",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/portrait.rs",
+      "size": 40644,
+      "sha256": "22f40276dc88b2936b43aedc2608dc5ebf3792f5a70c29c64d3318c2bd984c97",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/project_audit.rs",
+      "size": 25718,
+      "sha256": "c1d0392ed93c7f4a63f33ce743717c23c388b414df82e980cc08138f3801a509",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/quality/gait_cycle.rs",
+      "size": 39843,
+      "sha256": "3338def5184243a85280d630981707c8344183ee47036e769da425a80ba49be6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/quality/identity.rs",
+      "size": 20618,
+      "sha256": "15d967f5cb08f9265f895fb12acaba1fc0e47f305fcd4a8626eb9db8e83bfb6a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/src/quality/source_cycle_sampling.rs",
+      "size": 27826,
+      "sha256": "77de35ac59ddfed8a30f0876da7ebe4d723078a1fac002b7d0fdef0f5aca1517",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/tests/grid_feature_gate_tests.rs",
+      "size": 2555,
+      "sha256": "bfcbc7597eb7ad8cb0136a0e774b0d38fdced63fcf076bbb8d2bbb375d8526fe",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/core/tests/subject_import_tests.rs",
+      "size": 7971,
+      "sha256": "6023b7445054c4b4a4726d3782d0b60d9c0b45afc1dd35de1785c528996b63a2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/providers/src/authorization.rs",
+      "size": 72941,
+      "sha256": "75f8c992c7dc75e6c752cf9c156531710486502e1216d2ae743e58db32a3461d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/providers/src/pixellab.rs",
+      "size": 5781,
+      "sha256": "668e1ccd357854d15ae2d3c9871119ca47507e55daa6a8277cc6f62845275a43",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/providers/tests/authorization_contract.rs",
+      "size": 2159,
+      "sha256": "9f9476b5e602f76244998e1fa1550adba8ddb5dbf62c36ab4b165e4ca14ca727",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/providers/tests/direction_motion_generation_contract.rs",
+      "size": 37574,
+      "sha256": "eac76966db47a3849e57ad71d676b37be95681f634fec2fb1c8aef5c480b0d52",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/providers/tests/grid_generation_contract.rs",
+      "size": 194015,
+      "sha256": "a9cf6de7aec265a645b35b717964dd7a1e4c4190b3e92ab11f3363d965419028",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/providers/tests/locked_frames_generation_contract.rs",
+      "size": 31866,
+      "sha256": "e99082f547024594cbe07e40658094320b2c5223e297ce552f5cb3be90948cf7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/providers/tests/pixellab_adapter_contract.rs",
+      "size": 2430,
+      "sha256": "8744c6da1ef39e05950067bd30083f841f8524acd80d5ece08bf2790f243fb7f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/providers/tests/spritesheet_generation_contract.rs",
+      "size": 17521,
+      "sha256": "6c19beb9043a8ed90fb40dde5b43b8b9b416bfd376dd8bce977e95c9d192e0fd",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/providers/tests/stage3_static_contract.rs",
+      "size": 47726,
+      "sha256": "8bf57293e44d79561e59bb15687f135ea7f323d74bcff9c033f36fca5a9c3306",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "packages/providers/tests/video_cycle_generation_contract.rs",
+      "size": 39519,
+      "sha256": "5b5899a41609d6500585992c0737b91731ea2860d1a0cdf949a6bf4c744132a6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/alpha-edge-halo-report.schema.json",
+      "size": 1373,
+      "sha256": "3e934f176742058928ddc7fd756f1f636299144d66e0039740d7fa70ca3496e5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/animation-human-review.schema.json",
+      "size": 2181,
+      "sha256": "db6a59fdd0323bbb56e5ad27382126b4cb2dc7ea2a021069d020f1b4d9368638",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/animation-sheet-report.schema.json",
+      "size": 2278,
+      "sha256": "b92b1895971284bd34f0f9b2441f464f46366216b8a6afa62127a643f3137aa2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/cape-hem-consistency-report.schema.json",
+      "size": 3511,
+      "sha256": "4e2a99193f36c289120aa0aa1059131a7f3e1e16a7cc3a8432e001fe83f72e9e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-alpha-repair-report.schema.json",
+      "size": 1684,
+      "sha256": "ad12ce66e1489e6504803d71acb3f4bd9d1907c5601bfc3f50dfdd8fe550fa39",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-anchor-stabilization-report.schema.json",
+      "size": 2685,
+      "sha256": "3b475442c22019171621ced7b99e72a99c2dd28ff000bffffbe66ebadae21271",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-direction-grid-appearance-report.schema.json",
+      "size": 2535,
+      "sha256": "b990319663fc16bcf529c389cce3d4c0e78ecb9a203114344142c35ae00a4f97",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-direction-grid-approval.schema.json",
+      "size": 1322,
+      "sha256": "560f5bc2ca010bfb5c34cfee00f0d39a871469737713c857a6e744fc9904a3bd",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-direction-grid-lock.schema.json",
+      "size": 5132,
+      "sha256": "1f88fc61efe7bcea3b058ae6c2033a7a95afacab42f0bbe6777ead5d1a10228e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-direction-lock.schema.json",
+      "size": 4024,
+      "sha256": "b4f2b636e16688064047b7a25722a92264f9825485d3d162155f823d5f89e8e8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-direction-motion-approval.schema.json",
+      "size": 1507,
+      "sha256": "50e046fdaf748c3b1c3065193b0a99c06ed323f642005b17cbf4c95c8e9ee8aa",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-direction-motion-lock.schema.json",
+      "size": 4200,
+      "sha256": "f175eddde820e430b6f118652277a410923abec75ec7f4e7d539f8f42726d47e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-direction-pose-lock.schema.json",
+      "size": 2230,
+      "sha256": "a1778c4a816d43bddac396a9e2566e850427e701e6a240526dcc6fc2022b2d04",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-direction-still-preflight.schema.json",
+      "size": 1866,
+      "sha256": "7b0cda40fd0d4b8be72f00f1d04f69a7c6dd134173af660473c308298433de89",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-gait-cycle-report-aggregate.schema.json",
+      "size": 4172,
+      "sha256": "d2744f0a8d02512d8baef33ac70fc69825c84184511c4df996950b568ce01b73",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-gait-cycle-report.schema.json",
+      "size": 3383,
+      "sha256": "540ac46581fda5849afc254d6bc8f2a15acbfa0d7eea600a641f905f93dd10c3",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-motion-semantics-report.schema.json",
+      "size": 5125,
+      "sha256": "322861c1fcbdc9ce7f337b6557f04c6073a2da15b661c2f3775874fb4ff607c1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-native-placement-report.schema.json",
+      "size": 2708,
+      "sha256": "9f7f4c0ccd5c6a31955c9c1fb3cef06592c13e031e11089cfb7ce5e24c6c708c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-scale-lock.schema.json",
+      "size": 2709,
+      "sha256": "9558f4b8ef6a799291bc88572d0400a8fbf56f44522228d9f156ecb340a2d6f0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-semantic-quality-report.schema.json",
+      "size": 3184,
+      "sha256": "4ff5673585c449df8a13286e7090f2f0cc7bbca28e286c7a79b800c6b9341732",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-side-walk-laterality-approval.schema.json",
+      "size": 1689,
+      "sha256": "5e44e8d65532298f9e158eb681f9c145f75aac7c4001092cdc1849733d364a4d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-silhouette-temporal-report-v1.schema.json",
+      "size": 2482,
+      "sha256": "234fb4c97629eceb8811af4d2f26a7349d285aa8c5226cea9cee0cf27bf0b4ac",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-silhouette-temporal-report.schema.json",
+      "size": 3598,
+      "sha256": "925ec259f2d48c932fc07d23514a91d8d93c9ca36d1c3be623705111408518f2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/character-visual-root-stabilization-report.schema.json",
+      "size": 3246,
+      "sha256": "9685d6b75f5da7dd76daad8c248caec17e256ec2056093fa30528f95f33c4c94",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/checkerboard-sheet-matting-report.schema.json",
+      "size": 2520,
+      "sha256": "0fa3f3c21ef8c0b1ea1b739db600091cc799edc30a7f5572a552f0e0ef5f27a2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/collection-anchor-quality-report.schema.json",
+      "size": 1635,
+      "sha256": "42face6e7cc3932efc6ba83902a2bf2ae11c2605785ee9a25a7dbcbeb04c2f6b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/collection-consistency-report.schema.json",
+      "size": 1898,
+      "sha256": "753436a8af89a3d09f863319e216d7f773cbf79e806807d352a9b8f7e52f8162",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/collection-spec.schema.json",
+      "size": 1627,
+      "sha256": "5dff2bccb28c0fed54ed970d6f3c58668de3e697ca5721db02e9c85b238acde7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/collection-static-spec.schema.json",
+      "size": 1435,
+      "sha256": "64b67f8a3a4f072aefd66d5571cd71c5f26dcd8a8c76b217155e6f1ce31e49cf",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/decal-set-spec.schema.json",
+      "size": 1528,
+      "sha256": "67e02536eb76b9b8317b0e94368b16071884616f1cc18c978e044f2deae64509",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/direction-grid-authority-alignment-report.schema.json",
+      "size": 1835,
+      "sha256": "2386f3a92b1f0a32aa5b9f5b9c26dfe85dec4ce07e534f0e3a7d726b8cf844e4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/direction-grid-import-consistency-report.schema.json",
+      "size": 4151,
+      "sha256": "843f41567ea2e59f8908b08ec1611a1a43cb5175a5deaba3cde6288bc5271fed",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/direction-grid-import-evidence.schema.json",
+      "size": 4612,
+      "sha256": "6120a4cfe337e6a7a99ae4f6eeb9c23aea14a52c4fd945305c41b9bcb10f5c64",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/equipment-set-spec.schema.json",
+      "size": 1274,
+      "sha256": "453ad2696d8545c6337a01d7dec685210bd3f93440a1c73302686c6963193c64",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/gait-laterality-report.schema.json",
+      "size": 2468,
+      "sha256": "8826b0fda8f2936cda6ca872a2ed79efec6fb073a47cfe57fe910788be9a407d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/gait-pair-transform-report.schema.json",
+      "size": 1332,
+      "sha256": "89e05233ab04655c347d5175b15fcc5acd931960914141c044c1c789a606b460",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/grid-action-report.schema.json",
+      "size": 3163,
+      "sha256": "d7236b68d269b50a453fc12c7fb9f81c00d98264cfe3000510f93cad54ab719b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/grid-keyframe-action-report.schema.json",
+      "size": 19335,
+      "sha256": "d21c7f0662a0d1963cd0f7f7c16009fd56f433451ced5e2dfeef3002b0a11a34",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/hand-equipment-contact-report.schema.json",
+      "size": 2703,
+      "sha256": "7861063f569f7efb988b57aba81d4bb70561a8348676f861050d24adfd838121",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/identity-metric-report.schema.json",
+      "size": 3422,
+      "sha256": "286ea13c3803db22bc942467b5db6a50aee072908063c85d94d80cac152ca7c2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/idle-motion-driver-lock.schema.json",
+      "size": 4476,
+      "sha256": "928da2544c2fcbb72db2c079e14b30a885f1976ac6678dfae4fb5c13eb8a11bd",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/keyframe-background-cleanup-report.schema.json",
+      "size": 1843,
+      "sha256": "780cf153d634c5b9dc2ebda7a9b5fe9684670e6daa72b23a8dfa216093b66081",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/motion-driver-lock.schema.json",
+      "size": 1881,
+      "sha256": "0e1beecf3486d28be5de4ecba130cbc2536ea3c78da148d1b13386e66176309f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/palette-lock.schema.json",
+      "size": 1611,
+      "sha256": "bae95ef9d6907efcdddd5098e38b7f8f8080f3671751c6cdb6561b63981e36df",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/pixel-delivery-report.schema.json",
+      "size": 1595,
+      "sha256": "917ac20ef09fa5bf11761cea8d63afe37d1feaa65bee1005a09f9b8a5ae60053",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/portrait-base-approval.schema.json",
+      "size": 1118,
+      "sha256": "3099e5c158cc1941ba245fcf6ad8bd520c7b063e8dacfac459bd9b2e1481118b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/portrait-base-lock.schema.json",
+      "size": 2796,
+      "sha256": "f51fb39c3e374ceb0131c6b4550840e8491507cc47f1970cbad144507db8b13c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/portrait-consistency-report.schema.json",
+      "size": 3307,
+      "sha256": "babc54f6ac22d361422f92e1f682daf359383d5c10e72c7f10788128a049aba8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/portrait-set-spec.schema.json",
+      "size": 1359,
+      "sha256": "51e62209cc5831724ef937f5a26c5f2e1b1d18b4942a8fdd9c8fa7516d2ae33a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/portrait-set-v2.schema.json",
+      "size": 1814,
+      "sha256": "0ad6624ef3e9173e91c545214c84b6684ce78f2c68fce0482482d879ec9fd62b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/project-audit-report.schema.json",
+      "size": 1860,
+      "sha256": "0460470fdc107ee1366c91017ee5d2a53222dd63b77d72b6632c0a445009885f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/provider-authorization.schema.json",
+      "size": 1830,
+      "sha256": "e6081d264f532bf8d077c91ce6a7b07a893c414dd65cd1977e013f2faf0e6d32",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/provider-request-ledger.schema.json",
+      "size": 1817,
+      "sha256": "4a631348465878219ce8dd71c2b81702f338735c6782be46febe97739b0c3eae",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/source-cycle-sampling-report.schema.json",
+      "size": 1974,
+      "sha256": "76545fb19022c0f80ec053823a3e60b55403386220edc5870929b99cb706ece5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/subject-import-report.schema.json",
+      "size": 1732,
+      "sha256": "ac5d8b7f9d5d97e661a4f4c0dd0f8460ee6fecf32a2b9e11f7efc7b6613a8a04",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "schemas/video-candidate-lock.schema.json",
+      "size": 1512,
+      "sha256": "160fa8108f37392cc965d1152bedc5b91b9aa82c2979895710980f2c46087fb2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/character/create_motion_driver_lock_bundle.py",
+      "size": 3940,
+      "sha256": "316572617c5adf2f8d01ec86e54c9282ce4d9485304032d0c41b21dc4062c9cb",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/character/evaluate_direction_video_geometry.py",
+      "size": 7241,
+      "sha256": "a2967374a523ba6713749cfbc518192864a1f067bad141a6f06a24973f3cb438",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/character/godot/directional_reuse_review.gd",
+      "size": 32679,
+      "sha256": "f188543269187109947e138ed1e43ddebde79f7e89688dd99ae29dc50e8c97bb",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/character/godot/main.tscn",
+      "size": 189,
+      "sha256": "ab5ca215c5fb47d5386d3ce861c74a5e9b65b142c362aa5aa8ef7d1d16958b45",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/character/godot/open-review.command",
+      "size": 343,
+      "sha256": "2e3e9c35dcedfc19ce3cb15cdfe24f64c423e0dd87d23521504486599fd21ce4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/character/godot/project.godot",
+      "size": 562,
+      "sha256": "50d7a93e5079cec22abca836c8effd4370442bad7d7ead57f2b5716a1abf3861",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/character/normalize_direction_first_frames.py",
+      "size": 15885,
+      "sha256": "c98d7e1e034bc4e52a2d6c4597917080a82cd3d6414232d09de578cbb5c7bd01",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/character/prepare_directional_reuse.py",
+      "size": 19931,
+      "sha256": "d291937907b87eac6a2ac4b3289142975fd172013d4050fdb8ab9dd86428860e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/character/test_prepare_directional_reuse.py",
+      "size": 11122,
+      "sha256": "2828b18bbee6a2dad104d145f2d96a1c83ccbd16d0d8b44d1f0386ae6266c258",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/character/verify_direction_geometry_experiment.py",
+      "size": 8901,
+      "sha256": "2c14b93d8142fc15ad5566a85cde23bbdd147bd292a57801d02ffc85fe2f9ba5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/godot/v95_walk_down_smoke.project.godot",
+      "size": 510,
+      "sha256": "2232348689c7305e7479526e5e502b9d89b2e9707fab7f8fa718f6c449833a61",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/godot/verify_v95_walk_down_smoke.gd",
+      "size": 11459,
+      "sha256": "0bc56d51bd52158b7295b681644d9f31e642f12b919b8d296d6217551fbc6b92",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "scripts/run-v95-godot-walk-smoke.sh",
+      "size": 7257,
+      "sha256": "22e73936e3f93724451d58ff5cf802bbc3d6939b70b44be8a608d29f7bf255dd",
+      "mode": 493
+    },
+    {
+      "status": "??",
+      "path": "scripts/test-experimental-feature-matrix.sh",
+      "size": 7942,
+      "sha256": "93acc4d672adc50d05ae3c1a8ba8a415e90d3d40a69041a8e792aa0951c0aa3d",
+      "mode": 493
+    },
+    {
+      "status": "??",
+      "path": "scripts/test-grid-generation.sh",
+      "size": 3994,
+      "sha256": "470c44974f577d558a14a593442b5b2f835227372ca41fce5d9b0e0e1d4b3cb4",
+      "mode": 493
+    },
+    {
+      "status": "??",
+      "path": "scripts/test-identity-metric.sh",
+      "size": 1338,
+      "sha256": "96b320b7f811b542d8722d2dcf48b34aba79c8956ba49920cc5479574c731ed9",
+      "mode": 493
+    },
+    {
+      "status": "??",
+      "path": "scripts/test-pixel-delivery.sh",
+      "size": 970,
+      "sha256": "255e319af4c90a07db380860ba9d81d0e74991dd47aa1c50a6d7d693ba678d9c",
+      "mode": 493
+    },
+    {
+      "status": "??",
+      "path": "scripts/test-stage3-static.sh",
+      "size": 14574,
+      "sha256": "ddaabf8e9403a8156a76d8424d9e36579168d1262e6fe2c4fe9e44adef9428f5",
+      "mode": 493
+    },
+    {
+      "status": "??",
+      "path": "scripts/test-subject-import.sh",
+      "size": 1035,
+      "sha256": "d8506ddfe4a2cce3efd68aeb592c7fdc7cc7710d273186d15527d60fbe2a5163",
+      "mode": 493
+    }
+  ],
+  "locallyPreservedArtifacts": [
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-camera-fx-framing-20260807/summary.json",
+      "size": 1477,
+      "sha256": "5e9e557a15be90dc03fdf8bea6a6c7f95b3660d33f389fed787a3807c66ceaa9",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-direction-equipment-semantics-20260807/summary.json",
+      "size": 1881,
+      "sha256": "5ae9188b510bb5e739323612757caf65c5af45b25f6fe4ab523f9d794527a2c0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-direction-lock-background-cleanup-20260808/pack/character-direction-lock.json",
+      "size": 2556,
+      "sha256": "60a3e866ae1299bc67325d3d68f11f345b6cd449140149f5224556733ba97c85",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-direction-lock-background-cleanup-20260808/pack/forgepack.json",
+      "size": 4503,
+      "sha256": "bfa7fe35624a311c354aae282a8d113fccadcfe2974b582d3b7173de4c106bf3",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-direction-lock-background-cleanup-20260808/pack/preview.gif",
+      "size": 49655,
+      "sha256": "672eb84545170a8d9e70ce4ac1cc775c4429ed2db7cd64f34e5f10ebdd5842da",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-direction-lock-background-cleanup-20260808/reports/consistency-report.json",
+      "size": 34460,
+      "sha256": "570edb6b935b6d8bb6767baf66ad9f8c4c57614700aaa726d793d50872448897",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-direction-lock-background-cleanup-20260808/reports/direction-lock.json",
+      "size": 2925,
+      "sha256": "da72e560e1525ebe245a1298eb6068551586ac5fef65a480ac058f9b6c487ce4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-direction-lock-background-cleanup-20260808/reports/job-report.json",
+      "size": 306253,
+      "sha256": "ddf24f1b32d3e008a97daae10d4e05d915a12b1a0099ce7ae215844cc90c2564",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-direction-lock-background-cleanup-20260808/reports/keyframe-provider-manifest.json",
+      "size": 43187,
+      "sha256": "ceaacaef6b4b83ee9f090e1131ee8748ebbe1072b3e25f1539f31465f3fa4cc6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-direction-lock-background-cleanup-20260808/reports/workflow-graph.json",
+      "size": 158284,
+      "sha256": "7a578dbfd34b062e0090d516fd69e92ca756db44c4744a3f7d49c320a09a7360",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-direction-lock-background-cleanup-20260808/summary.json",
+      "size": 843,
+      "sha256": "acd5f3d6e850ff04225710f7faca2da50eafb047f2d400c72076f5b6d4888ed9",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-direction-motion-v8-offline-20260810/summary.json",
+      "size": 1434,
+      "sha256": "6cb16dd2bdaccb0ed89c647e37f4a6471c12f62f042d6b6069ad2622487aeda7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-four-directions-real-20260807/summary.json",
+      "size": 1416,
+      "sha256": "b5de596b6761320a8738d05be8a38d719e1685a01ae0f137ee805931eb9a1551",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-four-directions-real-20260808/summary.json",
+      "size": 2473,
+      "sha256": "a5e936e36e46da1a87c8f1fb82d64402b7c820afba38a5281e0d03a11388bc00",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/character-v2.json",
+      "size": 347,
+      "sha256": "751f787837efc90a933fef21cc768396e9440079f57db1f96267b261f589f4d1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/previews/all-directions-contact.png",
+      "size": 1888809,
+      "sha256": "de54d72a7f7e393d76b09e9786018e3bd4300bddb24a0241a7e9cc1936f8e943",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/previews/idle-contact.png",
+      "size": 443714,
+      "sha256": "5101b9ff16217e8b010176ff2065c55779ea5c9e017f96f825f0d35e49fa3823",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/previews/idle.gif",
+      "size": 117646,
+      "sha256": "0e4fd1905e196c15089815be1bae1152adee6f461ce53fd3b0bbee08a8595016",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/previews/walk_down-contact.png",
+      "size": 483066,
+      "sha256": "e45c703a4159cc99c8e7f1ea5f860d035e7cf90924a34d91c3dc2a83c1cc4990",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/previews/walk_down.gif",
+      "size": 136180,
+      "sha256": "bf907b9a0150f069959bf6012889999e53e4cf04ad9168af5d8329be0b8fdb2e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/previews/walk_right-contact.png",
+      "size": 478074,
+      "sha256": "ac24640877ab5dd5d8d95f5339a963512164af3970f82e60956c960324afac63",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/previews/walk_right.gif",
+      "size": 139567,
+      "sha256": "437cf926940449dcfc377561d22ebb70b181e93b03f279da9b758375f31e7ae0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/previews/walk_up-contact.png",
+      "size": 490395,
+      "sha256": "0cfa8964c0d83f7c60371b541d7888f68878fb58cc17bff6d93946baa5800e99",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/previews/walk_up.gif",
+      "size": 135624,
+      "sha256": "cc090b27700be3fa7837432b4f2d17b376e4ac2c3f18c07f4c5897f74ea9456d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/reports/authorization-manifest.json",
+      "size": 4361,
+      "sha256": "578af39bdae2fffdd2c0c89aa79a7fe397739ea8ad03b54fb3cd365c83fc8613",
+      "mode": 384
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/reports/consistency-replay-report.json",
+      "size": 37574,
+      "sha256": "fa0ac9a5f64e05d1381239bfc4b5526eacc9f81f6ada0233db25b462684d3869",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/reports/consistency-report.json",
+      "size": 37574,
+      "sha256": "2d973ed386f4e4135ac4322b21f437bfbae5d2d78636545647946729400c4e64",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/reports/keyframe-provider-manifest-replay.json",
+      "size": 938,
+      "sha256": "73f3c7d31eeacd8053ecf575585e21bc5d72fbf98cad42abf10de7166d19a053",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/reports/keyframe-provider-manifest.json",
+      "size": 16561,
+      "sha256": "59d12a10d932b267aeb8e39d093ca910f8b94b24febebaa501448fd4563309a0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/reports/provider-usage-replay.json",
+      "size": 189,
+      "sha256": "f2573b3c8bd94a645374f103788ae88a9ad158ea79a4bef59170453daa673fc9",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/reports/provider-usage.json",
+      "size": 226,
+      "sha256": "e6b1bf04c40e4ccff71fc43e8f5b53ee186159e4718e6b5bb703e23e2a757639",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/reports/request-ledger.json",
+      "size": 33209,
+      "sha256": "5f22881cbd570f81271c2090174e8e133c7d31d35bfa17a74e90e9a89f1280f4",
+      "mode": 384
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/reports/workflow-graph.json",
+      "size": 102095,
+      "sha256": "c95813b29dbf63eae19ca427960c41ab0ce03f30310e1a7e4480660a20024a2c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v22-real-20260808/summary.json",
+      "size": 3497,
+      "sha256": "01d2cf88e97294fa9ed1e635712cd76b77daff3a68b588ebc67a0aaddde1d870",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/character-v2.json",
+      "size": 347,
+      "sha256": "73afbadab018b89c63119944bc053ecc70a4fd1cd0b533112d9fbb457eae5ad4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/acceptance-summary.json",
+      "size": 1876,
+      "sha256": "389b9ec973b046b55aa3e33b00b55d88e6e36d5a12efecf692769778ca0f73bc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/animation-quality-report.json",
+      "size": 2353,
+      "sha256": "f010b583e527c5685c0ecdd60437facb0d2121c46f71d76b705f77783ee4e44c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/character-silhouette-temporal-report.json",
+      "size": 11178,
+      "sha256": "1dc1eb956f519fd9af062c369a789de9bf9e437f03cd1c152612d84bbbe2a897",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/consistency-report.json",
+      "size": 34576,
+      "sha256": "2f18af8407f925a825d2ea55b5d016c406cfea2682aa19960515ddbaf81a1b66",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/fixture-consistency-v2/pack/character-direction-lock.json",
+      "size": 2556,
+      "sha256": "60a3e866ae1299bc67325d3d68f11f345b6cd449140149f5224556733ba97c85",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/fixture-consistency-v2/pack/forgepack.json",
+      "size": 4503,
+      "sha256": "fb2df033c54585c673334203a38688a4dd35a9f342926395222b3776db2756cf",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/fixture-consistency-v2/pack/preview.gif",
+      "size": 49655,
+      "sha256": "672eb84545170a8d9e70ce4ac1cc775c4429ed2db7cd64f34e5f10ebdd5842da",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/fixture-consistency-v2/reports/consistency-report.json",
+      "size": 34460,
+      "sha256": "82b6da27a3fe46bb262babce3c79afde17759d64aad8970b2cfdf67c8c461837",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/fixture-consistency-v2/reports/direction-lock.json",
+      "size": 2925,
+      "sha256": "808ea96c547487ff66c9567a1aaac3608ab2c96fc314cd8a3f53aa77bee94e90",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/fixture-consistency-v2/reports/job-report.json",
+      "size": 306253,
+      "sha256": "ab641f667a903214dd75b755a9217aad7ff0e0e3a9910ff87946c2c0c60a8ccc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/fixture-consistency-v2/reports/keyframe-provider-manifest.json",
+      "size": 43187,
+      "sha256": "33d9eed0cd4e3a19e197285436d64486506af0bcee1d22595fc8b89715a042e6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/fixture-consistency-v2/reports/workflow-graph.json",
+      "size": 158284,
+      "sha256": "a188d0535912922c69115c71de753e4e01d8b1197594c58a8d30e2d2f80c7a26",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/fixture-consistency-v2/summary.json",
+      "size": 843,
+      "sha256": "88885f42deeb85bf1774c54d85184096ff8aeac3567593593841fcf7b31e40d7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/idle-contact-sheet.png",
+      "size": 594207,
+      "sha256": "289c2c4e67c6754156dd47502600cc7421b668c99d59f628b7741b39133b15e4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/idle.gif",
+      "size": 109368,
+      "sha256": "8206b982ca63eb92dd23809121534d653488812b3cf1baaf12e7df1728bde1f8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/keyframe-loop-trim-report.json",
+      "size": 581,
+      "sha256": "12f06222d8a1675efd78d8c170cf69fae6603556f4e33a5ee66e7efc4dab2c88",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/review-decision.json",
+      "size": 416,
+      "sha256": "222e1d9f9d5acdc25ca560d0d62971bee90c8aed0837be3bd22daff20972a5a0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/walk-down-contact-sheet.png",
+      "size": 705899,
+      "sha256": "c881d785cb716fbded31966cab7ffca59496cdd0dad7e8215de37e95a8119bfb",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/walk-down.gif",
+      "size": 138703,
+      "sha256": "7356d278c5d4fb825218d7f4a14b49e0133742f6136e6fb3c93d2f9d3a661e96",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/walk-right-contact-sheet.png",
+      "size": 649078,
+      "sha256": "95549ffa1ec5cfb1d1a602005a9ebcd44634ddff45c111862df926922752f9ea",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/walk-right.gif",
+      "size": 123340,
+      "sha256": "34552698725c9cddf7dda38dfc91700d539ab479045cfa657abb4f3fcad5dc3f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/walk-up-contact-sheet.png",
+      "size": 588869,
+      "sha256": "597a7c01453028838f74fe57bc6fdae03ad81f9ccd1684519c6c615f2faec921",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/final/walk-up.gif",
+      "size": 130771,
+      "sha256": "ed568c458d9c8f45ad565603de8e00bde40c2ba5b89e6041cb3036998c85ae57",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/.forge/assets.json",
+      "size": 1746,
+      "sha256": "8155051596e9d04f694415ab8c3e1dc5dc2813aff496ab7d93c3a4a0bbe654c5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/.gitignore",
+      "size": 8,
+      "sha256": "531d0d253cec1addb97b2cb2d144b6589ff934513eb9c9b8cf882cb49e4c0c32",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/addons/forge_assets/ayla-ranger-keyframes-v2-3/.forge-owned.json",
+      "size": 372,
+      "sha256": "a143d09dd8f28352de448efd12b3b8a1171ad71d40ee480ba4f14298ef6f55c9",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/addons/forge_assets/ayla-ranger-keyframes-v2-3/forge_animated_sprite.tscn",
+      "size": 6629,
+      "sha256": "4a382d524d229fca58d510e0dbf7e23998e9aa401a0b8f11bc8ce478b007981e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/addons/forge_assets/ayla-ranger-keyframes-v2-3/forge_sprite_frames.tres",
+      "size": 6350,
+      "sha256": "40ef994eedd7495b0b449532607ea82f038b62ec1d2fe41e311dd2ab0f53cbbd",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/addons/forge_assets/ayla-ranger-keyframes-v2-3/forge_usage.json",
+      "size": 2389,
+      "sha256": "8f4eb8a55af79e163b6d3679bce701b61ef76a0fd95989a1ea780d69b496d2ba",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/addons/forge_assets/ayla-ranger-keyframes-v2-3/sprite_sheet.png",
+      "size": 1157906,
+      "sha256": "be3840b87d6f6fb064edf8e588a224ac66efca5f573579dfd31551b52995398e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/addons/forge_assets/ayla-ranger-keyframes-v2-3/sprite_sheet.png.import",
+      "size": 987,
+      "sha256": "ff982c9db50b9dfb377af17d1f3bb0c0eddce8b1015ba1114355a2de543673d2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/addons/forge_assets/ayla-ranger-keyframes-v2-3/sprite_sheet_002.png",
+      "size": 92973,
+      "sha256": "5c0c709cf9931fddb6b93f38ec20755bf881f2077b475be7298ea9ac171824d2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/addons/forge_assets/ayla-ranger-keyframes-v2-3/sprite_sheet_002.png.import",
+      "size": 999,
+      "sha256": "83f9fd7026e5f7d39d8b9d4c49d0f10511d1d374eb54741d6013e8cd567e8174",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/project.godot",
+      "size": 372,
+      "sha256": "a7d27bdf769f81cc1e3ddbcd7d2bc0499aa0d6c5dec9eaa9c718688a9eb61415",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/validate_character.gd",
+      "size": 1068,
+      "sha256": "f0dbf2c5f4da2ba21383e5b8ebf39e614987a4ab77d79d241b83c3f05ed9f446",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/godot-project/validate_character.gd.uid",
+      "size": 19,
+      "sha256": "2423653896e555cd4774136768939d0e9aa8c4ef72eff56dd79f111fc1b0dddd",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/idle-frame00-attempt1-cleanup-v11.png",
+      "size": 524601,
+      "sha256": "ed100779dd697858e054111089cd2209f75bbc332e5b88c1c45713645a95db00",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/idle-frame00-attempt1-cleanup-v12.png",
+      "size": 524601,
+      "sha256": "ed100779dd697858e054111089cd2209f75bbc332e5b88c1c45713645a95db00",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/idle-frame00-attempt1-normalized-v11.png",
+      "size": 46084,
+      "sha256": "ffd10c22aca6dd21380038e6478c92122dbbd668676a65f190e99cc3c8eb0abb",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/idle-frame00-attempt1-normalized-v12.png",
+      "size": 46084,
+      "sha256": "ffd10c22aca6dd21380038e6478c92122dbbd668676a65f190e99cc3c8eb0abb",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review-v2/idle-contact-sheet.png",
+      "size": 303267,
+      "sha256": "10e5f018ad7aa9c5852139bf88a798727799030c9de8ab5de6a1f79baa43dee3",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review-v2/walk_down-contact-sheet.png",
+      "size": 285416,
+      "sha256": "75e4a0a55d481233deb5c33f767ab13e5c555354c27f9d73ed33c84f9d5196a4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review-v2/walk_right-contact-sheet.png",
+      "size": 257188,
+      "sha256": "3b6f844ba99f65e01d57c9ad00a2c7f7ce084c5a7990607024acaebdf9c39200",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review-v2/walk_up-contact-sheet.png",
+      "size": 223460,
+      "sha256": "9a4eed8a6d2998af9b1339fef6b1e791ce949d378f976de76c14fd50e4e2be19",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review/idle-contact-sheet.png",
+      "size": 306080,
+      "sha256": "8f79d938e026100bc884106163c8eb8adb7ea38213e69b1a33ba7450aa6ff0f4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review/idle-frame01-attempt1-cleanup.png",
+      "size": 466797,
+      "sha256": "f710ae9b793b74c8584c8bf8e260c8f7aabb121544d8b49633e43c1d0dbe28ee",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review/idle-frame01-attempt1-normalized.png",
+      "size": 44012,
+      "sha256": "79b3d14bafe082722e8d6269d9305b730d05f2ef6547eca001e86549e50d22be",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review/idle-frame01-attempt2-cleanup.png",
+      "size": 380738,
+      "sha256": "bb12679356a62baae6363588038edbcbbce2ce0c290d97adb76ffb4ca643ed5c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review/idle-frame01-attempt2-normalized.png",
+      "size": 47039,
+      "sha256": "9e95c2429df5d1df273298af9970f0448dcac78cb32e83b522897c97cf426afb",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review/idle.gif",
+      "size": 155018,
+      "sha256": "c837e6fee5d08de4a867900e3d63343121efdcb373560bcc958fe405f13883b9",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review/walk_down-contact-sheet.png",
+      "size": 285416,
+      "sha256": "75e4a0a55d481233deb5c33f767ab13e5c555354c27f9d73ed33c84f9d5196a4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review/walk_down.gif",
+      "size": 146047,
+      "sha256": "8e56107ff13c3d1bcb2fd21c3e7bc420f480f34f1be0aebafda71ea57389929c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review/walk_right-contact-sheet.png",
+      "size": 257188,
+      "sha256": "3b6f844ba99f65e01d57c9ad00a2c7f7ce084c5a7990607024acaebdf9c39200",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review/walk_right.gif",
+      "size": 132626,
+      "sha256": "624247c856729bae31f2e0612047e04ddcda3d5fbc82a187731f35aa3de75b2c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review/walk_up-contact-sheet.png",
+      "size": 223460,
+      "sha256": "9a4eed8a6d2998af9b1339fef6b1e791ce949d378f976de76c14fd50e4e2be19",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/review/walk_up.gif",
+      "size": 130711,
+      "sha256": "b55bc3dd83a5983c11704e4ddb7eab9ef5ab25e32f15adf8e2efa0b553874ebd",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/walk-up-frame00-attempt1-cleanup.png",
+      "size": 292048,
+      "sha256": "67d7377be6a5da432b7cf3520ef1c84edb3b168afd18513a67f320910cd5ab2b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyframes-v23-real-20260808/walk-up-frame00-attempt1-normalized.png",
+      "size": 33429,
+      "sha256": "02a6cdfe5b7fdca09aa876da34c1316b9431175021f6980f37ba76eb9c2f9e86",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyposes-v24-real-20260808/acceptance-summary.json",
+      "size": 877,
+      "sha256": "d3408456d4f44cd910edb9ec0891c8139ff1ad7f6294e9f075e3fb2cb0798d6d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyposes-v24-real-20260808/character-v2.json",
+      "size": 345,
+      "sha256": "e141db8683077febd5480d3920dadfb7aea46064d7801e252f4a5d37318568ce",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyposes-v25-real-20260808/acceptance-summary.json",
+      "size": 1143,
+      "sha256": "570e6320160ed6a153a78906e22aee082d2e7d78f08ea11f19856df3886a0a95",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-keyposes-v25-real-20260808/character-v2.json",
+      "size": 354,
+      "sha256": "01383eb93cfa196be0f5de7eab0e302dc1d13ff42360d9165b9e578535f28021",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-method-remediation-20260811/git-status-before.txt",
+      "size": 12759,
+      "sha256": "c85e9867b66fd481036617506a2fd1bfe691ec35f60b0a7d606502c1f7a6dd19",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-reference-isolation-offline-20260808/character-v2.json",
+      "size": 392,
+      "sha256": "fe260659336d0068d12c040124c4209f61f29fd0b146207fe361d35656ca9e69",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-reference-isolation-offline-20260808/invalid-missing-equipment.json",
+      "size": 305,
+      "sha256": "f0eee5bd23127a24dde2d2cbe0840acd976620c028fc8cc7777e0f2acc8ecb81",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-reference-isolation-offline-20260808/summary.json",
+      "size": 2455,
+      "sha256": "4f20282eae8075a496fcf4ee44740fccaabd65b791d4bb58967b357f1a26beb3",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-silhouette-temporal-20260807/summary.json",
+      "size": 2541,
+      "sha256": "5bfe538ed5cd933eb4580b0ac39188fdc201c32006dde4697fcac563b341baa1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-silhouette-temporal-v2-20260807/summary.json",
+      "size": 2499,
+      "sha256": "e54fa5a3afe4123b68a2e40bb3ce8829519f320db0d1399df7cc191942393ac7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-spritesheet-v3-real-20260808/acceptance-summary.json",
+      "size": 4067,
+      "sha256": "1f2c65d5ec42cc83f74b779960125b34e167939bc4b54506065dbaa423d5314c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-spritesheet-v3-real-20260808/character-v2.json",
+      "size": 351,
+      "sha256": "fd008c9df3f68dde32c2f4b0f3d0d4432301bbfcf55f8932e4b7fc50203c172a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-preflight-20260808/character-v2.json",
+      "size": 331,
+      "sha256": "1b67052a56bf3809a71c5b9fde7a1d60a209de54ec6f03036bc14b876bc89387",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-preflight-20260808/preflight-summary.json",
+      "size": 1544,
+      "sha256": "56a2a18af0da4e3718ed33c81904a0725f3c8851c7ea5cce5afd046079d13e19",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/frames/frame_00001.png",
+      "size": 91903,
+      "sha256": "f4130b05c13180c09d23c8e681d7c42dbf09c42af94f7b31aa266a144946a2d3",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/frames/frame_00002.png",
+      "size": 88213,
+      "sha256": "d0f1f7edc9127875801cdf75b54269618911db5df0d3b99600ef1068ea91a414",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/frames/frame_00003.png",
+      "size": 58726,
+      "sha256": "72c3a06df32a2a431212092fa9b151aff86486bc3736adbda65b962f45c361d5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/frames/frame_00004.png",
+      "size": 62752,
+      "sha256": "e029e11454fdfdca3a7c398d66a61a3940d966d96dbfc571349a45179b001390",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/frames/frame_00005.png",
+      "size": 63167,
+      "sha256": "a97a2f84ba940d41ff459b7bb759857b221e2555cbcbeb53e73aa24bccf9caaa",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/frames/frame_00006.png",
+      "size": 87757,
+      "sha256": "f582bd5455e3cead602681b8dc691e2f3f5060e4584e21de4785af5a6d29988f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/frames/frame_00007.png",
+      "size": 87694,
+      "sha256": "a21eea0ad2ac2c2c5b9484c37ed06d1bffe64f0ffa849705874d922c28e0698a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/frames/frame_00008.png",
+      "size": 98581,
+      "sha256": "676148e7c4827704c8ff5c9c382f371f4ea904f8300a1938e99b01327aba0446",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/.gitignore",
+      "size": 8,
+      "sha256": "531d0d253cec1addb97b2cb2d144b6589ff934513eb9c9b8cf882cb49e4c0c32",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00001.png",
+      "size": 91903,
+      "sha256": "f4130b05c13180c09d23c8e681d7c42dbf09c42af94f7b31aa266a144946a2d3",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00001.png.import",
+      "size": 944,
+      "sha256": "fe89b391a96bc140185ffc4f4f2510cfe847943db01cf40bc23fe13e5aa8994b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00002.png",
+      "size": 88213,
+      "sha256": "d0f1f7edc9127875801cdf75b54269618911db5df0d3b99600ef1068ea91a414",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00002.png.import",
+      "size": 944,
+      "sha256": "31e572ee9e3517e759e0e814a479229fc8cf5b6f5f874e2c16d3c005f17c575c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00003.png",
+      "size": 58726,
+      "sha256": "72c3a06df32a2a431212092fa9b151aff86486bc3736adbda65b962f45c361d5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00003.png.import",
+      "size": 943,
+      "sha256": "d357d0159f4be5e97cee8488e2bbd074ac03129e8e8ed9a36b637b4dda8f08fa",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00004.png",
+      "size": 62752,
+      "sha256": "e029e11454fdfdca3a7c398d66a61a3940d966d96dbfc571349a45179b001390",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00004.png.import",
+      "size": 944,
+      "sha256": "77b5f1adeecbc0d299f5106cc45d21d108f9dfc861a34872043df2508711df42",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00005.png",
+      "size": 63167,
+      "sha256": "a97a2f84ba940d41ff459b7bb759857b221e2555cbcbeb53e73aa24bccf9caaa",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00005.png.import",
+      "size": 944,
+      "sha256": "f9a27dcc79493d6b68b60c6b7a47569ee73e2b9730d2ea9a06ae24f168b21dd4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00006.png",
+      "size": 87757,
+      "sha256": "f582bd5455e3cead602681b8dc691e2f3f5060e4584e21de4785af5a6d29988f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00006.png.import",
+      "size": 944,
+      "sha256": "1a7aca6e5e5b961d664f728925611883ccd204864be7a03de5448bd2cdc5da59",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00007.png",
+      "size": 87694,
+      "sha256": "a21eea0ad2ac2c2c5b9484c37ed06d1bffe64f0ffa849705874d922c28e0698a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00007.png.import",
+      "size": 943,
+      "sha256": "413a60c1efc229bb3b513b18af22660e78d41cb533accb6b4a86a354bcbb9707",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00008.png",
+      "size": 98581,
+      "sha256": "676148e7c4827704c8ff5c9c382f371f4ea904f8300a1938e99b01327aba0446",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/frames/frame_00008.png.import",
+      "size": 944,
+      "sha256": "aa59efc2c93cbc8e95496676afb3b9be42aeb271b18d3112d4684e3f4d3d7bbe",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/preview.gd",
+      "size": 731,
+      "sha256": "03eff4450b57834453fb91dfbeb47c8915e6f77e8997d236eb42e244d17f1bc0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/preview.gd.uid",
+      "size": 20,
+      "sha256": "5fdd7ec2d4dd987d665e577dcdcc593e12dc88a68ac0a3f822391b050e4d00d6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/preview.tscn",
+      "size": 1090,
+      "sha256": "fc99a49b7947992b476048720eb97cb66700164451e1687cc09c02762a85abed",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/godot-preview/project.godot",
+      "size": 693,
+      "sha256": "13dc5bc3994dfb0f7fe74ebc2c6ffd824574f877de4ef88e81407c1aede232ff",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/previews/walk_right-checkerboard-4x-contact.png",
+      "size": 1478020,
+      "sha256": "74e86835e97a8f24a10b7a7303bc55318c7b1f205397b7fe743bf7d41abddab4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/previews/walk_right-chroma-green-1x.gif",
+      "size": 252102,
+      "sha256": "6402e58bd774cf300724adfbb1f9d3782284a13200c378f740ad276060638907",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/reports/animation-quality-report.json",
+      "size": 1380,
+      "sha256": "e40d6f3109fe2d15c4d9011936840945697aeb5069fc836ec37152f7297e3b8c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/reports/character-alpha-repair-report.json",
+      "size": 2131,
+      "sha256": "216c013f3c30e00d4614e4b0815e99245cc7a76cf73f78e78e6c45b3dcbd6c02",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/reports/character-silhouette-temporal-report.json",
+      "size": 3359,
+      "sha256": "7fc3fd2184f0541343ea9aef3963fe50e48a3561a919934bd9df112a406a5209",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/reports/consistency-report.json",
+      "size": 9845,
+      "sha256": "07430afe3dd34c323d23b1d1df6058352ad6e9317f973822150b23e8ad3e94c2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/reports/hand-equipment-contact-report.json",
+      "size": 549,
+      "sha256": "06a7fa44b97a8ee5c2b86366325f8838c2f4b8ae0fc04877809144f76f4ee6c6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/reports/keyframe-provider-manifest.json",
+      "size": 4685,
+      "sha256": "7ef2da27fb796ce63f80129af4a0f78ad051b8383dc8ee2ef5f348150baa4f5a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/reports/workflow-graph.json",
+      "size": 29456,
+      "sha256": "c4252b0921d6d253642c256cfd0abfabd0b2942b63af9e323263df339787f157",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-character-walk-right-keyframe-real-20260808/summary.json",
+      "size": 1629,
+      "sha256": "e36b81d8c6b9dbb95119045b0c6fabe8e2aaf598c8d59c7ab75a33f187228d4c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-core-character-icon-prop-real-20260806/summary.json",
+      "size": 3887,
+      "sha256": "c74769d590824026a11c4a7c0d4ce43dc8fea0cd051bc9abcddde9d9a9f94de1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-core-character-icon-prop-real-revalidation-20260807/summary.json",
+      "size": 2924,
+      "sha256": "00658a668be6db385082f22a1bea12f5fcd756b9d992b3f118cac19272c30843",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-core-character-icon-prop-validation-20260806/summary.json",
+      "size": 4576,
+      "sha256": "3c2292c677d54a03aabb29260db119be9015fe2b866da55e2b1b3f4f2790cd18",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-core-real-blockers-remediation-20260807/summary.json",
+      "size": 2221,
+      "sha256": "b1b7b67d4289f2cb27264b332575b27940b6f0c3ec69f856318b28ce3720b02f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-directional-reuse-2026-09-07/evidence-manifest.json",
+      "size": 5977,
+      "sha256": "9aeec212bc2981663b389c1d6ac7bae2a9f6bb796e1a59ecee0ec35cc4e13451",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-directional-reuse-2026-09-07/negative-duration-summary.json",
+      "size": 325,
+      "sha256": "2b50176b30ba71293687eef9832acd214586c41a55b2b9bb990c135cb11d860c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-directional-reuse-2026-09-07/portable-verification.json",
+      "size": 360,
+      "sha256": "6d354d5a5fc7c20e8b6edf2b619a4bf025745d1346edc6fa9fa9d0c68248e4fc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-directional-reuse-2026-09-07/review.png",
+      "size": 338523,
+      "sha256": "2dd449898d812604f1c2c50e8f8744d66736ffc0a0b9556cefcfbcc6fe3b9d59",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-directional-reuse-2026-09-07/runtime-report-headless.json",
+      "size": 54158,
+      "sha256": "89ccd239c4c171872d0d9ec2d50695cb99775f23f4d53cdc64982da664f0427a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-directional-reuse-2026-09-07/runtime-report.json",
+      "size": 54241,
+      "sha256": "6411ceec07283ad33fe42d213df48bd2d6503cab713a397a4f436cfcaefe5b05",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-directional-reuse-2026-09-07/summary.json",
+      "size": 8746,
+      "sha256": "7e9c9b41a746820a0e272fb21a632ceb5f2cc73b2ce6485e11a73f7c7e63730c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-directional-reuse-2026-09-07/up-phase.png",
+      "size": 331122,
+      "sha256": "1ae6e29eb181866e7ecbe28532aec3aa45c3b3a1c1e4f924aef0652e4c9823c7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-framing-authorization-p0-20260806/summary.json",
+      "size": 1472,
+      "sha256": "2b9955b0c92c224de86c47a1c2278fa727bc1accfff319440ad18c551932d2da",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-full-body-real-20260806/anchor-provider-usage.json",
+      "size": 222,
+      "sha256": "846dc4dc4385a3efcc76d774b8df40dfd1ef1b38ed64e24812ca41c3ecfeaceb",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-full-body-real-20260806/anchor.png",
+      "size": 54001,
+      "sha256": "4e3be6e0acc137514ad66d7886ad355a2f0b3358b6795201177c24252cefb4aa",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-full-body-real-20260806/collection-consistency-report.json",
+      "size": 2188,
+      "sha256": "8057ebe1bff54e9197e7a3f726df79abb0f6c8c94871357abface2e246299961",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-full-body-real-20260806/consistency-report.json",
+      "size": 5832,
+      "sha256": "562ae044a46ff76d1ae4c8518c968fa79abf985652390b810ffaad3425293a22",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-full-body-real-20260806/contact-sheet.png",
+      "size": 224962,
+      "sha256": "96fb865590271b6823ac5dd3588985deb558733eaf1872caac5be520560caef5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-full-body-real-20260806/portrait-base-replay-summary.json",
+      "size": 1588,
+      "sha256": "5250c8595c6c4d540be217509663e8aba6b072f6f1be3afd1d9f31908d593828",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-full-body-real-20260806/portrait-provider-usage.json",
+      "size": 223,
+      "sha256": "17f78a9070defba276ff3f9a11d120eb9320e4a8e9fdce5beeabb756e9545784",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-full-body-real-20260806/summary.json",
+      "size": 2696,
+      "sha256": "339b842dba5824b95fbb4bbdfd7f18cdafef12255978b6de00b96896b35e827e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/calibration.json",
+      "size": 3951,
+      "sha256": "84ada3d012f6976f1744325d64406acd6731056fce809550dc19f2dce63a6b54",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/identity-metric-report.json",
+      "size": 6094,
+      "sha256": "79aefa218f7b6a321d93aa6fb2619e612490d4a515dfe0390e80b786cc24121c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/41598630-e5f4-4af8-b32b-a71f623ec182-back_idle.png",
+      "size": 32094,
+      "sha256": "3f52a3daf63a74223dae53de04761ece63acdfdf0e0aa12948c5ad6a32a8525a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/41598630-e5f4-4af8-b32b-a71f623ec182-front_idle.png",
+      "size": 43311,
+      "sha256": "572f6a52d24909df771854a475df44577fb7ea90f30997a6dfd1472f3e3c9243",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/479e3e7d-7c7c-42a1-81a9-e7a5b418c4f9-back_idle.png",
+      "size": 29346,
+      "sha256": "3729e37b77db52145cf80a939af977d28c067973e533d642f1b369216db62372",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/479e3e7d-7c7c-42a1-81a9-e7a5b418c4f9-front_idle.png",
+      "size": 32928,
+      "sha256": "2cd6100e47ef2cce33345245bc3338235e2d3fd9c61ac4fbd5d752ae69477700",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/733f5bf9-8060-4840-a098-513b672afb04-back_idle.png",
+      "size": 34893,
+      "sha256": "b2692fef8905eb0bdad3f724246455f670a45c0e35e833a8df48883329ffce4d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/733f5bf9-8060-4840-a098-513b672afb04-front_idle.png",
+      "size": 33364,
+      "sha256": "473f76f83a011c7e95382f86857b71a5458ee00aec195bde0f7c5e7c63aebe05",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/733f5bf9-8060-4840-a098-513b672afb04-left_idle.png",
+      "size": 24032,
+      "sha256": "a8a9a729de4e1fc0c807f6d221df7818e4b4276f6805a1e25927df3854e5de6d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/733f5bf9-8060-4840-a098-513b672afb04-left_walk.png",
+      "size": 27594,
+      "sha256": "80c58f71265b4f8544fb3ade5b45ea336130daa77e3bbd621502a45a6bc0b8be",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/733f5bf9-8060-4840-a098-513b672afb04-right_idle.png",
+      "size": 22422,
+      "sha256": "a3316a7528d8bdf844b79b8ecb8b658036029bec5a149dd0e5a51c15aea70e55",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/733f5bf9-8060-4840-a098-513b672afb04-right_walk.png",
+      "size": 29419,
+      "sha256": "51638d448cf1b55aca4cbf273b3f3b231b2547efab697bdcc3ce5c605bba1a90",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/92312efb-10aa-4ed8-b57a-82163fc1677e-back_idle.png",
+      "size": 30574,
+      "sha256": "8b45cfa85bf95108d9d71576151033115c8067d7cb299c3aac65e688517c0773",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/92312efb-10aa-4ed8-b57a-82163fc1677e-front_idle.png",
+      "size": 43311,
+      "sha256": "572f6a52d24909df771854a475df44577fb7ea90f30997a6dfd1472f3e3c9243",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/ede37df3-013d-4300-b11e-0f9130fa7aa7-back_idle.png",
+      "size": 33925,
+      "sha256": "f4230db9f34c2451f728d31360fdc96ef943440ec75601257c5fd8ce1aad60b3",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/ede37df3-013d-4300-b11e-0f9130fa7aa7-front_idle.png",
+      "size": 43311,
+      "sha256": "572f6a52d24909df771854a475df44577fb7ea90f30997a6dfd1472f3e3c9243",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/ede37df3-013d-4300-b11e-0f9130fa7aa7-left_idle.png",
+      "size": 25146,
+      "sha256": "f42a07169864cd7575f21490444e4da4a26e5eab2d32e06df0878dd2900e54ab",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/ede37df3-013d-4300-b11e-0f9130fa7aa7-left_walk.png",
+      "size": 29604,
+      "sha256": "839d3b6114806c096013b702e2c5626bab1502e04a74b60344f37f1008595bbc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/ede37df3-013d-4300-b11e-0f9130fa7aa7-right_idle.png",
+      "size": 25262,
+      "sha256": "9c6671fdff92aebcc2ad03ec4bb96af97db62af23c5cccaaa95748adab9326a2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/ede37df3-013d-4300-b11e-0f9130fa7aa7-right_walk.png",
+      "size": 27435,
+      "sha256": "6da623631419c190c0661c7d96cec6984728916191f3d390fba997447bf14208",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/f9a693ed-5d4d-4043-b4eb-ca56b312600c-back_idle.png",
+      "size": 38319,
+      "sha256": "cab2070d9a99ec5d927a49ff5b075bfd98488b0c3c372b3bf843e1c929820f5f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-identity-metric-calibration-2026-08-11/images/f9a693ed-5d4d-4043-b4eb-ca56b312600c-front_idle.png",
+      "size": 42484,
+      "sha256": "b1273d482f78eab7378a12ca9acbdf4dd7ca88c2a4e5fc3f2d446fd9b814fbf5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-portrait-expression-aware-skin-gate-20260806/summary.json",
+      "size": 3314,
+      "sha256": "4db481676df0bb00887017f70d50ab8ab2d6fb97e33e9e2d0ccc9612c8c600e8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-portrait-two-phase-neutral-approval-20260806/summary.json",
+      "size": 2902,
+      "sha256": "202eb1d35385374c56c683eb2b4677cff3863b4696af2930ab9e5debf5b6409a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-portrait-v2-real-20260806/summary.json",
+      "size": 3652,
+      "sha256": "05906ece31862ef6d73983bb9703c19ea2e82e74b3364da4867a2466d2f275e4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-stage3-offline-20260805/summary.json",
+      "size": 1904,
+      "sha256": "cece710b98a3a4913c9b4c6d3c96ca3c255f8a57b94f6e392e33e585cdb46c22",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-stage3-real-20260805/summary.json",
+      "size": 2952,
+      "sha256": "12fe8af9b08983a3019b50fffb5a1511da2fd1db16d5973558fb114e79489f81",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-stage3-remediation-20260805/summary.json",
+      "size": 2680,
+      "sha256": "a6dc674b0e85ac363945fe251f5e7d3b4d0d14710ca689a977af57d940a6c472",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-cycle-v10-real-20260814/summary.json",
+      "size": 1773,
+      "sha256": "3022b0d7f949ff976ae4a9a01773660879be45239cb16d3933fc552796da8919",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-frames-v4-offline-20260809/summary.json",
+      "size": 2636,
+      "sha256": "a71dc1fd8d8747416fa2565e42a3223d660762fd52e6662dbede14f503e5535f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-frames-v4-real-20260809/summary.json",
+      "size": 3112,
+      "sha256": "fb5cf160d2e38f5429bca30f79f36e5c57a61bb5cb87beb49db431f7ff38d74e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v93-preflight-20260813/preflight-summary.json",
+      "size": 2960,
+      "sha256": "440ce74ba9a2a829672152dacef191d069049ee2cbeda7adc527601ae878edcc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/frames/frame-00.png",
+      "size": 40793,
+      "sha256": "4ad2946571e3352de04904693e3d9eb30605ebe37ca30f3ec1aade2bc5f32ca8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/frames/frame-00.png.import",
+      "size": 934,
+      "sha256": "ae570c190cdde33a2315c6f1c654980ce464704cd54f39abebeed18bd4a424b7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/frames/frame-01.png",
+      "size": 42801,
+      "sha256": "edd6795e1f9a37a9a52b315dad68170e7b6ba0da0dba7d00758c495bef977d8a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/frames/frame-01.png.import",
+      "size": 935,
+      "sha256": "c04dbd54df4c132e5faf8a9b1d25d69d1a2ec794b7e49728ff0387b6bd39bda1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/frames/frame-02.png",
+      "size": 41858,
+      "sha256": "e64cf819c8ac3b7ee6ab78578cbff4fce199a60dec1bfba48385a4abb4cb4c40",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/frames/frame-02.png.import",
+      "size": 935,
+      "sha256": "44e1725558b1865fa7795f77a00197f57147734889008deb2589046637dc6910",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/frames/frame-03.png",
+      "size": 41304,
+      "sha256": "d389b3732a42220bc73574c1c875c231f7bac3bbe69dd1a5c7b12f6897ed80a0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/frames/frame-03.png.import",
+      "size": 934,
+      "sha256": "aa67d531b7102142efe5960cc02abeca70eb64c4de6b3f6002fcc671b32e986b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/output/godot-smoke-report.json",
+      "size": 2543,
+      "sha256": "6f94421ccf5b8ca6e68c5b0a2b72555cd46a2e9e10ffe68b33a6c521c7fd8770",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/output/walk_down-runtime-contact-sheet.png",
+      "size": 160430,
+      "sha256": "5d46c54886597a1bc00e290f5b09343ecd325fd5347c479a299464b61c647c68",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/output/walk_down-runtime-contact-sheet.png.import",
+      "size": 1003,
+      "sha256": "f9ba9f8b7f9870e882fb63532ab4870ae88e29232a4bd5e4ff5b62a1939e116e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/output/walk_down-runtime-strip.png",
+      "size": 156728,
+      "sha256": "059d0970bf0cbadc8ca0845c139b847dc237c89d7cbe8ebc95b370447747d54b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/output/walk_down-runtime-strip.png.import",
+      "size": 980,
+      "sha256": "122e14371e21e8ebd17cad698d48c445432a163a559e00aa4744d64cc59ad63d",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/output/walk_down.spriteframes.tres",
+      "size": 672,
+      "sha256": "9dbcbb7c1fe6bfc76086e0172d8c5c3365ae90422fee75c226cacd6b2013bc39",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/output/walk_down_smoke.tscn",
+      "size": 423,
+      "sha256": "efe1c3fdd4e77a222c3d4d9c239fffd820b53be2af4609b3c6020366be960e23",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/project.godot",
+      "size": 746,
+      "sha256": "9024d2dad99aafe20ebd33bf173e190e3ddf383e1924e43b9e9bdce1fe1d70bd",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/source-integrity.json",
+      "size": 841,
+      "sha256": "cf5d813b53e96b08d9da93bb91fed7acf2ef47dc210da11268fbbf2a71ec386e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/verify_v95_walk_down_smoke.gd",
+      "size": 11459,
+      "sha256": "0bc56d51bd52158b7295b681644d9f31e642f12b919b8d296d6217551fbc6b92",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-grid-v95-godot-smoke-20260813/verify_v95_walk_down_smoke.gd.uid",
+      "size": 20,
+      "sha256": "5de1f8d4521edaff6baaffe62f1c5740b8a04f3ddf52fe097ef42f61c0e711bb",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-spritesheet-v3-offline-20260808/acceptance.json",
+      "size": 1585,
+      "sha256": "944cba601c792269981cb48f820300a39cf290ce1a5b9cd2773a6d3196ebebcb",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-cycle-v6-offline-20260809/summary.json",
+      "size": 2034,
+      "sha256": "19a71b86b9daac8b74027fb3b7a4aae2735d35c064efb64b66f358087bf41e60",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-cycle-v6-real-20260809/summary.json",
+      "size": 2494,
+      "sha256": "87ecc79e4a3005c8a3319932f04f969661097ebfb81bd10cbc956b727c913d60",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-locked-v5-offline-20260809/summary.json",
+      "size": 1049,
+      "sha256": "ebe65455756187e1b6be77e1067011b5d2151eac4d8f48d8a82ea165ab770967",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-locked-v5-real-20260809/summary.json",
+      "size": 2891,
+      "sha256": "0c9a2b32bbd781077f65572e00b5d5e5e6cfaa8c290f4cba5d9716561cb822ec",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-locked-v5-remediation-offline-20260809/summary.json",
+      "size": 3282,
+      "sha256": "421cfa49f1cc18cb4ae40da48de82ccf91632e50d25b4cec93fd5fee61dc1479",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-locked-v5-remediation-real-20260809/summary.json",
+      "size": 3124,
+      "sha256": "e4eae64c00881ea12dae477382fea442b4ede4eaea778992747c71c3ee37683b",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-v2-real-20260809/character-v2.json",
+      "size": 411,
+      "sha256": "363575c8e4da1001aaf6f85b2f2c14d89c719f6495cc5f78bddcf61087e6dbb0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-v2-real-20260809/previews/direction-stills.png",
+      "size": 417335,
+      "sha256": "effc5824ca238b072e764061d76b21c2b099469ccab24a9c6dc5e01c15bd30b2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-v2-real-20260809/previews/idle-raw-video-contact.png",
+      "size": 240706,
+      "sha256": "d042e2c360fbbcdacdcf16a24ef1967fe60e0c1757972ccccf0878a0a98bf9b2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-v2-real-20260809/previews/walk_down-attempt-1-selected-frames.png",
+      "size": 786592,
+      "sha256": "8a359fbdbec0f7bb28bc8654a838ee62be8edf694019bf414485069dfa772577",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-v2-real-20260809/previews/walk_down-attempt-1.gif",
+      "size": 148446,
+      "sha256": "d941febf63b470268350b38bb537c6f134570870fbf3174b4e517b0d25736ea5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-v2-real-20260809/previews/walk_down-attempt-2-selected-frames.png",
+      "size": 774119,
+      "sha256": "b9f9afcac304fb6ecb5d5a4b6ce24f2aac2046040ff8a319a7c26aff1fc084d3",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-v2-real-20260809/previews/walk_down-attempt-2.gif",
+      "size": 146813,
+      "sha256": "310e893ef112aa14b776cbb5b2b0dee1f4a0ba2d883d525207d3a515ee76784c",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-v2-real-20260809/previews/walk_up-raw-video-contact.png",
+      "size": 229448,
+      "sha256": "fff1defed5cdedaaf0030b17d6eab6a5d6c7b0525daf55b2bd43b0382a3e39dc",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-topdown-video-v2-real-20260809/summary.json",
+      "size": 2221,
+      "sha256": "417287d2eabaa35edbd1cc2fecead8c653b819c5894eef36e62221bfb9935f5a",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-use-skill-2026-09-06/fixture-contact-sheet.png",
+      "size": 1046,
+      "sha256": "cb733895e2b679c9bea600ada082335c5ef8610bbd1bfe7a1bb025bcafb5b91e",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-use-skill-2026-09-06/independent-result.md",
+      "size": 4693,
+      "sha256": "071a0730711131bc77c555276391dc92e0baeef69bcb891bd9e8367677823310",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-use-skill-2026-09-06/summary.json",
+      "size": 4702,
+      "sha256": "38956dc2730a7e8bf239f01ec2949e1a4bbcc9d3d20cef7f6a099e4280f19038",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/forge-xai-image2-candidate-real-20260815/probe-summary.json",
+      "size": 2018,
+      "sha256": "2ac7421b7edbe5ba9fe5b19458458f5ad9f13541bd2125d2d0be29e60240536f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/assets/atlas.json",
+      "size": 1159,
+      "sha256": "61f5d24401f6544aa8ef55807b036873bbd9a3296cabc505f8472a29d085558f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/assets/frames/frame_001.png",
+      "size": 684,
+      "sha256": "a85f61da43eae468057f9d895bd679931d53e8d38ba4a430489859059a82efe1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/assets/frames/frame_002.png",
+      "size": 671,
+      "sha256": "37ebc8ffcad27add63fbe6948c61c678127b633d5d1596cdaeb89d67ffdfc356",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/assets/frames/frame_003.png",
+      "size": 684,
+      "sha256": "a85f61da43eae468057f9d895bd679931d53e8d38ba4a430489859059a82efe1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/assets/frames/frame_004.png",
+      "size": 671,
+      "sha256": "e95eac6f5e14282eb72319f273afb899f7c34cef0c236e9e68ab9c48797b0bf2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/assets/frames/frame_005.png",
+      "size": 684,
+      "sha256": "a85f61da43eae468057f9d895bd679931d53e8d38ba4a430489859059a82efe1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/assets/frames/frame_006.png",
+      "size": 671,
+      "sha256": "37ebc8ffcad27add63fbe6948c61c678127b633d5d1596cdaeb89d67ffdfc356",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/assets/frames/frame_007.png",
+      "size": 684,
+      "sha256": "a85f61da43eae468057f9d895bd679931d53e8d38ba4a430489859059a82efe1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/assets/frames/frame_008.png",
+      "size": 671,
+      "sha256": "e95eac6f5e14282eb72319f273afb899f7c34cef0c236e9e68ab9c48797b0bf2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/assets/godot_import.json",
+      "size": 947,
+      "sha256": "9d2e70df40a426dd4b137d58c041872d7d986c60183edb00cd91f012687f3f86",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/assets/manifest.json",
+      "size": 444,
+      "sha256": "b5bc61321c2bf78bc2f79559491a49a3ab929fc2971bfd2f2d4e24b2571051d4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/assets/sprite_sheet.png",
+      "size": 3261,
+      "sha256": "3ff76481a1858fa780881b2d7bc8cc3935eb4e77952190ccd7719474c40265d2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/forgepack.json",
+      "size": 883,
+      "sha256": "94df9b81ae911ee0c23a79ce5b13c61b7c76cbb12f95b5ebb503d2fa1926f801",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/previews/preview.gif",
+      "size": 5921,
+      "sha256": "3687c820098d195a853d4415214c7eb1377f602b03fed0038ee738beba43d644",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/Godot-Smoke-Walk.gsfpack/quality-report.json",
+      "size": 360,
+      "sha256": "227fa820168c27d6df440975b2331bd8848d7708fde65b8e4de9b11b65f74cd7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/atlas.json",
+      "size": 1159,
+      "sha256": "61f5d24401f6544aa8ef55807b036873bbd9a3296cabc505f8472a29d085558f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/frames/frame_001.png",
+      "size": 684,
+      "sha256": "a85f61da43eae468057f9d895bd679931d53e8d38ba4a430489859059a82efe1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/frames/frame_002.png",
+      "size": 671,
+      "sha256": "37ebc8ffcad27add63fbe6948c61c678127b633d5d1596cdaeb89d67ffdfc356",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/frames/frame_003.png",
+      "size": 684,
+      "sha256": "a85f61da43eae468057f9d895bd679931d53e8d38ba4a430489859059a82efe1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/frames/frame_004.png",
+      "size": 671,
+      "sha256": "e95eac6f5e14282eb72319f273afb899f7c34cef0c236e9e68ab9c48797b0bf2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/frames/frame_005.png",
+      "size": 684,
+      "sha256": "a85f61da43eae468057f9d895bd679931d53e8d38ba4a430489859059a82efe1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/frames/frame_006.png",
+      "size": 671,
+      "sha256": "37ebc8ffcad27add63fbe6948c61c678127b633d5d1596cdaeb89d67ffdfc356",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/frames/frame_007.png",
+      "size": 684,
+      "sha256": "a85f61da43eae468057f9d895bd679931d53e8d38ba4a430489859059a82efe1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/frames/frame_008.png",
+      "size": 671,
+      "sha256": "e95eac6f5e14282eb72319f273afb899f7c34cef0c236e9e68ab9c48797b0bf2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/godot_import.json",
+      "size": 947,
+      "sha256": "9d2e70df40a426dd4b137d58c041872d7d986c60183edb00cd91f012687f3f86",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/manifest.json",
+      "size": 444,
+      "sha256": "b5bc61321c2bf78bc2f79559491a49a3ab929fc2971bfd2f2d4e24b2571051d4",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/preview.gif",
+      "size": 5921,
+      "sha256": "3687c820098d195a853d4415214c7eb1377f602b03fed0038ee738beba43d644",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/quality-report.json",
+      "size": 360,
+      "sha256": "227fa820168c27d6df440975b2331bd8848d7708fde65b8e4de9b11b65f74cd7",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/exports/godot_smoke_walk/sprite_sheet.png",
+      "size": 3261,
+      "sha256": "3ff76481a1858fa780881b2d7bc8cc3935eb4e77952190ccd7719474c40265d2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/bboxes.json",
+      "size": 2468,
+      "sha256": "ea6b301f84761ab9685cd508d21f61b2f64965bc4866d95c5a5d3897f41da4a6",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/frame_00001.png",
+      "size": 497,
+      "sha256": "ce94327a0d9d9cacf7c0ab9618a3538018e145826f04ea30370307f32d2485a8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/frame_00002.png",
+      "size": 484,
+      "sha256": "ce13b6892f386fd2c7a03a355129831a7e51c61872b1aaf51b378c1737521ed8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/frame_00003.png",
+      "size": 497,
+      "sha256": "ce94327a0d9d9cacf7c0ab9618a3538018e145826f04ea30370307f32d2485a8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/frame_00004.png",
+      "size": 484,
+      "sha256": "c23ff8d0329d1606a0e64e36fac53811b251416c31a7a9f81d7cbf204916a2b5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/frame_00005.png",
+      "size": 497,
+      "sha256": "ce94327a0d9d9cacf7c0ab9618a3538018e145826f04ea30370307f32d2485a8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/frame_00006.png",
+      "size": 484,
+      "sha256": "ce13b6892f386fd2c7a03a355129831a7e51c61872b1aaf51b378c1737521ed8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/frame_00007.png",
+      "size": 497,
+      "sha256": "ce94327a0d9d9cacf7c0ab9618a3538018e145826f04ea30370307f32d2485a8",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/frame_00008.png",
+      "size": 484,
+      "sha256": "c23ff8d0329d1606a0e64e36fac53811b251416c31a7a9f81d7cbf204916a2b5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/normalized/frame_00001.png",
+      "size": 684,
+      "sha256": "a85f61da43eae468057f9d895bd679931d53e8d38ba4a430489859059a82efe1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/normalized/frame_00002.png",
+      "size": 671,
+      "sha256": "37ebc8ffcad27add63fbe6948c61c678127b633d5d1596cdaeb89d67ffdfc356",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/normalized/frame_00003.png",
+      "size": 684,
+      "sha256": "a85f61da43eae468057f9d895bd679931d53e8d38ba4a430489859059a82efe1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/normalized/frame_00004.png",
+      "size": 671,
+      "sha256": "e95eac6f5e14282eb72319f273afb899f7c34cef0c236e9e68ab9c48797b0bf2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/normalized/frame_00005.png",
+      "size": 684,
+      "sha256": "a85f61da43eae468057f9d895bd679931d53e8d38ba4a430489859059a82efe1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/normalized/frame_00006.png",
+      "size": 671,
+      "sha256": "37ebc8ffcad27add63fbe6948c61c678127b633d5d1596cdaeb89d67ffdfc356",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/normalized/frame_00007.png",
+      "size": 684,
+      "sha256": "a85f61da43eae468057f9d895bd679931d53e8d38ba4a430489859059a82efe1",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/processed/normalized/frame_00008.png",
+      "size": 671,
+      "sha256": "e95eac6f5e14282eb72319f273afb899f7c34cef0c236e9e68ab9c48797b0bf2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/raw/frame_00001.png",
+      "size": 494,
+      "sha256": "c70e1116a735e4139d09eef2eef2baec3481c719c72b0697fab70ba767132d85",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/raw/frame_00002.png",
+      "size": 482,
+      "sha256": "0a059b0eea0c2be1a8d04806e85f56120352a31db92c82e2c2388188c3ff1a65",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/raw/frame_00003.png",
+      "size": 494,
+      "sha256": "c70e1116a735e4139d09eef2eef2baec3481c719c72b0697fab70ba767132d85",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/raw/frame_00004.png",
+      "size": 482,
+      "sha256": "07dab113528f5eefc02b880f25a5ad44cb31883afe704d9e9886e5358115158f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/raw/frame_00005.png",
+      "size": 494,
+      "sha256": "c70e1116a735e4139d09eef2eef2baec3481c719c72b0697fab70ba767132d85",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/raw/frame_00006.png",
+      "size": 482,
+      "sha256": "0a059b0eea0c2be1a8d04806e85f56120352a31db92c82e2c2388188c3ff1a65",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/raw/frame_00007.png",
+      "size": 494,
+      "sha256": "c70e1116a735e4139d09eef2eef2baec3481c719c72b0697fab70ba767132d85",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/forge-job/raw/frame_00008.png",
+      "size": 482,
+      "sha256": "07dab113528f5eefc02b880f25a5ad44cb31883afe704d9e9886e5358115158f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/generated-pack-summary.json",
+      "size": 596,
+      "sha256": "a076256329a5a0e39a92a480fbe0445749be9a34112822fb1131124307ce11e0",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/godot-project/Godot_Smoke_Walk.tscn",
+      "size": 878104,
+      "sha256": "771b0d4a2b1289307161a141d7ca0ba534592b4f4905ea06d88b56e86c5306b2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/godot-project/addons/game_sprite_forge/import_forge_pack.gd",
+      "size": 8020,
+      "sha256": "c794051009e89a6fcf4dff377a6752128e3999ef13926a343d9f7337cca8fc2f",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/godot-project/imported/Godot_Smoke_Walk/Godot_Smoke_Walk.spriteframes.tres",
+      "size": 877855,
+      "sha256": "2792b903386c617cee316993ecc7f981699c42e7ffe18e5b8f2148b95c1ef6f5",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/godot-project/imported/Godot_Smoke_Walk/sprite_sheet.png",
+      "size": 3261,
+      "sha256": "3ff76481a1858fa780881b2d7bc8cc3935eb4e77952190ccd7719474c40265d2",
+      "mode": 420
+    },
+    {
+      "status": "??",
+      "path": "docs/qa/artifacts/godot-pack-smoke-20260807-230305/godot-project/project.godot",
+      "size": 106,
+      "sha256": "28f1c374aa8057737100d4f2e93bae72464b220e04f85362079460471b42c88b",
+      "mode": 420
+    }
+  ],
+  "localArchiveSha256": "3b6daef3397c20679c94734b4e62828afbb773a79118a0c8a29a5407cdf6f860",
+  "localArchiveFile": "pending-files.tar.gz",
+  "ignoredGeneratedAssets": "remain at original workspace; excluded from this archive and Git"
+}

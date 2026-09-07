@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/identity-metric-report.schema.json",
+  "title": "Forge Identity Metric Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "calibration", "baselinePhash", "ablation", "composite", "pairs"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "identity-metric@2.0.0" },
+    "calibration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifestPath", "manifestSha256", "pairCount", "passCount", "grayCount", "failCount"],
+      "properties": {
+        "manifestPath": { "type": "string", "minLength": 1 },
+        "manifestSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "pairCount": { "type": "integer", "minimum": 1 },
+        "passCount": { "type": "integer", "minimum": 0 },
+        "grayCount": { "type": "integer", "minimum": 0 },
+        "failCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "baselinePhash": { "$ref": "#/$defs/evaluation" },
+    "ablation": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evaluation" }
+    },
+    "composite": { "$ref": "#/$defs/evaluation" },
+    "pairs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "phashSimilarity", "scores"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "label": { "enum": ["pass", "gray", "fail"] },
+          "phashSimilarity": { "type": "number", "minimum": 0, "maximum": 1 },
+          "scores": { "$ref": "#/$defs/scores" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hogSimilarity", "regionalPaletteEmd", "silhouetteIou", "perceptualSimilarity", "occupancySimilarity", "composite"],
+      "properties": {
+        "hogSimilarity": { "type": "number" },
+        "regionalPaletteEmd": { "type": "number" },
+        "silhouetteIou": { "type": "number" },
+        "perceptualSimilarity": { "type": "number" },
+        "occupancySimilarity": { "type": "number" },
+        "composite": { "type": "number" }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric", "pairCount", "passMean", "failMean", "separation", "rocAuc", "bestThreshold", "confusion"],
+      "properties": {
+        "metric": { "type": "string", "minLength": 1 },
+        "pairCount": { "type": "integer", "minimum": 1 },
+        "passMean": { "type": "number" },
+        "failMean": { "type": "number" },
+        "separation": { "type": "number" },
+        "rocAuc": { "type": "number", "minimum": 0, "maximum": 1 },
+        "bestThreshold": { "type": "number", "minimum": 0, "maximum": 1 },
+        "confusion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["truePositive", "falsePositive", "trueNegative", "falseNegative"],
+          "properties": {
+            "truePositive": { "type": "integer", "minimum": 0 },
+            "falsePositive": { "type": "integer", "minimum": 0 },
+            "trueNegative": { "type": "integer", "minimum": 0 },
+            "falseNegative": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    }
+  }
+}

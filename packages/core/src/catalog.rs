@@ -69,6 +69,21 @@ pub struct CatalogInstallRefV1 {
     pub installed_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CatalogReviewStatusV1 {
+    Approved,
+    Quarantined,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CatalogReviewRefV1 {
+    pub status: CatalogReviewStatusV1,
+    pub reason: String,
+    pub reviewed_at: DateTime<Utc>,
+}
+
 /// Dependency pointer for a catalog asset: another asset/spec id plus,
 /// optionally, the exact revision and content hash it was built against.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -176,6 +191,8 @@ pub struct ProjectCatalogEntryV2 {
     pub license: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub provenance_summary: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub review: Option<CatalogReviewRefV1>,
 }
 
 impl From<ProjectCatalogEntryV1> for ProjectCatalogEntryV2 {
@@ -208,6 +225,7 @@ impl From<ProjectCatalogEntryV1> for ProjectCatalogEntryV2 {
             reviewed_at: None,
             license: None,
             provenance_summary: None,
+            review: None,
         }
     }
 }
@@ -333,6 +351,16 @@ pub fn link_catalog_install(
     target: PathBuf,
 ) -> Result<PathBuf, CatalogError> {
     let _lock = lock_catalog(project_root)?;
+    link_catalog_install_unlocked(project_root, asset_id, godot_project, target)
+}
+
+/// The caller must hold `lock_catalog` until commit or rollback.
+pub(crate) fn link_catalog_install_unlocked(
+    project_root: &Path,
+    asset_id: &str,
+    godot_project: PathBuf,
+    target: PathBuf,
+) -> Result<PathBuf, CatalogError> {
     let mut catalog = read_project_catalog(project_root)?;
     let entry = catalog
         .assets
@@ -346,6 +374,70 @@ pub fn link_catalog_install(
     write_project_catalog_unlocked(project_root, &catalog)
 }
 
+pub fn set_catalog_review(
+    project_root: &Path,
+    asset_id: &str,
+    status: CatalogReviewStatusV1,
+    reason: impl Into<String>,
+) -> Result<PathBuf, CatalogError> {
+    let quality_verdict = match status {
+        CatalogReviewStatusV1::Approved => "game_ready",
+        CatalogReviewStatusV1::Quarantined => "manual_rejected",
+    };
+    set_catalog_review_state(project_root, asset_id, status, reason, quality_verdict)
+}
+
+pub fn quarantine_catalog_asset(
+    project_root: &Path,
+    asset_id: &str,
+    reason: impl Into<String>,
+    quality_verdict: &str,
+) -> Result<PathBuf, CatalogError> {
+    if quality_verdict.trim().is_empty() {
+        return Err(CatalogError::Invalid(
+            "catalog quarantine quality verdict must not be empty".into(),
+        ));
+    }
+    set_catalog_review_state(
+        project_root,
+        asset_id,
+        CatalogReviewStatusV1::Quarantined,
+        reason,
+        quality_verdict,
+    )
+}
+
+fn set_catalog_review_state(
+    project_root: &Path,
+    asset_id: &str,
+    status: CatalogReviewStatusV1,
+    reason: impl Into<String>,
+    quality_verdict: &str,
+) -> Result<PathBuf, CatalogError> {
+    let reason = reason.into();
+    if reason.trim().is_empty() {
+        return Err(CatalogError::Invalid(
+            "catalog review reason must not be empty".into(),
+        ));
+    }
+    let _lock = lock_catalog(project_root)?;
+    let mut catalog = read_project_catalog(project_root)?;
+    let entry = catalog
+        .assets
+        .get_mut(asset_id)
+        .ok_or_else(|| CatalogError::Invalid(format!("catalog asset not found: {asset_id}")))?;
+    let reviewed_at = Utc::now();
+    entry.review = Some(CatalogReviewRefV1 {
+        status,
+        reason,
+        reviewed_at,
+    });
+    entry.reviewed_at = Some(reviewed_at);
+    entry.game_ready = Some(status == CatalogReviewStatusV1::Approved);
+    entry.quality_verdict = Some(quality_verdict.into());
+    write_project_catalog_unlocked(project_root, &catalog)
+}
+
 fn catalog_schema_version(bytes: &[u8]) -> Result<String, CatalogError> {
     let value: serde_json::Value = serde_json::from_slice(bytes)?;
     value
@@ -355,7 +447,7 @@ fn catalog_schema_version(bytes: &[u8]) -> Result<String, CatalogError> {
         .ok_or_else(|| CatalogError::Invalid("schemaVersion is required".into()))
 }
 
-fn lock_catalog(project_root: &Path) -> Result<File, CatalogError> {
+pub(crate) fn lock_catalog(project_root: &Path) -> Result<File, CatalogError> {
     let path = project_root.join(PROJECT_CATALOG_LOCK_RELATIVE);
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
@@ -553,6 +645,76 @@ mod tests {
         assert_eq!(hero["license"], "CC0-1.0");
         assert_eq!(hero["locks"]["style"], "7");
         assert_eq!(hero["dependencies"][0]["id"], "shared-style");
+    }
+
+    #[test]
+    fn manual_review_updates_catalog_game_ready_state_atomically() {
+        let temp = tempfile::tempdir().unwrap();
+        register_catalog_asset_v2(
+            temp.path(),
+            sample_v2_entry("portrait-pack", &"9".repeat(64)),
+        )
+        .unwrap();
+
+        set_catalog_review(
+            temp.path(),
+            "portrait-pack",
+            CatalogReviewStatusV1::Quarantined,
+            "mixed full-body framing",
+        )
+        .unwrap();
+        let quarantined = read_project_catalog(temp.path()).unwrap();
+        let entry = &quarantined.assets["portrait-pack"];
+        assert_eq!(entry.game_ready, Some(false));
+        assert_eq!(entry.quality_verdict.as_deref(), Some("manual_rejected"));
+        assert_eq!(
+            entry.review.as_ref().map(|review| review.status),
+            Some(CatalogReviewStatusV1::Quarantined)
+        );
+
+        set_catalog_review(
+            temp.path(),
+            "portrait-pack",
+            CatalogReviewStatusV1::Approved,
+            "re-reviewed corrected framing",
+        )
+        .unwrap();
+        let approved = read_project_catalog(temp.path()).unwrap();
+        let entry = &approved.assets["portrait-pack"];
+        assert_eq!(entry.game_ready, Some(true));
+        assert_eq!(entry.quality_verdict.as_deref(), Some("game_ready"));
+        assert_eq!(
+            entry.review.as_ref().map(|review| review.status),
+            Some(CatalogReviewStatusV1::Approved)
+        );
+    }
+
+    #[test]
+    fn automated_quality_recheck_uses_a_non_manual_quarantine_verdict() {
+        let temp = tempfile::tempdir().unwrap();
+        register_catalog_asset_v2(
+            temp.path(),
+            sample_v2_entry("portrait-pack", &"8".repeat(64)),
+        )
+        .unwrap();
+        quarantine_catalog_asset(
+            temp.path(),
+            "portrait-pack",
+            "portrait framing failed consistency@1.4.0",
+            "consistency_recheck_failed",
+        )
+        .unwrap();
+        let catalog = read_project_catalog(temp.path()).unwrap();
+        let entry = &catalog.assets["portrait-pack"];
+        assert_eq!(entry.game_ready, Some(false));
+        assert_eq!(
+            entry.quality_verdict.as_deref(),
+            Some("consistency_recheck_failed")
+        );
+        assert_eq!(
+            entry.review.as_ref().map(|review| review.status),
+            Some(CatalogReviewStatusV1::Quarantined)
+        );
     }
 
     #[test]

@@ -13,10 +13,14 @@
         "consistency@1.0.1",
         "consistency@1.1.0",
         "consistency@1.2.0",
-        "consistency@1.3.0"
+        "consistency@1.3.0",
+        "consistency@1.4.0",
+        "consistency@1.5.0",
+        "consistency@1.6.0",
+        "consistency@1.7.0"
       ]
     },
-    "assetType": { "enum": ["character", "icon_set", "prop_set"] },
+    "assetType": { "enum": ["character", "icon_set", "prop_set", "portrait_set", "equipment_set", "decal_set"] },
     "styleRevision": { "type": "string", "minLength": 1 },
     "styleBaselineProfile": { "type": "string", "minLength": 1 },
     "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
@@ -25,7 +29,60 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["id", "attempt", "metrics", "verdict", "reasons"]
+        "additionalProperties": false,
+        "required": ["id", "attempt", "metrics", "verdict", "reasons"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "attempt": { "type": "integer", "minimum": 1 },
+          "metrics": { "type": "object" },
+          "semanticAnchorSimilarity": { "type": "number", "minimum": 0, "maximum": 1 },
+          "semanticAnchorGeometrySimilarity": { "type": "number", "minimum": 0, "maximum": 1 },
+          "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+          "geometry": { "$ref": "#/$defs/geometryReport" },
+          "reasons": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "geometryReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "profile", "geometryProfile", "verdict", "metrics", "reasons"],
+      "properties": {
+        "schemaVersion": { "const": "1" },
+        "profile": { "const": "asset-geometry@1.0.0" },
+        "geometryProfile": {
+          "enum": ["dialogue_bust@1.0.0", "full_body@1.0.0", "character_sprite@1.0.0"]
+        },
+        "verdict": { "enum": ["game_ready", "awaiting_review", "blocked"] },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "foregroundWidthRatio",
+            "foregroundHeightRatio",
+            "foregroundAreaRatio",
+            "topMarginRatio",
+            "bottomMarginRatio",
+            "subjectCount",
+            "lowerBodyPresenceProxy",
+            "lowerBodyTwoRunRatio",
+            "lowerBodyWidthRatio"
+          ],
+          "properties": {
+            "foregroundWidthRatio": { "type": "number", "minimum": 0 },
+            "foregroundHeightRatio": { "type": "number", "minimum": 0 },
+            "foregroundAreaRatio": { "type": "number", "minimum": 0 },
+            "topMarginRatio": { "type": "number", "minimum": 0 },
+            "bottomMarginRatio": { "type": "number", "minimum": 0 },
+            "subjectCount": { "type": "integer", "minimum": 0 },
+            "lowerBodyPresenceProxy": { "type": "number", "minimum": 0 },
+            "lowerBodyTwoRunRatio": { "type": "number", "minimum": 0 },
+            "lowerBodyWidthRatio": { "type": "number", "minimum": 0 }
+          }
+        },
+        "reasons": { "type": "array", "items": { "type": "string" } }
       }
     }
   }

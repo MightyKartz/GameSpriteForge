@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/character-direction-still-preflight.schema.json",
+  "title": "Forge Character Direction Still Preflight V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "cameraProfile", "animation", "direction", "directionAnchor", "framing", "verdict", "reasons"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "direction-still-preflight@1.0.0" },
+    "cameraProfile": { "enum": ["topdown-3q-orthographic@1.0.0", "topdown-orthographic@2.0.0", "topdown-three-quarter@1.0.0"] },
+    "animation": { "enum": ["idle", "walk_up", "walk_right", "walk_down"] },
+    "direction": { "enum": ["front", "rear", "right"] },
+    "directionAnchor": { "type": "object" },
+    "framing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bodyTopMarginRatio", "bodyBottomMarginRatio", "bodyHeightRatio", "bodyCenterOffsetRatio", "referenceScaleRatio", "referenceTopDriftRatio", "referenceFootDriftRatio", "foregroundTouchesBoundary"],
+      "properties": {
+        "bodyTopMarginRatio": { "type": "number", "minimum": 0 },
+        "bodyBottomMarginRatio": { "type": "number", "minimum": 0 },
+        "bodyHeightRatio": { "type": "number", "minimum": 0 },
+        "bodyCenterOffsetRatio": { "type": "number", "minimum": 0 },
+        "referenceScaleRatio": { "type": "number", "minimum": 0 },
+        "referenceTopDriftRatio": { "type": "number", "minimum": 0 },
+        "referenceFootDriftRatio": { "type": "number", "minimum": 0 },
+        "foregroundTouchesBoundary": { "type": "boolean" }
+      }
+    },
+    "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+    "reasons": { "type": "array", "items": { "type": "string" } }
+  }
+}

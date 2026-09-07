@@ -1,0 +1,4 @@
+interface:
+  display_name: "Forge 产品使用"
+  short_description: "Create game assets with Forge and deliver to Godot"
+  default_prompt: "使用 $forge-use，根据我的素材需求规划并执行 Forge 流程，检查审核与预算范围，验证并交付 Pack 或 Godot 资源。"

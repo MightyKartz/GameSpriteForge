@@ -1,0 +1,595 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamespriteforge.dev/schemas/grid-keyframe-action-report.schema.json",
+  "title": "Forge Grid Keyframe Action Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "animation",
+    "directionNodeId",
+    "directionAnchorSha256",
+    "phaseProfile",
+    "frames",
+    "motionReportPath",
+    "motionReportSha256",
+    "motionVerdict",
+    "equipmentReportPath",
+    "equipmentReportSha256",
+    "equipmentVerdict"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": {
+      "enum": [
+        "grid-keyframe-action-report@1.0.0",
+        "grid-keyframe-action-report@1.1.0",
+        "grid-keyframe-action-report@1.2.0",
+        "grid-keyframe-action-report@1.3.0",
+        "grid-keyframe-action-report@1.4.0",
+        "grid-keyframe-action-report@1.5.0"
+      ]
+    },
+    "animation": {
+      "enum": ["walk_down", "walk_up", "walk_right", "walk_left"]
+    },
+    "directionNodeId": {
+      "enum": ["front_idle", "back_idle", "right_idle", "left_idle"]
+    },
+    "directionAnchorSha256": { "$ref": "#/$defs/sha256" },
+    "phaseProfile": { "const": "grid-action-phases@1.0.0" },
+    "frames": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/frame" }
+    },
+    "motionReportPath": { "type": "string", "minLength": 1 },
+    "motionReportSha256": { "$ref": "#/$defs/sha256" },
+    "motionVerdict": { "$ref": "#/$defs/verdict" },
+    "equipmentReportPath": { "type": "string", "minLength": 1 },
+    "equipmentReportSha256": { "$ref": "#/$defs/sha256" },
+    "equipmentVerdict": { "$ref": "#/$defs/verdict" },
+    "footwearReportPath": { "type": "string", "minLength": 1 },
+    "footwearReportSha256": { "$ref": "#/$defs/sha256" },
+    "footwearVerdict": { "$ref": "#/$defs/verdict" },
+    "lateralityReportPath": { "type": "string", "minLength": 1 },
+    "lateralityReportSha256": { "$ref": "#/$defs/sha256" },
+    "lateralityVerdict": { "$ref": "#/$defs/verdict" },
+    "recommendedRetryFrames": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 0, "maximum": 3 },
+      "uniqueItems": true
+    },
+    "retriedFrames": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 0, "maximum": 3 },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "verdict": {
+      "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"]
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frameIndex",
+        "phase",
+        "attempt",
+        "generationMethod",
+        "path",
+        "sha256",
+        "reused",
+        "providerRequestOccurred"
+      ],
+      "properties": {
+        "frameIndex": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "phase": {
+          "enum": [
+            "left_contact",
+            "left_passing",
+            "right_contact",
+            "right_passing"
+          ]
+        },
+        "attempt": { "type": "integer", "minimum": 1, "maximum": 255 },
+        "generationMethod": {
+          "enum": [
+            "independent_direction_anchor",
+            "static_fresh_retry",
+            "laterality_fresh_retry",
+            "asymmetric_guide_fresh_retry",
+            "platform_safe_guide_fresh_retry",
+            "footwear_cleanup_edit",
+            "motion_diagnostic_edit",
+            "child_frame_retry",
+            "byte_reuse"
+          ]
+        },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "reused": { "type": "boolean" },
+        "providerRequestOccurred": { "type": "boolean" },
+        "inputFrameSha256": { "$ref": "#/$defs/sha256" },
+        "replacesFrameSha256": { "$ref": "#/$defs/sha256" },
+        "poseStructurePath": { "type": "string", "minLength": 1 },
+        "poseStructureSha256": { "$ref": "#/$defs/sha256" },
+        "poseStructureProfile": {
+          "enum": [
+            "grid-pose-structure@1.0.0",
+            "grid-pose-structure@1.1.0",
+            "grid-pose-structure@1.2.0"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "generationMethod": {
+                "enum": ["motion_diagnostic_edit", "footwear_cleanup_edit"]
+              }
+            },
+            "required": ["generationMethod"]
+          },
+          "then": { "required": ["inputFrameSha256"] }
+        },
+        {
+          "if": {
+            "properties": {
+              "generationMethod": { "const": "child_frame_retry" }
+            },
+            "required": ["generationMethod"]
+          },
+          "then": { "required": ["replacesFrameSha256"] }
+        },
+        {
+          "if": {
+            "properties": {
+              "generationMethod": {
+                "enum": [
+                  "laterality_fresh_retry",
+                  "asymmetric_guide_fresh_retry",
+                  "platform_safe_guide_fresh_retry"
+                ]
+              }
+            },
+            "required": ["generationMethod"]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                { "required": ["inputFrameSha256"] },
+                { "required": ["replacesFrameSha256"] }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "profile": {
+            "enum": [
+              "grid-keyframe-action-report@1.1.0",
+              "grid-keyframe-action-report@1.2.0",
+              "grid-keyframe-action-report@1.3.0",
+              "grid-keyframe-action-report@1.4.0"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "lateralityReportPath",
+          "lateralityReportSha256",
+          "lateralityVerdict"
+        ],
+        "properties": {
+          "animation": { "const": "walk_down" },
+          "frames": {
+            "items": {
+              "required": ["poseStructurePath", "poseStructureSha256"]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "profile": { "const": "grid-keyframe-action-report@1.5.0" }
+        },
+        "required": ["profile"]
+      },
+      "then": {
+        "required": [
+          "retriedFrames",
+          "footwearReportPath",
+          "footwearReportSha256",
+          "footwearVerdict",
+          "lateralityReportPath",
+          "lateralityReportSha256",
+          "lateralityVerdict"
+        ],
+        "properties": {
+          "retriedFrames": {
+            "minItems": 1,
+            "maxItems": 1,
+            "items": { "const": 2 }
+          },
+          "frames": {
+            "prefixItems": [
+              {
+                "properties": {
+                  "frameIndex": { "const": 0 },
+                  "phase": { "const": "left_contact" },
+                  "generationMethod": { "const": "byte_reuse" },
+                  "providerRequestOccurred": { "const": false },
+                  "reused": { "const": true }
+                },
+                "required": ["frameIndex", "phase", "generationMethod", "poseStructurePath", "poseStructureSha256", "providerRequestOccurred", "reused"]
+              },
+              {
+                "properties": {
+                  "frameIndex": { "const": 1 },
+                  "phase": { "const": "left_passing" },
+                  "generationMethod": { "const": "byte_reuse" },
+                  "providerRequestOccurred": { "const": false },
+                  "reused": { "const": true }
+                },
+                "required": ["frameIndex", "phase", "generationMethod", "poseStructurePath", "poseStructureSha256", "providerRequestOccurred", "reused"]
+              },
+              {
+                "properties": {
+                  "frameIndex": { "const": 2 },
+                  "phase": { "const": "right_contact" },
+                  "generationMethod": { "const": "footwear_cleanup_edit" },
+                  "providerRequestOccurred": { "const": true },
+                  "reused": { "const": false }
+                },
+                "required": ["frameIndex", "phase", "generationMethod", "inputFrameSha256", "providerRequestOccurred", "reused"],
+                "not": {
+                  "anyOf": [
+                    { "required": ["poseStructurePath"] },
+                    { "required": ["poseStructureSha256"] },
+                    { "required": ["poseStructureProfile"] }
+                  ]
+                }
+              },
+              {
+                "properties": {
+                  "frameIndex": { "const": 3 },
+                  "phase": { "const": "right_passing" },
+                  "generationMethod": { "const": "byte_reuse" },
+                  "providerRequestOccurred": { "const": false },
+                  "reused": { "const": true }
+                },
+                "required": ["frameIndex", "phase", "generationMethod", "poseStructurePath", "poseStructureSha256", "providerRequestOccurred", "reused"]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "profile": { "const": "grid-keyframe-action-report@1.4.0" }
+        },
+        "required": ["profile"]
+      },
+      "then": {
+        "required": [
+          "retriedFrames",
+          "footwearReportPath",
+          "footwearReportSha256",
+          "footwearVerdict"
+        ],
+        "properties": {
+          "retriedFrames": {
+            "minItems": 1,
+            "maxItems": 1,
+            "items": { "const": 2 }
+          },
+          "frames": {
+            "prefixItems": [
+              {
+                "properties": {
+                  "frameIndex": { "const": 0 },
+                  "phase": { "const": "left_contact" },
+                  "generationMethod": { "const": "byte_reuse" },
+                  "poseStructureProfile": { "const": "grid-pose-structure@1.0.0" },
+                  "providerRequestOccurred": { "const": false },
+                  "reused": { "const": true }
+                },
+                "required": ["frameIndex", "phase", "generationMethod", "poseStructureProfile", "providerRequestOccurred", "reused"]
+              },
+              {
+                "properties": {
+                  "frameIndex": { "const": 1 },
+                  "phase": { "const": "left_passing" },
+                  "generationMethod": { "const": "byte_reuse" },
+                  "poseStructureProfile": { "const": "grid-pose-structure@1.0.0" },
+                  "providerRequestOccurred": { "const": false },
+                  "reused": { "const": true }
+                },
+                "required": ["frameIndex", "phase", "generationMethod", "poseStructureProfile", "providerRequestOccurred", "reused"]
+              },
+              {
+                "properties": {
+                  "frameIndex": { "const": 2 },
+                  "phase": { "const": "right_contact" },
+                  "generationMethod": { "const": "platform_safe_guide_fresh_retry" },
+                  "poseStructureProfile": { "const": "grid-pose-structure@1.2.0" },
+                  "providerRequestOccurred": { "const": true },
+                  "reused": { "const": false }
+                },
+                "required": ["frameIndex", "phase", "generationMethod", "poseStructureProfile", "providerRequestOccurred", "reused"]
+              },
+              {
+                "properties": {
+                  "frameIndex": { "const": 3 },
+                  "phase": { "const": "right_passing" },
+                  "generationMethod": { "const": "byte_reuse" },
+                  "poseStructureProfile": { "const": "grid-pose-structure@1.0.0" },
+                  "providerRequestOccurred": { "const": false },
+                  "reused": { "const": true }
+                },
+                "required": ["frameIndex", "phase", "generationMethod", "poseStructureProfile", "providerRequestOccurred", "reused"]
+              }
+            ],
+            "items": { "required": ["poseStructureProfile"] }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "profile": { "const": "grid-keyframe-action-report@1.3.0" }
+        },
+        "required": ["profile"]
+      },
+      "then": {
+        "required": ["retriedFrames"],
+        "properties": {
+          "frames": {
+            "prefixItems": [
+              {
+                "properties": {
+                  "frameIndex": { "const": 0 },
+                  "phase": { "const": "left_contact" },
+                  "generationMethod": { "const": "byte_reuse" },
+                  "poseStructureProfile": { "const": "grid-pose-structure@1.0.0" },
+                  "providerRequestOccurred": { "const": false },
+                  "reused": { "const": true }
+                },
+                "required": [
+                  "frameIndex",
+                  "phase",
+                  "generationMethod",
+                  "poseStructureProfile",
+                  "providerRequestOccurred",
+                  "reused"
+                ]
+              },
+              {
+                "properties": {
+                  "frameIndex": { "const": 1 },
+                  "phase": { "const": "left_passing" },
+                  "generationMethod": { "const": "byte_reuse" },
+                  "poseStructureProfile": { "const": "grid-pose-structure@1.0.0" },
+                  "providerRequestOccurred": { "const": false },
+                  "reused": { "const": true }
+                },
+                "required": [
+                  "frameIndex",
+                  "phase",
+                  "generationMethod",
+                  "poseStructureProfile",
+                  "providerRequestOccurred",
+                  "reused"
+                ]
+              },
+              {
+                "properties": {
+                  "frameIndex": { "const": 2 },
+                  "phase": { "const": "right_contact" },
+                  "generationMethod": { "const": "asymmetric_guide_fresh_retry" },
+                  "poseStructureProfile": { "const": "grid-pose-structure@1.1.0" },
+                  "providerRequestOccurred": { "const": true },
+                  "reused": { "const": false }
+                },
+                "required": [
+                  "frameIndex",
+                  "phase",
+                  "generationMethod",
+                  "poseStructureProfile",
+                  "providerRequestOccurred",
+                  "reused"
+                ]
+              },
+              {
+                "properties": {
+                  "frameIndex": { "const": 3 },
+                  "phase": { "const": "right_passing" },
+                  "generationMethod": { "const": "byte_reuse" },
+                  "poseStructureProfile": { "const": "grid-pose-structure@1.0.0" },
+                  "providerRequestOccurred": { "const": false },
+                  "reused": { "const": true }
+                },
+                "required": [
+                  "frameIndex",
+                  "phase",
+                  "generationMethod",
+                  "poseStructureProfile",
+                  "providerRequestOccurred",
+                  "reused"
+                ]
+              }
+            ],
+            "items": {
+              "required": ["poseStructureProfile"]
+            }
+          },
+          "retriedFrames": {
+            "minItems": 1,
+            "maxItems": 1,
+            "items": { "const": 2 }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "profile": { "const": "grid-keyframe-action-report@1.3.0" }
+        },
+        "required": ["profile"]
+      },
+      "then": {
+        "properties": {
+          "frames": {
+            "contains": {
+              "properties": {
+                "frameIndex": { "const": 2 },
+                "generationMethod": { "const": "asymmetric_guide_fresh_retry" },
+                "poseStructureProfile": { "const": "grid-pose-structure@1.1.0" },
+                "providerRequestOccurred": { "const": true },
+                "reused": { "const": false }
+              },
+              "required": [
+                "frameIndex",
+                "generationMethod",
+                "poseStructureProfile",
+                "providerRequestOccurred",
+                "reused"
+              ]
+            },
+            "minContains": 1,
+            "maxContains": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "profile": { "const": "grid-keyframe-action-report@1.3.0" }
+        },
+        "required": ["profile"]
+      },
+      "then": {
+        "properties": {
+          "frames": {
+            "contains": {
+              "properties": {
+                "generationMethod": { "const": "byte_reuse" },
+                "providerRequestOccurred": { "const": false },
+                "reused": { "const": true }
+              },
+              "required": [
+                "generationMethod",
+                "providerRequestOccurred",
+                "reused"
+              ]
+            },
+            "minContains": 3,
+            "maxContains": 3
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "profile": {
+            "enum": [
+              "grid-keyframe-action-report@1.0.0",
+              "grid-keyframe-action-report@1.1.0"
+            ]
+          }
+        },
+        "required": ["profile"]
+      },
+      "then": {
+        "properties": {
+          "frames": {
+            "items": {
+              "properties": {
+                "generationMethod": {
+                  "enum": [
+                    "independent_direction_anchor",
+                    "static_fresh_retry",
+                    "motion_diagnostic_edit",
+                    "child_frame_retry",
+                    "byte_reuse"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "profile": { "const": "grid-keyframe-action-report@1.2.0" }
+        },
+        "required": ["profile"]
+      },
+      "then": {
+        "properties": {
+          "frames": {
+            "items": {
+              "properties": {
+                "generationMethod": {
+                  "enum": [
+                    "independent_direction_anchor",
+                    "static_fresh_retry",
+                    "laterality_fresh_retry",
+                    "motion_diagnostic_edit",
+                    "child_frame_retry",
+                    "byte_reuse"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "profile": {
+            "enum": [
+              "grid-keyframe-action-report@1.0.0",
+              "grid-keyframe-action-report@1.1.0",
+              "grid-keyframe-action-report@1.2.0"
+            ]
+          }
+        },
+        "required": ["profile"]
+      },
+      "then": {
+        "properties": {
+          "frames": {
+            "items": {
+              "not": { "required": ["poseStructureProfile"] }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

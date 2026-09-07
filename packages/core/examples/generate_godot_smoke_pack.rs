@@ -94,6 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             fps: 12.0,
             loop_animation: true,
             background: GifBackground::Checkerboard,
+            scale: 1,
         },
         metadata: forge_core::export::PackMetadataParams {
             id: "godot-smoke-walk".to_string(),
@@ -107,8 +108,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             animation_name: "walk".to_string(),
             animation_frames: None,
             fps: 12.0,
+            frame_durations_ms: Vec::new(),
             loop_animation: true,
             anchor,
+            rendering: forge_core::export::GodotRenderingContractV1::default(),
             quality_report,
         },
     })?;

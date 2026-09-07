@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "2",
+  "kind": "character",
+  "id": "ayla-locked-frames",
+  "name": "Ayla Locked Frames",
+  "subject": {
+    "id": "ayla-ranger",
+    "revision": "REPLACE_WITH_SUBJECT_REVISION"
+  },
+  "workflow": {
+    "id": "topdown-frames",
+    "version": "4.0.0"
+  },
+  "equipment": {
+    "kind": "none"
+  },
+  "license": "private"
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/portrait-base-approval.schema.json",
+  "title": "Forge Portrait Base Approval V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "profile", "sourceJobId", "assetId", "baseLockSha256",
+    "neutralSha256", "neutralReferencePolicy", "accepted", "reason", "reviewedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "portrait-base-approval@1.0.0" },
+    "sourceJobId": { "type": "string", "minLength": 1 },
+    "assetId": { "type": "string", "minLength": 1 },
+    "baseLockSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "neutralSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "neutralReferencePolicy": {
+      "enum": [
+        "subject-style@1.0.0",
+        "subject-edit@1.0.0",
+        "legacy-three-reference@1.0.0"
+      ]
+    },
+    "accepted": { "const": true },
+    "reason": { "type": "string", "minLength": 1 },
+    "reviewedAt": { "type": "string", "format": "date-time" }
+  }
+}

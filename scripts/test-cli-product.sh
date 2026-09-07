@@ -28,6 +28,14 @@ if "${FORGE}" --help | grep -E '^  (subject|schema|component|environment|terrain
   exit 1
 fi
 
+"${FORGE}" provider models --provider xai --json \
+  | jq -e '
+      .ok
+      and (.data | any(.modelId == "grok-imagine-image-quality" and .routeStatus == "incumbent" and .defaultForKind))
+      and (.data | any(.modelId == "grok-imagine-image-2.0" and .routeStatus == "candidate" and .requiresExplicitOptIn and (.defaultForKind | not)))
+      and (.data | any(.modelId == "grok-imagine-video-1.5" and .routeStatus == "incumbent" and .defaultForKind))
+    ' >/dev/null
+
 "${FORGE}" project init \
   --path "${TEST_ROOT}/assets" \
   --name "CLI Contract" \
@@ -69,9 +77,25 @@ printf '%s' "${ICON_RECHECK_JSON}" \
   | jq -e '.ok and .data.lifecycle_state == "succeeded" and ([.data.artifacts[] | select(.kind | startswith("rechecked_item_"))] | length) == 2' >/dev/null
 ICON_RECHECK_JOB="$(printf '%s' "${ICON_RECHECK_JSON}" | jq -r '.data.job_id')"
 "${FORGE}" job report --id "${ICON_RECHECK_JOB}" --json \
-  | jq -e '.ok and (.data.providerRequestOccurred | not) and .data.reports.provider_usage.usage.requests == 0 and .data.reports.consistency_report.profile == "consistency@1.3.0"' >/dev/null
+  | jq -e '.ok and (.data.providerRequestOccurred | not) and .data.reports.provider_usage.usage.requests == 0 and .data.reports.consistency_report.profile == "consistency@1.5.0"' >/dev/null
 
 CHARACTER_JOB="$(printf '%s' "${CHARACTER_JSON}" | jq -r '.data.job_id')"
+CHARACTER_ASSEMBLY_JSON="$("${FORGE}" job assemble-character \
+  --base "${CHARACTER_JOB}" \
+  --source "idle=${CHARACTER_JOB}" \
+  --source "walk_up=${CHARACTER_JOB}" \
+  --source "walk_right=${CHARACTER_JOB}" \
+  --source "walk_down=${CHARACTER_JOB}" \
+  --wait --json)"
+printf '%s' "${CHARACTER_ASSEMBLY_JSON}" \
+  | jq -e '.ok and .data.lifecycle_state == "succeeded" and (.data.artifacts | any(.kind == "character_assembly_manifest")) and (.data.artifacts | any(.kind == "character_framing_report"))' >/dev/null
+CHARACTER_ASSEMBLY_JOB="$(printf '%s' "${CHARACTER_ASSEMBLY_JSON}" | jq -r '.data.job_id')"
+CHARACTER_ASSEMBLY_PACK="$(printf '%s' "${CHARACTER_ASSEMBLY_JSON}" | jq -r '.data.artifacts[] | select(.kind == "gsfpack") | .path')"
+"${FORGE}" job report --id "${CHARACTER_ASSEMBLY_JOB}" --json \
+  | jq -e '.ok and (.data.providerRequestOccurred | not) and .data.reports.provider_usage.usage.requests == 0 and (.data.reports.character_assembly_manifest.sources | length) == 4 and .data.reports.character_semantic_quality_report.cameraProfile == "topdown-3q-orthographic@1.0.0" and .data.reports.character_semantic_quality_report.framingProfile == "body-framing@1.0.0"' >/dev/null
+"${FORGE}" pack validate --path "${CHARACTER_ASSEMBLY_PACK}" --json \
+  | jq -e '.ok and .data.valid' >/dev/null
+
 CHARACTER_RETRY_JSON="$("${FORGE}" job retry \
   --id "${CHARACTER_JOB}" --item walk_right --wait --json)"
 printf '%s' "${CHARACTER_RETRY_JSON}" \
@@ -168,6 +192,8 @@ REVIEW_JOB="$(printf '%s' "${REVIEW_JSON}" | jq -r '.data.job_id')"
 
 PACK="$(printf '%s' "${CHARACTER_JSON}" | jq -r '.data.artifacts[] | select(.kind == "gsfpack") | .path')"
 "${FORGE}" pack validate --path "${PACK}" --json | jq -e '.ok and .data.valid' >/dev/null
+jq -e '.spriteFrames.rendering.profile == "godot-sprite-rendering@1.0.0" and .spriteFrames.rendering.textureFilter == "nearest" and .spriteFrames.rendering.pixelSnap == true' \
+  "${PACK}/assets/godot_import.json" >/dev/null
 
 mkdir -p "${TEST_ROOT}/godot"
 cp "${ROOT}/examples/godot/forge-import-smoke/project.godot" "${TEST_ROOT}/godot/project.godot"
@@ -180,9 +206,13 @@ TOKEN="$(printf '%s' "${PLAN_JSON}" | jq -r '.data.token')"
   | jq -e '.ok and .data.lifecycle_state == "succeeded"' >/dev/null
 
 RESOURCE="${TEST_ROOT}/godot/addons/forge_assets/fixture-ranger/forge_sprite_frames.tres"
+SCENE="${TEST_ROOT}/godot/addons/forge_assets/fixture-ranger/forge_animated_sprite.tscn"
 test -f "${RESOURCE}"
+test -f "${SCENE}"
 test "$(stat -f '%z' "${RESOURCE}")" -lt 1048576
 ! grep -q 'PackedByteArray\|sub_resource type="Image"' "${RESOURCE}"
+grep -q 'texture_filter = 1' "${SCENE}"
+grep -q 'centered = false' "${SCENE}"
 
 if credential_scan_matches "${FORGE_JOB_STORE}" >/dev/null; then
   echo "credential-like material leaked into the fixture JobStore" >&2

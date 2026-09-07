@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/project-audit-report.schema.json",
+  "title": "Forge Project Audit Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "projectId", "projectPath", "scope", "generatedAt", "summary", "findings"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "enum": ["project-audit@1.0.0", "project-audit@1.1.0"] },
+    "projectId": { "type": "string", "minLength": 1 },
+    "projectPath": { "type": "string", "minLength": 1 },
+    "scope": { "enum": ["completeness", "consistency", "quality", "provenance", "godot", "all"] },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "summary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["assetCount", "auditedPackCount", "installedAssetCount", "errorCount", "warningCount", "clean"],
+      "properties": {
+        "assetCount": { "type": "integer", "minimum": 0 }, "auditedPackCount": { "type": "integer", "minimum": 0 },
+        "installedAssetCount": { "type": "integer", "minimum": 0 }, "errorCount": { "type": "integer", "minimum": 0 },
+        "warningCount": { "type": "integer", "minimum": 0 }, "clean": { "type": "boolean" }
+      }
+    },
+    "findings": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["scope", "severity", "code", "message"], "properties": {
+      "scope": { "enum": ["completeness", "consistency", "quality", "provenance", "godot", "all"] },
+      "severity": { "enum": ["info", "warning", "error"] }, "code": { "type": "string", "minLength": 1 }, "message": { "type": "string", "minLength": 1 },
+      "assetId": { "type": "string", "minLength": 1 }, "path": { "type": "string", "minLength": 1 }
+    } } }
+  }
+}

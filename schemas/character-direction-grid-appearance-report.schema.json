@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/character-direction-grid-appearance-report.schema.json",
+  "title": "Forge Character Direction Grid Appearance Report V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "equipmentKind", "equipment", "handStateBaseline", "handStateNodes", "mirroredSideCoverageRatio", "unexpectedElongatedNodeCount", "verdict", "reasons"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "direction-grid-appearance@1.0.0" },
+    "equipmentKind": { "enum": ["none", "staff_like"] },
+    "equipment": { "$ref": "hand-equipment-contact-report.schema.json" },
+    "handStateBaseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available", "source", "leftExposedPixels", "rightExposedPixels", "exteriorElongationScore"],
+      "properties": {
+        "available": { "type": "boolean" },
+        "source": { "const": "subject_canonical" },
+        "leftExposedPixels": { "type": "integer", "minimum": 0 },
+        "rightExposedPixels": { "type": "integer", "minimum": 0 },
+        "exteriorElongationScore": { "type": "number", "minimum": 0 }
+      }
+    },
+    "handStateNodes": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["nodeId", "leftExposedPixels", "rightExposedPixels", "exposedCoverageRatio", "exteriorElongationScore", "verdict", "reasons"],
+        "properties": {
+          "nodeId": { "enum": ["front_idle", "back_idle", "right_idle", "left_idle"] },
+          "leftExposedPixels": { "type": "integer", "minimum": 0 },
+          "rightExposedPixels": { "type": "integer", "minimum": 0 },
+          "exposedCoverageRatio": { "type": "number", "minimum": 0 },
+          "exteriorElongationScore": { "type": "number", "minimum": 0 },
+          "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+          "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "mirroredSideCoverageRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "unexpectedElongatedNodeCount": { "type": "integer", "minimum": 0, "maximum": 4 },
+    "verdict": { "enum": ["game_ready", "awaiting_review", "regenerate", "blocked"] },
+    "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  }
+}

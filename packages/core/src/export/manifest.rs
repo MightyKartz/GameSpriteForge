@@ -7,6 +7,57 @@ use crate::quality::QualityReport;
 use super::sheet::Atlas;
 
 pub const SCHEMA_VERSION: &str = "1.0.0";
+pub const GODOT_RENDERING_PROFILE_V1: &str = "godot-sprite-rendering@1.0.0";
+
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum GodotTextureFilterV1 {
+    #[default]
+    Nearest,
+    Linear,
+}
+
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum CharacterMirrorPolicyV1 {
+    #[default]
+    Auto,
+    RightOnly,
+    ExplicitLeft,
+    MirrorRightToLeft,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct GodotRenderingContractV1 {
+    #[serde(default = "godot_rendering_profile")]
+    pub profile: String,
+    #[serde(default)]
+    pub texture_filter: GodotTextureFilterV1,
+    #[serde(default = "default_pixel_snap")]
+    pub pixel_snap: bool,
+    #[serde(default)]
+    pub mirror_policy: CharacterMirrorPolicyV1,
+}
+
+impl Default for GodotRenderingContractV1 {
+    fn default() -> Self {
+        Self {
+            profile: GODOT_RENDERING_PROFILE_V1.into(),
+            texture_filter: GodotTextureFilterV1::Nearest,
+            pixel_snap: true,
+            mirror_policy: CharacterMirrorPolicyV1::Auto,
+        }
+    }
+}
+
+fn godot_rendering_profile() -> String {
+    GODOT_RENDERING_PROFILE_V1.into()
+}
+
+fn default_pixel_snap() -> bool {
+    true
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -15,6 +66,8 @@ pub struct EngineManifest {
     pub sheet: ManifestSheet,
     pub animations: Vec<ManifestAnimation>,
     pub anchor: ManifestAnchor,
+    #[serde(default)]
+    pub rendering: GodotRenderingContractV1,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -35,6 +88,8 @@ pub struct ManifestAnimation {
     pub name: String,
     pub frames: Vec<usize>,
     pub fps: f32,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub frame_durations_ms: Vec<u64>,
     #[serde(rename = "loop")]
     pub loop_animation: bool,
 }
@@ -100,6 +155,8 @@ pub struct PackAssets {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub godot_helper: Option<String>,
     pub quality_report: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub animation_human_review: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -132,8 +189,12 @@ pub struct PackMetadataParams {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub animation_frames: Option<Vec<usize>>,
     pub fps: f32,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub frame_durations_ms: Vec<u64>,
     pub loop_animation: bool,
     pub anchor: FootAnchor,
+    #[serde(default)]
+    pub rendering: GodotRenderingContractV1,
     pub quality_report: QualityReport,
 }
 
@@ -151,24 +212,20 @@ pub struct CharacterPackMetadataParams {
     pub source_metadata: Option<serde_json::Value>,
     pub default_animation: String,
     pub anchor: FootAnchor,
+    #[serde(default)]
+    pub rendering: GodotRenderingContractV1,
     pub quality_report: QualityReport,
 }
 
-pub fn engine_manifest(
-    name: String,
-    animation_name: String,
-    fps: f32,
-    loop_animation: bool,
-    animation_frames: Option<Vec<usize>>,
-    anchor: FootAnchor,
-    atlas: &Atlas,
-) -> EngineManifest {
-    let frames = animation_frames
+pub fn engine_manifest(params: &PackMetadataParams, atlas: &Atlas) -> EngineManifest {
+    let frames = params
+        .animation_frames
+        .clone()
         .filter(|frames| !frames.is_empty())
         .unwrap_or_else(|| (0..atlas.frames.len()).collect());
 
     EngineManifest {
-        name,
+        name: params.name.clone(),
         sheet: ManifestSheet {
             image: "assets/sprite_sheet.png".to_string(),
             images: atlas
@@ -182,20 +239,22 @@ pub fn engine_manifest(
             rows: atlas.rows,
         },
         animations: vec![ManifestAnimation {
-            name: animation_name,
+            name: params.animation_name.clone(),
             frames,
-            fps,
-            loop_animation,
+            fps: params.fps,
+            frame_durations_ms: params.frame_durations_ms.clone(),
+            loop_animation: params.loop_animation,
         }],
         anchor: ManifestAnchor {
-            anchor_type: if anchor.locked_by_user {
+            anchor_type: if params.anchor.locked_by_user {
                 "custom".to_string()
             } else {
                 "feet".to_string()
             },
-            x: anchor.x,
-            y: anchor.y,
+            x: params.anchor.x,
+            y: params.anchor.y,
         },
+        rendering: params.rendering.clone(),
     }
 }
 
@@ -203,6 +262,7 @@ pub fn engine_manifest_for_animations(
     name: String,
     animations: Vec<ManifestAnimation>,
     anchor: FootAnchor,
+    rendering: GodotRenderingContractV1,
     atlas: &Atlas,
 ) -> EngineManifest {
     EngineManifest {
@@ -229,19 +289,12 @@ pub fn engine_manifest_for_animations(
             x: anchor.x,
             y: anchor.y,
         },
+        rendering,
     }
 }
 
 pub fn export_metadata(params: PackMetadataParams, atlas: &Atlas) -> ExportMetadata {
-    let manifest = engine_manifest(
-        params.name.clone(),
-        params.animation_name.clone(),
-        params.fps,
-        params.loop_animation,
-        params.animation_frames,
-        params.anchor,
-        atlas,
-    );
+    let manifest = engine_manifest(&params, atlas);
     let forgepack = ForgePackMetadata {
         schema_version: SCHEMA_VERSION.to_string(),
         id: params.id,
@@ -271,6 +324,7 @@ pub fn export_metadata(params: PackMetadataParams, atlas: &Atlas) -> ExportMetad
             manifest: "assets/manifest.json".to_string(),
             godot_helper: Some("assets/godot_import.json".to_string()),
             quality_report: "quality-report.json".to_string(),
+            animation_human_review: None,
         },
         previews: PackPreviews {
             gif: "previews/preview.gif".to_string(),
@@ -289,8 +343,13 @@ pub fn export_character_metadata(
     animations: Vec<ManifestAnimation>,
     atlas: &Atlas,
 ) -> ExportMetadata {
-    let manifest =
-        engine_manifest_for_animations(params.name.clone(), animations, params.anchor, atlas);
+    let manifest = engine_manifest_for_animations(
+        params.name.clone(),
+        animations,
+        params.anchor,
+        params.rendering,
+        atlas,
+    );
     let forgepack = ForgePackMetadata {
         schema_version: SCHEMA_VERSION.to_string(),
         id: params.id,
@@ -320,6 +379,7 @@ pub fn export_character_metadata(
             manifest: "assets/manifest.json".to_string(),
             godot_helper: Some("assets/godot_import.json".to_string()),
             quality_report: "quality-report.json".to_string(),
+            animation_human_review: None,
         },
         previews: PackPreviews {
             gif: "previews/preview.gif".to_string(),

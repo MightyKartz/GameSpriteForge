@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "2",
+  "kind": "character",
+  "id": "ayla-video-cycle",
+  "name": "Ayla Gait-Locked Video Cycle",
+  "subject": {
+    "id": "ayla-ranger",
+    "revision": "REPLACE_WITH_SUBJECT_REVISION"
+  },
+  "workflow": {
+    "id": "topdown-video-cycle",
+    "version": "6.0.0"
+  },
+  "cameraProfile": "topdown-three-quarter@1.0.0",
+  "equipment": {
+    "kind": "none"
+  },
+  "license": "private"
+}

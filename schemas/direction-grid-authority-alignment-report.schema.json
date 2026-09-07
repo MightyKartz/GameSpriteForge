@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/direction-grid-authority-alignment-report.schema.json",
+  "title": "Forge DirectionGrid Authority Alignment Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "sharedScale", "exactByteReuse", "frames", "verdict", "reasons"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "direction-grid-authority-alignment@1.0.0" },
+    "sharedScale": { "type": "number", "minimum": 0.5, "maximum": 2 },
+    "exactByteReuse": { "type": "boolean" },
+    "frames": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["nodeId", "sourceBodyWidth", "sourceBodyHeight", "widthRatio", "heightRatio", "centerDriftPx", "footBaselineDriftPx", "translationX", "translationY"],
+        "properties": {
+          "nodeId": { "enum": ["front_idle", "back_idle", "right_idle", "left_idle"] },
+          "sourceBodyWidth": { "type": "number", "exclusiveMinimum": 0 },
+          "sourceBodyHeight": { "type": "number", "exclusiveMinimum": 0 },
+          "widthRatio": { "type": "number", "minimum": 0.9, "maximum": 1.1 },
+          "heightRatio": { "type": "number", "minimum": 0.9, "maximum": 1.1 },
+          "centerDriftPx": { "type": "number", "minimum": 0, "maximum": 2 },
+          "footBaselineDriftPx": { "type": "number", "minimum": 0, "maximum": 2 },
+          "translationX": { "type": "integer" },
+          "translationY": { "type": "integer" }
+        }
+      }
+    },
+    "verdict": { "enum": ["game_ready", "blocked"] },
+    "reasons": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+  }
+}

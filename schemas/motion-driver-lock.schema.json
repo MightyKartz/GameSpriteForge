@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/motion-driver-lock.schema.json",
+  "title": "Forge Motion Driver Lock V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "profile", "id", "action", "direction", "sourceKind", "identityAnchorPath", "identityAnchorSha256", "requestedDurationMs", "expectedCyclesMinimum", "cameraFixed", "rootFixed", "ordinaryWalk", "phaseMarkers", "maximumSwingFootClearanceRatio"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "motion-driver-lock@1.0.0" },
+    "id": { "type": "string", "minLength": 1 },
+    "action": { "type": "string", "minLength": 1 },
+    "direction": { "type": "string", "minLength": 1 },
+    "sourceKind": { "enum": ["procedural_gait_spec", "driving_video", "pose_video"] },
+    "identityAnchorPath": { "type": "string", "minLength": 1 },
+    "identityAnchorSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "driverSourcePath": { "type": "string", "minLength": 1 },
+    "driverSourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "requestedDurationMs": { "type": "integer", "minimum": 1000 },
+    "expectedCyclesMinimum": { "type": "integer", "minimum": 1 },
+    "cameraFixed": { "const": true },
+    "rootFixed": { "const": true },
+    "ordinaryWalk": { "const": true },
+    "phaseMarkers": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "normalizedTime"],
+        "properties": {
+          "role": { "type": "string" },
+          "normalizedTime": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "maximumSwingFootClearanceRatio": { "type": "number", "minimum": 0.02, "maximum": 0.18 }
+  }
+}

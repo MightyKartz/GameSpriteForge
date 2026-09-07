@@ -18,6 +18,493 @@ fn validates_required_gsfpack_layout() {
 }
 
 #[test]
+fn validates_optional_character_motion_semantics_report() {
+    let temp = tempfile::tempdir().unwrap();
+    let pack = temp.path().join("hero.gsfpack");
+    write_pack_fixture(&pack, 4);
+    let mut forgepack: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("forgepack.json")).unwrap()).unwrap();
+    forgepack["assets"]["characterMotionSemanticsReport"] =
+        json!("character-motion-semantics-report.json");
+    fs::write(
+        pack.join("forgepack.json"),
+        serde_json::to_vec_pretty(&forgepack).unwrap(),
+    )
+    .unwrap();
+    fs::write(
+        pack.join("character-motion-semantics-report.json"),
+        json!({
+            "schemaVersion": "1",
+            "profile": "motion-semantics@1.0.0",
+            "thresholds": {
+                "walkMinLowerBodyDynamicDegree": 0.025,
+                "walkMinOpposingContactChangeRatio": 0.04,
+                "walkMinDistinctPoseCount": 4,
+                "walkMinPhaseOrderScore": 0.45,
+                "idleMinForegroundDynamicDegree": 0.002,
+                "maximumStableUpperBodyFlickerRatio": 0.08,
+                "lowerEdgeGhostMinimumRatio": 0.18,
+                "lowerEdgeGhostMinimumOutlierRatio": 2.5,
+                "maximumFootLobeCount": 2
+            },
+            "verdict": "game_ready",
+            "animations": [{
+                "name": "idle",
+                "frameCount": 4,
+                "foregroundDynamicDegree": 0.01,
+                "lowerBodyDynamicDegree": 0.0,
+                "opposingContactChangeRatio": 0.0,
+                "distinctPoseCount": 2,
+                "phaseOrderScore": 0.0,
+                "stableUpperBodyFlickerRatioMax": 0.01,
+                "unsupportedLowerEdgeRatioMax": 0.01,
+                "lowerEdgeOutlierRatioMax": 1.0,
+                "footLobeCountMax": 2,
+                "verdict": "game_ready",
+                "reasons": []
+            }]
+        })
+        .to_string(),
+    )
+    .unwrap();
+
+    validate_pack_layout(&pack).unwrap();
+}
+
+#[test]
+fn validates_optional_character_gait_cycle_report_aggregate() {
+    let temp = tempfile::tempdir().unwrap();
+    let pack = temp.path().join("hero.gsfpack");
+    write_pack_fixture(&pack, 8);
+    write_gait_cycle_report(&pack, &gait_cycle_report_aggregate_json());
+
+    validate_pack_layout(&pack).unwrap();
+}
+
+#[test]
+fn frame_durations_must_match_animation_frames() {
+    let temp = tempfile::tempdir().unwrap();
+    let pack = temp.path().join("hero.gsfpack");
+    write_pack_fixture(&pack, 8);
+    let mut forgepack: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("forgepack.json")).unwrap()).unwrap();
+    forgepack["animations"][0]["frameDurationsMs"] = json!(vec![100_u64; 7]);
+    fs::write(
+        pack.join("forgepack.json"),
+        serde_json::to_vec_pretty(&forgepack).unwrap(),
+    )
+    .unwrap();
+
+    assert!(matches!(
+        validate_pack_layout(&pack).unwrap_err(),
+        PackError::SchemaValidation { document, message }
+            if document == "forgepack.json"
+                && message.contains("8 frames but 7 frameDurationsMs values")
+    ));
+}
+
+#[test]
+fn manifest_frame_durations_tampering_fails_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/manifest.json")).unwrap()).unwrap();
+    manifest["animations"][0]["frameDurationsMs"] = json!(vec![125_u64; 8]);
+    fs::write(
+        pack.join("assets/manifest.json"),
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(&pack, "assets/manifest.json", "frameDurationsMs differs");
+    drop(temp);
+}
+
+#[test]
+fn manifest_fps_tampering_fails_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/manifest.json")).unwrap()).unwrap();
+    manifest["animations"][0]["fps"] = json!(12.0);
+    fs::write(
+        pack.join("assets/manifest.json"),
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(&pack, "assets/manifest.json", "fps differs");
+    drop(temp);
+}
+
+#[test]
+fn godot_helper_frame_durations_tampering_fails_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]["frameDurationsMs"] = json!(vec![125_u64; 8]);
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        serde_json::to_vec_pretty(&helper).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(
+        &pack,
+        "assets/godot_import.json",
+        "frameDurationsMs differs",
+    );
+    drop(temp);
+}
+
+#[test]
+fn validates_matching_godot_rendering_contract() {
+    let (_temp, pack) = write_timing_pack_fixture();
+    let rendering = json!({
+        "profile": "godot-sprite-rendering@1.0.0",
+        "textureFilter": "nearest",
+        "pixelSnap": true,
+        "mirrorPolicy": "auto"
+    });
+    let manifest_path = pack.join("assets/manifest.json");
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+    manifest["rendering"] = rendering.clone();
+    fs::write(
+        &manifest_path,
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+    let helper_path = pack.join("assets/godot_import.json");
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(&helper_path).unwrap()).unwrap();
+    helper["spriteFrames"]["rendering"] = rendering;
+    fs::write(&helper_path, serde_json::to_vec_pretty(&helper).unwrap()).unwrap();
+
+    validate_pack_layout(&pack).unwrap();
+}
+
+#[test]
+fn validates_right_only_rendering_contract() {
+    let (_temp, pack) = write_right_only_timing_pack_fixture(false);
+
+    validate_pack_layout(&pack).unwrap();
+}
+
+#[test]
+fn right_only_rendering_contract_rejects_left_animations() {
+    let (_temp, pack) = write_right_only_timing_pack_fixture(true);
+
+    assert_timing_validation_fails(
+        &pack,
+        "assets/manifest.json",
+        "right_only forbids idle_left and walk_left",
+    );
+}
+
+#[test]
+fn right_only_rendering_contract_requires_right_pair() {
+    let (_temp, pack) = write_right_only_timing_pack_fixture(false);
+    for (relative, pointer) in [
+        ("forgepack.json", "/animations"),
+        ("assets/manifest.json", "/animations"),
+        ("assets/godot_import.json", "/spriteFrames/animations"),
+    ] {
+        let path = pack.join(relative);
+        let mut document: serde_json::Value =
+            serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        document
+            .pointer_mut(pointer)
+            .and_then(serde_json::Value::as_array_mut)
+            .unwrap()
+            .retain(|animation| animation["name"] != "walk_right");
+        fs::write(path, serde_json::to_vec_pretty(&document).unwrap()).unwrap();
+    }
+
+    assert_timing_validation_fails(
+        &pack,
+        "assets/manifest.json",
+        "right_only requires animations idle_right, walk_right",
+    );
+}
+
+#[test]
+fn rejects_mismatched_godot_rendering_contract() {
+    let (_temp, pack) = write_timing_pack_fixture();
+    let manifest_path = pack.join("assets/manifest.json");
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+    manifest["rendering"] = json!({
+        "profile": "godot-sprite-rendering@1.0.0",
+        "textureFilter": "nearest",
+        "pixelSnap": true,
+        "mirrorPolicy": "auto"
+    });
+    fs::write(
+        &manifest_path,
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+    let helper_path = pack.join("assets/godot_import.json");
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(&helper_path).unwrap()).unwrap();
+    helper["spriteFrames"]["rendering"] = json!({
+        "profile": "godot-sprite-rendering@1.0.0",
+        "textureFilter": "linear",
+        "pixelSnap": false,
+        "mirrorPolicy": "auto"
+    });
+    fs::write(&helper_path, serde_json::to_vec_pretty(&helper).unwrap()).unwrap();
+
+    assert_timing_validation_fails(&pack, "assets/godot_import.json", "rendering differs");
+}
+
+#[test]
+fn godot_helper_fps_tampering_fails_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]["fps"] = json!(12.0);
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        serde_json::to_vec_pretty(&helper).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(&pack, "assets/godot_import.json", "fps differs");
+    drop(temp);
+}
+
+#[test]
+fn equivalent_f32_fps_spellings_share_one_runtime_cadence() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let short_f32 = 6.855_184_f32;
+    for path in ["forgepack.json", "assets/manifest.json"] {
+        let path = pack.join(path);
+        let mut document: serde_json::Value =
+            serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        document["animations"][0]["fps"] = json!(short_f32);
+        fs::write(path, serde_json::to_vec_pretty(&document).unwrap()).unwrap();
+    }
+    let helper_path = pack.join("assets/godot_import.json");
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(&helper_path).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]["fps"] = json!(f64::from(short_f32));
+    fs::write(helper_path, serde_json::to_vec_pretty(&helper).unwrap()).unwrap();
+
+    validate_pack_layout(&pack).unwrap();
+    drop(temp);
+}
+
+#[test]
+fn helper_animation_removal_fails_modern_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"] = json!([]);
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        serde_json::to_vec_pretty(&helper).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(&pack, "assets/godot_import.json", "animation names differ");
+    drop(temp);
+}
+
+#[test]
+fn helper_fps_removal_fails_modern_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("fps");
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        serde_json::to_vec_pretty(&helper).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(&pack, "assets/godot_import.json", "fps is missing");
+    drop(temp);
+}
+
+#[test]
+fn helper_frame_durations_removal_fails_modern_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("frameDurationsMs");
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        serde_json::to_vec_pretty(&helper).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(
+        &pack,
+        "assets/godot_import.json",
+        "frameDurationsMs is missing",
+    );
+    drop(temp);
+}
+
+#[test]
+fn all_documents_may_omit_legacy_frame_durations() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut forgepack: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("forgepack.json")).unwrap()).unwrap();
+    forgepack["animations"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("frameDurationsMs");
+    fs::write(
+        pack.join("forgepack.json"),
+        serde_json::to_vec_pretty(&forgepack).unwrap(),
+    )
+    .unwrap();
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/manifest.json")).unwrap()).unwrap();
+    manifest["animations"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("frameDurationsMs");
+    fs::write(
+        pack.join("assets/manifest.json"),
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("frameDurationsMs");
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        serde_json::to_vec_pretty(&helper).unwrap(),
+    )
+    .unwrap();
+
+    validate_pack_layout(&pack).unwrap();
+    drop(temp);
+}
+
+#[test]
+fn character_gait_cycle_report_rejects_duplicate_animation() {
+    let (temp, pack) = write_gait_cycle_pack_fixture();
+    let mut report = gait_cycle_report_aggregate_json();
+    let duplicate = report["animations"][0].clone();
+    report["animations"].as_array_mut().unwrap().push(duplicate);
+    write_gait_cycle_report(&pack, &report);
+
+    assert_gait_cycle_contract_fails(&pack);
+    drop(temp);
+}
+
+#[test]
+fn character_gait_cycle_report_rejects_direction_mismatch() {
+    let (temp, pack) = write_gait_cycle_pack_fixture();
+    let mut report = gait_cycle_report_aggregate_json();
+    report["animations"][1]["direction"] = json!("front");
+    write_gait_cycle_report(&pack, &report);
+
+    assert_gait_cycle_contract_fails(&pack);
+    drop(temp);
+}
+
+#[test]
+fn character_gait_cycle_report_rejects_non_increasing_indices() {
+    let (temp, pack) = write_gait_cycle_pack_fixture();
+    let mut report = gait_cycle_report_aggregate_json();
+    let indices = json!([0, 1, 2, 4, 5, 5, 7, 9]);
+    report["animations"][0]["outputFrameIndices"] = indices.clone();
+    report["animations"][0]["sourceFrameIndices"] = indices;
+    write_gait_cycle_report(&pack, &report);
+
+    assert_gait_cycle_contract_fails(&pack);
+    drop(temp);
+}
+
+#[test]
+fn character_gait_cycle_report_rejects_out_of_range_indices() {
+    let (temp, pack) = write_gait_cycle_pack_fixture();
+    let mut report = gait_cycle_report_aggregate_json();
+    let indices = json!([0, 1, 2, 4, 5, 6, 7, 10]);
+    report["animations"][0]["outputFrameIndices"] = indices.clone();
+    report["animations"][0]["sourceFrameIndices"] = indices;
+    write_gait_cycle_report(&pack, &report);
+
+    assert_gait_cycle_contract_fails(&pack);
+    drop(temp);
+}
+
+#[test]
+fn character_gait_cycle_report_rejects_non_game_ready_evidence() {
+    let (temp, pack) = write_gait_cycle_pack_fixture();
+    let mut report = gait_cycle_report_aggregate_json();
+    report["animations"][2]["verdict"] = json!("blocked");
+    write_gait_cycle_report(&pack, &report);
+
+    assert_gait_cycle_contract_fails(&pack);
+    drop(temp);
+}
+
+#[test]
+fn character_gait_cycle_report_requires_canonical_existing_valid_aggregate() {
+    let temp = tempfile::tempdir().unwrap();
+    let pack = temp.path().join("hero.gsfpack");
+    write_pack_fixture(&pack, 8);
+    let mut forgepack: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("forgepack.json")).unwrap()).unwrap();
+    forgepack["assets"]["characterGaitCycleReport"] = json!("reports/gait.json");
+    fs::write(
+        pack.join("forgepack.json"),
+        serde_json::to_vec_pretty(&forgepack).unwrap(),
+    )
+    .unwrap();
+
+    let error = validate_pack_layout(&pack).unwrap_err();
+    assert!(matches!(
+        error,
+        PackError::AssetPathMismatch { field, expected, actual }
+            if field == "assets.characterGaitCycleReport"
+                && expected == "character-gait-cycle-report.json"
+                && actual == "reports/gait.json"
+    ));
+
+    forgepack["assets"]["characterGaitCycleReport"] = json!("character-gait-cycle-report.json");
+    fs::write(
+        pack.join("forgepack.json"),
+        serde_json::to_vec_pretty(&forgepack).unwrap(),
+    )
+    .unwrap();
+    let missing_error = validate_pack_layout(&pack).unwrap_err();
+    assert!(matches!(
+        missing_error,
+        PackError::MissingFile(path) if path == "character-gait-cycle-report.json"
+    ));
+
+    fs::write(
+        pack.join("character-gait-cycle-report.json"),
+        json!({
+            "schemaVersion": "1",
+            "profile": "gait-cycle@1.0.0",
+            "animations": [{ "animation": "walk_right" }]
+        })
+        .to_string(),
+    )
+    .unwrap();
+    assert!(matches!(
+        validate_pack_layout(&pack).unwrap_err(),
+        PackError::SchemaValidation { .. }
+    ));
+}
+
+#[test]
 fn missing_required_layout_file_fails_validation() {
     let temp = tempfile::tempdir().unwrap();
     let pack = temp.path().join("hero.gsfpack");
@@ -625,4 +1112,201 @@ fn quality_json(frame_count: usize) -> serde_json::Value {
         "recommendations": [],
         "notes": []
     })
+}
+
+fn gait_cycle_report_aggregate_json() -> serde_json::Value {
+    let report = |animation: &str, direction: &str| {
+        json!({
+            "schemaVersion": "1",
+            "profile": "gait-cycle@1.0.0",
+            "animation": animation,
+            "direction": direction,
+            "candidateFrameCount": 16,
+            "candidateFps": 12.0,
+            "selectedStartFrame": 0,
+            "selectedEndBoundaryFrame": 10,
+            "contactFrames": [0, 5],
+            "passingFrames": [2, 7],
+            "outputFrameIndices": [0, 1, 2, 4, 5, 6, 7, 9],
+            "phaseLabels": [
+                "contact_a",
+                "contact_a_release",
+                "passing_a",
+                "contact_b_approach",
+                "contact_b",
+                "contact_b_release",
+                "passing_b",
+                "contact_a_approach"
+            ],
+            "sourceFrameIndices": [0, 1, 2, 4, 5, 6, 7, 9],
+            "sourceDurationMs": 833,
+            "phaseOrderScore": 1.0,
+            "closureScore": 0.9,
+            "motionScore": 0.8,
+            "maximumFootLobeCount": 2,
+            "verdict": "game_ready",
+            "reasons": []
+        })
+    };
+    json!({
+        "schemaVersion": "1",
+        "profile": "gait-cycle@1.0.0",
+        "animations": [
+            report("walk_up", "rear"),
+            report("walk_right", "right"),
+            report("walk_down", "front")
+        ]
+    })
+}
+
+fn write_gait_cycle_pack_fixture() -> (tempfile::TempDir, std::path::PathBuf) {
+    let temp = tempfile::tempdir().unwrap();
+    let pack = temp.path().join("hero.gsfpack");
+    write_pack_fixture(&pack, 8);
+    write_gait_cycle_report(&pack, &gait_cycle_report_aggregate_json());
+    (temp, pack)
+}
+
+fn write_timing_pack_fixture() -> (tempfile::TempDir, std::path::PathBuf) {
+    let temp = tempfile::tempdir().unwrap();
+    let pack = temp.path().join("hero.gsfpack");
+    write_pack_fixture(&pack, 8);
+    let animation = json!({
+        "name": "idle",
+        "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+        "fps": 10.0,
+        "loop": true,
+        "frameDurationsMs": [100, 100, 100, 100, 100, 100, 100, 100]
+    });
+    let mut forgepack: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("forgepack.json")).unwrap()).unwrap();
+    forgepack["animations"] = json!([animation.clone()]);
+    forgepack["assets"]["godotHelper"] = json!("assets/godot_import.json");
+    fs::write(
+        pack.join("forgepack.json"),
+        serde_json::to_vec_pretty(&forgepack).unwrap(),
+    )
+    .unwrap();
+
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/manifest.json")).unwrap()).unwrap();
+    manifest["animations"] = json!([animation.clone()]);
+    fs::write(
+        pack.join("assets/manifest.json"),
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        json!({ "spriteFrames": { "animations": [animation] } }).to_string(),
+    )
+    .unwrap();
+    (temp, pack)
+}
+
+fn write_right_only_timing_pack_fixture(
+    include_left: bool,
+) -> (tempfile::TempDir, std::path::PathBuf) {
+    let (temp, pack) = write_timing_pack_fixture();
+    let idle_right = json!({
+        "name": "idle_right",
+        "frames": [0, 1, 2, 3],
+        "fps": 10.0,
+        "loop": true,
+        "frameDurationsMs": [100, 100, 100, 100]
+    });
+    let walk_right = json!({
+        "name": "walk_right",
+        "frames": [4, 5, 6, 7],
+        "fps": 10.0,
+        "loop": true,
+        "frameDurationsMs": [100, 100, 100, 100]
+    });
+    let idle_left = json!({
+        "name": "idle_left",
+        "frames": [0, 1, 2, 3],
+        "fps": 10.0,
+        "loop": true,
+        "frameDurationsMs": [100, 100, 100, 100]
+    });
+    let walk_left = json!({
+        "name": "walk_left",
+        "frames": [4, 5, 6, 7],
+        "fps": 10.0,
+        "loop": true,
+        "frameDurationsMs": [100, 100, 100, 100]
+    });
+    let mut animations = vec![idle_right, walk_right];
+    if include_left {
+        animations.extend([idle_left, walk_left]);
+    }
+    let rendering = json!({
+        "profile": "godot-sprite-rendering@1.0.0",
+        "textureFilter": "nearest",
+        "pixelSnap": true,
+        "mirrorPolicy": "right_only"
+    });
+
+    let forgepack_path = pack.join("forgepack.json");
+    let mut forgepack: serde_json::Value =
+        serde_json::from_slice(&fs::read(&forgepack_path).unwrap()).unwrap();
+    forgepack["animations"] = json!(animations.clone());
+    fs::write(
+        &forgepack_path,
+        serde_json::to_vec_pretty(&forgepack).unwrap(),
+    )
+    .unwrap();
+
+    let manifest_path = pack.join("assets/manifest.json");
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+    manifest["animations"] = json!(animations.clone());
+    manifest["rendering"] = rendering.clone();
+    fs::write(
+        &manifest_path,
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+
+    let helper_path = pack.join("assets/godot_import.json");
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(&helper_path).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"] = json!(animations);
+    helper["spriteFrames"]["rendering"] = rendering;
+    fs::write(&helper_path, serde_json::to_vec_pretty(&helper).unwrap()).unwrap();
+    (temp, pack)
+}
+
+fn write_gait_cycle_report(pack: &Path, report: &serde_json::Value) {
+    let mut forgepack: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("forgepack.json")).unwrap()).unwrap();
+    forgepack["assets"]["characterGaitCycleReport"] = json!("character-gait-cycle-report.json");
+    fs::write(
+        pack.join("forgepack.json"),
+        serde_json::to_vec_pretty(&forgepack).unwrap(),
+    )
+    .unwrap();
+    fs::write(
+        pack.join("character-gait-cycle-report.json"),
+        report.to_string(),
+    )
+    .unwrap();
+}
+
+fn assert_gait_cycle_contract_fails(pack: &Path) {
+    assert!(matches!(
+        validate_pack_layout(pack).unwrap_err(),
+        PackError::SchemaValidation { document, .. }
+            if document.ends_with("character-gait-cycle-report.json")
+    ));
+}
+
+fn assert_timing_validation_fails(pack: &Path, document: &str, message: &str) {
+    assert!(matches!(
+        validate_pack_layout(pack).unwrap_err(),
+        PackError::SchemaValidation {
+            document: error_document,
+            message: error_message,
+        } if error_document == document && error_message.contains(message)
+    ));
 }

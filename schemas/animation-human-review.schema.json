@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamespriteforge.dev/schemas/animation-human-review.schema.json",
+  "title": "Forge Animation Human Review V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "animation",
+    "sourceVideoSha256",
+    "promptSha256",
+    "replaySummarySha256",
+    "frameSha256",
+    "frameDurationsMs",
+    "reviewer",
+    "status",
+    "checks",
+    "reviewNote",
+    "reviewedAt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "const": "animation-human-review@1.0.0" },
+    "animation": { "type": "string", "minLength": 1 },
+    "sourceVideoSha256": { "$ref": "#/$defs/sha256" },
+    "promptSha256": { "$ref": "#/$defs/sha256" },
+    "replaySummarySha256": { "$ref": "#/$defs/sha256" },
+    "frameSha256": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 24,
+      "items": { "$ref": "#/$defs/sha256" }
+    },
+    "frameDurationsMs": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 24,
+      "items": { "type": "integer", "minimum": 1 }
+    },
+    "reviewer": { "const": "human" },
+    "status": { "enum": ["pending", "approved", "rejected"] },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "motionAcceptable",
+        "placementAcceptable",
+        "edgeCleanupAcceptable",
+        "footAlternationAcceptable",
+        "pivotAcceptable",
+        "collisionAcceptable"
+      ],
+      "properties": {
+        "motionAcceptable": { "type": ["boolean", "null"] },
+        "placementAcceptable": { "type": ["boolean", "null"] },
+        "edgeCleanupAcceptable": { "type": ["boolean", "null"] },
+        "footAlternationAcceptable": { "type": ["boolean", "null"] },
+        "pivotAcceptable": { "type": ["boolean", "null"] },
+        "collisionAcceptable": { "type": ["boolean", "null"] }
+      }
+    },
+    "reviewNote": { "type": "string", "minLength": 1 },
+    "reviewedAt": { "type": ["string", "null"], "format": "date-time" }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

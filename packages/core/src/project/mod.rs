@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use std::fs;
+use std::fs::{self, File, OpenOptions};
 use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
@@ -44,6 +44,9 @@ pub enum ProjectAssetKind {
     Character,
     IconSet,
     PropSet,
+    PortraitSet,
+    EquipmentSet,
+    DecalSet,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -169,6 +172,36 @@ pub fn read_project_manifest(
 pub fn register_project_asset(
     params: RegisterProjectAsset<'_>,
 ) -> Result<PathBuf, ProjectManifestError> {
+    let _lock = lock_project_manifest(params.project_path)?;
+    register_project_asset_unlocked(params)
+}
+
+/// Held across installation and rollback so another installer cannot publish
+/// metadata that an earlier failed installation would subsequently restore.
+pub(crate) fn lock_project_manifest(project_path: &Path) -> Result<File, ProjectManifestError> {
+    validate_project(project_path)?;
+    ensure_metadata_path_safe(project_path)?;
+    let path = project_path.join(".forge/assets.lock");
+    fs::create_dir_all(path.parent().expect("manifest lock has a parent"))
+        .map_err(|source| io_error(&path, source))?;
+    if fs::symlink_metadata(&path).is_ok_and(|metadata| metadata.file_type().is_symlink()) {
+        return Err(ProjectManifestError::SymbolicLink(path));
+    }
+    let lock = OpenOptions::new()
+        .create(true)
+        .read(true)
+        .write(true)
+        .truncate(false)
+        .open(&path)
+        .map_err(|source| io_error(&path, source))?;
+    lock.lock().map_err(|source| io_error(&path, source))?;
+    Ok(lock)
+}
+
+/// The caller must hold `lock_project_manifest` until commit or rollback.
+pub(crate) fn register_project_asset_unlocked(
+    params: RegisterProjectAsset<'_>,
+) -> Result<PathBuf, ProjectManifestError> {
     let mut manifest = read_project_manifest(params.project_path)?;
     let project_root = fs::canonicalize(params.project_path)
         .map_err(|source| io_error(params.project_path, source))?;
@@ -185,13 +218,7 @@ pub fn register_project_asset(
             path: canonical_pack,
         }
     };
-    let kind = match params.pack.asset_type.as_str() {
-        "character" => ProjectAssetKind::Character,
-        "icon_set" => ProjectAssetKind::IconSet,
-        "prop_set" => ProjectAssetKind::PropSet,
-        _ if params.pack.animations.len() > 1 => ProjectAssetKind::Character,
-        _ => ProjectAssetKind::Animation,
-    };
+    let kind = project_asset_kind(&params.pack.asset_type, params.pack.animations.len());
     let animations = params
         .pack
         .animations
@@ -257,6 +284,19 @@ pub fn register_project_asset(
     Ok(manifest_path)
 }
 
+fn project_asset_kind(asset_type: &str, animation_count: usize) -> ProjectAssetKind {
+    match asset_type {
+        "character" => ProjectAssetKind::Character,
+        "icon_set" => ProjectAssetKind::IconSet,
+        "prop_set" => ProjectAssetKind::PropSet,
+        "portrait_set" => ProjectAssetKind::PortraitSet,
+        "equipment_set" => ProjectAssetKind::EquipmentSet,
+        "decal_set" => ProjectAssetKind::DecalSet,
+        _ if animation_count > 1 => ProjectAssetKind::Character,
+        _ => ProjectAssetKind::Animation,
+    }
+}
+
 fn validate_project(project_path: &Path) -> Result<(), ProjectManifestError> {
     if !project_path.join("project.godot").is_file() {
         return Err(ProjectManifestError::InvalidProject(
@@ -290,5 +330,30 @@ fn io_error(path: &Path, source: std::io::Error) -> ProjectManifestError {
     ProjectManifestError::Io {
         path: path.to_path_buf(),
         source,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn static_collection_kinds_remain_exact_in_godot_manifest() {
+        assert_eq!(
+            project_asset_kind("portrait_set", 0),
+            ProjectAssetKind::PortraitSet
+        );
+        assert_eq!(
+            project_asset_kind("equipment_set", 0),
+            ProjectAssetKind::EquipmentSet
+        );
+        assert_eq!(
+            project_asset_kind("decal_set", 0),
+            ProjectAssetKind::DecalSet
+        );
+        assert_eq!(
+            project_asset_kind("unknown", 2),
+            ProjectAssetKind::Character
+        );
     }
 }

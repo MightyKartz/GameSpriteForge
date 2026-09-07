@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1",
+  "kind": "decal_set",
+  "id": "forest-decals",
+  "name": "Forest Decals",
+  "collection": { "id": "decals", "revision": "REPLACE_WITH_COLLECTION_REVISION" },
+  "items": [
+    {
+      "id": "fallen-leaves",
+      "name": "Fallen Leaves",
+      "prompt": "a sparse scatter of fallen autumn leaves",
+      "footprint": { "width": 2, "height": 1 },
+      "blend": "mix"
+    }
+  ],
+  "license": "private"
+}

@@ -120,6 +120,7 @@ impl GameArtManifestV1 {
         for asset in &self.assets {
             let mut subject_locks = 0usize;
             let mut style_locks = 0usize;
+            let mut collection_locks = 0usize;
             for dependency in &asset.depends_on {
                 if dependency == &asset.id {
                     return Err(GameArtError::SelfDependency(format!(
@@ -136,6 +137,7 @@ impl GameArtManifestV1 {
                     match reference.kind {
                         super::types::LockKind::Subject => subject_locks += 1,
                         super::types::LockKind::Style => style_locks += 1,
+                        super::types::LockKind::Collection => collection_locks += 1,
                     }
                 } else {
                     return Err(GameArtError::UnknownDependency(format!(
@@ -144,15 +146,35 @@ impl GameArtManifestV1 {
                     )));
                 }
             }
-            if subject_locks > usize::from(asset.kind == AssetKind::Character) {
+            if subject_locks
+                > usize::from(matches!(
+                    asset.kind,
+                    AssetKind::Character | AssetKind::PortraitSet
+                ))
+            {
                 return Err(GameArtError::InvalidLockRef(format!(
-                    "asset \"{}\" may declare at most one subject lock, and only character assets support it",
+                    "asset \"{}\" may declare at most one subject lock, and only character/portrait assets support it",
                     asset.id
                 )));
             }
             if style_locks > 1 {
                 return Err(GameArtError::InvalidLockRef(format!(
                     "asset \"{}\" may declare at most one style lock",
+                    asset.id
+                )));
+            }
+            if collection_locks
+                > usize::from(matches!(
+                    asset.kind,
+                    AssetKind::IconSet
+                        | AssetKind::PropSet
+                        | AssetKind::PortraitSet
+                        | AssetKind::EquipmentSet
+                        | AssetKind::DecalSet
+                ))
+            {
+                return Err(GameArtError::InvalidLockRef(format!(
+                    "asset \"{}\" may declare at most one collection lock, and only static assets support it",
                     asset.id
                 )));
             }
@@ -334,7 +356,7 @@ fn reject_unknown_asset_kinds(value: &Value) -> Result<(), GameArtError> {
                 if kind.parse::<AssetKind>().is_err() {
                     let label = asset.get("id").and_then(Value::as_str).unwrap_or("?");
                     return Err(GameArtError::InvalidKind(format!(
-                        "asset \"{label}\" (assets[{index}]) uses unsupported kind \"{kind}\" (stage 2 supports character, icon_set, prop_set)"
+                        "asset \"{label}\" (assets[{index}]) uses unsupported kind \"{kind}\""
                     )));
                 }
             }

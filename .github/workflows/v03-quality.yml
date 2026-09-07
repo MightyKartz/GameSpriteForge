@@ -26,10 +26,15 @@ jobs:
   v03-quality:
     runs-on: macos-15
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [release, project-assets, subject-grid, processing]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install Godot 4.6.3
+        if: matrix.suite != 'processing'
         shell: bash
         run: |
           set -euo pipefail
@@ -45,8 +50,14 @@ jobs:
           printf 'FORGE_GODOT_PATH=%s\n' "${godot_binary}" >> "${GITHUB_ENV}"
           ln -s "${godot_binary}" "${RUNNER_TEMP}/godot-bin/godot"
           printf '%s\n' "${RUNNER_TEMP}/godot-bin" >> "${GITHUB_PATH}"
+          # Grid fixture contracts currently locate this exact application path.
+          # Install it on the disposable runner so those assertions cannot skip.
+          test ! -e /Applications/Godot.app
+          ln -s "$(dirname "$(dirname "$(dirname "${godot_binary}")")")" /Applications/Godot.app
+          printf 'FORGE_REQUIRE_GODOT=1\n' >> "${GITHUB_ENV}"
 
       - name: Build pinned LGPL FFmpeg helpers
+        if: matrix.suite != 'processing'
         shell: bash
         run: |
           set -euo pipefail
@@ -79,16 +90,25 @@ jobs:
           printf '%s\n' "${RUNNER_TEMP}/ffmpeg/bin" >> "${GITHUB_PATH}"
 
       - name: Run v0.3 release matrix
+        if: matrix.suite == 'release'
         shell: bash
         env:
           FORGE_V03_REPORT_DIR: ${{ runner.temp }}/forge-v03-quality
         run: bash scripts/test-v03-release-matrix.sh
 
+      - name: Run offline experimental contracts
+        if: matrix.suite != 'release'
+        shell: bash
+        env:
+          FORGE_EXPERIMENTAL_SUITE: ${{ matrix.suite }}
+          FORGE_EXPERIMENTAL_REPORT_DIR: ${{ runner.temp }}/forge-v03-quality
+        run: bash scripts/test-experimental-feature-matrix.sh
+
       - name: Upload QA evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: forge-v03-quality-${{ github.run_id }}
+          name: forge-v03-quality-${{ matrix.suite }}-${{ github.run_id }}
           path: ${{ runner.temp }}/forge-v03-quality
           if-no-files-found: error
           retention-days: 14

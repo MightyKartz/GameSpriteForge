@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/direction-grid-import-evidence.schema.json",
+  "title": "Forge DirectionGrid Import Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "generator",
+    "note",
+    "sourceJobId",
+    "sourceLockSha256",
+    "inputSheetSha256",
+    "materializedOriginalPath",
+    "materializedOriginalSha256",
+    "mattedSheetPath",
+    "mattedSheetSha256",
+    "mattingProfile",
+    "mattingReportPath",
+    "mattingReportSha256",
+    "alignmentProfile",
+    "alignmentReportPath",
+    "alignmentReportSha256",
+    "providerRequestOccurred"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "enum": ["direction-grid-import@1.0.0", "direction-grid-import@1.1.0"] },
+    "generator": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$" },
+    "note": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "sourceJobId": { "type": "string", "minLength": 1 },
+    "sourceLockSha256": { "$ref": "#/$defs/sha256" },
+    "inputMode": { "enum": ["sheet", "four_files"] },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "sourcePath", "sourceSha256", "materializedPath", "materializedSha256"],
+        "properties": {
+          "role": { "enum": ["sheet", "front", "rear", "right", "left"] },
+          "sourcePath": { "type": "string", "minLength": 1 },
+          "sourceSha256": { "$ref": "#/$defs/sha256" },
+          "materializedPath": { "type": "string", "minLength": 1 },
+          "materializedSha256": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "inputSheetSha256": { "$ref": "#/$defs/sha256" },
+    "materializedOriginalPath": { "type": "string", "minLength": 1 },
+    "materializedOriginalSha256": { "$ref": "#/$defs/sha256" },
+    "mattedSheetPath": { "type": "string", "minLength": 1 },
+    "mattedSheetSha256": { "$ref": "#/$defs/sha256" },
+    "mattingProfile": { "enum": ["checkerboard-sheet-matting@1.0.0", "checkerboard-sheet-matting@1.1.0"] },
+    "mattingReportPath": { "type": "string", "minLength": 1 },
+    "mattingReportSha256": { "$ref": "#/$defs/sha256" },
+    "mattedAlphaEdgeReportPath": { "type": "string", "minLength": 1 },
+    "mattedAlphaEdgeReportSha256": { "$ref": "#/$defs/sha256" },
+    "alphaEdgeProfile": { "const": "alpha-edge-halo@1.0.0" },
+    "alphaEdgeReportPath": { "type": "string", "minLength": 1 },
+    "alphaEdgeReportSha256": { "$ref": "#/$defs/sha256" },
+    "alignmentProfile": { "const": "onion-skin@1.0.0" },
+    "alignmentReportPath": { "type": "string", "minLength": 1 },
+    "alignmentReportSha256": { "$ref": "#/$defs/sha256" },
+    "authorityAlignmentProfile": { "const": "direction-grid-authority-alignment@1.0.0" },
+    "authorityAlignmentReportPath": { "type": "string", "minLength": 1 },
+    "authorityAlignmentReportSha256": { "$ref": "#/$defs/sha256" },
+    "consistencyProfile": { "const": "direction-grid-import-consistency@1.0.0" },
+    "consistencyReportPath": { "type": "string", "minLength": 1 },
+    "consistencyReportSha256": { "$ref": "#/$defs/sha256" },
+    "capeHemContract": { "enum": ["continuous_gold_lower_hem", "front_authoritative_no_skirt_hem"] },
+    "capeHemProfile": { "const": "cape-hem-consistency@1.0.0" },
+    "capeHemReportPath": { "type": "string", "minLength": 1 },
+    "capeHemReportSha256": { "$ref": "#/$defs/sha256" },
+    "providerRequestOccurred": { "const": false }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "profile": { "const": "direction-grid-import@1.1.0" } }, "required": ["profile"] },
+      "then": {
+        "required": ["inputMode", "inputs", "mattedAlphaEdgeReportPath", "mattedAlphaEdgeReportSha256", "alphaEdgeProfile", "alphaEdgeReportPath", "alphaEdgeReportSha256", "authorityAlignmentProfile", "authorityAlignmentReportPath", "authorityAlignmentReportSha256", "consistencyProfile", "consistencyReportPath", "consistencyReportSha256"]
+      }
+    },
+    {
+      "if": { "required": ["capeHemContract"] },
+      "then": { "required": ["capeHemProfile", "capeHemReportPath", "capeHemReportSha256"] },
+      "else": {
+        "not": {
+          "anyOf": [
+            { "required": ["capeHemProfile"] },
+            { "required": ["capeHemReportPath"] },
+            { "required": ["capeHemReportSha256"] }
+          ]
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

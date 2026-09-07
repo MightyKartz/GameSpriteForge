@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "id": "full-body-portraits",
+  "name": "Full-body Portraits",
+  "assetKind": "portrait_set",
+  "prompt": "consistent full-body dialogue and profile artwork for one character",
+  "materials": ["cloth", "leather", "painted metal"],
+  "scale": "complete character occupies a consistent height",
+  "perspective": "inherit_style",
+  "grounding": "feet",
+  "framingProfile": "full_body@1.0.0",
+  "canvasSize": 256,
+  "license": "private"
+}

@@ -148,6 +148,7 @@ fn candidate_sampling_caps_fps_and_covers_the_full_clip() {
         end_time_ms: 1_000,
         maximum_fps: 12.0,
         maximum_frame_count: 96,
+        preserve_source_pts: false,
         output_directory: temp.path().join("candidates"),
         configured_ffmpeg_path: Some(ffmpeg.into()),
         bundled_resource_path: None,
@@ -155,10 +156,49 @@ fn candidate_sampling_caps_fps_and_covers_the_full_clip() {
     .expect("sample loop candidates");
 
     assert_eq!(result.duration_ms, 1_000);
-    assert!((result.sample_fps - 12.0).abs() < 0.001);
+    assert!((result.sample_fps - 12.0).abs() < 0.02);
     assert_eq!(result.frames.len(), 12);
+    assert_eq!(result.frame_timestamps_ms.len(), result.frames.len());
+    assert_eq!(result.frame_timestamps_ms[0], 0);
+    assert!(result
+        .frame_timestamps_ms
+        .windows(2)
+        .all(|pair| matches!(pair[1] - pair[0], 83 | 84)));
     assert!(result.frames.first().is_some_and(|path| path.is_file()));
     assert!(result.frames.last().is_some_and(|path| path.is_file()));
+}
+
+#[test]
+fn native_pts_candidate_sampling_retains_all_24_fps_source_frames() {
+    let Some(ffmpeg) = forge_core::video::ffmpeg::find_in_path("ffmpeg") else {
+        eprintln!("skipping integration test because ffmpeg is unavailable");
+        return;
+    };
+    let temp = tempfile::tempdir().expect("tempdir");
+    let input_path = temp.path().join("green-box-character.mp4");
+    create_fixture(&ffmpeg, &input_path);
+
+    let result = extract_candidate_frames(&ExtractCandidateFramesParams {
+        input_path,
+        start_time_ms: 0,
+        end_time_ms: 1_000,
+        maximum_fps: 24.0,
+        maximum_frame_count: 120,
+        preserve_source_pts: true,
+        output_directory: temp.path().join("native-candidates"),
+        configured_ffmpeg_path: Some(ffmpeg.into()),
+        bundled_resource_path: None,
+    })
+    .expect("decode native PTS candidates");
+
+    assert_eq!(result.frames.len(), 24);
+    assert_eq!(result.frame_timestamps_ms.len(), 24);
+    assert!((result.sample_fps - 24.0).abs() < 0.05);
+    assert_eq!(result.frame_timestamps_ms[0], 0);
+    assert!(result
+        .frame_timestamps_ms
+        .windows(2)
+        .all(|pair| matches!(pair[1] - pair[0], 41 | 42)));
 }
 
 fn create_fixture(ffmpeg: &str, input_path: &Path) {

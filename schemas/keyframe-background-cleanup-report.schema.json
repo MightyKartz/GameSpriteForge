@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gamespriteforge.dev/schemas/keyframe-background-cleanup-report.schema.json",
+  "title": "Forge KeyframeBackgroundCleanupReportV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "profile",
+    "strategy",
+    "rawAlphaCoverage",
+    "rawBorderOpaqueRatio",
+    "cleanedAlphaCoverage",
+    "cleanedBorderOpaqueRatio",
+    "sourceComponentCount",
+    "retainedComponentCount",
+    "removedForegroundPixels",
+    "verdict",
+    "reasons"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "profile": { "enum": ["keyframe-background-cleanup@1.1.0", "keyframe-background-cleanup@1.2.0", "keyframe-background-cleanup@1.3.0"] },
+    "strategy": { "enum": ["native_alpha", "border_connected_dark", "chroma_auto", "exact_direction_authority_byte_reuse"] },
+    "rawAlphaCoverage": { "type": "number", "minimum": 0, "maximum": 1 },
+    "rawBorderOpaqueRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "cleanedAlphaCoverage": { "type": "number", "minimum": 0, "maximum": 1 },
+    "cleanedBorderOpaqueRatio": { "type": "number", "minimum": 0, "maximum": 1 },
+    "sourceComponentCount": { "type": "integer", "minimum": 0 },
+    "retainedComponentCount": { "type": "integer", "minimum": 0 },
+    "removedForegroundPixels": { "type": "integer", "minimum": 0 },
+    "groundLineRemovedPixels": { "type": "integer", "minimum": 0 },
+    "groundLineResidual": { "type": "boolean" },
+    "footPlaneChromaRemovedPixels": { "type": "integer", "minimum": 0 },
+    "footPlaneChromaResidual": { "type": "boolean" },
+    "magentaSpillRemovedPixels": { "type": "integer", "minimum": 0 },
+    "verdict": { "enum": ["game_ready", "blocked"] },
+    "reasons": { "type": "array", "items": { "type": "string" } }
+  }
+}

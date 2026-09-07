@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+# This is the stable release baseline. Later feature contracts run in separate
+# jobs through test-experimental-feature-matrix.sh, without changing defaults.
+unset FORGE_REAL_PROVIDER_ACCEPT FORGE_REAL_PROVIDER_MAX_REQUESTS \
+  FORGE_REAL_PROVIDER_MAX_COST_TICKS XAI_API_KEY
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"
 REPORT_DIR="${FORGE_V03_REPORT_DIR:-${ROOT}/target/qa/v0.3-release-matrix-${RUN_ID}}"

@@ -535,6 +535,7 @@ pub fn build_environment_lock(
             )?],
             aspect_ratio: "1:1".into(),
             resolution: "1k".into(),
+            authorization_target: Some(format!("environment:{}", spec.id)),
         },
         &generated,
     )?;
@@ -753,6 +754,7 @@ pub fn generate_building_kit(
             )?],
             aspect_ratio: "1:1".into(),
             resolution: "1k".into(),
+            authorization_target: Some(format!("building:{}:{label}", spec.id)),
         };
         let attempt = edit_image_with_retry(provider, &request, target)?;
         material_attempts.insert(id.to_string(), attempt);
@@ -1912,6 +1914,7 @@ fn generate_material(
             )?],
             aspect_ratio: "1:1".into(),
             resolution: "1k".into(),
+            authorization_target: Some(format!("terrain:{}:sample:{sample}", material.name)),
         },
         target,
     )
