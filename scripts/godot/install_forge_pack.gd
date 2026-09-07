@@ -40,6 +40,9 @@ func _initialize() -> void:
 	var animations: Array = _required_array(spec, "animations", "spriteFrames")
 	var atlas_frames: Array = _required_array(atlas, "frames", "atlas.json")
 	var anchor: Dictionary = _required_dict(spec, "anchor", "spriteFrames")
+	var rendering: Dictionary = spec.get("rendering", {})
+	if typeof(rendering) != TYPE_DICTIONARY:
+		_fail("spriteFrames.rendering must be an object.")
 	var frame_width := float(spec.get("frameWidth", atlas.get("frameWidth", 0)))
 	var frame_height := float(spec.get("frameHeight", atlas.get("frameHeight", 0)))
 
@@ -59,10 +62,16 @@ func _initialize() -> void:
 	for animation_value in animations:
 		var animation: Dictionary = animation_value
 		var animation_name := String(animation.get("name", "idle"))
+		var animation_fps := float(animation.get("fps", 12.0))
+		var animation_frames: Array = _required_array(animation, "frames", "animation")
+		var frame_durations: Array = animation.get("frameDurationsMs", [])
+		if !frame_durations.is_empty() and frame_durations.size() != animation_frames.size():
+			_fail("Animation frameDurationsMs must match frames: %s" % animation_name)
 		native_frames.add_animation(animation_name)
-		native_frames.set_animation_speed(animation_name, float(animation.get("fps", 12.0)))
+		native_frames.set_animation_speed(animation_name, animation_fps)
 		native_frames.set_animation_loop(animation_name, bool(animation.get("loop", true)))
-		for index_value in _required_array(animation, "frames", "animation"):
+		for animation_frame_index in animation_frames.size():
+			var index_value = animation_frames[animation_frame_index]
 			var index := int(index_value)
 			if index < 0 or index >= atlas_frames.size():
 				_fail("Animation frame index is outside atlas bounds: %s" % index)
@@ -76,7 +85,14 @@ func _initialize() -> void:
 				float(frame["x"]), float(frame["y"]),
 				float(frame["width"]), float(frame["height"])
 			)
-			native_frames.add_frame(animation_name, atlas_texture)
+			atlas_texture.filter_clip = true
+			var relative_duration := 1.0
+			if !frame_durations.is_empty():
+				var duration_ms := float(frame_durations[animation_frame_index])
+				if duration_ms <= 0.0:
+					_fail("Animation frame duration must be positive: %s" % animation_name)
+				relative_duration = duration_ms * animation_fps / 1000.0
+			native_frames.add_frame(animation_name, atlas_texture, relative_duration)
 
 	var frames_path := target_res.path_join("forge_sprite_frames.tres")
 	if ResourceSaver.save(native_frames, frames_path) != OK:
@@ -86,14 +102,33 @@ func _initialize() -> void:
 	var sprite := AnimatedSprite2D.new()
 	sprite.name = "AnimatedSprite2D"
 	sprite.sprite_frames = native_frames
+	var texture_filter := String(rendering.get("textureFilter", "nearest"))
+	match texture_filter:
+		"nearest":
+			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		"linear":
+			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		_:
+			_fail("Unsupported spriteFrames.rendering.textureFilter: %s" % texture_filter)
+	sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_DISABLED
 	var default_animation := String(spec.get("defaultAnimation", animations[0].get("name", "idle")))
 	if !native_frames.has_animation(default_animation):
 		_fail("Default animation is missing from SpriteFrames: %s" % default_animation)
 	sprite.animation = default_animation
-	sprite.position = Vector2(
-		frame_width / 2.0 - float(anchor.get("x", frame_width / 2.0)),
-		frame_height / 2.0 - float(anchor.get("y", frame_height))
-	)
+	var anchor_x := float(anchor.get("x", frame_width / 2.0))
+	var anchor_y := float(anchor.get("y", frame_height))
+	var pixel_snap := bool(rendering.get("pixelSnap", texture_filter == "nearest"))
+	if pixel_snap:
+		if !is_equal_approx(anchor_x, round(anchor_x)) or !is_equal_approx(anchor_y, round(anchor_y)):
+			_fail("Pixel-snapped sprite anchor must use integer coordinates.")
+		sprite.centered = false
+		sprite.position = Vector2(-round(anchor_x), -round(anchor_y))
+	else:
+		sprite.centered = true
+		sprite.position = Vector2(
+			frame_width / 2.0 - anchor_x,
+			frame_height / 2.0 - anchor_y
+		)
 	root.add_child(sprite)
 	sprite.owner = root
 	var packed := PackedScene.new()

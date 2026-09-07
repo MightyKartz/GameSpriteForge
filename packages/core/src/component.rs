@@ -167,11 +167,10 @@ impl VisionComponent for FixtureVisionComponent {
                 })?;
                 let digest = Sha256::digest(input.sha256.as_bytes());
                 let embedding = digest
-                    .chunks_exact(4)
-                    .map(|chunk| {
-                        u32::from_be_bytes(chunk.try_into().expect("four bytes")) as f64
-                            / u32::MAX as f64
-                    })
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
+                    .map(|chunk| u32::from_be_bytes(*chunk) as f64 / u32::MAX as f64)
                     .collect::<Vec<_>>();
                 serde_json::json!({"model": "fixture-embedding@1", "embedding": embedding})
             }
