@@ -41,7 +41,7 @@ forge doctor --json
 
 安装器会验证 SHA-256 清单，将 `forge`、`ffmpeg` 和 `ffprobe` 安装到版本化用户目录，
 仅把 `forge` 暴露到 `PATH`。当前已发布版本为
-[`v0.2.0-cli.1`](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.2.0-cli.1)，
+[`v0.2.1`](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.2.1)，
 尚未签名或公证。`main` 上的新能力可能需要从源码构建。
 
 ## 生成第一个角色
@@ -123,7 +123,7 @@ python3 scripts/character/prepare_directional_reuse.py --help
 | 能力 | 可用范围 |
 | --- | --- |
 | Style Lock、角色/图标/道具生成、本地资产准备、Job、Pack 校验、Godot 安装 | 默认 CLI |
-| 原生逐帧时长与渲染参数支持 | 包含在 0.2.1 候选版中 |
+| 原生逐帧时长与渲染参数支持 | 包含在 0.2.1 CLI 发行包中 |
 | 三方向复用辅助工具和 Godot 审核模板 | 实验性工具，需要对应版本的源码 |
 | Subject Lock 与 Character 一致性 V2 | 按需启用 `consistency-v2` 源码 feature |
 | Environment、Terrain、Building、Map 工作流 | 按需启用 World features；`world-assets` 启用整组 |

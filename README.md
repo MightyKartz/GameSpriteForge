@@ -45,7 +45,7 @@ forge doctor --json
 The installer verifies SHA-256 manifests and installs `forge`, `ffmpeg`, and
 `ffprobe` in a versioned user directory. Only `forge` is exposed on `PATH`.
 The current published release is
-[`v0.2.0-cli.1`](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.2.0-cli.1);
+[`v0.2.1`](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.2.1);
 it is unsigned and not notarized. Changes on `main` may require a source build.
 
 ## Generate your first character
@@ -136,7 +136,7 @@ The default build uses `default = []`.
 | Surface | Availability |
 | --- | --- |
 | Style Locks, character/icon/prop generation, local asset preparation, jobs, Pack validation, Godot installation | Default CLI |
-| Native per-frame timing and rendering support | Included in the 0.2.1 release candidate |
+| Native per-frame timing and rendering support | Included in the 0.2.1 CLI release |
 | Directional reuse helper and Godot review templates | Experimental; matching source checkout required |
 | Subject Locks and Character consistency V2 | Opt-in `consistency-v2` source build |
 | Environment, Terrain, Building, Map workflows | Opt-in world features; `world-assets` enables the group |
