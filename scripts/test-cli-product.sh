@@ -193,8 +193,11 @@ if [ "${FORGE_VERIFY_GODOT:-0}" = "1" ]; then
   command -v godot >/dev/null
   cp "${ROOT}/examples/godot/forge-import-smoke/verify_installed_frames.gd" "${TEST_ROOT}/godot/"
   godot --headless --path "${TEST_ROOT}/godot" --editor --import --quit
-  godot --headless --path "${TEST_ROOT}/godot" --script res://verify_installed_frames.gd -- \
-    res://addons/forge_assets/fixture-ranger/forge_sprite_frames.tres "${PACK}/assets/manifest.json"
+  godot --headless --path "${TEST_ROOT}/godot" --quit-after 120 --script res://verify_installed_frames.gd -- \
+    res://addons/forge_assets/fixture-ranger/forge_sprite_frames.tres "${PACK}/assets/manifest.json" \
+    > "${TEST_ROOT}/godot-verification.log" 2>&1
+  cat "${TEST_ROOT}/godot-verification.log"
+  grep -F 'PASS installed Godot SpriteFrames:' "${TEST_ROOT}/godot-verification.log" >/dev/null
 fi
 
 if credential_scan_matches "${FORGE_JOB_STORE}" >/dev/null; then

@@ -13,7 +13,10 @@ func _initialize() -> void:
 	var checked := 0
 	for animation in manifest["animations"]:
 		var name := String(animation["name"])
-		var durations: Array = animation["frameDurationsMs"]
+		var durations: Array = animation.get("frameDurationsMs", [])
+		if durations.is_empty():
+			for unused in animation["frames"]:
+				durations.append(1000.0 / float(animation["fps"]))
 		if not frames.has_animation(name) or frames.get_frame_count(name) != durations.size():
 			fail("Animation coverage mismatch: " + name)
 			return
