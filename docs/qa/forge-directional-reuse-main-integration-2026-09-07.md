@@ -17,6 +17,14 @@ up 方向原始尺度门禁失败仍保留；本次固定倍率约 0.939902 是�
 `visualReview = pending`、`productionPromoted = false`。没有新增视频或其他真实 Provider 请求。
 未扩展默认 CLI 的生成工作流，也未发布新的二进制 Release。
 
+## CI 兼容修复
+
+首次远端运行使用 Rust 1.98，新增的 `chunks_exact_to_as_chunks` Clippy 规则
+命中了 main 原有代码。本轮将三处固定四字节分组改为等价的 `as_chunks` /
+`as_chunks_mut` 写法，涉及组件 fixture、Provider fixture 和其测试 fixture。
+本地 Rust 1.98 的默认及 Consistency/World Clippy、完整 workspace 测试均通过。
+首次远端其余五组矩阵已通过；最终远端结果见各 PR 的最新 Checks。
+
 ## 本轮检查
 
 | 检查 | 本轮结果 |

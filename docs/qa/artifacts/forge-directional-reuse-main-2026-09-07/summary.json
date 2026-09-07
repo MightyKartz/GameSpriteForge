@@ -4,7 +4,8 @@
   "baseCommit": "23e5b905024942024f3f461d14cdb589c603c444",
   "implementationCommits": [
     "8f8ba2d8a0c39d1354df52b172acb80041d4081d",
-    "b7ee1cb709d102dbf1301e526799b068b6da821c"
+    "b7ee1cb709d102dbf1301e526799b068b6da821c",
+    "462df7478ace2621072ddf06a32237adb58cef70"
   ],
   "localChecks": {
     "format": "passed",
@@ -15,7 +16,10 @@
     "cliProductContract": "passed",
     "godotHeadless": "passed",
     "godotWindowed": "passed",
-    "cleanZipImportAndHeadlessRuntime": "passed"
+    "cleanZipImportAndHeadlessRuntime": "passed",
+    "rust198DefaultWorkspaceClippy": "passed",
+    "rust198ConsistencyAndWorldClippy": "passed",
+    "rust198WorkspaceTests": "passed"
   },
   "engine": "4.6.3-stable (official)",
   "sourceAssetsUnchanged": true,
@@ -64,5 +68,14 @@
   },
   "portableRuntimeReportSha256": "a178c95f409fd14a3086936a03486c158bd455b859fa52667360b4ba113bf876",
   "screenshotSha256": "93ad747248939831c8897a5ea86e904f0ed6ac8cd80031108bcb58c043728bff",
-  "remoteCI": "See linked pull requests; separate from local checks."
+  "remoteCI": "See linked pull requests; separate from local checks.",
+  "ciCompatibilityFix": {
+    "reason": "Rust 1.98 chunks_exact_to_as_chunks lint in existing code",
+    "changedSites": 3,
+    "initialRemoteRuns": [
+      34085614926,
+      34085824053
+    ],
+    "initialNonRustMatrixGroupsPassed": 5
+  }
 }
