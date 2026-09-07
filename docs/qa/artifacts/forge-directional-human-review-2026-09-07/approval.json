@@ -1,0 +1,267 @@
+{
+  "schemaVersion": "1",
+  "profile": "directional-runtime-human-review@1.0.0",
+  "reviewId": "directional-reuse-v1-human-approved-20260907",
+  "recordedAt": "2026-09-07T07:19:20.006312+00:00",
+  "decision": "approved",
+  "reviewer": "user",
+  "userStatement": "人工审核角色后选通过",
+  "scope": "Human visual approval of the right/down/up runtime candidate previously opened for the user",
+  "candidateId": "directional-reuse-v1-20260907",
+  "candidateDirectory": "generated-assets/experiments/directional-reuse-v1-20260907",
+  "sourceLock": {
+    "path": "source-lock.json",
+    "sha256": "0aadab9209864c445e14d960f84ba5204ee054505cd1e52e33dc3a505da9ce04"
+  },
+  "runtimeContract": {
+    "path": "godot-project/runtime-contracts.json",
+    "sha256": "9855b39031084606d0251015ed0e02b251409daeb6d3d30fdfa35c7d45f956f3"
+  },
+  "currentVisualInputs": [
+    {
+      "path": "godot-project/addons/forge_assets/walk_down/forge_animated_sprite.tscn",
+      "sha256": "27fbb84dece2f74026b0ded4db63ea6357f86e80b550ccbd1fa8397897af7601"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_down/forge_sprite_frames.tres",
+      "sha256": "cbda35f29996b0a7d1f7870f1fb61b860de5fc4f906fa4f6f0a9464fcc0a2625"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_down/sprite_sheet.png",
+      "sha256": "50e25b79726fff57526f76c127d01db3d48300121f055813d875a217166acbc3"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_down/sprite_sheet_002.png",
+      "sha256": "25c7c7bf0c37b3931b37ad9f799c21ed6bd222c7fe01aad909a5890ee10bcb6a"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_down/sprite_sheet_003.png",
+      "sha256": "247013fa3ed1a4656cf42b6396629368068be824c4c36732fc64df23c55b02da"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_down/sprite_sheet_004.png",
+      "sha256": "6c9658bbce87d0518aeb34d78e2a9135b8fb509878b8ed7672769406e37dcc04"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_down/sprite_sheet_005.png",
+      "sha256": "e2956cf27fec673d8c947450a6f536c6f3b2e7593a42d529445bc25632683e60"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_down/sprite_sheet_006.png",
+      "sha256": "30c688905fe71206bb5cc7f2c4d5dd46010d061ce0d9490556483f13102615a4"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_right/forge_animated_sprite.tscn",
+      "sha256": "a52fe077171c96538b5def1960669d0a342ad10813369f047cdaed832df9da24"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_right/forge_sprite_frames.tres",
+      "sha256": "30a40079b80d79a7792e06db2570b77ed9967042165c89a3dc08df98296b833e"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_right/sprite_sheet.png",
+      "sha256": "47a74e6cb372a805af622815dbe3d27124d0ba667f17868ac3b0f24a4bd13c54"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_right/sprite_sheet_002.png",
+      "sha256": "81f47373d7947b2294fef25f48da5d98b13016ae1d047257505eb669a38b82ad"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_right/sprite_sheet_003.png",
+      "sha256": "ea5b1e4b304900f4085154db94d38c3404b70e945739fb628e5d0596cbc54288"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_up/forge_animated_sprite.tscn",
+      "sha256": "2e309f381753d68951bad1600b6bd4742ee24dfb25d8f883ce485aa7f768c0ec"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_up/forge_sprite_frames.tres",
+      "sha256": "47b4f4997101a49ae4eaefc5e317b0ea357c6f7801e2c098ca51a15ccd167aed"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_up/sprite_sheet.png",
+      "sha256": "b3fa3bf9d08a70117d25520a4198e2e9d12a805fb419da6559c76fd72863d828"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_up/sprite_sheet_002.png",
+      "sha256": "a1b60a26e95a45a2d129ea2c2b4913a86ba5888e1ca0d05b8bf6a44b7adaa747"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_up/sprite_sheet_003.png",
+      "sha256": "ccf5647af7a254992fc4d64ef7f16de63ed94831a1230d5e6b3ada7ca195ff0f"
+    },
+    {
+      "path": "godot-project/addons/forge_assets/walk_up/sprite_sheet_004.png",
+      "sha256": "68e5949f84aea67dc6b21e49fdf7289da24f38eeac0934786b5ba98a89fcd80e"
+    },
+    {
+      "path": "godot-project/directional_reuse_review.gd",
+      "sha256": "50061045fa039f4a2ad599432f361d80efe796a30430f48159cddc099de9cbe6"
+    },
+    {
+      "path": "godot-project/main.tscn",
+      "sha256": "ab5ca215c5fb47d5386d3ce861c74a5e9b65b142c362aa5aa8ef7d1d16958b45"
+    },
+    {
+      "path": "godot-project/project.godot",
+      "sha256": "3093c72443cc8da6ad75671ade2216672e2541af5140ce7a9aebc10b2743a6ac"
+    },
+    {
+      "path": "godot-project/runtime-contracts.json",
+      "sha256": "9855b39031084606d0251015ed0e02b251409daeb6d3d30fdfa35c7d45f956f3"
+    }
+  ],
+  "visualInputFingerprintSha256": "5a81fc1d34ca7992d7d86c73b14b44716396ead4a3f542bad8cfb312a178afe8",
+  "sourceAnimations": {
+    "right": {
+      "frameCount": 12,
+      "frameSha256": [
+        "e96aa94cb08441bb98b0c336bec21b57c8bc12f0b9699ca0d7aa27baa8440f63",
+        "074b0e04cc68b98b55fcc9ac25957e06c5b82f208df335495ef2a31ce32e9ead",
+        "a51c33537c07cae796ebbbea7066b1c0697d9189e1dadb7f4479d55d82a6d45c",
+        "e8b429c0ff796015a75e041b2bac9cbc315e43c414443c238dd0b6fc176a33f4",
+        "fbf5a53dc53c7a47bd31209effc05bed8408f37082077a2af0ccbcc930030915",
+        "ebb919b4cb5ca41ff61a670083b748f56c153803ee1ddecc01505e468fafa8cc",
+        "4e8c1c26fa963ac93cbb0d84e2f6843b74d1ea4e41414e5401c61a379552be16",
+        "ff9cec7523ddc75d8a6e75c259381a82b10a2e8eae1383f4b8f576d4eaf2ddb1",
+        "a8432dcdd0d67878ffac2cfe369a985bae942dabb0853aa041c56b81a9cbe3ea",
+        "8289b8f1d716f2b7192595dccb68748328f4231a7df57145da2191a49cbcc0ff",
+        "507854f9bafbe3181aa7d0be477c6c00f2d7f0eb4994e2098e0e531f71b0e870",
+        "1cdd6a725114995859a5b0ba0b8ec1953e7d47e59a58b1a6ff86da2312c4e048"
+      ],
+      "frameDurationsMs": [
+        166,
+        167,
+        167,
+        166,
+        167,
+        167,
+        166,
+        167,
+        167,
+        166,
+        167,
+        208
+      ],
+      "sourceCycleDurationMs": 2041
+    },
+    "down": {
+      "frameCount": 24,
+      "frameSha256": [
+        "d8370a5970a318133f0f46c5b247962394b75f34fc689ed9ffff5f696ffd3a5c",
+        "13ef9595a6a64fe6950ab4c51774373384c877aaa4765ed348b4a5397aaf7ea7",
+        "1d53d39de8421efeb1b03d443d33b56019620e6a4947a1940f6ad5e1378e815a",
+        "6f6a7660cea1527c3fea5dbbcc6f7ebae4192d0dbab2e56bbb303be5fd5878c0",
+        "ee1bf53b50a68cef056f24c73e8341ab92c64389e8bf56e9638b0c1b7db6d903",
+        "572a4b2adfc8609480fef8a4bdf24328e78800fcda990708bd5b09e0a19d55c9",
+        "e212ceb6478fa0e10168104f1b5a18eb6b5297616c33e11e70579fff836588ae",
+        "97b52556f524f748931da44d75e6a9abf9efb73b68fb495443fae3250efb845c",
+        "dca767cb0c3598c5fa82575927e9eebe2394e6e07605016891576bda9bdb7fce",
+        "00f626a560aba8e63d2acd0081d52a06b3e97920893727f975998e3ab921992c",
+        "4fec6eba73b72f04a60c8884703e164758861cae7015ded09164cb37d8e5a1f8",
+        "810a50da66b06abeec6157f0028c1931251b254b3afe513e3f11b3faacf12476",
+        "3d5093ed75af85e85097b2e49e87cb65b0566ee5d52ef80fcc3bdb2e81940fed",
+        "3f7137f896d7512dd826ee4abd8f694188a48a56b9d34cdaa5b2f4ca90e88e14",
+        "74bf304ed4e034f1961cfca7b87bd2ea5af74b0b21e91010902f2d43425eb655",
+        "aed69cecd3e6b6b123853fcf83f4edeaf6257df59ce993f235cde1d36bfc80a4",
+        "cfdd75563a622fdd999a3e970e40e9465e65a1b06331fc38f152c975d99e9581",
+        "973d5bea331ae1bc20e4b57596bc89d99a646125f22d0f3220fb38cb4117d3cd",
+        "ef177ba268c8f0f5393d1e4a42757c08e5286af8495ba1ce328ede7736850cd5",
+        "bf88d23b09e80329d22077156e63a91f3f24f1d535343bee9bc8f3a9f639cd2a",
+        "efafd06ecae5822d515454d69d4cfca4046e8587aa897ca3a3b64242944f8d89",
+        "f05a365586d4ddc9d2f6a89074703f96d15181beb42256e4a5ef7057aeea82a8",
+        "2c6151f9a6b9cc297bdfc4adc8a5eb83fd7b31aeaaf62ed6047e2c556c12af4b",
+        "a15e4a7105fe151f852a2f70b231c519fd6f5da916ad5dd0c496cf2d55fb52d9"
+      ],
+      "frameDurationsMs": [
+        41,
+        84,
+        83,
+        83,
+        84,
+        83,
+        42,
+        83,
+        83,
+        84,
+        83,
+        83,
+        42,
+        83,
+        84,
+        83,
+        83,
+        84,
+        41,
+        84,
+        83,
+        83,
+        84,
+        83
+      ],
+      "sourceCycleDurationMs": 1833
+    },
+    "up": {
+      "frameCount": 16,
+      "frameSha256": [
+        "f25b6086fd900d093bcd90517cc9f2b4de11ac837e5a1a411969900cd20ae00c",
+        "136c371f9711dfd5d5f16f3afb966b101a6e5b863efe3c6f4f65b3ec3dd61c03",
+        "e253b15e930d36c26d438d5ab27c3d050e8ccdc5845e70c232655f70774fb9f0",
+        "433e72f128c12846dddcf38aaf4f4d79779fd8694dd3844b52df8df9fb5e539a",
+        "0942abb93ba6354f1d4f55fc59f2725b0d795408716c9c404472cb4fb76d003d",
+        "ae90acb319b326614cd1d87f39e5c19e6d03583350eb6e8241b74f8f340c1edb",
+        "0ebd8d0433593f0d0d95f17d71b942407ff810584491ca3245f47e0c404f8218",
+        "e71833caf96190a819fb0639f5d81b04122e8964f7e801e77944911c01cf528d",
+        "350e1e8bde1c965fe17460a3f5e281c73367ca374de170153893a064beb956e8",
+        "4d090e5b10b67b8020fe486f088c97639a5b2a5deba1bc7c1414ea778529f1b1",
+        "cbd0d5bc1a87206a0ed77872542a61c6c18f67c53d34e30f0145f2c6f25c1700",
+        "7e681defcfb1bb7d2e51d2c6f3c4cf42a5fcd265aea76db107e895f3f46617c1",
+        "af8e72d05eef761e8baa1cab8f784ab2d126b80386486f97a8cbf0b57fb17ed7",
+        "5bb7544a05ead661b6ddcfa91f2887afebfb9c97d9686a0a0ffe4f50e816c767",
+        "68fe50971e806410aa53b81bffc666f5d8868ecafda71bd7499b99513af62e3d",
+        "102527a5ab93060af6698a8630f5ab98f9fa095401adfa0f929f2c52f170224a"
+      ],
+      "frameDurationsMs": [
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125,
+        125
+      ],
+      "sourceCycleDurationMs": 2000
+    }
+  },
+  "currentRuntimeReport": {
+    "path": "godot-project/qa-output/runtime-report.json",
+    "sha256": "467c00a86ccab5716a6c88df06110285080ed94c9ff07535e22bcc0b044b4629",
+    "runtimePassed": true
+  },
+  "currentVerification": {
+    "sourceFramePixelComparisonsPassed": 52,
+    "installedTextureHashesMatched": 13,
+    "nativeTextResourceHashesMatched": 7
+  },
+  "historicalEvidence": {
+    "verificationReportSha256": "49ed30b65a1ae998725f53a4671481c8973d43e1dc443a64b5f55fb650ac0129",
+    "note": "Historical project.godot and runtime-report hashes predate later editor/runtime writes; this receipt binds the current files without rewriting the older report."
+  },
+  "relatedEngineeringReplica": {
+    "candidateId": "merge-candidate-v1",
+    "sameSourceLock": true,
+    "sameRuntimeContract": true,
+    "separatelyHumanReviewed": false
+  },
+  "sourceGeometryVerdictsPreserved": true,
+  "productionPromoted": false
+}
