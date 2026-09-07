@@ -110,9 +110,18 @@ Packs in a standalone Godot review project, preserves source frames and native
 timing, and applies a fixed scale per direction. The installation plans must have
 explicit zero Provider request bounds.
 
-The helper requires Python 3.9+, Pillow, a current source-built Forge CLI, Godot
+The helper requires Python 3.9+, Pillow, Forge CLI 0.2.1 (or its release candidate), Godot
 4.6.x, and the expected source approvals and geometry evidence. It is scoped to the
 existing recovered three-direction corpus; the full source media is not bundled.
+The helper and its adjacent Godot templates are source-only: download the matching
+release tag's source archive or check out that tag, then run:
+
+```bash
+python3 scripts/character/prepare_directional_reuse.py --help
+```
+
+Pass the installed CLI's absolute path through `--forge` when building a candidate.
+See the [0.2.1 release notes](docs/releases/v0.2.1.md) for the delivery scope.
 
 See the [integration checks](docs/qa/forge-directional-reuse-main-integration-2026-09-07.md)
 and [human approval record](docs/qa/forge-directional-human-review-2026-09-07.md).
@@ -127,7 +136,8 @@ The default build uses `default = []`.
 | Surface | Availability |
 | --- | --- |
 | Style Locks, character/icon/prop generation, local asset preparation, jobs, Pack validation, Godot installation | Default CLI |
-| Directional reuse helper and native per-frame timing/rendering support | Available on `main`; separate from the published CLI release |
+| Native per-frame timing and rendering support | Included in the 0.2.1 release candidate |
+| Directional reuse helper and Godot review templates | Experimental; matching source checkout required |
 | Subject Locks and Character consistency V2 | Opt-in `consistency-v2` source build |
 | Environment, Terrain, Building, Map workflows | Opt-in world features; `world-assets` enables the group |
 | Manifest-driven project diff and build planning | Opt-in `game-art-manifest` source build |
