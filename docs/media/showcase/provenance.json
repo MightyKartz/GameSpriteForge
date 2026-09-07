@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-07",
+  "purpose": "Product README showcase",
+  "sourceArtwork": {
+    "sha256": "424884fd2a89c92244a95f36c6b1228edf43cd1679fcbc301d41ab4f4344afa1",
+    "width": 1536,
+    "height": 1024,
+    "mode": "RGB",
+    "includedInGit": false,
+    "tool": "Codex built-in imagegen",
+    "generationCalls": 1,
+    "editCalls": 1
+  },
+  "forge": {
+    "version": "0.2.1",
+    "operation": "prepare_asset",
+    "jobId": "32b0a6f2-d3b1-4250-8e19-086153686aac",
+    "providerRequestEstimate": 0,
+    "maximumProviderRequests": 0,
+    "split": {
+      "columns": 4,
+      "frameHeight": 512,
+      "frameWidth": 384,
+      "mode": "fixed_grid",
+      "rows": 2
+    },
+    "matting": {
+      "color": "#FF00FF",
+      "despillStrength": 0.0,
+      "haloPixels": 0,
+      "keyMode": "manual",
+      "manualKeyColor": "#FF00FF",
+      "mode": "manual_color",
+      "softness": 0,
+      "threshold": 65
+    },
+    "requireGameReady": true,
+    "state": "quality_checked",
+    "lifecycleState": "awaiting_review",
+    "steps": [
+      {
+        "name": "ingest",
+        "state": "succeeded"
+      },
+      {
+        "name": "matting",
+        "state": "succeeded"
+      },
+      {
+        "name": "normalize",
+        "state": "succeeded"
+      },
+      {
+        "name": "quality",
+        "state": "succeeded"
+      },
+      {
+        "name": "export",
+        "state": "blocked",
+        "message": "quality verdict PrototypeUsable; GameReady is required"
+      }
+    ],
+    "qualityReport": {
+      "verdict": "prototype_usable",
+      "metrics": {
+        "bboxBottomDriftPx": 40.0,
+        "bboxCenterXDriftPx": 0.5,
+        "bboxCenterYDriftPx": 1.0,
+        "bboxWidthVariationPx": 96.0,
+        "alphaCoverageAvg": 0.24581878,
+        "loopMatchScore": 0.0,
+        "frameCount": 8,
+        "frameSizeConsistent": true,
+        "cellBoundarySafe": true
+      },
+      "recommendations": [
+        "adjust_anchor",
+        "trim_loop_range"
+      ],
+      "notes": []
+    },
+    "exportedPack": false,
+    "usedOutputs": "Unmodified processed/matted frames; not the normalized animation sequence"
+  },
+  "presentation": {
+    "renderer": "Godot 4.6.3",
+    "scene": "Authored demo using prepared PNGs",
+    "nativePackInstallationDemonstrated": false
+  },
+  "files": {
+    "gallery.png": {
+      "sha256": "c164b25f0d43eda990905b2c8ded72e3b87d0eebccbc1fd1a170c8a704e0f216",
+      "width": 1280,
+      "height": 760,
+      "mode": "RGBA"
+    },
+    "godot.png": {
+      "sha256": "f08baef503a2a630f2e31e2cbdedd2ffc800844d61fbf16ab1867e681c5cf0ac",
+      "width": 1280,
+      "height": 760,
+      "mode": "RGBA"
+    },
+    "processing.png": {
+      "sha256": "0f0819bbab3935707a7816ab76a06a32f87752c7a142318abef0c82368632bfb",
+      "width": 1280,
+      "height": 760,
+      "mode": "RGBA"
+    },
+    "source/potion-before.png": {
+      "sha256": "66de13d8b52b6689d4538791922947af5052901f62ee0843c123e43962d4c4ee",
+      "width": 384,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    "sprites/barrel.png": {
+      "sha256": "d1b3a68c8dfeb201b4779174a47cfcee2500eedb1749fb10bdccc2a6104c68f0",
+      "width": 384,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    "sprites/campfire.png": {
+      "sha256": "f0e1d790660e13b6ec09be9c665de01c58323d5e7108a98ae3bc1dce17bfdd21",
+      "width": 384,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    "sprites/crate.png": {
+      "sha256": "c6d844e3d7b1d479184750e4851b7056152ce1a445cd508c75fb8f6acdef65fa",
+      "width": 384,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    "sprites/crystal.png": {
+      "sha256": "db48209218c64e39e70977e6228d003c8507c70380be02b5dd69faf6ec7d7dd5",
+      "width": 384,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    "sprites/key.png": {
+      "sha256": "20c82f96c6d8f885ef24cc420cd723f7463fc31fa780608e4e22e8985661dd0e",
+      "width": 384,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    "sprites/potion.png": {
+      "sha256": "7bf1df866e1bf3909f1d35ab40cce5d0bdd77229552bc4565dfcf78186a6e09d",
+      "width": 384,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    "sprites/pouch.png": {
+      "sha256": "5405154240de035c41b3645291ab26692b1b3e322e0de50093a301c573cc1b42",
+      "width": 384,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    "sprites/signpost.png": {
+      "sha256": "2d42c5716c61a809afb94dad49e06239c8bd88a855412e47c1b3bfe8f3f422ce",
+      "width": 384,
+      "height": 512,
+      "mode": "RGBA"
+    }
+  }
+}
