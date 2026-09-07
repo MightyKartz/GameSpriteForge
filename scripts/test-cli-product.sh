@@ -6,8 +6,13 @@ TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/forge-cli-product.XXXXXX")"
 trap 'rm -rf "${TEST_ROOT}"' EXIT
 
 command -v jq >/dev/null 2>&1
-cargo build -q -p forge-cli --manifest-path "${ROOT}/Cargo.toml"
-FORGE="${ROOT}/target/debug/forge"
+if [ -n "${FORGE_BINARY:-}" ]; then
+  FORGE="${FORGE_BINARY}"
+  test -x "${FORGE}"
+else
+  cargo build -q -p forge-cli --manifest-path "${ROOT}/Cargo.toml"
+  FORGE="${ROOT}/target/debug/forge"
+fi
 export FORGE_JOB_STORE="${TEST_ROOT}/jobs"
 export FORGE_PLAN_STORE="${TEST_ROOT}/plans"
 
@@ -183,6 +188,14 @@ RESOURCE="${TEST_ROOT}/godot/addons/forge_assets/fixture-ranger/forge_sprite_fra
 test -f "${RESOURCE}"
 test "$(stat -f '%z' "${RESOURCE}")" -lt 1048576
 ! grep -q 'PackedByteArray\|sub_resource type="Image"' "${RESOURCE}"
+
+if [ "${FORGE_VERIFY_GODOT:-0}" = "1" ]; then
+  command -v godot >/dev/null
+  cp "${ROOT}/examples/godot/forge-import-smoke/verify_installed_frames.gd" "${TEST_ROOT}/godot/"
+  godot --headless --path "${TEST_ROOT}/godot" --editor --import --quit
+  godot --headless --path "${TEST_ROOT}/godot" --script res://verify_installed_frames.gd -- \
+    res://addons/forge_assets/fixture-ranger/forge_sprite_frames.tres "${PACK}/assets/manifest.json"
+fi
 
 if credential_scan_matches "${FORGE_JOB_STORE}" >/dev/null; then
   echo "credential-like material leaked into the fixture JobStore" >&2

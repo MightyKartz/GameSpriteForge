@@ -99,8 +99,18 @@ Forge 使用外部纹理，安装到 `addons/forge_assets`，并追踪由 Forge 
 将已有、已批准的 right/down/up 恢复 Pack 组合到独立 Godot 审核项目中，保留源帧和原生
 时序，并按方向应用整段固定缩放。安装计划必须明确预计与最大 Provider 请求均为零。
 
-辅助工具需要 Python 3.9+、Pillow、从当前源码构建的 Forge CLI、Godot 4.6.x，以及符合
+辅助工具需要 Python 3.9+、Pillow、Forge CLI 0.2.1（或其候选版）、Godot 4.6.x，以及符合
 输入约定的来源批准和尺度证据。它适用于现有三方向恢复素材；完整源媒体不随仓库分发。
+
+辅助脚本和相邻的 Godot 模板仅随源码提供，CLI 安装器不安装它们。下载对应标签的
+源码压缩包或检出该标签后，查看参数：
+
+```bash
+python3 scripts/character/prepare_directional_reuse.py --help
+```
+
+构建候选时，通过 `--forge` 传入已安装 CLI 的绝对路径。
+交付范围见 [0.2.1 发布说明](docs/releases/v0.2.1.md)。
 
 可查阅[集成验证](docs/qa/forge-directional-reuse-main-integration-2026-09-07.md)与
 [人工审核通过记录](docs/qa/forge-directional-human-review-2026-09-07.md)。批准绑定具体候选；
@@ -113,7 +123,8 @@ Forge 使用外部纹理，安装到 `addons/forge_assets`，并追踪由 Forge 
 | 能力 | 可用范围 |
 | --- | --- |
 | Style Lock、角色/图标/道具生成、本地资产准备、Job、Pack 校验、Godot 安装 | 默认 CLI |
-| 三方向复用辅助工具、原生逐帧时长与渲染参数支持 | 已进入 `main`，与当前发布二进制分开 |
+| 原生逐帧时长与渲染参数支持 | 包含在 0.2.1 候选版中 |
+| 三方向复用辅助工具和 Godot 审核模板 | 实验性工具，需要对应版本的源码 |
 | Subject Lock 与 Character 一致性 V2 | 按需启用 `consistency-v2` 源码 feature |
 | Environment、Terrain、Building、Map 工作流 | 按需启用 World features；`world-assets` 启用整组 |
 | 资产清单驱动的项目 diff 与构建计划 | 按需启用 `game-art-manifest` 源码 feature |

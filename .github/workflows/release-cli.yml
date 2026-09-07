@@ -9,7 +9,7 @@ on:
       version:
         description: "Release version to preflight (no GitHub Release is created)"
         required: true
-        default: "v0.2.0-cli.1"
+        default: "v0.2.1-rc.1"
         type: string
 
 permissions:
@@ -20,16 +20,24 @@ permissions:
 jobs:
   release-macos-arm64:
     runs-on: macos-15
+    timeout-minutes: 60
     env:
       FORGE_RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      - name: Install release Rust toolchain
+        run: rustup toolchain install 1.98.0 --profile minimal --component rustfmt --component clippy
+
+      - name: Select release Rust toolchain
+        run: rustup override set 1.98.0
+
       - name: Verify tag and source
         shell: bash
         run: |
           set -euo pipefail
-          test "${FORGE_RELEASE_TAG}" = "v0.2.0-cli.1"
+          [[ "${FORGE_RELEASE_TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc\.[1-9][0-9]*)?$ ]]
+          test -s "docs/releases/${FORGE_RELEASE_TAG%%-*}.md"
           cargo_version="$(cargo metadata --no-deps --format-version 1 | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next(package["version"] for package in data["packages"] if package["name"] == "forge-cli"))')"
           test "${FORGE_RELEASE_TAG}" = "v${cargo_version}"
           cargo fmt --all -- --check
@@ -37,7 +45,7 @@ jobs:
           cargo test --workspace --no-fail-fast
 
       - name: Build Forge
-        run: cargo build -p forge-cli --release --target aarch64-apple-darwin
+        run: cargo build --locked -p forge-cli --release --target aarch64-apple-darwin
 
       - name: Build pinned LGPL FFmpeg helpers
         shell: bash
@@ -83,7 +91,8 @@ jobs:
           ln -s "${godot_binary}" "${RUNNER_TEMP}/godot-bin/godot"
           export PATH="${RUNNER_TEMP}/ffmpeg/bin:${RUNNER_TEMP}/godot-bin:${PATH}"
           godot --version | grep -E '^4\.6\.'
-          bash scripts/test-cli-product.sh
+          FORGE_BINARY="${GITHUB_WORKSPACE}/target/aarch64-apple-darwin/release/forge" bash scripts/test-cli-product.sh
+          python3 scripts/character/test_prepare_directional_reuse.py -v
           bash scripts/test-cli-installer.sh
           bash scripts/test-cli-signing-contract.sh
 
@@ -112,6 +121,20 @@ jobs:
           cp ffmpeg-8.1.2.tar.xz ffmpeg-8.1.2-source.tar.xz
           cp install.sh forge-installer.sh
 
+      - name: Verify packaged fresh install and upgrade
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/previous-release"
+          gh release download v0.2.0-cli.1 --dir "${RUNNER_TEMP}/previous-release" \
+            --pattern 'forge-aarch64-apple-darwin.zip*'
+          export PATH="${RUNNER_TEMP}/godot-bin:${PATH}"
+          bash scripts/test-cli-release-artifact.sh \
+            "${GITHUB_WORKSPACE}" "${FORGE_RELEASE_TAG}" \
+            "${RUNNER_TEMP}/previous-release" v0.2.0-cli.1
+
       - name: Generate SBOM
         env:
           CARGO_NET_RETRY: "5"
@@ -129,6 +152,19 @@ jobs:
           test -s packages/cli/forge-sbom.cdx.json
           cp packages/cli/forge-sbom.cdx.json forge-sbom.cdx.json
 
+      - name: Upload verified release artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: forge-cli-${{ env.FORGE_RELEASE_TAG }}-${{ github.run_id }}
+          path: |
+            forge-aarch64-apple-darwin.zip
+            forge-aarch64-apple-darwin.zip.sha256
+            forge-installer.sh
+            forge-sbom.cdx.json
+            ffmpeg-8.1.2-source.tar.xz
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Attest release binary
         if: github.event_name == 'push'
         uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4
@@ -143,9 +179,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh release create "${FORGE_RELEASE_TAG}" \
+          release_flags=(--latest)
+          if [[ "${FORGE_RELEASE_TAG}" == *-rc.* ]]; then
+            release_flags=(--prerelease --latest=false)
+          fi
+          gh release create "${FORGE_RELEASE_TAG}" --verify-tag "${release_flags[@]}" \
             --title "Forge CLI ${FORGE_RELEASE_TAG}" \
-            --notes "Agent-first Forge CLI for consistent characters, icon sets, prop sets, and Godot 4.6.x delivery. This first CLI archive is unsigned and not notarized; the installer verifies the release and per-file SHA-256 manifests, and GitHub publishes an artifact attestation and SBOM." \
+            --notes-file "docs/releases/${FORGE_RELEASE_TAG%%-*}.md" \
             forge-aarch64-apple-darwin.zip \
             forge-aarch64-apple-darwin.zip.sha256 \
             forge-installer.sh \
