@@ -942,6 +942,23 @@ pub fn export_static_pack(
         })
         .collect::<Vec<_>>();
     let canvas = image::open(&frames[0])?.width();
+    let anchor = serde_json::json!({
+        "type": if asset.kind == StaticAssetKind::IconSet { "center" } else { "feet" },
+        "x": canvas as f32 / 2.0,
+        // normalize_static_image aligns the exclusive bottom of the foreground
+        // to this ground line, leaving the same canvas/16 transparent margin.
+        "y": if asset.kind == StaticAssetKind::IconSet {
+            canvas as f32 / 2.0
+        } else {
+            (canvas - canvas / 16) as f32
+        },
+    });
+    let rendering = serde_json::json!({
+        "profile": "godot-sprite-rendering@1.0.0",
+        "textureFilter": style.sampling,
+        "pixelSnap": style.sampling == SamplingMode::Nearest,
+        "mirrorPolicy": "auto",
+    });
     let mut manifest = serde_json::json!({
         "assetType": asset.kind.as_str(),
         "name": asset.name,
@@ -953,11 +970,8 @@ pub fn export_static_pack(
             "rows": sheet.atlas.rows,
         },
         "animations": animations,
-        "anchor": {
-            "type": if asset.kind == StaticAssetKind::IconSet { "center" } else { "feet" },
-            "x": canvas as f32 / 2.0,
-            "y": if asset.kind == StaticAssetKind::IconSet { canvas as f32 / 2.0 } else { canvas as f32 },
-        },
+        "anchor": anchor,
+        "rendering": rendering,
         "items": manifest_items,
     });
     if sheet_images.len() > 1 {
@@ -1020,6 +1034,8 @@ pub fn export_static_pack(
                 "styleRevision": style.revision,
                 "styleBaselineProfile": style.baseline_profile,
                 "consistencyProfile": CONSISTENCY_PROFILE,
+                "rendering": rendering,
+                "anchor": anchor,
             }
         },
         "animations": animations,
@@ -1070,6 +1086,10 @@ pub fn export_static_pack(
             "assetType": asset.kind.as_str(),
             "items": manifest["items"],
             "textures": sheet_images,
+            "frameWidth": canvas,
+            "frameHeight": canvas,
+            "anchor": anchor,
+            "rendering": rendering,
         }))?,
     )?;
     fs::write(

@@ -274,6 +274,11 @@ pub fn validate_pack_layout(pack_path: &Path) -> Result<(), PackError> {
         godot_helper_document.as_ref(),
     )?;
     validate_godot_rendering_contract(&manifest_document, godot_helper_document.as_ref())?;
+    validate_static_delivery_contract(
+        &forgepack_document,
+        &manifest_document,
+        godot_helper_document.as_ref(),
+    )?;
     validate_json_file(
         pack_path.join("assets/atlas.json"),
         "atlas.schema.json",
@@ -1122,14 +1127,18 @@ fn validate_godot_rendering_contract(
     godot_helper: Option<&serde_json::Value>,
 ) -> Result<(), PackError> {
     let manifest_rendering = manifest.get("rendering");
-    let helper_rendering =
-        godot_helper.and_then(|helper| helper.pointer("/spriteFrames/rendering"));
+    let helper_rendering_path = if is_static_manifest(manifest) {
+        "/rendering"
+    } else {
+        "/spriteFrames/rendering"
+    };
+    let helper_rendering = godot_helper.and_then(|helper| helper.pointer(helper_rendering_path));
     match (manifest_rendering, helper_rendering) {
         (None, None) => return Ok(()),
         (Some(_), None) => {
             return Err(timing_error(
                 "assets/godot_import.json",
-                "spriteFrames.rendering is missing",
+                format!("{helper_rendering_path} is missing"),
             ));
         }
         (None, Some(_)) => {
@@ -1140,7 +1149,7 @@ fn validate_godot_rendering_contract(
         {
             return Err(timing_error(
                 "assets/godot_import.json",
-                "spriteFrames.rendering differs from assets/manifest.json",
+                format!("{helper_rendering_path} differs from assets/manifest.json"),
             ));
         }
         (Some(_), Some(_)) => {}
@@ -1244,6 +1253,60 @@ fn validate_godot_rendering_contract(
             "assets/manifest.json",
             "rendering.mirrorPolicy right_only forbids idle_left and walk_left",
         ));
+    }
+    Ok(())
+}
+
+fn is_static_manifest(manifest: &serde_json::Value) -> bool {
+    matches!(
+        manifest["assetType"].as_str(),
+        Some("icon_set" | "prop_set")
+    )
+}
+
+fn validate_static_delivery_contract(
+    forgepack: &serde_json::Value,
+    manifest: &serde_json::Value,
+    helper: Option<&serde_json::Value>,
+) -> Result<(), PackError> {
+    // Older static Packs had no rendering contract and keep their original
+    // centered/inherited Godot behavior when installed.
+    if !is_static_manifest(manifest) || manifest.get("rendering").is_none() {
+        return Ok(());
+    }
+    let helper =
+        helper.ok_or_else(|| timing_error("assets/godot_import.json", "missing helper"))?;
+    for key in ["anchor", "rendering"] {
+        if helper.get(key) != manifest.get(key)
+            || forgepack.pointer(&format!("/source/metadata/{key}")) != manifest.get(key)
+        {
+            return Err(timing_error(
+                "assets/godot_import.json",
+                format!("static {key} differs between Pack metadata, manifest, and helper"),
+            ));
+        }
+    }
+    if helper.get("items") != manifest.get("items") {
+        return Err(timing_error(
+            "assets/godot_import.json",
+            "static items differ from manifest",
+        ));
+    }
+    for (dimension, coordinate) in [("frameWidth", "x"), ("frameHeight", "y")] {
+        let size = manifest["sheet"][dimension].as_f64().unwrap_or(0.0);
+        if helper.get(dimension) != manifest["sheet"].get(dimension) {
+            return Err(timing_error(
+                "assets/godot_import.json",
+                format!("static {dimension} differs from manifest"),
+            ));
+        }
+        let anchor = manifest["anchor"][coordinate].as_f64().unwrap_or(-1.0);
+        if !(0.0..=size).contains(&anchor) {
+            return Err(timing_error(
+                "assets/manifest.json",
+                format!("static anchor.{coordinate} is outside the canvas"),
+            ));
+        }
     }
     Ok(())
 }

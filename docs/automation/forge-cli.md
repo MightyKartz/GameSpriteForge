@@ -161,6 +161,14 @@ text `.tres`/`.tscn` files at or above 1 MiB and any embedded Image
 - Icon sets receive one external PNG per item and an item-to-`res://` mapping.
 - Prop sets receive one external PNG and one `Sprite2D` scene per item.
 
+New static Packs preserve Style `sampling` as `rendering.textureFilter` (`nearest`
+or `linear`) in the manifest, Pack source metadata, and Godot helper. Props use the
+normalized ground line `(canvas / 2, canvas - canvas / 16)` as their local origin;
+icons use the canvas center. `forge_usage.json` includes this rendering/anchor
+metadata and a `texturePaths` map from item ID to installed `res://` texture for UI
+consumers. Static Packs without the rendering contract retain their former centered
+geometry and inherited Godot filtering.
+
 Every install writes `forge_usage.json`, registers atomically in
 `.forge/assets.json`, replaces only Forge-owned targets, and restores the previous
 installation after failure. Character usage includes the loop profile, selected

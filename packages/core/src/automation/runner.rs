@@ -5118,7 +5118,7 @@ fn run_install_godot(
                     .iter()
                     .any(|animation| animation.name == *required)
             });
-    let usage = serde_json::json!({
+    let mut usage = serde_json::json!({
         "schemaVersion": "1",
         "assetKey": &asset_key,
         "assetId": &pack_summary.id,
@@ -5158,6 +5158,35 @@ fn run_install_godot(
         }),
         "gameplayControllerIncluded": false,
     });
+    if matches!(pack_summary.asset_type.as_str(), "icon_set" | "prop_set") {
+        let helper: serde_json::Value = serde_json::from_slice(&fs::read(
+            request.pack_path.join("assets/godot_import.json"),
+        )?)?;
+        if let Some(rendering) = helper.get("rendering") {
+            usage["rendering"] = rendering.clone();
+            usage["anchor"] = helper["anchor"].clone();
+            usage["frameWidth"] = helper["frameWidth"].clone();
+            usage["frameHeight"] = helper["frameHeight"].clone();
+        }
+        usage["texturePaths"] = pack_summary
+            .items
+            .iter()
+            .map(|item| {
+                (
+                    item.id.clone(),
+                    serde_json::json!(format!(
+                        "res://{}",
+                        request
+                            .target
+                            .join("items")
+                            .join(format!("{}.png", item.id))
+                            .display()
+                    )),
+                )
+            })
+            .collect::<serde_json::Map<String, serde_json::Value>>()
+            .into();
+    }
     fs::write(&usage_path, serde_json::to_vec_pretty(&usage)?)?;
 
     let marker = serde_json::json!({
