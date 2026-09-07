@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::asset_project::{SamplingMode, StaticAssetKind, StaticAssetSetSpecV1};
-use crate::export::{PreviewGifParameters, SpriteSheetParameters};
+use crate::export::{AnimationRendering, PreviewGifParameters, SpriteSheetParameters};
 use crate::frames::NormalizeOptions;
 use crate::job::RepairContext;
 use crate::matting::ChromaParameters;
@@ -55,6 +55,8 @@ impl Default for QualityPolicy {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct PrepareAssetRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rendering: Option<AnimationRendering>,
     #[serde(default = "schema_version")]
     pub schema_version: String,
     pub input: AssetInput,
@@ -102,6 +104,8 @@ pub struct PrepareStaticItem {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct PrepareCharacterPackRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rendering: Option<AnimationRendering>,
     #[serde(default = "character_schema_version")]
     pub schema_version: String,
     pub metadata: CharacterPackMetadata,
@@ -368,6 +372,8 @@ pub struct CharacterPackMetadata {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct CharacterAnimationRecipe {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frame_durations_ms: Option<Vec<u32>>,
     pub name: String,
     pub input: AssetInput,
     #[serde(default = "default_fps")]
@@ -446,6 +452,8 @@ pub enum MattingRecipe {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct AssetMetadata {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frame_durations_ms: Option<Vec<u32>>,
     pub name: String,
     #[serde(default = "default_animation")]
     pub animation: String,

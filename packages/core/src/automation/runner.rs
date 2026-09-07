@@ -2156,12 +2156,14 @@ fn run_generate_keyframe_character_pack(
     }
 
     let mut prepare = PrepareCharacterPackRequest {
+        rendering: None,
         schema_version: "2".into(),
         metadata: request.metadata.clone(),
         workflow: request.workflow.clone(),
         animations: actions
             .iter()
             .map(|(action, fps)| CharacterAnimationRecipe {
+                frame_durations_ms: None,
                 name: (*action).into(),
                 input: AssetInput::PngSequence {
                     paths: frame_groups
@@ -3725,12 +3727,14 @@ fn generated_pack_request(
     workflow: &[(&str, f32, &str, &str)],
 ) -> PrepareCharacterPackRequest {
     PrepareCharacterPackRequest {
+        rendering: None,
         schema_version: "2".into(),
         metadata: request.metadata.clone(),
         workflow: request.workflow.clone(),
         animations: workflow
             .iter()
             .map(|(name, fps, _, _)| CharacterAnimationRecipe {
+                frame_durations_ms: None,
                 name: (*name).into(),
                 input: AssetInput::VideoClip {
                     path: generated[*name].video_path.clone(),
@@ -4289,6 +4293,11 @@ fn run_prepare_character_pack(
                 animation.name
             )));
         }
+        crate::export::validate_frame_durations(
+            animation.frame_durations_ms.as_deref(),
+            raw_frames.len(),
+        )
+        .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
         completed_phases += 1.0;
         step(
             store,
@@ -4360,8 +4369,12 @@ fn run_prepare_character_pack(
         .iter()
         .flat_map(|group| group.frame_paths.iter().cloned())
         .collect::<Vec<_>>();
-    let (normalized_paths, bboxes, sizes, anchor, summaries) =
-        normalize_and_save(&record.job_dir, &all_processed, request.normalize)?;
+    let (normalized_paths, bboxes, sizes, anchor, summaries) = normalize_and_save(
+        &record.job_dir,
+        &all_processed,
+        request.normalize,
+        request.rendering.as_ref(),
+    )?;
     fs::write(
         record.job_dir.join("normalized-frames.json"),
         serde_json::to_vec_pretty(&summaries)?,
@@ -4584,6 +4597,7 @@ fn run_prepare_character_pack(
         animations: runs
             .into_iter()
             .map(|run| CharacterAnimationExport {
+                frame_durations_ms: run.recipe.frame_durations_ms,
                 name: run.recipe.name,
                 frame_paths: run.frame_paths,
                 fps: run.recipe.fps,
@@ -4594,6 +4608,7 @@ fn run_prepare_character_pack(
             .collect(),
         sheet: request.sheet,
         metadata: CharacterPackMetadataParams {
+            rendering: request.rendering.clone(),
             id: asset_id,
             name: request.metadata.name.clone(),
             version: "0.1.0".into(),
@@ -4806,6 +4821,11 @@ fn run_prepare_asset(
     }
 
     let raw_frames = ingest_frames(&record.job_dir, &request.input)?;
+    crate::export::validate_frame_durations(
+        request.metadata.frame_durations_ms.as_deref(),
+        raw_frames.len(),
+    )
+    .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
     if raw_frames.len() < 2 {
         return Err(AutomationRunError::Processing(
             "at least two frames are required".into(),
@@ -4820,8 +4840,12 @@ fn run_prepare_asset(
     check_cancelled(store, job_id)?;
 
     step(store, job_id, "normalize", "running", 0.45, None)?;
-    let (normalized_paths, bboxes, sizes, anchor, summaries) =
-        normalize_and_save(&record.job_dir, &processed_frames, request.normalize)?;
+    let (normalized_paths, bboxes, sizes, anchor, summaries) = normalize_and_save(
+        &record.job_dir,
+        &processed_frames,
+        request.normalize,
+        request.rendering.as_ref(),
+    )?;
     step(store, job_id, "normalize", "succeeded", 0.6, None)?;
 
     step(store, job_id, "quality", "running", 0.65, None)?;
@@ -4894,6 +4918,8 @@ fn run_prepare_asset(
             background: GifBackground::Transparent,
         },
         metadata: PackMetadataParams {
+            rendering: request.rendering.clone(),
+            frame_durations_ms: request.metadata.frame_durations_ms.clone(),
             id: asset_id,
             name: request.metadata.name.clone(),
             version: "0.1.0".into(),
@@ -5165,6 +5191,32 @@ fn run_install_godot(
         }),
         "gameplayControllerIncluded": false,
     });
+    if matches!(pack_summary.asset_type.as_str(), "animation" | "character") {
+        let helper: serde_json::Value = serde_json::from_slice(&fs::read(
+            request.pack_path.join("assets/godot_import.json"),
+        )?)?;
+        let spec = &helper["spriteFrames"];
+        for key in ["rendering", "anchor", "frameWidth", "frameHeight"] {
+            if let Some(value) = spec.get(key) {
+                usage[key] = value.clone();
+            }
+        }
+        if let (Some(installed), Some(animations)) = (
+            usage["animations"].as_array_mut(),
+            spec["animations"].as_array(),
+        ) {
+            for installed_animation in installed {
+                if let Some(animation) = animations
+                    .iter()
+                    .find(|animation| animation["name"] == installed_animation["name"])
+                {
+                    if let Some(durations) = animation.get("frameDurationsMs") {
+                        installed_animation["frameDurationsMs"] = durations.clone();
+                    }
+                }
+            }
+        }
+    }
     if matches!(pack_summary.asset_type.as_str(), "icon_set" | "prop_set") {
         let helper: serde_json::Value = serde_json::from_slice(&fs::read(
             request.pack_path.join("assets/godot_import.json"),
@@ -5800,11 +5852,39 @@ fn normalize_and_save(
     job_dir: &Path,
     paths: &[PathBuf],
     options: crate::frames::NormalizeOptions,
+    rendering: Option<&crate::export::AnimationRendering>,
 ) -> Result<NormalizeOutput, AutomationRunError> {
     let images = paths
         .iter()
         .map(|path| Ok(image::open(path)?.to_rgba8()))
         .collect::<Result<Vec<_>, image::ImageError>>()?;
+    if options.mode == crate::frames::CanvasMode::PreserveSource {
+        if options.margin != 0 || options.margin_bottom != 0 {
+            return Err(AutomationRunError::Processing(
+                "preserve_source requires zero margins".into(),
+            ));
+        }
+        if let Some(first) = images.first() {
+            if images
+                .iter()
+                .any(|image| image.dimensions() != first.dimensions())
+            {
+                return Err(AutomationRunError::Processing("preserve_source requires identical source canvas dimensions across every frame and animation".into()));
+            }
+            if options.manual_anchor.is_some_and(|anchor| {
+                !anchor.x.is_finite()
+                    || !anchor.y.is_finite()
+                    || anchor.x < 0.0
+                    || anchor.y < 0.0
+                    || anchor.x > first.width() as f32
+                    || anchor.y > first.height() as f32
+            }) {
+                return Err(AutomationRunError::Processing(
+                    "manualAnchor must be inside the preserved source canvas".into(),
+                ));
+            }
+        }
+    }
     let normalized = normalize_frames(&images, options);
     let target_dir = job_dir.join("processed/normalized");
     fs::create_dir_all(&target_dir)?;
@@ -5833,6 +5913,12 @@ fn normalize_and_save(
         .first()
         .map(|frame| frame.anchor)
         .ok_or_else(|| AutomationRunError::Processing("normalization produced no frames".into()))?;
+    if (rendering.is_some() || options.mode == crate::frames::CanvasMode::PreserveSource)
+        && rendering.is_none_or(|r| r.pixel_snap)
+        && (anchor.x.fract() != 0.0 || anchor.y.fract() != 0.0)
+    {
+        return Err(AutomationRunError::Processing("pixelSnap requires integer anchor coordinates; set a manualAnchor or rendering.pixelSnap false".into()));
+    }
     Ok((paths, bboxes, sizes, anchor, summaries))
 }
 

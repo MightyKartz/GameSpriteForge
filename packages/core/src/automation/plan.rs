@@ -326,12 +326,31 @@ fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreEr
                 .map_err(PlanStoreError::InvalidRequest)?;
         }
         AutomationOperation::PrepareAsset(request) => {
+            validate_local_animation_options(request.normalize, request.rendering.as_ref())?;
+            validate_local_animation_input(
+                &request.input,
+                request.metadata.frame_durations_ms.as_deref(),
+            )?;
+            validate_preserved_canvases(
+                request.normalize,
+                request.rendering.as_ref(),
+                std::iter::once(&request.input),
+            )?;
+            if matches!(request.input, AssetInput::Gsfpack { .. })
+                && (request.rendering.is_some()
+                    || request.metadata.frame_durations_ms.is_some()
+                    || request.normalize.mode == crate::frames::CanvasMode::PreserveSource)
+            {
+                return Err(PlanStoreError::InvalidRequest(
+                    "gsfpack input is copied unchanged; rendering, frameDurationsMs and preserve_source overrides require PNG, sprite sheet or video input".into(),
+                ));
+            }
             if request.metadata.name.trim().is_empty() {
                 return Err(PlanStoreError::InvalidRequest(
                     "metadata.name is required".into(),
                 ));
             }
-            if request.metadata.fps <= 0.0 {
+            if !request.metadata.fps.is_finite() || request.metadata.fps <= 0.0 {
                 return Err(PlanStoreError::InvalidRequest(
                     "metadata.fps must be positive".into(),
                 ));
@@ -1070,9 +1089,122 @@ pub fn fingerprint_operation_inputs(
     Ok(format!("{:x}", hasher.finalize()))
 }
 
+fn validate_local_animation_options(
+    options: crate::frames::NormalizeOptions,
+    rendering: Option<&crate::export::AnimationRendering>,
+) -> Result<(), PlanStoreError> {
+    if options.mode == crate::frames::CanvasMode::PreserveSource
+        && (options.margin != 0 || options.margin_bottom != 0)
+    {
+        return Err(PlanStoreError::InvalidRequest(
+            "preserve_source requires margin and marginBottom to be zero".into(),
+        ));
+    }
+    if let Some(anchor) = options.manual_anchor {
+        if !anchor.x.is_finite() || !anchor.y.is_finite() || anchor.x < 0.0 || anchor.y < 0.0 {
+            return Err(PlanStoreError::InvalidRequest(
+                "manualAnchor coordinates must be finite and nonnegative".into(),
+            ));
+        }
+        if (rendering.is_some() || options.mode == crate::frames::CanvasMode::PreserveSource)
+            && rendering.is_none_or(|r| r.pixel_snap)
+            && (anchor.x.fract() != 0.0 || anchor.y.fract() != 0.0)
+        {
+            return Err(PlanStoreError::InvalidRequest(
+                "pixelSnap requires integer manualAnchor coordinates".into(),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validate_local_animation_input(
+    input: &AssetInput,
+    durations: Option<&[u32]>,
+) -> Result<(), PlanStoreError> {
+    let Some(durations) = durations else {
+        return Ok(());
+    };
+    let frame_count = match input {
+        AssetInput::PngSequence { paths } => paths.len(),
+        AssetInput::SpriteSheet {
+            split: super::types::SpriteSheetSplit::FixedGrid(grid),
+            ..
+        } => (grid.columns as usize)
+            .checked_mul(grid.rows as usize)
+            .ok_or_else(|| {
+                PlanStoreError::InvalidRequest("fixed_grid frame count overflows".into())
+            })?,
+        AssetInput::VideoClip {
+            target_frame_count, ..
+        } => *target_frame_count as usize,
+        // Content-derived splits are checked again after actual ingestion.
+        _ => durations.len(),
+    };
+    crate::export::validate_frame_durations(Some(durations), frame_count)
+        .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))
+}
+
+fn validate_preserved_canvases<'a>(
+    options: crate::frames::NormalizeOptions,
+    rendering: Option<&crate::export::AnimationRendering>,
+    inputs: impl Iterator<Item = &'a AssetInput>,
+) -> Result<(), PlanStoreError> {
+    if options.mode != crate::frames::CanvasMode::PreserveSource {
+        return Ok(());
+    }
+    let mut expected = None;
+    for input in inputs {
+        let dimensions = match input {
+            AssetInput::PngSequence { paths } => paths
+                .iter()
+                .map(|path| {
+                    image::image_dimensions(path).map_err(|error| {
+                        PlanStoreError::InvalidRequest(format!("invalid PNG dimensions: {error}"))
+                    })
+                })
+                .collect::<Result<Vec<_>, _>>()?,
+            AssetInput::SpriteSheet {
+                split: super::types::SpriteSheetSplit::FixedGrid(grid),
+                ..
+            } => vec![(grid.frame_width, grid.frame_height)],
+            _ => Vec::new(),
+        };
+        for size in dimensions {
+            if expected.is_some_and(|previous| previous != size) {
+                return Err(PlanStoreError::InvalidRequest("preserve_source requires identical source canvas dimensions across every frame and animation".into()));
+            }
+            if options
+                .manual_anchor
+                .is_some_and(|anchor| anchor.x > size.0 as f32 || anchor.y > size.1 as f32)
+            {
+                return Err(PlanStoreError::InvalidRequest(
+                    "manualAnchor must be inside the preserved source canvas".into(),
+                ));
+            }
+            let anchor = options
+                .manual_anchor
+                .unwrap_or_else(|| crate::frames::default_foot_anchor(size.0, size.1, 0));
+            if rendering.is_none_or(|r| r.pixel_snap)
+                && (anchor.x.fract() != 0.0 || anchor.y.fract() != 0.0)
+            {
+                return Err(PlanStoreError::InvalidRequest("pixelSnap requires integer anchor coordinates; set a manualAnchor or rendering.pixelSnap false".into()));
+            }
+            expected = Some(size);
+        }
+    }
+    Ok(())
+}
+
 fn validate_character_pack_request(
     request: &PrepareCharacterPackRequest,
 ) -> Result<(), PlanStoreError> {
+    validate_local_animation_options(request.normalize, request.rendering.as_ref())?;
+    validate_preserved_canvases(
+        request.normalize,
+        request.rendering.as_ref(),
+        request.animations.iter().map(|a| &a.input),
+    )?;
     if request.schema_version != "2" {
         return Err(PlanStoreError::InvalidRequest(
             "Character Pack requests require schemaVersion \"2\"".into(),
@@ -1090,6 +1222,7 @@ fn validate_character_pack_request(
     }
     let mut names = HashSet::new();
     for animation in &request.animations {
+        validate_local_animation_input(&animation.input, animation.frame_durations_ms.as_deref())?;
         if !is_engine_safe_name(&animation.name) {
             return Err(PlanStoreError::InvalidRequest(format!(
                 "animation name must contain only letters, numbers, '-' or '_': {}",
@@ -1102,7 +1235,7 @@ fn validate_character_pack_request(
                 animation.name
             )));
         }
-        if animation.fps <= 0.0 {
+        if !animation.fps.is_finite() || animation.fps <= 0.0 {
             return Err(PlanStoreError::InvalidRequest(format!(
                 "animation fps must be positive: {}",
                 animation.name

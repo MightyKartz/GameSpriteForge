@@ -13,8 +13,8 @@ use crate::quality::{LoopSelectionReport, QualityReport, QualityVerdict};
 pub use gif::{build_preview_gif, GifBackground, PreviewGifOutput, PreviewGifParameters};
 pub use godot::{export_godot_project, GodotProjectExportOutput, GodotProjectExportParams};
 pub use manifest::{
-    export_metadata, CharacterPackMetadataParams, EngineManifest, ExportMetadata,
-    PackMetadataParams,
+    export_metadata, AnimationRendering, CharacterPackMetadataParams, EngineManifest,
+    ExportMetadata, PackMetadataParams,
 };
 pub use sheet::{build_sprite_sheet, Atlas, AtlasFrame, SpriteSheetOutput, SpriteSheetParameters};
 pub use sheet_layout::{
@@ -89,6 +89,8 @@ pub struct ExportPackOutput {
 #[derive(Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CharacterAnimationExport {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frame_durations_ms: Option<Vec<u32>>,
     pub name: String,
     pub frame_paths: Vec<PathBuf>,
     pub fps: f32,
@@ -178,6 +180,15 @@ pub fn export_frame_sequence(
 }
 
 pub fn export_pack(params: ExportPackParams) -> Result<ExportPackOutput, ExportError> {
+    validate_frame_durations(
+        params.metadata.frame_durations_ms.as_deref(),
+        params
+            .metadata
+            .animation_frames
+            .as_ref()
+            .filter(|frames| !frames.is_empty())
+            .map_or(params.frame_paths.len(), Vec::len),
+    )?;
     if params.metadata.quality_report.verdict == QualityVerdict::Blocked {
         return Err(ExportError::QualityBlocked);
     }
@@ -264,6 +275,10 @@ pub fn export_character_pack(
     }
     let mut names = Vec::new();
     for animation in &params.animations {
+        validate_frame_durations(
+            animation.frame_durations_ms.as_deref(),
+            animation.frame_paths.len(),
+        )?;
         if animation.frame_paths.is_empty() {
             return Err(ExportError::NoFrames);
         }
@@ -321,6 +336,7 @@ pub fn export_character_pack(
         )?;
         animation_preview_paths.insert(animation.name.clone(), preview_path);
         manifest_animations.push(manifest::ManifestAnimation {
+            frame_durations_ms: animation.frame_durations_ms.clone(),
             name: animation.name.clone(),
             frames: (offset..end).collect(),
             fps: animation.fps,
@@ -486,7 +502,7 @@ fn godot_import_helper(manifest: &manifest::EngineManifest) -> serde_json::Value
         manifest.sheet.images.clone()
     };
 
-    serde_json::json!({
+    let mut helper = serde_json::json!({
         "engine": "godot",
         "format": "AnimatedSprite2D SpriteFrames helper",
         "spriteFrames": {
@@ -507,7 +523,25 @@ fn godot_import_helper(manifest: &manifest::EngineManifest) -> serde_json::Value
             "Create a SpriteFrames resource for AnimatedSprite2D.",
             "Use the listed animation frames and FPS from this helper."
         ]
-    })
+    });
+    if let Some(rendering) = &manifest.rendering {
+        helper["spriteFrames"]["rendering"] = serde_json::json!(rendering);
+    }
+    helper
+}
+
+pub(crate) fn validate_frame_durations(
+    durations: Option<&[u32]>,
+    frame_count: usize,
+) -> Result<(), ExportError> {
+    if let Some(durations) = durations {
+        if durations.len() != frame_count || durations.is_empty() || durations.contains(&0) {
+            return Err(ExportError::InvalidParameter(format!(
+                "frameDurationsMs must contain one positive integer per frame (expected {frame_count})"
+            )));
+        }
+    }
+    Ok(())
 }
 
 fn is_safe_id(value: &str) -> bool {
@@ -588,6 +622,8 @@ mod tests {
                 background: GifBackground::Checkerboard,
             },
             metadata: PackMetadataParams {
+                rendering: None,
+                frame_durations_ms: None,
                 id: "hero".to_string(),
                 name: "Hero".to_string(),
                 version: "0.1.0".to_string(),
@@ -687,6 +723,8 @@ mod tests {
                 background: GifBackground::Transparent,
             },
             metadata: PackMetadataParams {
+                rendering: None,
+                frame_durations_ms: None,
                 id: "hero".to_string(),
                 name: "Hero".to_string(),
                 version: "0.1.0".to_string(),
@@ -739,6 +777,7 @@ mod tests {
     #[test]
     fn godot_helper_lists_all_multipage_textures() {
         let manifest = manifest::EngineManifest {
+            rendering: None,
             name: "Hero Knight Pack".to_string(),
             sheet: manifest::ManifestSheet {
                 image: "assets/sprite_sheet.png".to_string(),
@@ -752,6 +791,7 @@ mod tests {
                 rows: 4,
             },
             animations: vec![manifest::ManifestAnimation {
+                frame_durations_ms: None,
                 name: "walk".to_string(),
                 frames: vec![0, 1],
                 fps: 12.0,
@@ -797,6 +837,8 @@ mod tests {
                 background: GifBackground::Checkerboard,
             },
             metadata: PackMetadataParams {
+                rendering: None,
+                frame_durations_ms: None,
                 id: "hero".to_string(),
                 name: "Hero".to_string(),
                 version: "0.1.0".to_string(),

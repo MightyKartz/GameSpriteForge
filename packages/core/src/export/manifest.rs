@@ -8,9 +8,47 @@ use super::sheet::Atlas;
 
 pub const SCHEMA_VERSION: &str = "1.0.0";
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct AnimationRendering {
+    #[serde(default)]
+    pub profile: AnimationRenderingProfile,
+    pub texture_filter: crate::asset_project::SamplingMode,
+    pub pixel_snap: bool,
+    #[serde(default)]
+    pub mirror_policy: AnimationMirrorPolicy,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub enum AnimationRenderingProfile {
+    #[default]
+    #[serde(rename = "godot-sprite-rendering@1.0.0")]
+    V1,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum AnimationMirrorPolicy {
+    #[default]
+    Auto,
+}
+
+impl Default for AnimationRendering {
+    fn default() -> Self {
+        Self {
+            profile: AnimationRenderingProfile::V1,
+            texture_filter: crate::asset_project::SamplingMode::Nearest,
+            pixel_snap: true,
+            mirror_policy: AnimationMirrorPolicy::Auto,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct EngineManifest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rendering: Option<AnimationRendering>,
     pub name: String,
     pub sheet: ManifestSheet,
     pub animations: Vec<ManifestAnimation>,
@@ -32,6 +70,8 @@ pub struct ManifestSheet {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct ManifestAnimation {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frame_durations_ms: Option<Vec<u32>>,
     pub name: String,
     pub frames: Vec<usize>,
     pub fps: f32,
@@ -119,6 +159,10 @@ pub struct ExportMetadata {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PackMetadataParams {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rendering: Option<AnimationRendering>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frame_durations_ms: Option<Vec<u32>>,
     pub id: String,
     pub name: String,
     pub version: String,
@@ -140,6 +184,8 @@ pub struct PackMetadataParams {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CharacterPackMetadataParams {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rendering: Option<AnimationRendering>,
     pub id: String,
     pub name: String,
     pub version: String,
@@ -168,6 +214,7 @@ pub fn engine_manifest(
         .unwrap_or_else(|| (0..atlas.frames.len()).collect());
 
     EngineManifest {
+        rendering: None,
         name,
         sheet: ManifestSheet {
             image: "assets/sprite_sheet.png".to_string(),
@@ -182,6 +229,7 @@ pub fn engine_manifest(
             rows: atlas.rows,
         },
         animations: vec![ManifestAnimation {
+            frame_durations_ms: None,
             name: animation_name,
             frames,
             fps,
@@ -206,6 +254,7 @@ pub fn engine_manifest_for_animations(
     atlas: &Atlas,
 ) -> EngineManifest {
     EngineManifest {
+        rendering: None,
         name,
         sheet: ManifestSheet {
             image: "assets/sprite_sheet.png".to_string(),
@@ -233,7 +282,7 @@ pub fn engine_manifest_for_animations(
 }
 
 pub fn export_metadata(params: PackMetadataParams, atlas: &Atlas) -> ExportMetadata {
-    let manifest = engine_manifest(
+    let mut manifest = engine_manifest(
         params.name.clone(),
         params.animation_name.clone(),
         params.fps,
@@ -242,6 +291,8 @@ pub fn export_metadata(params: PackMetadataParams, atlas: &Atlas) -> ExportMetad
         params.anchor,
         atlas,
     );
+    manifest.rendering = params.rendering;
+    manifest.animations[0].frame_durations_ms = params.frame_durations_ms;
     let forgepack = ForgePackMetadata {
         schema_version: SCHEMA_VERSION.to_string(),
         id: params.id,
@@ -289,8 +340,9 @@ pub fn export_character_metadata(
     animations: Vec<ManifestAnimation>,
     atlas: &Atlas,
 ) -> ExportMetadata {
-    let manifest =
+    let mut manifest =
         engine_manifest_for_animations(params.name.clone(), animations, params.anchor, atlas);
+    manifest.rendering = params.rendering;
     let forgepack = ForgePackMetadata {
         schema_version: SCHEMA_VERSION.to_string(),
         id: params.id,
