@@ -29,6 +29,9 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      - name: Test zero-generation reuse integrity
+        run: python3 scripts/character/test_prepare_directional_reuse.py -v
+
       - name: Install Godot 4.6.3
         shell: bash
         run: |
