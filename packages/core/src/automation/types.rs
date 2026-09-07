@@ -79,7 +79,15 @@ pub struct PrepareStaticRequest {
     pub license: String,
     pub sampling: SamplingMode,
     pub canvas_size: u32,
+    #[serde(default = "default_foreground_alpha_threshold")]
+    pub foreground_alpha_threshold: u8,
+    #[serde(default)]
+    pub edge_padding_px: u32,
     pub items: Vec<PrepareStaticItem>,
+}
+
+fn default_foreground_alpha_threshold() -> u8 {
+    1
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

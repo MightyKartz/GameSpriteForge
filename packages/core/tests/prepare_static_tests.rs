@@ -28,6 +28,8 @@ fn request(root: &Path) -> PrepareStaticRequest {
         license: "CC0-1.0".into(),
         sampling: SamplingMode::Linear,
         canvas_size: 64,
+        foreground_alpha_threshold: 1,
+        edge_padding_px: 0,
         items: vec![PrepareStaticItem {
             id: "jade".into(),
             name: "Jade".into(),
@@ -120,6 +122,8 @@ fn local_static_plan_rejects_invalid_inputs_before_creating_jobs() {
         "license",
         "opaque",
         "corrupt",
+        "alpha_threshold",
+        "edge_padding",
     ] {
         let temp = tempfile::tempdir().unwrap();
         let mut request = request(temp.path());
@@ -136,6 +140,8 @@ fn local_static_plan_rejects_invalid_inputs_before_creating_jobs() {
                 .save(&request.items[0].path)
                 .unwrap(),
             "corrupt" => fs::write(&request.items[0].path, "not a PNG").unwrap(),
+            "alpha_threshold" => request.foreground_alpha_threshold = 0,
+            "edge_padding" => request.edge_padding_px = 65,
             _ => unreachable!(),
         }
         let plans = PlanStore::new(temp.path().join("plans")).unwrap();
@@ -146,4 +152,57 @@ fn local_static_plan_rejects_invalid_inputs_before_creating_jobs() {
             "{invalid} must fail"
         );
     }
+}
+
+#[test]
+fn explicit_alpha_bounds_ignore_distant_residue_and_keep_padded_soft_edges() {
+    let temp = tempfile::tempdir().unwrap();
+    let mut request = request(temp.path());
+    request.sampling = SamplingMode::Nearest;
+    request.foreground_alpha_threshold = 16;
+    request.edge_padding_px = 2;
+    let path = &request.items[0].path;
+    let mut image = image::open(path).unwrap().to_rgba8();
+    image.put_pixel(0, 0, Rgba([200, 0, 0, 2]));
+    image.put_pixel(18, 24, Rgba([0, 200, 80, 8]));
+    image.save(path).unwrap();
+    let source_hash = hash_file(path).unwrap();
+    let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+    let prepared = plans
+        .prepare(AutomationOperation::PrepareStatic(request))
+        .unwrap();
+    let plan = plans.claim(&prepared.token).unwrap();
+    let jobs = JobStore::new(temp.path().join("jobs")).unwrap();
+    let queued = stage_plan_job(&jobs, &plan).unwrap();
+    let done = run_operation(&jobs, &queued.job_id, &plan.operation).unwrap();
+    let report_path = &done
+        .artifacts
+        .iter()
+        .find(|a| a.kind == "quality_report")
+        .unwrap()
+        .path;
+    let report: Value = serde_json::from_slice(&fs::read(report_path).unwrap()).unwrap();
+    assert_eq!(
+        report["items"][0]["foregroundBounds"],
+        serde_json::json!([20, 8, 44, 56])
+    );
+    assert_eq!(
+        report["items"][0]["cropBounds"],
+        serde_json::json!([18, 6, 46, 58])
+    );
+    let output = image::open(done.job_dir.join("normalized/static/jade.png"))
+        .unwrap()
+        .to_rgba8();
+    assert!(
+        output.pixels().any(|p| p[3] == 8 && p[1] == 200),
+        "padding retains original soft alpha"
+    );
+    assert!(
+        !output.pixels().any(|p| p[0] == 200 && p[3] == 2),
+        "distant residue stays outside the crop"
+    );
+    assert_eq!(
+        hash_file(&done.job_dir.join("source/static/jade.png")).unwrap(),
+        source_hash
+    );
 }

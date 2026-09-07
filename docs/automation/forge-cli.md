@@ -74,6 +74,8 @@ forge plan execute --token TOKEN --wait --json
   "license": "private",
   "sampling": "linear",
   "canvasSize": 128,
+  "foregroundAlphaThreshold": 16,
+  "edgePaddingPx": 16,
   "items": [
     { "id": "jade_blade", "name": "Jade blade", "path": "sources/jade-blade.png" }
   ]
@@ -88,6 +90,15 @@ transparent background and visible foreground, at most 4096 px per dimension and
 source alpha, fits the foreground to 82% of the canvas, centers icons, and places
 props on the ground line described below. Nearest uses nearest-neighbor resizing;
 linear uses Lanczos resizing and linear engine filtering.
+
+For images with faint distant alpha residue, `foregroundAlphaThreshold` (1–255,
+default 1) chooses the subject bounds. `edgePaddingPx` (0–64, default 0) expands
+that crop in source pixels before normalization. Values of 16 and 16 work for the
+Sword concept-derived source set. Pixels inside the padded crop retain their
+original alpha; the threshold is not an alpha cutoff. The quality report records
+both the subject bounds and the padded crop with exclusive right/bottom coordinates.
+Padding is included in the normalized extent, so the visible subject may sit a few
+output pixels above the prop origin. Omitted fields preserve the original behavior.
 
 The Job retains original PNGs, source and normalized SHA-256 values, recipe/input
 fingerprints, and a local quality report. The static Pack records `import_frames`

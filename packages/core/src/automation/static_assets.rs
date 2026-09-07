@@ -43,6 +43,11 @@ pub(super) fn validate_request(request: &PrepareStaticRequest) -> Result<(), Str
     if request.items.is_empty() || request.items.len() > 64 {
         return Err("prepare-static requires 1..=64 items".into());
     }
+    if request.foreground_alpha_threshold == 0 || request.edge_padding_px > 64 {
+        return Err(
+            "foregroundAlphaThreshold must be 1..=255 and edgePaddingPx must be 0..=64".into(),
+        );
+    }
     let mut ids = HashSet::new();
     for item in &request.items {
         if !valid_id(&item.id)
@@ -54,7 +59,16 @@ pub(super) fn validate_request(request: &PrepareStaticRequest) -> Result<(), Str
                 item.id
             ));
         }
-        read_png(&item.path)?;
+        let image = read_png(&item.path)?;
+        if !image
+            .pixels()
+            .any(|pixel| pixel[3] >= request.foreground_alpha_threshold)
+        {
+            return Err(format!(
+                "no foreground reaches foregroundAlphaThreshold: {}",
+                item.id
+            ));
+        }
     }
     Ok(())
 }
@@ -95,21 +109,40 @@ fn read_png(path: &Path) -> Result<RgbaImage, String> {
     Ok(image)
 }
 
-fn normalize(image: &RgbaImage, request: &PrepareStaticRequest) -> RgbaImage {
-    // Include every nonzero alpha value so hand-painted soft edges survive.
-    // No chroma key or color-based cleanup is applied to local transparent media.
+struct StaticNormalization {
+    image: RgbaImage,
+    foreground_bounds: [u32; 4],
+    crop_bounds: [u32; 4],
+}
+
+fn normalize(
+    image: &RgbaImage,
+    request: &PrepareStaticRequest,
+) -> Result<StaticNormalization, String> {
+    // The threshold locates the subject; it never modifies alpha values inside
+    // the padded crop. This keeps hand-painted edges without allowing distant
+    // nearly invisible generator residue to shrink or displace the subject.
     let mut left = image.width();
     let mut top = image.height();
     let mut right = 0;
     let mut bottom = 0;
     for (x, y, pixel) in image.enumerate_pixels() {
-        if pixel[3] > 0 {
+        if pixel[3] >= request.foreground_alpha_threshold {
             left = left.min(x);
             top = top.min(y);
             right = right.max(x);
             bottom = bottom.max(y);
         }
     }
+    if left == image.width() {
+        return Err("no foreground reaches foregroundAlphaThreshold".into());
+    }
+    let foreground_bounds = [left, top, right + 1, bottom + 1];
+    left = left.saturating_sub(request.edge_padding_px);
+    top = top.saturating_sub(request.edge_padding_px);
+    right = (right + request.edge_padding_px).min(image.width() - 1);
+    bottom = (bottom + request.edge_padding_px).min(image.height() - 1);
+    let crop_bounds = [left, top, right + 1, bottom + 1];
     let cropped =
         image::imageops::crop_imm(image, left, top, right - left + 1, bottom - top + 1).to_image();
     let canvas = request.canvas_size;
@@ -130,7 +163,11 @@ fn normalize(image: &RgbaImage, request: &PrepareStaticRequest) -> RgbaImage {
         StaticAssetKind::PropSet => canvas - height - canvas / 16,
     };
     image::imageops::overlay(&mut output, &resized, x.into(), y.into());
-    output
+    Ok(StaticNormalization {
+        image: output,
+        foreground_bounds,
+        crop_bounds,
+    })
 }
 
 pub(super) fn run_prepare_static(
@@ -163,14 +200,15 @@ pub(super) fn run_prepare_static(
         let image = read_png(&source_path).map_err(AutomationRunError::Processing)?;
         let source_hash =
             hash_file(&source_path).map_err(|e| AutomationRunError::Processing(e.to_string()))?;
-        let output = normalize(&image, request);
+        let output = normalize(&image, request).map_err(AutomationRunError::Processing)?;
         let output_path = normalized_dir.join(format!("{}.png", item.id));
-        output.save(&output_path)?;
+        output.image.save(&output_path)?;
         let normalized_hash =
             hash_file(&output_path).map_err(|e| AutomationRunError::Processing(e.to_string()))?;
         provenance.insert(item.id.clone(), json!({"sourceKind":"import_png", "sha256":source_hash, "normalizedSha256":normalized_hash}));
         source_items.push(json!({"id":item.id,"sha256":source_hash,"normalizedSha256":normalized_hash,
-            "sourceWidth":image.width(),"sourceHeight":image.height(),"outputWidth":output.width(),"outputHeight":output.height()}));
+            "sourceWidth":image.width(),"sourceHeight":image.height(),"outputWidth":output.image.width(),"outputHeight":output.image.height(),
+            "foregroundBounds":output.foreground_bounds,"cropBounds":output.crop_bounds}));
         items.push(StaticPackItem {
             id: item.id.clone(),
             name: item.name.clone(),
@@ -192,7 +230,8 @@ pub(super) fn run_prepare_static(
         "visualReviewRequired":true,"verdict":"game_ready","items":source_items,
         "checks":{"validPng":true,"visibleForeground":true,"transparentBackground":true,
             "uniformCanvas":true,"alphaPreservedWithoutChromaKey":true},
-        "notes":["game_ready describes local structural checks; source artwork still requires visual review"]});
+        "normalization":{"foregroundAlphaThreshold":request.foreground_alpha_threshold,"edgePaddingPx":request.edge_padding_px},
+        "notes":["game_ready describes local structural checks; source artwork still requires visual review", "bounds use exclusive right/bottom; edge padding is in source pixels and retained inside the normalized canvas"]});
     let report_path = record.job_dir.join("local-import-report.json");
     fs::write(&report_path, serde_json::to_vec_pretty(&report)?)?;
     let asset = StaticAssetSetSpecV1 {
@@ -217,7 +256,8 @@ pub(super) fn run_prepare_static(
         item_provenance: provenance,
         source: json!({"kind":"import_frames","name":"Local transparent PNG files",
             "metadata":{"operation":PROFILE,"providerRequestOccurred":false,"providerRequestCount":0,
-                "inputFingerprint":record.input_hash,"recipeHash":record.recipe_hash,"inputs":source_items}}),
+                "inputFingerprint":record.input_hash,"recipeHash":record.recipe_hash,"inputs":source_items,
+                "normalization":{"foregroundAlphaThreshold":request.foreground_alpha_threshold,"edgePaddingPx":request.edge_padding_px}}}),
     };
     let pack = export_static_pack_with_source(
         &record.job_dir.join("exports"),

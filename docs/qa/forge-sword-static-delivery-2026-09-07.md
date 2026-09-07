@@ -71,3 +71,39 @@ Executed after the follow-up:
 Development binary: `/Users/kartz/Development/Forge-sword-static-delivery/target/debug/forge`.
 It reports `forge 0.2.1`; pin the development branch commit as well, because the
 published v0.2.1 release does not contain `prepare-static`.
+
+## Real-source alpha bounds correction
+
+Sword's five original Codex image_gen PNGs contain distant pixels with alpha 1–15.
+Using every nonzero alpha pixel as the crop extent made the visible spirit, lantern,
+and rock smaller and lifted them above the expected prop origin. Added optional
+`foregroundAlphaThreshold` (default 1) and `edgePaddingPx` (default 0) to local
+requests. The threshold selects bounds only; original alpha is retained inside the
+padded crop, and original input files remain byte-identical in the Job store.
+
+Executed `plan prepare-static` → `plan execute --wait` on all five actual originals
+twice at a 256 px canvas: baseline 1/0 and explicit threshold/padding 16/16. Both
+Packs validated, every Job reported zero Provider requests, and all original
+SHA-256 values matched the Sword source manifest after both imports. Measured
+visible output extents at alpha ≥16:
+
+| Asset | Baseline | 16/16 | Visible bottom before → after |
+| --- | --- | --- | --- |
+| Spirit | 163 px high | 204 px high | 209 → 237 |
+| Stone lantern | 161 px high | 204 px high | 218 → 237 |
+| Moss rock | 165 px wide | 204 px wide | 203 → 237 |
+| Cultivator | 207 px high | 206 px high | 238 → 238 |
+| Jade sword | 210 px high | 206 px high | 240 → 238 |
+
+The nominal normalized prop origin is y=240; retained source padding accounts for
+the remaining 2–3 px gap. Source images were read and imported, not edited.
+Evidence: `artifacts/forge-sword-alpha-bounds-20260907/summary.json`. Private source
+PNGs and generated Job stores remain ignored local evidence.
+
+`cargo test -p core --test prepare_static_tests --test static_delivery_tests` passed
+7 tests after this correction (the independent real-engine test remained ignored
+in this targeted invocation). The new regression covers distant alpha noise,
+retained alpha-8 edge pixels within padding, and unchanged raw-source hashes.
+`cargo build -p forge-cli` and `cargo fmt --all -- --check` passed. This follow-up
+changes normalization only; the previously verified Godot metadata/installation
+contract remains unchanged.
