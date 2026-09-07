@@ -30,3 +30,44 @@ No Provider calls, credential access, or changes to the Sword project were used.
 The engine check uses deterministic local rectangles and verifies resource delivery;
 it does not establish production art quality or iPhone performance. Existing install
 backup/rollback behavior is reused and was not redesigned in this change.
+
+## Local PNG intake follow-up
+
+Added `forge plan prepare-static --request ... --json`, followed by the existing
+`plan execute`. The request accepts `icon_set`/`prop_set`, explicit sampling and
+license, a 64–512 power-of-two canvas, and stable item IDs with local PNG paths.
+Relative paths resolve from the request file. No Provider or generated Style Lock
+is needed, and no Provider resolver is called for the operation.
+
+The importer retains original PNGs and source/normalized SHA-256 evidence, checks
+plan fingerprints before and after intake, preserves low-alpha and green pixels
+without chroma-key matting, then reuses static Pack export and validation. Local
+quality evidence explicitly says style consistency was not evaluated. The normal
+Godot install registry and ownership rules apply; local intake does not add a
+Forge asset-project catalog or targeted retry workflow.
+
+Executed after the follow-up:
+
+- `cargo test -p core --test prepare_static_tests --test static_delivery_tests`:
+  6 passed, 1 separately selected engine test. New coverage includes green and
+  semitransparent pixels with both sampling modes and both static kinds, license
+  and source hashes, modified-plan inputs, duplicate IDs, invalid canvas, missing
+  license, corrupt media, and opaque input rejection.
+- `cargo test --workspace`: 248 passed, 1 ignored (the real-engine test above).
+  Existing generated static, character, keyframe, and world fixture contracts
+  passed; no real Provider calls were made.
+- `cargo build -p forge-cli` and `cargo fmt --all -- --check`: passed.
+- `python3 scripts/test-local-static-cli.py --forge
+  /Users/kartz/Development/Forge-sword-static-delivery/target/debug/forge --godot
+  /Applications/Godot.app/Contents/MacOS/Godot`: passed. Three cases covered linear
+  props, nearest props, and linear icons, each with two distinct static items.
+  The script checked the single-JSON CLI envelope, relative input paths, durable
+  plan/job execution, zero Provider usage, correct static asset types and item IDs,
+  source hashes, Pack validation, installed usage mappings, and saved Godot nodes.
+- An earlier retained run is summarized in
+  `artifacts/forge-local-static-20260907/summary.json`. Generated Job stores,
+  fixture PNGs, and imported Godot caches remain local and are excluded from Git.
+
+Development binary: `/Users/kartz/Development/Forge-sword-static-delivery/target/debug/forge`.
+It reports `forge 0.2.1`; pin the development branch commit as well, because the
+published v0.2.1 release does not contain `prepare-static`.
