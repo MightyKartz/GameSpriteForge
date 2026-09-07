@@ -92,3 +92,9 @@ zsh /absolute/extracted/forge-directional-reuse-review/open-review.command --hea
 
 启动脚本先导入外部纹理再运行场景；成功要求日志包含 `RUNTIME_REVIEW PASS`，
 且新生成的 `qa-output/runtime-report.json` 中 `runtimePassed` 为 `true`。
+
+## 后续人工审核决定
+
+用户后续已批准此前打开的 `directional-reuse-v1-20260907` 候选，详见
+[人工审核记录](forge-directional-human-review-2026-09-07.md)。本报告的 `pending`
+及工程副本结果保留为该次构建时的历史证据，后续决定通过候选哈希单独绑定。
