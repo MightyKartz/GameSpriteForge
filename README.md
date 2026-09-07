@@ -19,6 +19,8 @@ The current macOS Apple Silicon release supports:
 - atomic Godot installation with external textures, small native resources,
   usage metadata, ownership checks, and rollback.
 
+Existing approved directional animations can be assembled with the [zero-generation reuse review workflow](docs/architecture/forge-existing-animation-reuse-plan.md). This experimental script preserves source frames, native timing and provenance; the derived Godot candidate still requires separate visual review.
+
 ## Install
 
 ```bash

@@ -14,6 +14,8 @@ CI 可以通过同一套稳定 JSON 协议生成一致的 2D 游戏资产，并�
 - 确定性抠图、规范化、一致性门禁、阶段级重试、Loop Selection V2、来源记录和 `.gsfpack` 验证；
 - 使用外部纹理、原子覆盖、所有权检查和失败回滚的 Godot 安装。
 
+已有批准的方向动画可使用[零生成复用审核流程](docs/architecture/forge-existing-animation-reuse-plan.md)组合成 Godot 候选。该实验脚本保留原帧、原生时长和来源记录；候选仍需独立视觉审核。
+
 ## 安装
 
 ```bash
