@@ -73,6 +73,7 @@
         }
       }
     },
+    "rendering": { "$ref": "#/$defs/rendering" },
     "items": {
       "type": "array",
       "minItems": 1,
@@ -91,6 +92,38 @@
     }
   },
   "$defs": {
+    "rendering": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "textureFilter",
+        "pixelSnap",
+        "mirrorPolicy"
+      ],
+      "properties": {
+        "profile": {
+          "const": "godot-sprite-rendering@1.0.0"
+        },
+        "textureFilter": {
+          "enum": [
+            "nearest",
+            "linear"
+          ]
+        },
+        "pixelSnap": {
+          "type": "boolean"
+        },
+        "mirrorPolicy": {
+          "enum": [
+            "auto",
+            "right_only",
+            "explicit_left",
+            "mirror_right_to_left"
+          ]
+        }
+      }
+    },
     "itemProvenance": {
       "type": "object",
       "additionalProperties": false,
@@ -119,6 +152,7 @@
             "minimum": 0
           }
         },
+        "frameDurationsMs": { "type": "array", "minItems": 1, "items": { "type": "integer", "minimum": 1 } },
         "fps": {
           "type": "number",
           "exclusiveMinimum": 0

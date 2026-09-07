@@ -9,6 +9,9 @@ const MANIFEST_SCHEMA: &str = include_str!("../../../schemas/manifest.schema.jso
 const ATLAS_SCHEMA: &str = include_str!("../../../schemas/atlas.schema.json");
 const QUALITY_REPORT_SCHEMA: &str = include_str!("../../../schemas/quality-report.schema.json");
 
+const ANIMATION_HUMAN_REVIEW_SCHEMA: &str =
+    include_str!("../../../schemas/animation-human-review.schema.json");
+
 const REQUIRED_FILES: &[&str] = &[
     "forgepack.json",
     "previews/preview.gif",
@@ -135,6 +138,7 @@ struct PackAssets {
     atlas: Option<String>,
     manifest: String,
     godot_helper: Option<String>,
+    animation_human_review: Option<String>,
     quality_report: String,
     consistency_report: Option<String>,
     terrain_manifest: Option<String>,
@@ -244,16 +248,32 @@ pub fn validate_pack_layout(pack_path: &Path) -> Result<(), PackError> {
         return Err(PackError::NoFrames);
     }
 
+    let forgepack_path = pack_path.join("forgepack.json");
     validate_json_file(
-        pack_path.join("forgepack.json"),
+        forgepack_path.clone(),
         "gsfpack.schema.json",
         GSFPACK_SCHEMA,
     )?;
+    let forgepack_document = read_json(forgepack_path)?;
+    let manifest_path = pack_path.join("assets/manifest.json");
     validate_json_file(
-        pack_path.join("assets/manifest.json"),
+        manifest_path.clone(),
         "manifest.schema.json",
         MANIFEST_SCHEMA,
     )?;
+    let manifest_document = read_json(manifest_path)?;
+    let godot_helper_document = metadata
+        .assets
+        .godot_helper
+        .as_deref()
+        .map(|helper| read_json(pack_path.join(helper)))
+        .transpose()?;
+    validate_animation_timing_contract(
+        &forgepack_document,
+        &manifest_document,
+        godot_helper_document.as_ref(),
+    )?;
+    validate_godot_rendering_contract(&manifest_document, godot_helper_document.as_ref())?;
     validate_json_file(
         pack_path.join("assets/atlas.json"),
         "atlas.schema.json",
@@ -265,6 +285,19 @@ pub fn validate_pack_layout(pack_path: &Path) -> Result<(), PackError> {
         "quality-report.schema.json",
         QUALITY_REPORT_SCHEMA,
     )?;
+    if let Some(review) = metadata.assets.animation_human_review.as_deref() {
+        expect_asset_path(
+            "assets.animationHumanReview",
+            "quality/animation-human-review.json",
+            review,
+        )?;
+        require_regular_pack_file(pack_path, review)?;
+        validate_json_file(
+            pack_path.join(review),
+            "animation-human-review.schema.json",
+            ANIMATION_HUMAN_REVIEW_SCHEMA,
+        )?;
+    }
 
     Ok(())
 }
@@ -710,5 +743,507 @@ fn validate_json_file(
         });
     }
 
+    Ok(())
+}
+
+#[derive(Debug)]
+struct AnimationTiming {
+    name: String,
+    frame_count: usize,
+    // Runtime and manifest types expose FPS as f32. Parsing all three JSON
+    // documents back to the same precision avoids treating serde's short f32
+    // spelling (`6.855184`) and json!()'s exact f64 spelling
+    // (`6.855184078216553`) as different cadence values.
+    fps: Option<f32>,
+    loop_animation: Option<bool>,
+    frame_durations_ms: Option<Vec<u64>>,
+}
+
+fn validate_animation_timing_contract(
+    forgepack: &serde_json::Value,
+    manifest: &serde_json::Value,
+    godot_helper: Option<&serde_json::Value>,
+) -> Result<(), PackError> {
+    let forgepack_timings = animation_timings(forgepack.get("animations"), "forgepack.json")?;
+    let manifest_timings = animation_timings(manifest.get("animations"), "assets/manifest.json")?;
+    validate_animation_timing_cardinality("forgepack.json", &forgepack_timings)?;
+    validate_animation_timing_cardinality("assets/manifest.json", &manifest_timings)?;
+    // Static V2 packs use one-frame animation metadata for atlas compatibility,
+    // but their Godot helper is item/texture based rather than SpriteFrames.
+    // Keep the two canonical metadata documents synchronized and leave the
+    // type-specific helper to the static-pack validator below.
+    if forgepack
+        .get("assetType")
+        .and_then(serde_json::Value::as_str)
+        .is_some_and(|asset_type| matches!(asset_type, "icon_set" | "prop_set"))
+    {
+        validate_animation_metadata_pair(&forgepack_timings, &manifest_timings)?;
+        return Ok(());
+    }
+    let helper_timings = godot_helper
+        .map(|helper| {
+            let sprite_frames = helper
+                .get("spriteFrames")
+                .and_then(serde_json::Value::as_object)
+                .ok_or_else(|| {
+                    timing_error("assets/godot_import.json", "spriteFrames is missing")
+                })?;
+            animation_timings(sprite_frames.get("animations"), "assets/godot_import.json")
+        })
+        .transpose()?;
+    if let Some(helper_timings) = helper_timings.as_ref() {
+        validate_animation_timing_cardinality("assets/godot_import.json", helper_timings)?;
+    }
+
+    // A helper declaration identifies the modern, three-document contract. Packs
+    // without one retain V1/V2 compatibility after their local timing validation.
+    let Some(helper_timings) = helper_timings.as_ref() else {
+        return Ok(());
+    };
+    validate_modern_animation_timing_contract(
+        &forgepack_timings,
+        &manifest_timings,
+        helper_timings,
+    )?;
+
+    Ok(())
+}
+
+fn validate_animation_timing_cardinality(
+    source: &str,
+    timings: &[AnimationTiming],
+) -> Result<(), PackError> {
+    for timing in timings {
+        if let Some(durations) = &timing.frame_durations_ms {
+            if !durations.is_empty() && durations.len() != timing.frame_count {
+                return Err(timing_error(
+                    source,
+                    format!(
+                        "animation {} has {} frames but {} frameDurationsMs values",
+                        timing.name,
+                        timing.frame_count,
+                        durations.len()
+                    ),
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_animation_metadata_pair(
+    forgepack: &[AnimationTiming],
+    manifest: &[AnimationTiming],
+) -> Result<(), PackError> {
+    if animation_name_set(forgepack, "forgepack.json")?
+        != animation_name_set(manifest, "assets/manifest.json")?
+    {
+        return Err(timing_error(
+            "assets/manifest.json",
+            "animation names differ from forgepack.json",
+        ));
+    }
+    for forgepack_animation in forgepack {
+        let manifest_animation = animation_by_name(manifest, &forgepack_animation.name)
+            .expect("matching animation names were validated");
+        if forgepack_animation.frame_count != manifest_animation.frame_count {
+            return Err(timing_error(
+                "assets/manifest.json",
+                format!(
+                    "animation {} frame count differs from forgepack.json",
+                    forgepack_animation.name
+                ),
+            ));
+        }
+        validate_optional_timing_field(
+            &forgepack_animation.name,
+            "fps",
+            vec![
+                ("forgepack.json", forgepack_animation.fps),
+                ("assets/manifest.json", manifest_animation.fps),
+            ],
+        )?;
+        validate_optional_timing_field(
+            &forgepack_animation.name,
+            "loop",
+            vec![
+                ("forgepack.json", forgepack_animation.loop_animation),
+                ("assets/manifest.json", manifest_animation.loop_animation),
+            ],
+        )?;
+        validate_optional_timing_field(
+            &forgepack_animation.name,
+            "frameDurationsMs",
+            vec![
+                (
+                    "forgepack.json",
+                    forgepack_animation.frame_durations_ms.clone(),
+                ),
+                (
+                    "assets/manifest.json",
+                    manifest_animation.frame_durations_ms.clone(),
+                ),
+            ],
+        )?;
+    }
+    Ok(())
+}
+
+fn validate_modern_animation_timing_contract(
+    forgepack: &[AnimationTiming],
+    manifest: &[AnimationTiming],
+    godot_helper: &[AnimationTiming],
+) -> Result<(), PackError> {
+    let forgepack_names = animation_name_set(forgepack, "forgepack.json")?;
+    let manifest_names = animation_name_set(manifest, "assets/manifest.json")?;
+    let helper_names = animation_name_set(godot_helper, "assets/godot_import.json")?;
+    if forgepack_names != manifest_names {
+        return Err(timing_error(
+            "assets/manifest.json",
+            "animation names differ from forgepack.json",
+        ));
+    }
+    if forgepack_names != helper_names {
+        return Err(timing_error(
+            "assets/godot_import.json",
+            "animation names differ from forgepack.json",
+        ));
+    }
+
+    for forgepack_animation in forgepack {
+        let manifest_animation = animation_by_name(manifest, &forgepack_animation.name)
+            .expect("matching animation names were validated");
+        let helper_animation = animation_by_name(godot_helper, &forgepack_animation.name)
+            .expect("matching animation names were validated");
+        if forgepack_animation.frame_count != manifest_animation.frame_count {
+            return Err(timing_error(
+                "assets/manifest.json",
+                format!(
+                    "animation {} frame count differs from forgepack.json",
+                    forgepack_animation.name
+                ),
+            ));
+        }
+        if forgepack_animation.frame_count != helper_animation.frame_count {
+            return Err(timing_error(
+                "assets/godot_import.json",
+                format!(
+                    "animation {} frame count differs from forgepack.json",
+                    forgepack_animation.name
+                ),
+            ));
+        }
+        validate_optional_timing_field(
+            &forgepack_animation.name,
+            "fps",
+            vec![
+                ("forgepack.json", forgepack_animation.fps),
+                ("assets/manifest.json", manifest_animation.fps),
+                ("assets/godot_import.json", helper_animation.fps),
+            ],
+        )?;
+        validate_optional_timing_field(
+            &forgepack_animation.name,
+            "loop",
+            vec![
+                ("forgepack.json", forgepack_animation.loop_animation),
+                ("assets/manifest.json", manifest_animation.loop_animation),
+                ("assets/godot_import.json", helper_animation.loop_animation),
+            ],
+        )?;
+        validate_optional_timing_field(
+            &forgepack_animation.name,
+            "frameDurationsMs",
+            vec![
+                (
+                    "forgepack.json",
+                    forgepack_animation.frame_durations_ms.clone(),
+                ),
+                (
+                    "assets/manifest.json",
+                    manifest_animation.frame_durations_ms.clone(),
+                ),
+                (
+                    "assets/godot_import.json",
+                    helper_animation.frame_durations_ms.clone(),
+                ),
+            ],
+        )?;
+    }
+
+    Ok(())
+}
+
+fn animation_name_set(
+    animations: &[AnimationTiming],
+    source: &str,
+) -> Result<HashSet<String>, PackError> {
+    let names = animations
+        .iter()
+        .map(|animation| animation.name.clone())
+        .collect::<HashSet<_>>();
+    if names.len() != animations.len() {
+        return Err(timing_error(source, "animation names must be unique"));
+    }
+    Ok(names)
+}
+
+fn animation_by_name<'a>(
+    animations: &'a [AnimationTiming],
+    name: &str,
+) -> Option<&'a AnimationTiming> {
+    animations.iter().find(|animation| animation.name == name)
+}
+
+fn validate_optional_timing_field<T: PartialEq>(
+    animation_name: &str,
+    field: &str,
+    values: Vec<(&str, Option<T>)>,
+) -> Result<(), PackError> {
+    if values.iter().all(|(_, value)| value.is_none()) {
+        // Explicit legacy branch: a timing field omitted everywhere remains valid.
+        return Ok(());
+    }
+    let mut values = values.into_iter();
+    let (_, expected) = values
+        .next()
+        .expect("modern timing contract always has three documents");
+    let expected = expected.ok_or_else(|| {
+        timing_error(
+            "forgepack.json",
+            format!("animation {animation_name} {field} is missing"),
+        )
+    })?;
+    for (source, value) in values {
+        let value = value.ok_or_else(|| {
+            timing_error(
+                source,
+                format!("animation {animation_name} {field} is missing"),
+            )
+        })?;
+        if value != expected {
+            return Err(timing_error(
+                source,
+                format!("animation {animation_name} {field} differs from forgepack.json"),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn animation_timings(
+    animations: Option<&serde_json::Value>,
+    source: &str,
+) -> Result<Vec<AnimationTiming>, PackError> {
+    let animations = animations
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| timing_error(source, "animations must be an array"))?;
+    animations
+        .iter()
+        .map(|animation| {
+            let animation = animation
+                .as_object()
+                .ok_or_else(|| timing_error(source, "animation must be an object"))?;
+            let name = animation
+                .get("name")
+                .and_then(serde_json::Value::as_str)
+                .filter(|name| !name.is_empty())
+                .ok_or_else(|| timing_error(source, "animation name is missing"))?
+                .to_string();
+            let frames = animation
+                .get("frames")
+                .and_then(serde_json::Value::as_array)
+                .ok_or_else(|| timing_error(source, format!("animation {name} frames are missing")))?;
+            let fps = animation
+                .get("fps")
+                .map(|value| {
+                    value
+                        .as_f64()
+                        .map(|fps| fps as f32)
+                        .filter(|fps| fps.is_finite() && *fps > 0.0)
+                        .ok_or_else(|| {
+                            timing_error(source, format!("animation {name} fps must be positive"))
+                        })
+                })
+                .transpose()?;
+            let loop_animation = animation
+                .get("loop")
+                .map(|value| {
+                    value.as_bool().ok_or_else(|| {
+                        timing_error(source, format!("animation {name} loop must be a boolean"))
+                    })
+                })
+                .transpose()?;
+            let frame_durations_ms = animation
+                .get("frameDurationsMs")
+                .map(|value| {
+                    value
+                        .as_array()
+                        .ok_or_else(|| {
+                            timing_error(
+                                source,
+                                format!("animation {name} frameDurationsMs must be an array"),
+                            )
+                        })?
+                        .iter()
+                        .map(|duration| {
+                            duration.as_u64().filter(|duration| *duration > 0).ok_or_else(|| {
+                                timing_error(
+                                    source,
+                                    format!(
+                                        "animation {name} frameDurationsMs must contain positive integers"
+                                    ),
+                                )
+                            })
+                        })
+                        .collect::<Result<Vec<_>, _>>()
+                })
+                .transpose()?;
+            Ok(AnimationTiming {
+                name,
+                frame_count: frames.len(),
+                fps,
+                loop_animation,
+                frame_durations_ms,
+            })
+        })
+        .collect()
+}
+
+fn timing_error(document: &str, message: impl Into<String>) -> PackError {
+    PackError::SchemaValidation {
+        document: document.to_string(),
+        message: message.into(),
+    }
+}
+
+fn validate_godot_rendering_contract(
+    manifest: &serde_json::Value,
+    godot_helper: Option<&serde_json::Value>,
+) -> Result<(), PackError> {
+    let manifest_rendering = manifest.get("rendering");
+    let helper_rendering =
+        godot_helper.and_then(|helper| helper.pointer("/spriteFrames/rendering"));
+    match (manifest_rendering, helper_rendering) {
+        (None, None) => return Ok(()),
+        (Some(_), None) => {
+            return Err(timing_error(
+                "assets/godot_import.json",
+                "spriteFrames.rendering is missing",
+            ));
+        }
+        (None, Some(_)) => {
+            return Err(timing_error("assets/manifest.json", "rendering is missing"));
+        }
+        (Some(manifest_rendering), Some(helper_rendering))
+            if manifest_rendering != helper_rendering =>
+        {
+            return Err(timing_error(
+                "assets/godot_import.json",
+                "spriteFrames.rendering differs from assets/manifest.json",
+            ));
+        }
+        (Some(_), Some(_)) => {}
+    }
+
+    let rendering = manifest_rendering
+        .and_then(serde_json::Value::as_object)
+        .ok_or_else(|| timing_error("assets/manifest.json", "rendering must be an object"))?;
+    if rendering.get("profile").and_then(serde_json::Value::as_str)
+        != Some("godot-sprite-rendering@1.0.0")
+    {
+        return Err(timing_error(
+            "assets/manifest.json",
+            "rendering.profile must be godot-sprite-rendering@1.0.0",
+        ));
+    }
+    if !matches!(
+        rendering
+            .get("textureFilter")
+            .and_then(serde_json::Value::as_str),
+        Some("nearest" | "linear")
+    ) {
+        return Err(timing_error(
+            "assets/manifest.json",
+            "rendering.textureFilter must be nearest or linear",
+        ));
+    }
+    let pixel_snap = rendering
+        .get("pixelSnap")
+        .and_then(serde_json::Value::as_bool)
+        .ok_or_else(|| {
+            timing_error(
+                "assets/manifest.json",
+                "rendering.pixelSnap must be a boolean",
+            )
+        })?;
+    let mirror_policy = rendering
+        .get("mirrorPolicy")
+        .and_then(serde_json::Value::as_str)
+        .filter(|policy| {
+            matches!(
+                *policy,
+                "auto" | "right_only" | "explicit_left" | "mirror_right_to_left"
+            )
+        })
+        .ok_or_else(|| {
+            timing_error(
+                "assets/manifest.json",
+                "rendering.mirrorPolicy is unsupported",
+            )
+        })?;
+
+    if pixel_snap {
+        for coordinate in ["x", "y"] {
+            let value = manifest
+                .pointer(&format!("/anchor/{coordinate}"))
+                .and_then(serde_json::Value::as_f64)
+                .ok_or_else(|| {
+                    timing_error(
+                        "assets/manifest.json",
+                        format!("anchor.{coordinate} must be numeric"),
+                    )
+                })?;
+            if value.fract().abs() > f64::EPSILON {
+                return Err(timing_error(
+                    "assets/manifest.json",
+                    format!("pixel-snapped anchor.{coordinate} must be an integer"),
+                ));
+            }
+        }
+    }
+
+    let animation_names = manifest
+        .get("animations")
+        .and_then(serde_json::Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|animation| animation.get("name").and_then(serde_json::Value::as_str))
+        .collect::<HashSet<_>>();
+    let required = match mirror_policy {
+        "right_only" => &["idle_right", "walk_right"][..],
+        "explicit_left" => &["idle_left", "walk_left"][..],
+        "mirror_right_to_left" => &["idle_right", "walk_right"][..],
+        _ => &[][..],
+    };
+    if !required.is_empty() && required.iter().any(|name| !animation_names.contains(name)) {
+        return Err(timing_error(
+            "assets/manifest.json",
+            format!(
+                "rendering.mirrorPolicy {mirror_policy} requires animations {}",
+                required.join(", ")
+            ),
+        ));
+    }
+    if mirror_policy == "right_only"
+        && ["idle_left", "walk_left"]
+            .iter()
+            .any(|name| animation_names.contains(name))
+    {
+        return Err(timing_error(
+            "assets/manifest.json",
+            "rendering.mirrorPolicy right_only forbids idle_left and walk_left",
+        ));
+    }
     Ok(())
 }

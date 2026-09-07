@@ -59,10 +59,15 @@ func _initialize() -> void:
 			_fail("Animation entry must be a dictionary.")
 		var animation_name := String(animation.get("name", "default"))
 		var animation_frames: Array = _required_array(animation, "frames", "animation")
+		var animation_fps := float(animation.get("fps", 12.0))
+		var frame_durations: Array = animation.get("frameDurationsMs", [])
+		if !frame_durations.is_empty() and frame_durations.size() != animation_frames.size():
+			_fail("Animation frameDurationsMs must match frames: %s" % animation_name)
 		native_frames.add_animation(animation_name)
-		native_frames.set_animation_speed(animation_name, float(animation.get("fps", 12.0)))
+		native_frames.set_animation_speed(animation_name, animation_fps)
 		native_frames.set_animation_loop(animation_name, bool(animation.get("loop", true)))
-		for frame_index_value in animation_frames:
+		for animation_frame_index in animation_frames.size():
+			var frame_index_value = animation_frames[animation_frame_index]
 			var frame_index := int(frame_index_value)
 			if frame_index < 0 or frame_index >= atlas_frames.size():
 				_fail("Animation frame index %s is outside atlas frame range." % frame_index)
@@ -79,7 +84,13 @@ func _initialize() -> void:
 				float(atlas_frame["width"]),
 				float(atlas_frame["height"])
 			)
-			native_frames.add_frame(animation_name, atlas_texture)
+			var relative_duration := 1.0
+			if !frame_durations.is_empty():
+				var duration_ms := float(frame_durations[animation_frame_index])
+				if duration_ms <= 0.0:
+					_fail("Animation frame duration must be positive: %s" % animation_name)
+				relative_duration = duration_ms * animation_fps / 1000.0
+			native_frames.add_frame(animation_name, atlas_texture, relative_duration)
 
 	var first_animation: Dictionary = animations[0]
 	var first_animation_name := String(first_animation.get("name", "default"))

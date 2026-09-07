@@ -626,3 +626,470 @@ fn quality_json(frame_count: usize) -> serde_json::Value {
         "notes": []
     })
 }
+
+#[test]
+fn frame_durations_must_match_animation_frames() {
+    let temp = tempfile::tempdir().unwrap();
+    let pack = temp.path().join("hero.gsfpack");
+    write_pack_fixture(&pack, 8);
+    let mut forgepack: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("forgepack.json")).unwrap()).unwrap();
+    forgepack["animations"][0]["frameDurationsMs"] = json!(vec![100_u64; 7]);
+    fs::write(
+        pack.join("forgepack.json"),
+        serde_json::to_vec_pretty(&forgepack).unwrap(),
+    )
+    .unwrap();
+
+    assert!(matches!(
+        validate_pack_layout(&pack).unwrap_err(),
+        PackError::SchemaValidation { document, message }
+            if document == "forgepack.json"
+                && message.contains("8 frames but 7 frameDurationsMs values")
+    ));
+}
+
+#[test]
+fn manifest_frame_durations_tampering_fails_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/manifest.json")).unwrap()).unwrap();
+    manifest["animations"][0]["frameDurationsMs"] = json!(vec![125_u64; 8]);
+    fs::write(
+        pack.join("assets/manifest.json"),
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(&pack, "assets/manifest.json", "frameDurationsMs differs");
+    drop(temp);
+}
+
+#[test]
+fn manifest_fps_tampering_fails_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/manifest.json")).unwrap()).unwrap();
+    manifest["animations"][0]["fps"] = json!(12.0);
+    fs::write(
+        pack.join("assets/manifest.json"),
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(&pack, "assets/manifest.json", "fps differs");
+    drop(temp);
+}
+
+#[test]
+fn godot_helper_frame_durations_tampering_fails_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]["frameDurationsMs"] = json!(vec![125_u64; 8]);
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        serde_json::to_vec_pretty(&helper).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(
+        &pack,
+        "assets/godot_import.json",
+        "frameDurationsMs differs",
+    );
+    drop(temp);
+}
+
+#[test]
+fn validates_matching_godot_rendering_contract() {
+    let (_temp, pack) = write_timing_pack_fixture();
+    let rendering = json!({
+        "profile": "godot-sprite-rendering@1.0.0",
+        "textureFilter": "nearest",
+        "pixelSnap": true,
+        "mirrorPolicy": "auto"
+    });
+    let manifest_path = pack.join("assets/manifest.json");
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+    manifest["rendering"] = rendering.clone();
+    fs::write(
+        &manifest_path,
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+    let helper_path = pack.join("assets/godot_import.json");
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(&helper_path).unwrap()).unwrap();
+    helper["spriteFrames"]["rendering"] = rendering;
+    fs::write(&helper_path, serde_json::to_vec_pretty(&helper).unwrap()).unwrap();
+
+    validate_pack_layout(&pack).unwrap();
+}
+
+#[test]
+fn validates_right_only_rendering_contract() {
+    let (_temp, pack) = write_right_only_timing_pack_fixture(false);
+
+    validate_pack_layout(&pack).unwrap();
+}
+
+#[test]
+fn right_only_rendering_contract_rejects_left_animations() {
+    let (_temp, pack) = write_right_only_timing_pack_fixture(true);
+
+    assert_timing_validation_fails(
+        &pack,
+        "assets/manifest.json",
+        "right_only forbids idle_left and walk_left",
+    );
+}
+
+#[test]
+fn right_only_rendering_contract_requires_right_pair() {
+    let (_temp, pack) = write_right_only_timing_pack_fixture(false);
+    for (relative, pointer) in [
+        ("forgepack.json", "/animations"),
+        ("assets/manifest.json", "/animations"),
+        ("assets/godot_import.json", "/spriteFrames/animations"),
+    ] {
+        let path = pack.join(relative);
+        let mut document: serde_json::Value =
+            serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        document
+            .pointer_mut(pointer)
+            .and_then(serde_json::Value::as_array_mut)
+            .unwrap()
+            .retain(|animation| animation["name"] != "walk_right");
+        fs::write(path, serde_json::to_vec_pretty(&document).unwrap()).unwrap();
+    }
+
+    assert_timing_validation_fails(
+        &pack,
+        "assets/manifest.json",
+        "right_only requires animations idle_right, walk_right",
+    );
+}
+
+#[test]
+fn rejects_mismatched_godot_rendering_contract() {
+    let (_temp, pack) = write_timing_pack_fixture();
+    let manifest_path = pack.join("assets/manifest.json");
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+    manifest["rendering"] = json!({
+        "profile": "godot-sprite-rendering@1.0.0",
+        "textureFilter": "nearest",
+        "pixelSnap": true,
+        "mirrorPolicy": "auto"
+    });
+    fs::write(
+        &manifest_path,
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+    let helper_path = pack.join("assets/godot_import.json");
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(&helper_path).unwrap()).unwrap();
+    helper["spriteFrames"]["rendering"] = json!({
+        "profile": "godot-sprite-rendering@1.0.0",
+        "textureFilter": "linear",
+        "pixelSnap": false,
+        "mirrorPolicy": "auto"
+    });
+    fs::write(&helper_path, serde_json::to_vec_pretty(&helper).unwrap()).unwrap();
+
+    assert_timing_validation_fails(&pack, "assets/godot_import.json", "rendering differs");
+}
+
+#[test]
+fn godot_helper_fps_tampering_fails_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]["fps"] = json!(12.0);
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        serde_json::to_vec_pretty(&helper).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(&pack, "assets/godot_import.json", "fps differs");
+    drop(temp);
+}
+
+#[test]
+fn equivalent_f32_fps_spellings_share_one_runtime_cadence() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let short_f32 = 6.855_184_f32;
+    for path in ["forgepack.json", "assets/manifest.json"] {
+        let path = pack.join(path);
+        let mut document: serde_json::Value =
+            serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        document["animations"][0]["fps"] = json!(short_f32);
+        fs::write(path, serde_json::to_vec_pretty(&document).unwrap()).unwrap();
+    }
+    let helper_path = pack.join("assets/godot_import.json");
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(&helper_path).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]["fps"] = json!(f64::from(short_f32));
+    fs::write(helper_path, serde_json::to_vec_pretty(&helper).unwrap()).unwrap();
+
+    validate_pack_layout(&pack).unwrap();
+    drop(temp);
+}
+
+#[test]
+fn helper_animation_removal_fails_modern_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"] = json!([]);
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        serde_json::to_vec_pretty(&helper).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(&pack, "assets/godot_import.json", "animation names differ");
+    drop(temp);
+}
+
+#[test]
+fn helper_fps_removal_fails_modern_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("fps");
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        serde_json::to_vec_pretty(&helper).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(&pack, "assets/godot_import.json", "fps is missing");
+    drop(temp);
+}
+
+#[test]
+fn helper_frame_durations_removal_fails_modern_timing_validation() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("frameDurationsMs");
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        serde_json::to_vec_pretty(&helper).unwrap(),
+    )
+    .unwrap();
+
+    assert_timing_validation_fails(
+        &pack,
+        "assets/godot_import.json",
+        "frameDurationsMs is missing",
+    );
+    drop(temp);
+}
+
+#[test]
+fn all_documents_may_omit_legacy_frame_durations() {
+    let (temp, pack) = write_timing_pack_fixture();
+    let mut forgepack: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("forgepack.json")).unwrap()).unwrap();
+    forgepack["animations"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("frameDurationsMs");
+    fs::write(
+        pack.join("forgepack.json"),
+        serde_json::to_vec_pretty(&forgepack).unwrap(),
+    )
+    .unwrap();
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/manifest.json")).unwrap()).unwrap();
+    manifest["animations"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("frameDurationsMs");
+    fs::write(
+        pack.join("assets/manifest.json"),
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("frameDurationsMs");
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        serde_json::to_vec_pretty(&helper).unwrap(),
+    )
+    .unwrap();
+
+    validate_pack_layout(&pack).unwrap();
+    drop(temp);
+}
+
+fn write_timing_pack_fixture() -> (tempfile::TempDir, std::path::PathBuf) {
+    let temp = tempfile::tempdir().unwrap();
+    let pack = temp.path().join("hero.gsfpack");
+    write_pack_fixture(&pack, 8);
+    let animation = json!({
+        "name": "idle",
+        "frames": [0, 1, 2, 3, 4, 5, 6, 7],
+        "fps": 10.0,
+        "loop": true,
+        "frameDurationsMs": [100, 100, 100, 100, 100, 100, 100, 100]
+    });
+    let mut forgepack: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("forgepack.json")).unwrap()).unwrap();
+    forgepack["animations"] = json!([animation.clone()]);
+    forgepack["assets"]["godotHelper"] = json!("assets/godot_import.json");
+    fs::write(
+        pack.join("forgepack.json"),
+        serde_json::to_vec_pretty(&forgepack).unwrap(),
+    )
+    .unwrap();
+
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(pack.join("assets/manifest.json")).unwrap()).unwrap();
+    manifest["animations"] = json!([animation.clone()]);
+    fs::write(
+        pack.join("assets/manifest.json"),
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+    fs::write(
+        pack.join("assets/godot_import.json"),
+        json!({ "spriteFrames": { "animations": [animation] } }).to_string(),
+    )
+    .unwrap();
+    (temp, pack)
+}
+
+fn write_right_only_timing_pack_fixture(
+    include_left: bool,
+) -> (tempfile::TempDir, std::path::PathBuf) {
+    let (temp, pack) = write_timing_pack_fixture();
+    let idle_right = json!({
+        "name": "idle_right",
+        "frames": [0, 1, 2, 3],
+        "fps": 10.0,
+        "loop": true,
+        "frameDurationsMs": [100, 100, 100, 100]
+    });
+    let walk_right = json!({
+        "name": "walk_right",
+        "frames": [4, 5, 6, 7],
+        "fps": 10.0,
+        "loop": true,
+        "frameDurationsMs": [100, 100, 100, 100]
+    });
+    let idle_left = json!({
+        "name": "idle_left",
+        "frames": [0, 1, 2, 3],
+        "fps": 10.0,
+        "loop": true,
+        "frameDurationsMs": [100, 100, 100, 100]
+    });
+    let walk_left = json!({
+        "name": "walk_left",
+        "frames": [4, 5, 6, 7],
+        "fps": 10.0,
+        "loop": true,
+        "frameDurationsMs": [100, 100, 100, 100]
+    });
+    let mut animations = vec![idle_right, walk_right];
+    if include_left {
+        animations.extend([idle_left, walk_left]);
+    }
+    let rendering = json!({
+        "profile": "godot-sprite-rendering@1.0.0",
+        "textureFilter": "nearest",
+        "pixelSnap": true,
+        "mirrorPolicy": "right_only"
+    });
+
+    let forgepack_path = pack.join("forgepack.json");
+    let mut forgepack: serde_json::Value =
+        serde_json::from_slice(&fs::read(&forgepack_path).unwrap()).unwrap();
+    forgepack["animations"] = json!(animations.clone());
+    fs::write(
+        &forgepack_path,
+        serde_json::to_vec_pretty(&forgepack).unwrap(),
+    )
+    .unwrap();
+
+    let manifest_path = pack.join("assets/manifest.json");
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+    manifest["animations"] = json!(animations.clone());
+    manifest["rendering"] = rendering.clone();
+    fs::write(
+        &manifest_path,
+        serde_json::to_vec_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+
+    let helper_path = pack.join("assets/godot_import.json");
+    let mut helper: serde_json::Value =
+        serde_json::from_slice(&fs::read(&helper_path).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"] = json!(animations);
+    helper["spriteFrames"]["rendering"] = rendering;
+    fs::write(&helper_path, serde_json::to_vec_pretty(&helper).unwrap()).unwrap();
+    (temp, pack)
+}
+
+fn assert_timing_validation_fails(pack: &Path, document: &str, message: &str) {
+    assert!(matches!(
+        validate_pack_layout(pack).unwrap_err(),
+        PackError::SchemaValidation {
+            document: error_document,
+            message: error_message,
+        } if error_document == document && error_message.contains(message)
+    ));
+}
+
+#[test]
+fn equal_total_duration_does_not_hide_changed_cadence() {
+    let (_temp, pack) = write_timing_pack_fixture();
+    let path = pack.join("assets/godot_import.json");
+    let mut helper: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    helper["spriteFrames"]["animations"][0]["frameDurationsMs"] =
+        json!([90, 110, 100, 100, 100, 100, 100, 100]);
+    fs::write(path, serde_json::to_vec(&helper).unwrap()).unwrap();
+    assert_timing_validation_fails(
+        &pack,
+        "assets/godot_import.json",
+        "frameDurationsMs differs",
+    );
+}
+
+#[test]
+fn declared_human_review_must_exist_and_match_its_schema() {
+    let (_temp, pack) = write_timing_pack_fixture();
+    let path = pack.join("forgepack.json");
+    let mut metadata: serde_json::Value =
+        serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    metadata["assets"]["animationHumanReview"] = json!("quality/animation-human-review.json");
+    fs::write(path, serde_json::to_vec(&metadata).unwrap()).unwrap();
+    assert!(matches!(
+        validate_pack_layout(&pack).unwrap_err(),
+        PackError::MissingFile(_)
+    ));
+    fs::create_dir(pack.join("quality")).unwrap();
+    fs::write(pack.join("quality/animation-human-review.json"), b"{}").unwrap();
+    assert!(matches!(
+        validate_pack_layout(&pack).unwrap_err(),
+        PackError::SchemaValidation { .. }
+    ));
+}
