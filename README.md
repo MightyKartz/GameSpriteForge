@@ -2,34 +2,48 @@
 
 English | [简体中文](./README.zh-CN.md)
 
-**An agent-first CLI for generating, processing, and reusing 2D game assets, with provenance and Godot delivery.**
+**Create 2D game assets, prepare your sprites, and bring them into Godot.**
 
-Forge gives Codex, Claude, scripts, and CI a common JSON interface for building game
-assets. Generate characters, icons, and props; process existing media locally; or
-reuse approved animation frames without generating new video. Deliver the results
-as inspectable `.gsfpack` assets and native Godot resources.
+Forge is a CLI for generating icon and prop sets, processing existing images and animation, and delivering assets to your game. Use it from the terminal, or let Codex and Claude handle the workflow with you.
 
 [Latest release](https://github.com/MightyKartz/GameSpriteForge/releases/latest) ·
-[CLI reference](docs/automation/forge-cli.md) ·
-[Examples](examples/cli) ·
-[Contributing](CONTRIBUTING.md)
+[Get started](#install) ·
+[CLI guide](docs/automation/forge-cli.md) ·
+[Examples](examples/cli)
 
-## What Forge does
+## Generate icons and props in a shared style
 
-- **Consistent assets:** immutable Style Locks guide character, icon-set, and prop-set generation.
-- **Local processing:** matting, frame normalization, loop selection, sprite sheets, and Pack validation.
-- **Existing-animation reuse:** preserve approved source pixels, frame order, native durations, and provenance while assembling a separate directional review candidate.
-- **Inspectable jobs:** durable jobs, structured reports, plan/execute operations, and targeted retries.
-- **Godot delivery:** external PNG/atlas textures, native animation resources, installation ownership checks, and usage metadata.
-- **Agent integration:** one JSON envelope on stdout, with diagnostics and interactive authentication on stderr/TTY.
+Create inventory icons, pickups, and scene props from descriptions. A reusable style guide helps keep each set visually coordinated, and you can retry an individual item while keeping the rest.
 
-Forge handles visual assets and engine delivery. Gameplay and game logic belong to
-the project consuming those assets.
+![Illustrative forest icon and prop set](docs/media/showcase/gallery.png)
+
+*Forest-themed artwork generated separately with AI for this showcase, then prepared with Forge.*
+
+Start with the [icon set](examples/cli/icons.json), [prop set](examples/cli/props.json), and [style](examples/cli/style.json) examples.
+
+## Turn existing media into usable sprites
+
+Bring your own video, PNG sequence, or sprite sheet. Remove backgrounds, align frames, choose animation loops, and build sprite sheets locally—so existing artwork can move into your game workflow.
+
+![Existing media prepared as transparent sprite frames](docs/media/showcase/processing.png)
+
+*One sprite from the source sheet, before and after Forge background removal.*
+
+## Bring assets into Godot
+
+Deliver textures, atlases, and native animation resources to a Godot project. Forge preserves frame timing and rendering settings, so you can preview the result in the engine and refine it for your game.
+
+![Godot demo scene assembled with the processed PNG sprites](docs/media/showcase/godot.png)
+
+*A demo scene assembled in Godot using the PNGs prepared by Forge.*
+
+### Work at your own pace
+
+Check task progress, inspect results, and retry the items that need another pass. Forge works with terminal commands, scripts, and coding agents, making it practical to prepare a few assets or repeat a larger batch.
 
 ## Install
 
-The published CLI release targets **macOS Apple Silicon**. Install Godot **4.6.x**
-separately if you need engine delivery.
+Current release: [v0.2.1](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.2.1) for **macOS Apple Silicon**. Install **Godot 4.6.x** separately for engine delivery. The current binaries are unsigned and not notarized.
 
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/MightyKartz/GameSpriteForge/main/install.sh | sh
@@ -42,128 +56,22 @@ forge --version
 forge doctor --json
 ```
 
-The installer verifies SHA-256 manifests and installs `forge`, `ffmpeg`, and
-`ffprobe` in a versioned user directory. Only `forge` is exposed on `PATH`.
-The current published release is
-[`v0.2.1`](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.2.1);
-it is unsigned and not notarized. Changes on `main` may require a source build.
+For your first set, follow the [CLI guide](docs/automation/forge-cli.md) with the [icon](examples/cli/icons.json) or [prop](examples/cli/props.json) example. Online generation uses your provider account and may incur charges; local asset processing does not require new generation.
 
-## Generate your first character
+## In development
 
-Use the [style](examples/cli/style.json) and [character](examples/cli/character.json)
-specifications as starting points. Save your own copies and replace the absolute
-spec paths below. API Key is the stable xAI authentication path; OAuth is Preview.
-Provider-backed generation may incur charges. Review the plan and request bounds
-before execution; see the [CLI reference](docs/automation/forge-cli.md).
+**Character animation is still being developed and tested.** Generation, animation reuse, and directional workflows need visual review. The experimental reuse helper is available in the source repository; it is not installed with the CLI.
 
-```bash
-forge provider login --provider xai --method api-key
-forge project init --path "$PWD/game-assets" --name "My Game"
+Advanced character consistency and world-asset workflows also require optional source-build features. See the [release notes](docs/releases/v0.2.1.md) for what is included in the current download.
 
-# Plan the Style Lock, then execute the returned token.
-forge style create --project "$PWD/game-assets" \
-  --spec /absolute/style.json --plan-only --json
-forge plan execute --token STYLE_PLAN_TOKEN --wait --json
+## Documentation
 
-# Plan the character, then execute its separate token.
-forge generate character --project "$PWD/game-assets" \
-  --spec /absolute/character.json --plan-only --json
-forge plan execute --token CHARACTER_PLAN_TOKEN --wait --json
-```
-
-Replace each token placeholder with the value from its plan response. Generation
-normally runs as a durable asynchronous job; `--wait` waits for completion. Read the
-job's artifacts to find the actual output Pack:
-
-```bash
-forge job report --id JOB_ID --json
-forge pack validate --path /absolute/Character.gsfpack --json
-```
-
-For inventory assets, use `forge generate icon-set` or `forge generate prop-set`
-with the corresponding [icon](examples/cli/icons.json) or
-[prop](examples/cli/props.json) specification.
-
-## Deliver to Godot
-
-Use an existing Godot project and the Pack path returned by the completed job:
-
-```bash
-forge godot plan-install \
-  --pack /absolute/Character.gsfpack \
-  --project /absolute/my-godot-game \
-  --asset-key my_character --json
-
-forge plan execute --token INSTALL_PLAN_TOKEN --wait --json
-```
-
-Forge installs into `addons/forge_assets`, uses external textures, and tracks
-Forge-owned output. Validate the installed resources and review the animation in
-Godot before using it in your game.
-
-## Reuse animation without new video
-
-The source repository includes an experimental
-[directional reuse workflow](docs/architecture/forge-existing-animation-reuse-plan.md)
-(documentation in Chinese). It combines existing approved right/down/up recovery
-Packs in a standalone Godot review project, preserves source frames and native
-timing, and applies a fixed scale per direction. The installation plans must have
-explicit zero Provider request bounds.
-
-The helper requires Python 3.9+, Pillow, Forge CLI 0.2.1 (or its release candidate), Godot
-4.6.x, and the expected source approvals and geometry evidence. It is scoped to the
-existing recovered three-direction corpus; the full source media is not bundled.
-The helper and its adjacent Godot templates are source-only: download the matching
-release tag's source archive or check out that tag, then run:
-
-```bash
-python3 scripts/character/prepare_directional_reuse.py --help
-```
-
-Pass the installed CLI's absolute path through `--forge` when building a candidate.
-See the [0.2.1 release notes](docs/releases/v0.2.1.md) for the delivery scope.
-
-See the [integration checks](docs/qa/forge-directional-reuse-main-integration-2026-09-07.md)
-and [human approval record](docs/qa/forge-directional-human-review-2026-09-07.md).
-Approval is bound to that specific candidate. Each changed candidate needs its own
-review; the helper does not synthesize missing left-facing or idle animations.
-
-## Release and source-build scope
-
-The [CLI feature definitions](packages/cli/Cargo.toml) are the source of truth.
-The default build uses `default = []`.
-
-| Surface | Availability |
-| --- | --- |
-| Style Locks, character/icon/prop generation, local asset preparation, jobs, Pack validation, Godot installation | Default CLI |
-| Native per-frame timing and rendering support | Included in the 0.2.1 CLI release |
-| Directional reuse helper and Godot review templates | Experimental; matching source checkout required |
-| Subject Locks and Character consistency V2 | Opt-in `consistency-v2` source build |
-| Environment, Terrain, Building, Map workflows | Opt-in world features; `world-assets` enables the group |
-| Manifest-driven project diff and build planning | Opt-in `game-art-manifest` source build |
-
-Optional features and fixture checks do not establish real-provider or visual
-acceptance. The CLI and Rust workspace are the current product focus; retained
-desktop/MCP code is outside the default release surface.
-
-## Development
-
-```bash
-cargo build -p forge-cli
-cargo fmt --all -- --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test --workspace
-python3 scripts/character/test_prepare_directional_reuse.py -v
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and applicable checks, the
-[quality workflow](.github/workflows/v03-quality.yml) for CI coverage, and the
-[QA artifact policy](docs/qa/forge-qa-artifact-policy.md) for evidence handling.
-Keep credentials and temporary media URLs out of commits. Provider output should
-be materialized and hashed before processing, and source Jobs/Packs remain
-traceable across retries and derived outputs.
+- [CLI guide](docs/automation/forge-cli.md) — commands, generation, processing, and Godot delivery.
+- [Example specifications](examples/cli) — starting points for your own assets.
+- [Release notes](docs/releases/v0.2.1.md) — platform support and release scope.
+- [Showcase assets](docs/media/showcase/README.md) — image sources and the reproducible Godot demo.
+- [Contributing](CONTRIBUTING.md) — source builds and development checks.
 
 ## License
 
-[MIT](LICENSE). Bundled FFmpeg helpers have separate LGPL notices and corresponding
-source distributions; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+[MIT](LICENSE). Bundled FFmpeg tools have separate LGPL notices and source distributions; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

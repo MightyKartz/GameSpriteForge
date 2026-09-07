@@ -1,0 +1,3 @@
+# Godot regenerates texture import metadata and local caches.
+.godot/
+*.import
