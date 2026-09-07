@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "1",
+  "scope": "isolated main integration; existing local source assets",
+  "baseCommit": "23e5b905024942024f3f461d14cdb589c603c444",
+  "implementationCommits": [
+    "8f8ba2d8a0c39d1354df52b172acb80041d4081d",
+    "b7ee1cb709d102dbf1301e526799b068b6da821c",
+    "462df7478ace2621072ddf06a32237adb58cef70"
+  ],
+  "localChecks": {
+    "format": "passed",
+    "defaultWorkspaceClippy": "passed",
+    "defaultWorkspaceTests": "passed",
+    "packTests": 37,
+    "pythonIntegrityTests": 7,
+    "cliProductContract": "passed",
+    "godotHeadless": "passed",
+    "godotWindowed": "passed",
+    "cleanZipImportAndHeadlessRuntime": "passed",
+    "rust198DefaultWorkspaceClippy": "passed",
+    "rust198ConsistencyAndWorldClippy": "passed",
+    "rust198WorkspaceTests": "passed"
+  },
+  "engine": "4.6.3-stable (official)",
+  "sourceAssetsUnchanged": true,
+  "sourceFrameCount": 52,
+  "runtimeFramePixelChecks": 52,
+  "installedTextureChecks": 13,
+  "textResourceChecks": 7,
+  "providerRequestCountThisOperation": 0,
+  "upCalibrationScale": 0.9399019056206103,
+  "sourceGeometryAssessment": {
+    "down": {
+      "stableScaleGatePassed": true,
+      "stableScaleMedianPx": 737.22816,
+      "stableScaleRelativeError": 0.000489911,
+      "verdict": "source evidence preserved; runtime calibration does not replace source geometry assessment"
+    },
+    "right": {
+      "stableScaleGatePassed": true,
+      "stableScaleMedianPx": 737.589513,
+      "stableScaleRelativeError": 0.0,
+      "verdict": "source evidence preserved; runtime calibration does not replace source geometry assessment"
+    },
+    "up": {
+      "stableScaleGatePassed": false,
+      "stableScaleMedianPx": 784.751588,
+      "stableScaleRelativeError": 0.063940816,
+      "verdict": "source evidence preserved; runtime calibration does not replace source geometry assessment"
+    }
+  },
+  "maximumSourceAnchorToBodyDistancePx": 0.0,
+  "maximumDisplacementErrorPx": 0.0028076171875,
+  "allMovementSegmentsCoverNativeFrames": true,
+  "pairedPreviewMaximumFrameDifference": 0,
+  "pairedPreviewMaximumProgressDifference": 0.0,
+  "visualReview": "pending",
+  "productionPromoted": false,
+  "delivery": {
+    "sha256": "9b5076859548ecb3a1040b506beea272b18e38d8e81ccfe29cac14062b14558f",
+    "sizeBytes": 25198275
+  },
+  "localEvidenceSha256": {
+    "source-lock.json": "0aadab9209864c445e14d960f84ba5204ee054505cd1e52e33dc3a505da9ce04",
+    "preparation-report.json": "87d72f189cf2f61c106b9538a1d9e03d3daa2ad9f36f89531ca9994a2f6f1c4d",
+    "verification-report.json": "6a939c7a5c26f9b0b0d5bd63c2835f47c77368abad6679d612428914204661d2",
+    "godot-project/qa-output/runtime-report.json": "c48fd29e0ec0f983278c3f1d0108d97bd8f3468d422dfc0a10185227024e2e19"
+  },
+  "portableRuntimeReportSha256": "a178c95f409fd14a3086936a03486c158bd455b859fa52667360b4ba113bf876",
+  "screenshotSha256": "93ad747248939831c8897a5ea86e904f0ed6ac8cd80031108bcb58c043728bff",
+  "remoteCI": {
+    "batch1": {
+      "runId": 34092056565,
+      "url": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/34092056565",
+      "headCommit": "462df7478ace2621072ddf06a32237adb58cef70",
+      "verdict": "pass",
+      "gates": {
+        "rust-quality": "pass",
+        "character-v2-contract": "pass",
+        "character-v2-full-matrix": "pass",
+        "static-cli-contract": "pass",
+        "static-five-style-matrix": "pass",
+        "world-assets-experimental": "pass"
+      }
+    },
+    "batch2": {
+      "runId": 34092060365,
+      "url": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/34092060365",
+      "headCommit": "7e4cd1e72b500244af27782811eb40f8117e67bb",
+      "verdict": "pass",
+      "gates": {
+        "rust-quality": "pass",
+        "character-v2-contract": "pass",
+        "character-v2-full-matrix": "pass",
+        "static-cli-contract": "pass",
+        "static-five-style-matrix": "pass",
+        "world-assets-experimental": "pass"
+      }
+    }
+  },
+  "ciCompatibilityFix": {
+    "reason": "Rust 1.98 chunks_exact_to_as_chunks lint in existing code",
+    "changedSites": 3,
+    "initialRemoteRuns": [
+      34085614926,
+      34085824053
+    ],
+    "initialNonRustMatrixGroupsPassed": 5
+  }
+}
