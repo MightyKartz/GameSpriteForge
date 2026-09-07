@@ -114,7 +114,7 @@ impl FixtureProvider {
             .map_err(|error| ProviderError::InvalidOutput(error.to_string()))?;
         for index in 0..24u8 {
             let mut pixels = vec![0u8; 96 * 96 * 4];
-            for pixel in pixels.chunks_exact_mut(4) {
+            for pixel in pixels.as_chunks_mut::<4>().0 {
                 pixel.copy_from_slice(&[0, 255, 0, 255]);
             }
             let phase = index % 8;
