@@ -1,0 +1,195 @@
+{
+  "ok": true,
+  "scope": "Forward verification from the embedded CLI guide: synthetic transparent PNGs to static prop Pack to native Godot resources, with no skill installation",
+  "selectedCli": {
+    "sha256": "5972ed1b95ff6bcdc2d59beeee160ef873c46b3cd315acd565e4a6b92adc528a",
+    "name": "forge-use",
+    "schemaVersion": 1,
+    "cliVersion": "0.3.2",
+    "build": {
+      "dirty": true,
+      "features": [],
+      "gitCommit": "1784c7a3b08e90cbab9e5671a490d9708d759847",
+      "profile": "debug",
+      "target": "aarch64-apple-darwin"
+    },
+    "contentHash": "3de3687ec98e1a48620c5382b5b39faff24c4ef264705cadb9db35d8a8655250"
+  },
+  "isolation": {
+    "projectSkillInstalled": false,
+    "userSkillInstalled": false,
+    "skillInstallCommandRun": false,
+    "projectAgentsSkillsPresent": false,
+    "codexHomeEmpty": true,
+    "storesOutsideGameProject": true,
+    "realUserSkillsAccessed": false,
+    "realConsumerProjectsAccessed": false,
+    "originalPrivateArtworkAccessed": false
+  },
+  "guidance": {
+    "sources": [
+      "forge --help",
+      "forge guide",
+      "forge guide static",
+      "forge guide static-example",
+      "forge guide --json",
+      "forge plan --help",
+      "Godot --help"
+    ],
+    "repositorySourceOrSkillFilesRead": false,
+    "existingQaScriptsRead": false,
+    "forgeCommandsGuessed": false,
+    "blockingGaps": [],
+    "clarifications": [
+      {
+        "finding": "The tested guide said props have Sprite2D scenes and usage.nodeType was Sprite2D, while generated scenes have a Node2D root and Sprite2D child. The anchor is applied through the child position.",
+        "impact": "The first native QA check assumed Sprite2D at the scene root and failed; the consumer was corrected after inspecting this run\u2019s returned .tscn files. Forge import and install commands succeeded on their first executed attempt.",
+        "firstAttemptEvidence": "native-first-attempt.json",
+        "resolution": "Root reports the static guide now explicitly documents the Node2D root, Sprite2D child and anchor position in commit 930b0e5. This clarification is newer than the pinned executable used by this result and was not re-exercised."
+      }
+    ],
+    "resourcePaths": "Pack, usage, registry, textures and scene directory were obtained from CLI output; scene filenames were enumerated in the returned directory, not derived from display names"
+  },
+  "nativeGodot": {
+    "anchor": [
+      128.0,
+      240.0
+    ],
+    "failures": [],
+    "godotVersion": "4.6.3-stable (official)",
+    "ok": true,
+    "scenes": [
+      {
+        "centered": false,
+        "expectedTextureFilter": 2,
+        "id": "lantern",
+        "offset": [
+          0.0,
+          0.0
+        ],
+        "rectPosition": [
+          0.0,
+          0.0
+        ],
+        "rootClass": "Node2D",
+        "scenePath": "res://addons/forge_assets/guide_forward_props/scenes/lantern.tscn",
+        "sceneRectOrigin": [
+          -128.0,
+          -240.0
+        ],
+        "spriteClass": "Sprite2D",
+        "spritePosition": [
+          -128.0,
+          -240.0
+        ],
+        "textureFilter": 2,
+        "texturePath": "res://addons/forge_assets/guide_forward_props/items/lantern.png"
+      },
+      {
+        "centered": false,
+        "expectedTextureFilter": 2,
+        "id": "rock",
+        "offset": [
+          0.0,
+          0.0
+        ],
+        "rectPosition": [
+          0.0,
+          0.0
+        ],
+        "rootClass": "Node2D",
+        "scenePath": "res://addons/forge_assets/guide_forward_props/scenes/rock.tscn",
+        "sceneRectOrigin": [
+          -128.0,
+          -240.0
+        ],
+        "spriteClass": "Sprite2D",
+        "spritePosition": [
+          -128.0,
+          -240.0
+        ],
+        "textureFilter": 2,
+        "texturePath": "res://addons/forge_assets/guide_forward_props/items/rock.png"
+      }
+    ],
+    "scope": "Native structural resource checks; not human art approval",
+    "textureFilter": "linear",
+    "textures": [
+      {
+        "class": "CompressedTexture2D",
+        "height": 256,
+        "id": "lantern",
+        "path": "res://addons/forge_assets/guide_forward_props/items/lantern.png",
+        "usedRect": [
+          26,
+          30,
+          203,
+          210
+        ],
+        "width": 256
+      },
+      {
+        "class": "CompressedTexture2D",
+        "height": 256,
+        "id": "rock",
+        "path": "res://addons/forge_assets/guide_forward_props/items/rock.png",
+        "usedRect": [
+          23,
+          112,
+          210,
+          128
+        ],
+        "width": 256
+      }
+    ]
+  },
+  "hashes": [
+    {
+      "id": "lantern",
+      "sourceSha256": "3d7eb70177d7284eef1426a3adaaeddf3300f7c972b981543bec3267daddcb8e",
+      "normalizedSha256": "d5cbef64eb21a4ac376837b25782dfcec66aea49f83fbb1745db1abea712d90b",
+      "deliveredTextureSha256": "d5cbef64eb21a4ac376837b25782dfcec66aea49f83fbb1745db1abea712d90b",
+      "sceneSha256": "d3757f68b67037c1c2211624965dc02c0af0fc1ffc1942e4be39f1202bbd1adb",
+      "sourceUnchanged": true,
+      "normalizedEqualsDelivered": true
+    },
+    {
+      "id": "rock",
+      "sourceSha256": "f5eec0c66a420b98ba32f9b5482c8941fd7771df41dee09c0008abb68c44721b",
+      "normalizedSha256": "75f124fa8766a814c6acd243485d42657210b20576e54a8894882e269633b1a3",
+      "deliveredTextureSha256": "75f124fa8766a814c6acd243485d42657210b20576e54a8894882e269633b1a3",
+      "sceneSha256": "5d28feaf6fb5c34b3bf012e213d14912a17be5c6aed7a2d580573439bee2be5a",
+      "sourceUnchanged": true,
+      "normalizedEqualsDelivered": true
+    }
+  ],
+  "assessment": {
+    "structuralValidationPassed": true,
+    "styleConsistencyEvaluated": false,
+    "visualReviewRequired": true,
+    "humanArtApproval": false,
+    "statement": "Successful structural validation and headless Godot resource loading do not constitute human art approval, style approval, gameplay-scale visual review or device performance validation."
+  },
+  "commandCount": 25,
+  "prepare": {
+    "jobId": "f80f6458-34de-4763-a729-b7790b51bd7a",
+    "state": "succeeded",
+    "inputHash": "152f213479b1f80670973ad45e18741210e9da003591de30e256b3b31d7c454e",
+    "recipeHash": "b2db90eff4fad8d7c3cf14f701100e835a0f94a29e962c0a7c5fbcbd8600f1ff",
+    "providerRequestOccurred": false,
+    "providerRequestCount": 0,
+    "planProviderRequestEstimate": 0,
+    "planMaximumProviderRequests": 0
+  },
+  "pack": {
+    "cliPackFingerprint": "d9d381f78959d72e8e3fcf5069b09fba124c4237dc674af858d2a5a2ece914e3",
+    "valid": true
+  },
+  "install": {
+    "jobId": "44c95c59-6a24-45c9-b6b9-66cd981889d2",
+    "state": "succeeded",
+    "providerRequestOccurred": false,
+    "providerRequestCount": 0,
+    "packFingerprintMatchesRegistry": true
+  }
+}

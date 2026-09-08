@@ -1,25 +1,21 @@
 {
   "ok": true,
-  "binarySha256": "5972ed1b95ff6bcdc2d59beeee160ef873c46b3cd315acd565e4a6b92adc528a",
+  "binarySha256": "a226ea2e20a3ee2cb0161da11396a3a82572ca59affda498097a8053c46ba5e1",
   "build": {
-    "dirty": true,
+    "dirty": false,
     "features": [],
-    "gitCommit": "1784c7a3b08e90cbab9e5671a490d9708d759847",
+    "gitCommit": "930b0e500b6811f9cd2cfeacb4c70ba396765dc1",
     "profile": "debug",
     "target": "aarch64-apple-darwin"
   },
-  "contentHash": "3de3687ec98e1a48620c5382b5b39faff24c4ef264705cadb9db35d8a8655250",
-  "commandCount": 118,
-  "providerRequestsExecuted": 0,
-  "scope": "temporary projects/home; synthetic local PNGs; plans only; no Godot or Provider execution",
-  "caseCount": 33,
+  "contentHash": "5f63b2adfb9e69e63e5b29d0692f8e3796c9fb3a13527a6e46e4494129e70165",
   "cases": [
     {
       "name": "show_complete_bundle",
       "passed": true,
       "files": 6,
       "relativeLinks": 13,
-      "contentHash": "3de3687ec98e1a48620c5382b5b39faff24c4ef264705cadb9db35d8a8655250"
+      "contentHash": "5f63b2adfb9e69e63e5b29d0692f8e3796c9fb3a13527a6e46e4494129e70165"
     },
     {
       "name": "guide_defaults_to_overview_without_skill_installation",
@@ -157,8 +153,8 @@
     {
       "name": "upgrade_real_older_content_and_preserve_backup",
       "passed": true,
-      "previousContentHash": "70766198f40711bc8f7d70951d3c5c1dd4edd2dc47980895459067720883e672",
-      "backupPath": "/Users/kartz/Development/Forge/target/qa/v032-guide/contracts-final/older-managed-bundle/.agents/.forge-skill-backups/32166-1788850418827911000-2/forge-use"
+      "previousContentHash": "7ed845d2ce9d58f8645f73dd8c43ebfb131d6ad01e721757d1064a31329702e9",
+      "backupPath": "older-managed-bundle/.agents/.forge-skill-backups/33624-1788850754716753000-2/forge-use"
     },
     {
       "name": "invalid_arguments_have_no_side_effects",
@@ -166,9 +162,14 @@
       "requests": 8
     }
   ],
+  "commandCount": 118,
+  "providerRequestsExecuted": 0,
+  "scope": "temporary projects/home; synthetic local PNGs; plans only; no Godot or Provider execution",
+  "caseCount": 33,
   "cliRustTestsPassed": 17,
   "workspaceClippy": "pass",
   "formatting": "pass",
   "skillValidation": "pass",
-  "localMarkdownTargetsChecked": 81
+  "localMarkdownTargetsChecked": 81,
+  "evidencePathsRelativeTo": "isolated contract test root"
 }

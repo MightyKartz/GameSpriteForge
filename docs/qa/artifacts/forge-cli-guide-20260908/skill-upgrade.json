@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "oldVersion": "0.3.1",
+  "newVersion": "0.3.2",
+  "oldContentHash": "e5d93005c28e3d3f3b7463c2b89ed2e90ec30ec705eaac1db66abd0ce0935791",
+  "newContentHash": "5f63b2adfb9e69e63e5b29d0692f8e3796c9fb3a13527a6e46e4494129e70165",
+  "oldManagedManifestAccepted": true,
+  "backupMatchesAllOldFiles": true,
+  "newStatus": "current",
+  "isolatedProjectAndHome": true
+}
