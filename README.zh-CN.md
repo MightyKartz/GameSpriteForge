@@ -2,56 +2,64 @@
 
 [English](./README.md) | 简体中文
 
-**把你的 PNG 图片整理成 Godot 游戏素材。**
+**面向 AI 协作开发的 2D 游戏资产生产工具链。**
 
-Forge 是一款整理 2D 游戏美术素材的 CLI。用 Codex 或你喜欢的图片工具制作美术，将透明 PNG 交给 Forge，再把整理好的素材集交付到游戏项目。你可以直接在终端使用，也可以让 Codex、Claude 配合完成流程。
+Forge 连接美术创作与 Godot 原生资源交付，将批量资产处理、质量检查、可追溯资产包和引擎集成整合到一款 Rust CLI 中。你可以让 Codex、Claude 驱动制作流程，也可以通过终端和脚本批量执行。
+
+从美术需求出发制作图标与道具库，接入你喜欢的工具生成的图片，或将已有动画帧用于游戏原型。Forge 贯通处理、检查与交付流程，并保留源素材，支持持续迭代。
 
 [最新发布](https://github.com/MightyKartz/GameSpriteForge/releases/latest) ·
 [安装](#安装) ·
 [CLI 指南](docs/automation/forge-cli.md) ·
 [示例](examples/cli)
 
-## 直接配合 Codex 使用
+## 用 Codex 驱动资产制作
 
 [安装 CLI](#安装)后，在 Codex 中打开游戏项目，可以这样说：
 
-> 请用 Forge 和可用的图像工具，为这个 Godot 游戏制作一组森林主题背包图标。先运行 `forge guide`，保留原图，检查并导入素材。
+> 请用 Forge 和可用的图像工具，为这个 Godot 游戏制作森林主题的背包图标和场景道具。先运行 `forge guide`，保留源图，检查制作结果，再交付到游戏项目。
 
-Codex 使用图像工具制作源图，Forge 负责整理 PNG、打包素材并交付到 Godot。你也可以直接使用已有的透明 PNG。
+Codex 使用图像工具创作源图，Forge 负责资产处理、验证与 Godot 交付。CLI 内置操作指南、请求示例和结构化 JSON 输出，让编程智能体能够规划任务、查看进度并核对执行结果。
 
-## 使用你喜欢的工具制作美术
+## 围绕美术方向，批量构建资产集
 
-导入 AI 生成的图片、手绘精灵，或你已经拥有的美术素材。每个背包图标、拾取物或场景道具使用一张独立的透明 PNG。本地整理无需 Forge Provider 账号，也无需生成风格设定。
+从 AI 生成图片、手绘精灵或已有素材库开始，将透明 PNG 批量制作成适用于背包、拾取物和游戏场景的图标与道具集。本地处理在你的电脑上完成，无需 Forge Provider 账号。
+
+也可以通过 Forge 固定风格参考，调用在线服务商生成图标或道具集。通过一致性报告检查配色、比例等偏差，再针对选定素材重新生成。在线生成使用你自己的服务商账号，可能产生费用。
 
 ![森林主题图标与道具示例素材](docs/media/showcase/gallery.png)
 
-*为本页单独用 AI 生成的森林主题示例素材，随后使用 Forge 处理。*
+*森林主题图标与道具集：源图由 Codex 单独生成，精灵素材由 Forge 在本地处理。*
 
-从 [PNG → Forge → Godot 指南](docs/automation/codex-local-assets.md)开始。
+从[本地美术工作流](docs/automation/codex-local-assets.md)开始，或查看[在线生成示例](examples/cli)。
 
-## 为游戏整理一组素材
+## 控制精灵在游戏中的呈现
 
-把透明图标和道具整理到统一画布，选择适合美术风格的纹理采样，并在交付前检查结果。Forge 保留源文件，方便后续修改素材集。对于需要清理背景的图片，也提供背景移除工具。
+切分精灵图集、清理色键背景、统一画布规格。图标采用居中原点，道具采用落地锚点，并按美术风格选择清晰的像素采样或平滑过滤。在交付前查看预览和质量报告，确认素材的实际表现。
+
+对于已有动画帧，实验工作流可在导出时保留绘制坐标与逐帧时长。源文件和处理记录会保留，方便后续调整与重新制作。
 
 ![将已有素材处理为透明精灵帧](docs/media/showcase/processing.png)
 
-*从原始图集中切分的一张精灵图，展示 Forge 去除背景前后的实际效果。*
+*从带色键背景的源图到透明精灵：Forge 本地背景处理的实际效果。*
 
-## 将资源交付到 Godot
+## 验证资产，交付 Godot 原生资源
 
-把静态素材 Pack 交付到 Godot 项目，获得纹理、可直接使用的道具场景，以及放置和渲染设置。在引擎中预览，再根据游戏效果调整大小与行为。
+Forge 将纹理和资产信息封装为可验证的 Pack，再安装到 Godot 项目。图标集交付 PNG 纹理，道具集提供带锚点和渲染设置的可复用场景；动画 Pack 提供原生 `SpriteFrames` 资源和 `AnimatedSprite2D` 场景。更新时仅替换 Forge 管理的资产，交付失败会恢复上次安装。
 
-### Sword 项目原型素材预览
+通过源文件指纹、处理设置和任务报告，可以追溯资产来源，核对每次迭代的变化。Pack 验证负责检查交付结构与完整性，美术是否适合游戏则由实际画面审查决定。
 
-这些素材已交付给 Sword 游戏原型：Codex 生成源图，Forge 处理交付，再由 Godot 回放动画。下方预览将已交付的动画帧放进独立展示场景中播放。
+### 实际项目：Sword
+
+Sword 是一款修仙题材的生存游戏原型，使用 Forge 完成资产处理与交付。法术特效和怪物动画的源图由 Codex 生成，经 Forge 处理后导入 Godot；下方动图在独立的资产展示场景中回放这些已有动画。
 
 ![Sword 原型法术：离火、寒霜、落雷](docs/media/showcase/sword-spells.gif)
 
-*离火、寒霜、落雷。*
+*离火、寒霜、落雷：已交付到 Godot 的法术帧动画。*
 
 ![Sword 原型怪物：游魂、石傀、妖藤，以及守卫落击动作](docs/media/showcase/sword-enemies.gif)
 
-*游魂、石傀、妖藤，以及守卫落击动作。*
+*游魂、石傀、妖藤与守卫落击：游戏原型中的怪物动画素材。*
 
 ## 安装
 
@@ -71,18 +79,16 @@ forge guide
 
 `forge guide` 读取当前 CLI 版本附带的操作指引与请求示例，离线也能使用。
 
-制作第一组素材，请参考[本地 PNG 指南](docs/automation/codex-local-assets.md)，完成透明图片导入、Pack 检查和 Godot 安装。
+制作第一组资产，请参考[本地美术工作流](docs/automation/codex-local-assets.md)：处理图片、检查结果、验证 Pack，再安装到 Godot。
 
-Forge 也能通过在线服务商生成图标和道具集，详见 [CLI 指南](docs/automation/forge-cli.md)与[示例规格](examples/cli)。在线生成需要使用自己的服务商账号，可能产生费用；本地整理使用你已有的美术素材。
+## 当前能力与开发进展
 
-## 开发中的功能
-
-**角色动画目前仍处于测试开发阶段。** 用于游戏前仍需检查实际动画效果。版本的具体范围见 [v0.3.2 发布说明](docs/releases/v0.3.2.md)。
+本地图标与道具处理、Pack 验证和 Godot 交付构成稳定能力。**角色动画仍处于测试开发阶段**，包括生成、复用和多方向工作流。Sword 展示的是具体原型素材的应用，用于游戏前仍需检查动画效果。版本范围见 [v0.3.2 发布说明](docs/releases/v0.3.2.md)。
 
 ## 文档
 
 - [CLI 指南](docs/automation/forge-cli.md)：命令、素材生成与处理、Godot 交付。
-- [PNG 图片工作流](docs/automation/codex-local-assets.md)：整理 Codex 或其他工具制作的 PNG，并交付到 Godot。
+- [本地美术工作流](docs/automation/codex-local-assets.md)：将 Codex 或其他工具创作的美术处理并交付到 Godot。
 - [示例规格](examples/cli)：以现有示例开始制作自己的素材。
 - [发布说明](docs/releases/v0.3.2.md)：平台支持和版本范围。
 - [展示素材](docs/media/showcase/README.md)：美术来源与 Godot 预览。

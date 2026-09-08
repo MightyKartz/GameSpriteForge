@@ -1,64 +1,71 @@
 # Product
 
-## Register
+**A 2D game asset pipeline for AI-assisted development.**
 
-product
+Forge helps independent developers and small teams turn artwork into reusable
+game resources. Its public product is a Rust CLI that people, coding agents and
+scripts can use throughout asset production, from local preparation and quality
+checks to traceable Packs and native Godot delivery.
 
-## Users
+## Who it serves
 
-Forge V1 is for solo game developers, 2D asset makers, technical artists, and small game teams on macOS. They already have local videos, PNG frame sequences, sprite sheets, or `.gsfpack` folders, and they need a deterministic local workflow that turns those sources into game-ready 2D animation assets.
+Developers working with Codex, other image tools or existing artwork need more
+than a collection of generated images. They need assets with consistent framing,
+intentional placement, usable engine resources and a record of how each result
+was produced. Forge connects that creative work to the game project.
 
-Users are usually in a focused production context: checking frames, fixing background removal, validating anchors and loops, exporting packs, and confirming that the exported asset can be re-imported and used in an engine.
+## What Forge provides
 
-## Product Purpose
+- Prepare transparent PNG icons and props on consistent canvases with suitable
+  texture sampling and placement anchors.
+- Inspect processing results and quality reports, then validate the asset Pack.
+  Structural checks and visual approval remain separate decisions.
+- Preserve source originals, hashes and processing evidence so revisions can be
+  traced back to their inputs instead of replacing the asset's history.
+- Deliver textures, prop scenes and usage metadata into Godot, with stable asset
+  identities, owned installation targets and recovery after failed installs.
+- Reuse existing animation frames through experimental local preparation that
+  can preserve shared drawing coordinates, anchors and frame timing through
+  Pack and Godot SpriteFrames delivery.
 
-Game Sprite Forge is a local macOS workbench for importing existing media and packaging it into validated 2D sprite animation assets. V1 focuses on an import-only pipeline: import source media, inspect and process frames, compute quality, export frames/sprite sheet/manifest/atlas/preview GIF/`.gsfpack`, and validate the exported pack through re-import.
+## Artwork and generation
 
-Success means a user can process a short local character animation end to end without cloud services, AI provider setup, online registry, marketplace flows, or account-dependent features.
+The primary route starts with artwork created in Codex or another image tool,
+or transparent PNGs the developer already has. Image creation is a separate
+creative step; Forge processes the local files without a Provider account.
 
-## Current MVP Status
+Forge also supports controlled online icon and prop generation through a
+selected Provider and Style. This route uses the developer's Provider account,
+records generation provenance and request usage, and supports targeted retries.
+Provider requests can incur charges; local processing has separate usage evidence.
 
-As of 2026-06-06, the project has a working Tauri + React macOS MVP installed locally at `/Applications/Game Sprite Forge.app`.
+## Working with an AI assistant
 
-Implemented:
+Install the CLI and ask the assistant to run `forge guide` before preparing the
+assets. The guide and request examples travel with the executable and work
+offline. Keep a game's verified Forge version when continuing an existing project.
+The workflow supports reviewing and delivering an asset set the game can consume,
+with source history and delivery evidence available for later revisions and reuse.
 
-- Local source intake for video, PNG sequences, sprite sheets, and `.gsfpack` folders.
-- ffmpeg/ffprobe dependency check with user-configurable paths and deterministic clean-environment QA controls.
-- Video probe, frame extraction, chroma preview, batch chroma processing, square-bottom normalization, manual foot anchor support, loop range selection, quality report generation, and export.
-- `.gsfpack` create/import/validate/re-import flow backed by local schemas and Rust tests.
-- UI truth pass: demo data is labeled, unavailable workflow steps are locked, export readiness lists blockers, live workspaces show a compact Run Summary, and failed pipeline states provide recovery actions.
-- Developer ID signed, notarized, stapled DMG build and local `/Applications` install.
-- Local Pack Library refresh, inspect, validate, open, and re-import for exported `.gsfpack` folders.
+## Current release scope
 
-Current release status:
+[v0.3.2](docs/releases/v0.3.2.md) supports macOS Apple Silicon. The stable route
+is local transparent PNG preparation, static Packs and Godot delivery. Install
+Godot 4.6.x separately. Current CLI binaries are unsigned and not notarized.
 
-- The current release package is `release-candidates/GameSpriteForge-0.1.0-aarch64-0a5d18c3d1c8-notarized`.
-- Current DMG SHA-256: `0a5d18c3d1c8df79ba73e617ed972241cc2208b553227fda56ec124e90b5cc42`.
-- Current release zip SHA-256: `41831d5fa1155ad5620cf0f3e1351b8c6953d8d45d52276c4db97750c5dcb7ce`.
-- Notarization submission `834c0445-1c45-4201-88d5-a2c99c008714` is accepted, the DMG is stapled, Gatekeeper accepts the DMG and mounted app as `source=Notarized Developer ID`, mounted-DMG launch verification passed, and the synchronized `/Applications` app is stapled and Gatekeeper-accepted.
+Character animation remains in development and testing. Existing animation
+processing and reviewed project examples do not establish that automatic animation
+generation is ready for general production use. Advanced character and world-asset workflows require
+optional source-build features and are outside the default release workflow.
 
-## Brand Personality
+Product communication should make actual capabilities, results and review needs
+clear. It should help developers create and reuse assets without promising that
+generated artwork is automatically ready for every game.
 
-Technical, trustworthy, and workbench-like.
+## Historical context
 
-The product should feel like a focused local desktop tool for game asset production. It should be dense, calm, and operational rather than playful, decorative, marketing-heavy, or cloud-generator-like.
-
-## Anti-references
-
-- Generic SaaS dashboards with oversized hero sections, marketing cards, or vague productivity copy.
-- AI generation surfaces that imply one-click final game-ready assets before quality checks.
-- Marketplace, creator publishing, cloud upload, account, BYOK, hosted credits, or online registry affordances in the MVP.
-- Game-engine chrome that looks powerful but exposes controls that do not perform real local actions.
-- Decorative complexity that competes with frame inspection, quality metrics, and export readiness.
-
-## Design Principles
-
-- Make real pipeline state obvious: every visible control should either perform a local action now or clearly say why it is unavailable.
-- Keep the primary loop prominent: Import -> Extract -> Process/Quality -> Export -> Validate/Re-import.
-- Prefer local-first confidence: no AI, account, cloud, marketplace, or publishing affordances in the MVP.
-- Show sample data only when it is unmistakably labeled as sample data.
-- Let visual polish support scanning, comparison, and repeated action rather than decoration.
-
-## Accessibility & Inclusion
-
-Target WCAG AA for text contrast, focus visibility, keyboard access, and non-color-only state signaling. The app should remain readable in dense desktop layouts, provide clear disabled and error states, support reduced motion, and avoid relying on hover-only explanations for critical workflow state.
+Earlier Forge work produced a Tauri + React desktop MVP focused on local media
+import and animation processing. Its retained application code, early 0.1.0
+packages and signing evidence are historical; the desktop and MCP clients are
+outside the current default CLI build and release. See
+[Contributing](CONTRIBUTING.md) for the current development boundaries.
