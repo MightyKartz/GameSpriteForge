@@ -66,6 +66,8 @@ use forge_providers::{
 };
 use serde::Serialize;
 
+mod build_info;
+
 const JSON_SCHEMA_VERSION: &str = "1";
 
 #[derive(Parser)]
@@ -686,6 +688,8 @@ struct ErrorBody {
 #[serde(rename_all = "camelCase")]
 struct DoctorOutput {
     cli_version: &'static str,
+    build: build_info::BuildInfo,
+    capabilities: &'static [&'static str],
     cli_path: PathBuf,
     profile_id: String,
     profile_version: String,
@@ -740,6 +744,8 @@ fn run() -> Result<(), (String, String)> {
             .ok();
             success(&DoctorOutput {
                 cli_version: env!("CARGO_PKG_VERSION"),
+                build: build_info::current(),
+                capabilities: build_info::CAPABILITIES,
                 cli_path: env::current_exe().map_err(io_error)?,
                 profile_id: profile.id,
                 profile_version: profile.version,
