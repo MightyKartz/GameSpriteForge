@@ -8,7 +8,7 @@ consumer binaries are retained. Real Provider generation is outside this work.
 | --- | --- | --- |
 | 1 | Local static intake, rendering/anchors, alpha bounds, skills/docs and CI | Merged through PR #20; GitHub quality matrix passed |
 | 2 | Preserved animation coordinates/timing and whole-sheet preprocessing | Merged through PR #21; GitHub quality matrix passed |
-| 3 | Build/capability identity, v0.3.0 RC and final package verification | Release candidate preparation |
+| 3 | Build/capability identity, v0.3.0 RC and final package verification | RC.1 package gate caught a launcher bug; RC.2 preparation |
 | 4 | Isolated consumer replay, Sword lock migration and rollback evidence | Pending |
 
 ## Batch 1
@@ -80,3 +80,26 @@ Independent release-check review removed a test-only payload PATH injection.
 Installed doctor now has to discover its sibling FFmpeg/FFprobe through the same
 public executable link used by an ordinary installation; the verifier still
 requires both reported paths to point inside that exact versioned payload.
+
+### RC.1 package gate and RC.2 correction
+
+PR #22's eight source quality gates passed, including 265 Rust tests. The
+`v0.3.0-rc.1` tag points to `c0f70c57fcdc6be58d6a0f133ba9fdb20062859d`.
+Its [release run](https://github.com/MightyKartz/GameSpriteForge/actions/runs/34180596991)
+stopped before publication at the actual installed product contract. No GitHub
+Release or downloadable RC.1 package was published; the tag is retained unchanged.
+
+On macOS, `current_exe()` can retain the installer's public symlink. Taking its
+parent therefore missed the actual payload's FFmpeg/FFprobe. The identity verifier
+had resolved that symlink before launch, concealing the same entry-point behavior.
+The runtime now resolves the executable before locating its helpers, and installed
+verification invokes the public link unchanged with external helper search disabled.
+
+The failure was reproduced locally: a direct payload launch passed the product
+contract; its public link reported `ffmpeg_missing`. After the fix, relative and
+chained launcher tests passed, a missing helper was correctly rejected, and the
+full fixture product/Godot contract passed through the public link with no external
+FFmpeg search. Formatting, warning-free workspace Clippy and shell checks passed.
+This local fixture is separate from release-package evidence. RC.2 will be built
+and verified from a new tag; stable publication and consumer migration remain gated
+on the actual RC.2 package and isolated replay.
