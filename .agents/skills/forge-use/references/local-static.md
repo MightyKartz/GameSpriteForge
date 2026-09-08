@@ -122,8 +122,10 @@ deriving filenames from display names. Forge updates only its owned target and
 restores the previous installation if an install fails.
 
 Static usage exposes `texturePaths`, `anchor` and `rendering.textureFilter`.
-Props also have `Sprite2D` scenes which apply the anchor and filter. Icon texture
-consumers must apply the declared filter on their own Godot nodes. Use wrapper
+Props also have scenes with a `Node2D` root and a `Sprite2D` child. The child
+applies the anchor through its position and sets the texture filter; inspect the
+scene tree before binding game scripts. Icon texture consumers must apply the
+declared filter on their own Godot nodes. Use wrapper
 scenes for game-specific scale, offsets and behavior so subsequent Forge installs
 can continue managing the generated resources.
 
