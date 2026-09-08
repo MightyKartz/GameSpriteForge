@@ -19,8 +19,8 @@ a game's pinned executable with a convenient `forge` on PATH.
 - `plan prepare-static` is included in the current default source build. The
   published v0.2.1 predates it; use a verified source binary until the new release.
 - Local `preserve_source`, request-level rendering/timing, and whole-sheet
-  padding/offset require the animation development implementation at `d4b18e2`
-  on `codex/sword-animation-delivery`.
+  padding/offset are also included in the current source build. Published v0.2.1
+  does not accept those local request forms. Animation remains experimental.
 
 Check `plan --help` for commands. Request fields also need a known source revision
 and a successful plan; the presence of `prepare-asset` alone does not establish
@@ -80,6 +80,10 @@ Godot at gameplay scale. Local static `game_ready` is a structural result, not a
 `prototype_usable` stays a prototype. Do not disable a quality gate or submit a
 human acceptance on behalf of an unperformed review. If the user explicitly wants
 a prototype, record that intent and its remaining review status separately.
+
+Automatic repair preserves `preserve_source` coordinates: canvas/anchor changes
+are returned as manual actions. A repair plan may still apply other supported
+corrections; inspect its changes and remaining manual actions before execution.
 
 To revise a local static set, prepare a new request; the initial local importer has
 no targeted retry or Forge asset-project catalog integration. Provider-generated

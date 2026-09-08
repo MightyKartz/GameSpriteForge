@@ -61,6 +61,19 @@ worker continues the job.
 
 ## Plans and jobs
 
+### Local animation contracts
+
+Use `plan prepare-asset --request ... --json` for one action and
+`plan prepare-character --request ... --json` for multiple actions. The current
+source build accepts `normalize.mode: preserve_source`, request-level `rendering`,
+and per-action `frameDurationsMs`, plus explicit whole-sheet padding/offset in
+fixed-grid inputs. These local request forms are newer than published v0.2.1.
+They preserve intentional drawing coordinates and timing through Pack/Godot
+delivery; they do not establish visual quality. Automatic repair leaves preserved
+coordinates unchanged and returns canvas/anchor issues for manual review. See the
+[local asset guide](codex-local-assets.md#preserve-intentional-animation-coordinates-development-build)
+for the request shapes and limits.
+
 ### Local transparent PNG sets
 
 `plan prepare-static` prepares a local `icon_set` or `prop_set` without a Provider

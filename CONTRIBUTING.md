@@ -47,6 +47,11 @@ Godot integration tests use Godot 4.6.x when it is available at
 toolchain described in `third_party/ffmpeg/BUILD.md` or compatible local
 development binaries.
 
+The local animation CLI/Godot smoke requires Pillow; install
+`scripts/requirements-local-assets.txt` into a Python virtual environment. CI uses
+Python 3.12. Its source-transform fixtures are synthetic and do not require
+consumer artwork or Provider credentials.
+
 Before submitting changes:
 
 ```bash

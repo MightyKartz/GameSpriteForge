@@ -7,20 +7,21 @@ model as a Provider: the handoff is a local image file.
 
 ## Availability: check before following these examples
 
-Updated for the first integration batch on **2026-09-08**. Local static delivery
-is now included in this source checkout. The published **v0.2.1 download predates
+Updated for the static and animation integration batches on **2026-09-08**. Local
+static delivery and preserved animation are included in this source checkout.
+The published **v0.2.1 download predates
 the new local request capabilities**; an updated release is being prepared.
 
 | Workflow | Current default source build | Published v0.2.1 |
 | --- | --- | --- |
 | Existing local animation processing, Pack validation, Godot install | Available | Available |
 | Transparent PNG sets with `plan prepare-static`, static filtering/ground anchors, alpha-bound options | Available | Not available |
-| Local request `preserve_source`, explicit rendering and frame timing | Pending animation integration | Not available in these local request forms |
-| Whole-sheet transparent padding and translation | Pending animation integration | Not available |
+| Local request `preserve_source`, explicit rendering and frame timing | Available; animation experimental | Not available in these local request forms |
+| Whole-sheet transparent padding and translation | Available | Not available |
 
 Sword still retains separate static (`c1f4480`) and animation (`d4b18e2`) binary
-locks until a release passes consumer replay. The animation implementation is on
-`codex/sword-animation-delivery`; a local branch is not an installable release.
+locks until a release passes consumer replay. Both implementations are integrated
+in the current source; a source checkout is not an installable release.
 Do not silently fall back to the stable binary. The original
 [audit](../qa/forge-sword-workflow-audit-2026-09-08.md) is historical evidence;
 follow the [integration record](../qa/forge-local-assets-integration-2026-09-08.md)
@@ -158,6 +159,11 @@ and at least two `animations[]` entries instead of the single-action `input` and
 positive integer per frame. Keep normalization/rendering at the request level.
 Reordering the default action must not change its timing. Inspect the actual job
 quality result before delivery.
+
+Automatic repair keeps `preserve_source` intact. Anchor or canvas-boundary
+recommendations require manual source review; they do not silently change mode,
+margins or per-frame placement. Other supported corrections can still appear in
+the repair plan, alongside remaining manual actions.
 
 If the source sheet does not fit its grid, the animation implementation supports
 `sourcePaddingRightPx`, `sourcePaddingBottomPx`, `sourceOffsetX` and `sourceOffsetY`

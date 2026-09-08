@@ -1,0 +1,2 @@
+# Used by the local animation CLI/Godot fixture checks.
+Pillow==11.3.0
