@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::asset_project::{SamplingMode, StaticAssetKind, StaticAssetSetSpecV1};
-use crate::export::{PreviewGifParameters, SpriteSheetParameters};
+use crate::export::{AnimationRendering, PreviewGifParameters, SpriteSheetParameters};
 use crate::frames::NormalizeOptions;
 use crate::job::RepairContext;
 use crate::matting::ChromaParameters;
@@ -55,6 +55,8 @@ impl Default for QualityPolicy {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct PrepareAssetRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rendering: Option<AnimationRendering>,
     #[serde(default = "schema_version")]
     pub schema_version: String,
     pub input: AssetInput,
@@ -102,6 +104,8 @@ pub struct PrepareStaticItem {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct PrepareCharacterPackRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rendering: Option<AnimationRendering>,
     #[serde(default = "character_schema_version")]
     pub schema_version: String,
     pub metadata: CharacterPackMetadata,
@@ -368,6 +372,8 @@ pub struct CharacterPackMetadata {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct CharacterAnimationRecipe {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frame_durations_ms: Option<Vec<u32>>,
     pub name: String,
     pub input: AssetInput,
     #[serde(default = "default_fps")]
@@ -420,10 +426,25 @@ pub enum SpriteSheetSplit {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct FixedGridSplit {
+    #[serde(default, skip_serializing_if = "is_zero_u32")]
+    pub source_padding_right_px: u32,
+    #[serde(default, skip_serializing_if = "is_zero_u32")]
+    pub source_padding_bottom_px: u32,
+    #[serde(default, skip_serializing_if = "is_zero_i32")]
+    pub source_offset_x: i32,
+    #[serde(default, skip_serializing_if = "is_zero_i32")]
+    pub source_offset_y: i32,
     pub frame_width: u32,
     pub frame_height: u32,
     pub columns: u32,
     pub rows: u32,
+}
+
+fn is_zero_u32(value: &u32) -> bool {
+    *value == 0
+}
+fn is_zero_i32(value: &i32) -> bool {
+    *value == 0
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -446,6 +467,8 @@ pub enum MattingRecipe {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct AssetMetadata {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frame_durations_ms: Option<Vec<u32>>,
     pub name: String,
     #[serde(default = "default_animation")]
     pub animation: String,

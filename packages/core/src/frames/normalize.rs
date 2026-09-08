@@ -11,6 +11,9 @@ pub enum CanvasMode {
     SquareBottom,
     SquareCenter,
     AutoWidthCenter,
+    /// Keep the source coordinate system. Automation requires identical source
+    /// dimensions across every frame and action, and zero added margins.
+    PreserveSource,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -92,12 +95,13 @@ fn canvas_size(frames: &[RgbaImage], bboxes: &[FrameBbox], options: NormalizeOpt
     let margin = options.margin.saturating_mul(2);
 
     match options.mode {
+        CanvasMode::PreserveSource => FrameSize::new(max_source_width, max_source_height),
         CanvasMode::SquareBottom | CanvasMode::SquareCenter => {
             let needed_source_width = max_source_width.saturating_add(margin);
             let needed_source_height = match options.mode {
                 CanvasMode::SquareBottom => max_source_height.saturating_add(options.margin_bottom),
                 CanvasMode::SquareCenter => max_source_height.saturating_add(margin),
-                CanvasMode::AutoWidthCenter => max_source_height,
+                CanvasMode::AutoWidthCenter | CanvasMode::PreserveSource => max_source_height,
             };
             let side = max_source_width
                 .max(max_source_height)
@@ -134,22 +138,26 @@ fn normalize_one(
 
     let (target_center_x, target_center_y, target_bottom_y) = match options.mode {
         CanvasMode::SquareBottom => (anchor.x, 0.0, anchor.y),
-        CanvasMode::SquareCenter | CanvasMode::AutoWidthCenter => (
+        CanvasMode::SquareCenter | CanvasMode::AutoWidthCenter | CanvasMode::PreserveSource => (
             size.width as f32 / 2.0,
             size.height as f32 / 2.0,
             size.height as f32,
         ),
     };
 
-    let offset_x = if source_bbox.has_foreground() {
+    let offset_x = if options.mode == CanvasMode::PreserveSource {
+        0
+    } else if source_bbox.has_foreground() {
         (target_center_x - source_bbox.center_x).round() as i32
     } else {
         (size.width as i32 - source.width() as i32) / 2
     };
-    let offset_y = if source_bbox.has_foreground() {
+    let offset_y = if options.mode == CanvasMode::PreserveSource {
+        0
+    } else if source_bbox.has_foreground() {
         match options.mode {
             CanvasMode::SquareBottom => (target_bottom_y - source_bbox.bottom_y).round() as i32,
-            CanvasMode::SquareCenter | CanvasMode::AutoWidthCenter => {
+            CanvasMode::SquareCenter | CanvasMode::AutoWidthCenter | CanvasMode::PreserveSource => {
                 (target_center_y - source_bbox.center_y).round() as i32
             }
         }

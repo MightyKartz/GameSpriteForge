@@ -77,6 +77,12 @@ local_static_gate() {
     --output "${REPORT_DIR}/local-static"
 }
 
+local_animation_gate() {
+  python3 "${ROOT}/scripts/test-local-animation-delivery.py" \
+    --forge "${ROOT}/target/debug/forge" --godot "${FORGE_GODOT_PATH:-$(command -v godot)}" \
+    --output "${REPORT_DIR}/local-animation"
+}
+
 world_contract_gate() {
   cargo test --manifest-path "${ROOT}/Cargo.toml" \
     -p providers --test world_generation_contract -- --nocapture &&
@@ -90,6 +96,7 @@ run_gate "character-v2-full-matrix" "release_blocking" character_matrix_gate
 run_gate "static-cli-contract" "release_blocking" static_contract_gate
 run_gate "static-five-style-matrix" "release_blocking" static_matrix_gate
 run_gate "local-static-delivery" "release_blocking" local_static_gate
+run_gate "local-animation-delivery" "release_blocking" local_animation_gate
 run_gate "world-assets-experimental" "experimental" world_contract_gate
 FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 

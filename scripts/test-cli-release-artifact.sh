@@ -46,4 +46,10 @@ done
 PAYLOAD="${TEST_ROOT}/upgrade/share/versions/${VERSION}"
 PATH="${PAYLOAD}/bin:${PATH}" FORGE_BINARY="${TEST_ROOT}/upgrade/bin/forge" FORGE_VERIFY_GODOT=1 \
   bash "${ROOT}/scripts/test-cli-product.sh"
-echo "PASS packaged CLI fresh install, reinstall, upgrade, and fixture product contract (${VERSION})"
+python3 "${ROOT}/scripts/test-local-static-cli.py" \
+  --forge "${TEST_ROOT}/upgrade/bin/forge" --godot "$(command -v godot)" \
+  --output "${TEST_ROOT}/packaged-local-static"
+python3 "${ROOT}/scripts/test-local-animation-delivery.py" \
+  --forge "${TEST_ROOT}/upgrade/bin/forge" --godot "$(command -v godot)" \
+  --output "${TEST_ROOT}/packaged-local-animation"
+echo "PASS packaged CLI fresh install, reinstall, upgrade, product and local asset contracts (${VERSION})"

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-08",
+  "batch": "local-animation",
+  "implementationSources": [
+    "9efc15b",
+    "d4b18e2"
+  ],
+  "repairFix": "556b33a",
+  "syntheticCiFixture": "89fab9a",
+  "checks": [
+    {
+      "check": "fmt",
+      "exitCode": 0
+    },
+    {
+      "check": "clippy",
+      "exitCode": 0
+    },
+    {
+      "check": "workspace",
+      "exitCode": 0
+    },
+    {
+      "check": "build",
+      "exitCode": 0
+    },
+    {
+      "check": "animation-cli",
+      "exitCode": 0
+    },
+    {
+      "check": "static-cli",
+      "exitCode": 0
+    },
+    {
+      "check": "shell",
+      "exitCode": 0
+    }
+  ],
+  "workspaceTests": {
+    "passed": 260,
+    "failed": 0,
+    "ignored": 1
+  },
+  "animationCases": [
+    "single",
+    "character",
+    "nearest",
+    "legacy",
+    "source_transform"
+  ],
+  "staticCasesPassed": 3,
+  "remoteProviderRequests": 0,
+  "binarySha256": "7009a28ad429e3441ba3753f6baede0ddbca35d2443d4b182434fe85ecba1d10",
+  "notes": [
+    "Workspace includes single/character preserved-coordinate repair regressions",
+    "Five animation preparations and native Godot installations passed",
+    "Synthetic source-transform checks preserve original/derived RGBA and reject alpha=1 loss",
+    "One explicit static Godot test remains ignored in workspace suite; it passed separately in batch 1"
+  ]
+}

@@ -95,6 +95,7 @@ fn character_pack_uses_shared_canvas_and_exports_multiple_animations() {
     fs::create_dir(&attack).unwrap();
     let profile = automation_profile();
     let request = PrepareCharacterPackRequest {
+        rendering: None,
         schema_version: "2".into(),
         metadata: CharacterPackMetadata {
             name: "Automation Knight".into(),
@@ -105,6 +106,7 @@ fn character_pack_uses_shared_canvas_and_exports_multiple_animations() {
         workflow: CharacterWorkflowSelection::default(),
         animations: vec![
             CharacterAnimationRecipe {
+                frame_durations_ms: None,
                 name: "idle".into(),
                 input: AssetInput::PngSequence {
                     paths: write_identical_frames(&idle),
@@ -114,6 +116,7 @@ fn character_pack_uses_shared_canvas_and_exports_multiple_animations() {
                 matting: MattingRecipe::PreserveAlpha,
             },
             CharacterAnimationRecipe {
+                frame_durations_ms: None,
                 name: "attack".into(),
                 input: AssetInput::PngSequence {
                     paths: write_identical_frames(&attack),
@@ -309,6 +312,7 @@ fn guided_character_workflow_requires_its_core_animations() {
     fs::create_dir(&walk).unwrap();
     let profile = automation_profile();
     let request = PrepareCharacterPackRequest {
+        rendering: None,
         schema_version: "2".into(),
         metadata: CharacterPackMetadata {
             name: "Incomplete Platformer".into(),
@@ -322,6 +326,7 @@ fn guided_character_workflow_requires_its_core_animations() {
         },
         animations: vec![
             CharacterAnimationRecipe {
+                frame_durations_ms: None,
                 name: "idle".into(),
                 input: AssetInput::PngSequence {
                     paths: write_identical_frames(&idle),
@@ -331,6 +336,7 @@ fn guided_character_workflow_requires_its_core_animations() {
                 matting: MattingRecipe::PreserveAlpha,
             },
             CharacterAnimationRecipe {
+                frame_durations_ms: None,
                 name: "walk".into(),
                 input: AssetInput::PngSequence {
                     paths: write_identical_frames(&walk),
@@ -554,9 +560,11 @@ fn build_project_operation(project: &Path, manifest: &Path) -> AutomationOperati
 fn request(paths: Vec<PathBuf>) -> PrepareAssetRequest {
     let profile = automation_profile();
     PrepareAssetRequest {
+        rendering: None,
         schema_version: "1".into(),
         input: AssetInput::PngSequence { paths },
         metadata: AssetMetadata {
+            frame_durations_ms: None,
             name: "Automation Hero".into(),
             animation: "idle".into(),
             fps: 12.0,

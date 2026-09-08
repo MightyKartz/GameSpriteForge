@@ -26,6 +26,13 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install local asset test dependencies
+        run: python3 -m pip install --requirement scripts/requirements-local-assets.txt
+
       - name: Install release Rust toolchain
         run: rustup toolchain install 1.98.0 --profile minimal --component rustfmt --component clippy
 
@@ -98,6 +105,9 @@ jobs:
           python3 scripts/test-local-static-cli.py \
             --forge "${GITHUB_WORKSPACE}/target/aarch64-apple-darwin/release/forge" \
             --godot "${godot_binary}" --output "${RUNNER_TEMP}/local-static-delivery"
+          python3 scripts/test-local-animation-delivery.py \
+            --forge "${GITHUB_WORKSPACE}/target/aarch64-apple-darwin/release/forge" \
+            --godot "${godot_binary}" --output "${RUNNER_TEMP}/local-animation-delivery"
           python3 scripts/character/test_prepare_directional_reuse.py -v
           bash scripts/test-cli-installer.sh
           bash scripts/test-cli-signing-contract.sh

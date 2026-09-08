@@ -120,6 +120,8 @@ fn sample_video_exports_schema_valid_reimportable_pack() {
             background: GifBackground::Checkerboard,
         },
         metadata: forge_core::export::PackMetadataParams {
+            rendering: None,
+            frame_durations_ms: None,
             id: "green-box-character".to_string(),
             name: "Green Box Character".to_string(),
             version: "0.1.0".to_string(),
@@ -161,6 +163,8 @@ fn sample_video_exports_schema_valid_reimportable_pack() {
             background: GifBackground::Checkerboard,
         },
         metadata: forge_core::export::PackMetadataParams {
+            rendering: None,
+            frame_durations_ms: None,
             id: "green-box-character-reexport".to_string(),
             name: "Green Box Character Reexport".to_string(),
             version: "0.1.0".to_string(),
@@ -310,6 +314,8 @@ fn assert_pack_roundtrip(
             background: GifBackground::Checkerboard,
         },
         metadata: forge_core::export::PackMetadataParams {
+            rendering: None,
+            frame_durations_ms: None,
             id: pack_id.to_string(),
             name: pack_name.to_string(),
             version: "0.1.0".to_string(),
@@ -350,6 +356,8 @@ fn assert_pack_roundtrip(
             background: GifBackground::Checkerboard,
         },
         metadata: forge_core::export::PackMetadataParams {
+            rendering: None,
+            frame_durations_ms: None,
             id: format!("{pack_id}-reexport"),
             name: format!("{pack_name} Reexport"),
             version: "0.1.0".to_string(),

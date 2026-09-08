@@ -7,7 +7,7 @@ consumer binaries are retained. Real Provider generation is outside this work.
 | Batch | Scope | Status |
 | --- | --- | --- |
 | 1 | Local static intake, rendering/anchors, alpha bounds, skills/docs and CI | Local checks passed; GitHub checks pending |
-| 2 | Preserved animation coordinates/timing and whole-sheet preprocessing | Review in progress |
+| 2 | Preserved animation coordinates/timing and whole-sheet preprocessing | Local checks passed; GitHub checks pending |
 | 3 | Build/capability identity, v0.3.0 RC and final package verification | Pending |
 | 4 | Isolated consumer replay, Sword lock migration and rollback evidence | Pending |
 
@@ -38,3 +38,25 @@ hashes remained unchanged, and the rerun passed. See
 - Sword's locks remain unchanged until the actual release executable reproduces
   its installed pixels, frame coordinates/timing and rendering contracts.
 - Keep earlier audit reports immutable; update usage guides as availability changes.
+
+## Batch 2
+
+Integrates implementation commits `9efc15b` and `d4b18e2` without copying the
+intermediate private source/terminal QA reports. Review found that automatic
+repair could change `preserve_source` back to per-frame bottom alignment or add
+invalid margins. The focused fix `556b33a` keeps those recommendations as manual
+actions while allowing unrelated supported repairs. Single-action and character
+regressions cover both plan analysis and preparation.
+
+The CLI/Godot smoke now has a small synthetic whole-sheet padding/offset case,
+exact source/derived/frame pixel checks, and alpha=1 loss rejection. It keeps the
+legacy and explicit rendering/timing cases and needs no private Sword artwork.
+CI pins Python/Pillow for these fixtures. Both the source release checks and the
+actual packaged-install checks exercise static and animation delivery.
+
+Combined-source verification passed: 260 workspace tests, zero failures,
+with one separately exercised batch-1 static engine test ignored by default.
+This includes the single/character repair regressions. Formatting, warning-free
+workspace Clippy, default CLI build, five animation CLI/Godot cases, three static
+CLI/Godot cases and shell syntax passed. See
+[the animation summary](artifacts/forge-local-assets-integration-20260908/animation.json).

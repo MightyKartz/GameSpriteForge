@@ -257,6 +257,162 @@ fn character_repair_scopes_matting_changes_to_the_affected_animation() {
     assert_eq!(thresholds, vec![("idle", 48), ("attack", 48)]);
 }
 
+#[test]
+fn preserved_single_animation_repair_keeps_coordinate_changes_manual() {
+    assert_preserved_repair_contract(false);
+}
+
+#[test]
+fn preserved_character_repair_keeps_coordinate_changes_manual() {
+    assert_preserved_repair_contract(true);
+}
+
+fn assert_preserved_repair_contract(character: bool) {
+    for recommendations in [
+        vec![QualityRecommendationId::AdjustAnchor],
+        vec![QualityRecommendationId::IncreaseCanvasMargin],
+        vec![
+            QualityRecommendationId::AdjustAnchor,
+            QualityRecommendationId::IncreaseCanvasMargin,
+        ],
+    ] {
+        // A separate safe matting repair must remain available without silently
+        // adding margins or translating preserved frames in the same plan.
+        for repair_matting in [false, true] {
+            let temp = tempdir().unwrap();
+            let jobs = JobStore::new(temp.path().join("jobs")).unwrap();
+            let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+            let paths: Vec<_> = (0..2)
+                .map(|index| {
+                    let path = temp.path().join(format!("frame-{index}.png"));
+                    image::RgbaImage::from_pixel(64, 64, image::Rgba([30, 80, 120, 255]))
+                        .save(&path)
+                        .unwrap();
+                    path
+                })
+                .collect();
+            let matting = serde_json::json!({
+                "mode": "auto_corners", "keyMode": "auto_corners", "manualKeyColor": "#00FF00",
+                "threshold": 60, "softness": 18, "despillStrength": 0.5, "haloPixels": 0
+            });
+            let mut request = serde_json::json!({
+                "schemaVersion": "1",
+                "input": {"kind": "png_sequence", "paths": paths},
+                "metadata": {"name": "Preserved", "animation": "idle", "frameDurationsMs": [70, 150]},
+                "normalize": {"mode": "preserve_source", "margin": 0, "marginBottom": 0,
+                    "alphaThreshold": 0, "manualAnchor": {"x": 32.5, "y": 52.25, "lockedByUser": true}},
+                "rendering": {"textureFilter": "linear", "pixelSnap": false},
+                "matting": matting
+            });
+            if character {
+                let input = request.as_object_mut().unwrap().remove("input").unwrap();
+                request.as_object_mut().unwrap().remove("matting");
+                request["schemaVersion"] = serde_json::json!("2");
+                request["metadata"] =
+                    serde_json::json!({"name": "Preserved", "defaultAnimation": "idle"});
+                request["animations"] = serde_json::json!([
+                    {"name": "idle", "input": input, "frameDurationsMs": [70, 150], "matting": matting},
+                    {"name": "attack", "input": input, "frameDurationsMs": [90, 180], "matting": matting}
+                ]);
+            }
+            let operation: AutomationOperation = serde_json::from_value(serde_json::json!({
+                "kind": if character { "prepare_character_pack" } else { "prepare_asset" },
+                "request": request
+            }))
+            .unwrap();
+            let source = jobs
+                .create_job(forge_core::job::SourceKind::ImportFrames)
+                .unwrap();
+            jobs.update_record(&source.job_id, |record| {
+                record.lifecycle_state = JobLifecycleState::AwaitingReview;
+                record.recipe = Some(serde_json::to_value(&operation).unwrap());
+            })
+            .unwrap();
+            let mut reported = recommendations.clone();
+            if repair_matting {
+                reported.push(QualityRecommendationId::ReduceChromaThreshold);
+            }
+            let report = quality_report(QualityVerdict::NeedsCleanup, reported);
+            if character {
+                fs::write(
+                    source.job_dir.join("animation-quality-report.json"),
+                    serde_json::to_vec_pretty(&CharacterQualityReport {
+                        quality_profile: "animation-quality@2.0.0".into(),
+                        verdict: QualityVerdict::NeedsCleanup,
+                        default_animation: "idle".into(),
+                        frame_count: 4,
+                        animations: vec![
+                            AnimationQualityEntry {
+                                name: "idle".into(),
+                                report: quality_report(QualityVerdict::GameReady, vec![]),
+                                loop_selection_report: None,
+                                loop_selection: None,
+                            },
+                            AnimationQualityEntry {
+                                name: "attack".into(),
+                                report,
+                                loop_selection_report: None,
+                                loop_selection: None,
+                            },
+                        ],
+                    })
+                    .unwrap(),
+                )
+                .unwrap();
+            } else {
+                fs::write(
+                    source.job_dir.join("quality-report.json"),
+                    serde_json::to_vec_pretty(&report).unwrap(),
+                )
+                .unwrap();
+            }
+
+            let analysis = analyze_repair(&jobs, &source.job_id).unwrap();
+            assert_eq!(analysis.can_auto_repair, repair_matting);
+            assert_eq!(analysis.manual_actions.len(), recommendations.len());
+            for recommendation in &recommendations {
+                let action = match recommendation {
+                    QualityRecommendationId::AdjustAnchor => "shared:inspect_anchor_drift",
+                    QualityRecommendationId::IncreaseCanvasMargin => {
+                        "shared:review_source_canvas_boundaries"
+                    }
+                    _ => unreachable!(),
+                };
+                assert!(analysis.manual_actions.iter().any(|item| item == action));
+            }
+            if repair_matting {
+                assert_eq!(analysis.changes.len(), 1);
+                assert_eq!(analysis.changes[0].parameter, "matting.threshold");
+                let mut expected = serde_json::to_value(&operation).unwrap();
+                let threshold = if character {
+                    "/request/animations/1/matting/threshold"
+                } else {
+                    "/request/matting/threshold"
+                };
+                *expected.pointer_mut(threshold).unwrap() = serde_json::json!(48);
+                assert_eq!(
+                    serde_json::to_value(analysis.proposed_operation.as_ref().unwrap()).unwrap(),
+                    expected
+                );
+                let prepared = prepare_repair_plan(&plans, &jobs, &source.job_id).unwrap();
+                let claimed = plans.claim(&prepared.token).unwrap();
+                assert_eq!(serde_json::to_value(&claimed.operation).unwrap(), expected);
+            } else {
+                assert!(analysis.changes.is_empty());
+                assert!(analysis.proposed_operation.is_none());
+                assert!(matches!(
+                    prepare_repair_plan(&plans, &jobs, &source.job_id),
+                    Err(RepairError::NoAutomaticChanges)
+                ));
+            }
+            assert_eq!(
+                jobs.read_record(&source.job_id).unwrap().recipe,
+                Some(serde_json::to_value(&operation).unwrap())
+            );
+        }
+    }
+}
+
 fn quality_report(
     verdict: QualityVerdict,
     recommendations: Vec<QualityRecommendationId>,

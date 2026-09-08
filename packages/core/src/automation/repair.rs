@@ -415,6 +415,17 @@ fn apply_normalize_recommendations(
     changes: &mut Vec<RepairChange>,
     manual: &mut BTreeSet<String>,
 ) {
+    // Preserved source coordinates are an explicit contract. Changing the
+    // canvas or aligning each frame needs source review, not automatic repair.
+    if normalize.mode == CanvasMode::PreserveSource {
+        if recommendations.contains("IncreaseCanvasMargin") {
+            manual.insert("shared:review_source_canvas_boundaries".into());
+        }
+        if recommendations.contains("AdjustAnchor") {
+            manual.insert("shared:inspect_anchor_drift".into());
+        }
+        return;
+    }
     if recommendations.contains("IncreaseCanvasMargin") {
         let before = normalize.margin;
         let after = before.saturating_add(4).min(128);

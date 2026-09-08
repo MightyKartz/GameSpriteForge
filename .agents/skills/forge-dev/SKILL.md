@@ -52,6 +52,10 @@ Capability checkpoint, checked 2026-09-08; recheck Git and command help when usi
   `c1f448082c34f531738126e38e41f5a9d66ca1a7`. The published v0.2.1 predates these
   capabilities. Do not infer availability from the version string or silently
   change another project's pinned CLI.
+- The current source also includes local `preserve_source`, rendering/timing and
+  whole-sheet preprocessing, with repair preserving the requested coordinates.
+  Use `scripts/test-local-animation-delivery.py` with Pillow and Godot for the
+  synthetic CLI/Pack/native-resource contract. Animation remains experimental.
 - Subject/Character V2, world assets, and game-art manifest commands are optional
   source-build capabilities. Read feature gates and the selected command's help.
 

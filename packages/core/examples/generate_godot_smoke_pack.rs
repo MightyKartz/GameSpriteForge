@@ -96,6 +96,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             background: GifBackground::Checkerboard,
         },
         metadata: forge_core::export::PackMetadataParams {
+            rendering: None,
+            frame_durations_ms: None,
             id: "godot-smoke-walk".to_string(),
             name: "Godot Smoke Walk".to_string(),
             version: "0.1.0".to_string(),
