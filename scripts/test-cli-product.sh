@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+trap 'cli_product_exit=$?; printf "FAIL CLI product contract at line %s (exit %s)\n" "$LINENO" "$cli_product_exit" >&2; exit "$cli_product_exit"' ERR
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/forge-cli-product.XXXXXX")"

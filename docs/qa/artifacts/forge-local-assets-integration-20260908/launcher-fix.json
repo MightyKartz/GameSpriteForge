@@ -1,0 +1,39 @@
+{
+  "kind": "local-runtime-regression",
+  "failedReleaseRun": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/34180596991",
+  "releasePublished": false,
+  "before": {
+    "directPayloadProduct": "pass",
+    "publicLinkProduct": "ffmpeg_missing"
+  },
+  "after": {
+    "publicLinkProduct": "pass",
+    "symlinkTestsPassed": 2
+  },
+  "checks": [
+    {
+      "check": "fmt",
+      "exitCode": 0
+    },
+    {
+      "check": "clippy",
+      "exitCode": 0
+    },
+    {
+      "check": "launcher-identity",
+      "exitCode": 0
+    },
+    {
+      "check": "public-launcher-product",
+      "exitCode": 0
+    },
+    {
+      "check": "shell",
+      "exitCode": 0
+    }
+  ],
+  "notes": [
+    "Uses a debug Forge fixture plus previously released FFmpeg helpers.",
+    "No new release package is claimed verified by this local fixture."
+  ]
+}

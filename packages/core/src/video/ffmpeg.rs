@@ -69,7 +69,8 @@ pub fn resolve_binary(
 }
 
 pub fn runtime_tool_directory() -> Option<PathBuf> {
-    let executable = env::current_exe().ok()?;
+    // macOS can report the public launcher symlink instead of its payload.
+    let executable = env::current_exe().ok()?.canonicalize().ok()?;
     let directory = executable.parent()?.to_path_buf();
     let ffmpeg = directory.join("ffmpeg");
     let ffprobe = directory.join("ffprobe");
