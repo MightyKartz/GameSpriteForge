@@ -9,7 +9,7 @@ on:
       version:
         description: "Release version to preflight (no GitHub Release is created)"
         required: true
-        default: "v0.3.0-rc.1"
+        default: "v0.3.0"
         type: string
 
 permissions:
