@@ -36,6 +36,7 @@ pub const CAPABILITIES: &[&str] = &[
     "whole_sheet_source_transform",
     "pack_validation",
     "godot_install",
+    "bundled_forge_use_skill",
 ];
 
 #[cfg(test)]

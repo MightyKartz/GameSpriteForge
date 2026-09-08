@@ -67,6 +67,7 @@ use forge_providers::{
 use serde::Serialize;
 
 mod build_info;
+mod skill;
 
 const JSON_SCHEMA_VERSION: &str = "1";
 
@@ -84,6 +85,11 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     Doctor(JsonFlag),
+    /// Inspect and install the bundled forge-use skill for Codex.
+    Skill {
+        #[command(subcommand)]
+        command: skill::SkillCommand,
+    },
     Asset {
         #[command(subcommand)]
         command: AssetCommand,
@@ -732,6 +738,7 @@ fn main() {
 fn run() -> Result<(), (String, String)> {
     let cli = Cli::parse();
     match cli.command {
+        Command::Skill { command } => skill::run(command),
         Command::Doctor(_) => {
             let profile = automation_profile();
             let job_store = job_store()?;

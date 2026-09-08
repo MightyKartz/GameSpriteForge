@@ -52,6 +52,23 @@ The local animation CLI/Godot smoke requires Pillow; install
 Python 3.12. Its source-transform fixtures are synthetic and do not require
 consumer artwork or Provider credentials.
 
+## Bundled Codex skill
+
+The single maintained skill source is `.agents/skills/forge-use/`. Keep every
+runtime reference and example inside that directory; the CLI embeds its explicit
+file list at compile time. When adding a bundled file, update the list in
+`packages/cli/src/skill.rs` and verify the complete installed bundle:
+
+```bash
+cargo build --locked -p forge-cli --no-default-features
+python3 scripts/test-cli-skill.py --forge "$PWD/target/debug/forge"
+```
+
+This check exercises a standalone binary and isolated project/user installations,
+including update backups and preservation of modified content. Release checks
+also run it through the installer's public launcher. Skill-only changes must run
+CI because they change the binary's embedded payload.
+
 Before submitting changes:
 
 ```bash

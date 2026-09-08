@@ -43,7 +43,7 @@ Check task progress, inspect results, and submit a revised set when artwork chan
 
 ## Install
 
-Stable version: [v0.3.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.0) for **macOS Apple Silicon**. Install **Godot 4.6.x** separately for engine delivery. The binaries are unsigned and not notarized.
+Stable version: [v0.3.1](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.1) for **macOS Apple Silicon**. Install **Godot 4.6.x** separately for engine delivery. The binaries are unsigned and not notarized.
 
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/MightyKartz/GameSpriteForge/main/install.sh | sh
@@ -56,6 +56,14 @@ forge --version
 forge doctor --json
 ```
 
+To use Forge with Codex, run this from your game project:
+
+```bash
+forge skill install --project .
+```
+
+Open the project in Codex and ask it to use `forge-use` to prepare your game assets. The CLI includes the instructions and examples, so you do not need to download the source repository. See [Codex setup](docs/automation/codex-skill.md) for personal installation and updates.
+
 For your first set, follow the [local PNG guide](docs/automation/codex-local-assets.md). It covers importing transparent images, checking the Pack, and installing it into Godot.
 
 Forge can also generate icon and prop sets through an online provider. See the [CLI guide](docs/automation/forge-cli.md) and [example specifications](examples/cli). Online generation uses your provider account and may incur charges; local preparation uses the artwork you already have.
@@ -64,15 +72,15 @@ Forge can also generate icon and prop sets through an online provider. See the [
 
 **Character animation is still being developed and tested.** Generation, animation reuse, and directional workflows need visual review. The experimental reuse helper is available in the source repository; it is not installed with the CLI.
 
-Advanced character consistency and world-asset workflows also require optional source-build features. See the [v0.3.0 release notes](docs/releases/v0.3.0.md) for the release scope.
+Advanced character consistency and world-asset workflows also require optional source-build features. See the [v0.3.1 release notes](docs/releases/v0.3.1.md) for the release scope.
 
 ## Documentation
 
 - [CLI guide](docs/automation/forge-cli.md) — commands, generation, processing, and Godot delivery.
 - [PNG artwork workflow](docs/automation/codex-local-assets.md) — prepare PNGs from Codex or other tools and deliver them to Godot.
-- [Agent usage skill](.agents/skills/forge-use/SKILL.md) — guidance for preparing and delivering assets with Codex.
+- [Codex setup](docs/automation/codex-skill.md) — install the bundled `forge-use` skill into your game project.
 - [Example specifications](examples/cli) — starting points for your own assets.
-- [Release notes](docs/releases/v0.3.0.md) — platform support and release scope.
+- [Release notes](docs/releases/v0.3.1.md) — platform support and release scope.
 - [Showcase assets](docs/media/showcase/README.md) — image sources and the reproducible Godot demo.
 - [Contributing](CONTRIBUTING.md) — source builds and development checks.
 

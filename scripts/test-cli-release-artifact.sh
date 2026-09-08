@@ -46,6 +46,9 @@ for kind in fresh upgrade; do
     --release --build-info "${PAYLOAD}/BUILD_INFO.json"
 done
 
+python3 "${ROOT}/scripts/test-cli-skill.py" \
+  --forge "${TEST_ROOT}/upgrade/bin/forge" --output "${TEST_ROOT}/packaged-skill"
+
 PAYLOAD="${TEST_ROOT}/upgrade/share/versions/${VERSION}"
 FORGE_BINARY="${TEST_ROOT}/upgrade/bin/forge" FORGE_VERIFY_GODOT=1 \
   bash "${ROOT}/scripts/test-cli-product.sh"
