@@ -18,7 +18,12 @@ def verify(args):
     with tempfile.TemporaryDirectory(prefix="forge-build-check-") as temporary:
         env = dict(os.environ, FORGE_JOB_STORE=str(Path(temporary) / "jobs"),
                    FORGE_PLAN_STORE=str(Path(temporary) / "plans"))
-        result = subprocess.run([str(args.forge.resolve()), "doctor", "--json"],
+        if args.build_info:
+            # A complete payload must work without a separate FFmpeg install.
+            env["GAME_SPRITE_FORGE_FFMPEG_SEARCH_DIRS"] = str(Path(temporary) / "no-helpers")
+            env["GAME_SPRITE_FORGE_DISABLE_MACOS_DEFAULT_TOOL_DIRS"] = "1"
+        # Preserve the public launcher symlink: resolving it here hides startup bugs.
+        result = subprocess.run([str(args.forge.absolute()), "doctor", "--json"],
                                 env=env, capture_output=True, text=True, timeout=30)
         assert result.returncode == 0, result.stderr
         envelope = json.loads(result.stdout)
