@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "batch": "local-static",
+  "date": "2026-09-08",
+  "integratedStaticCommits": [
+    "fa58d64",
+    "1f9d309",
+    "c1f4480"
+  ],
+  "documentationCommit": "a7bfa0f",
+  "checks": [
+    {
+      "check": "fmt",
+      "exitCode": 0
+    },
+    {
+      "check": "clippy",
+      "exitCode": 0
+    },
+    {
+      "check": "workspace",
+      "exitCode": 0
+    },
+    {
+      "check": "static-godot",
+      "exitCode": 0
+    },
+    {
+      "check": "build",
+      "exitCode": 0
+    },
+    {
+      "check": "static-cli",
+      "exitCode": 0
+    },
+    {
+      "check": "signing",
+      "exitCode": 0
+    }
+  ],
+  "workspaceTests": {
+    "passed": 249,
+    "failed": 0,
+    "ignored": 1
+  },
+  "explicitRealGodotTestsPassed": 1,
+  "localStaticCases": 3,
+  "providerRequestsInLocalStaticCases": 0,
+  "remoteProviderRequests": 0,
+  "godotVersion": "4.6.3.stable.official.7d41c59c4",
+  "binarySha256": "089c0b20adfb325a8b9291c674c04f3e34f22ae4688481a5e47d97b569894711",
+  "initialEnvironmentFailure": "clippy interrupted by full disk; rerun passed after removing rebuildable Rust caches; locked consumer binaries were hash-verified unchanged"
+}

@@ -67,6 +67,8 @@ Advanced character consistency and world-asset workflows also require optional s
 ## Documentation
 
 - [CLI guide](docs/automation/forge-cli.md) — commands, generation, processing, and Godot delivery.
+- [Codex artwork workflow](docs/automation/codex-local-assets.md) — use your generated PNGs with Forge; includes development-build requirements.
+- [Agent usage skill](.agents/skills/forge-use/SKILL.md) — guidance for preparing and delivering assets with Codex.
 - [Example specifications](examples/cli) — starting points for your own assets.
 - [Release notes](docs/releases/v0.2.1.md) — platform support and release scope.
 - [Showcase assets](docs/media/showcase/README.md) — image sources and the reproducible Godot demo.

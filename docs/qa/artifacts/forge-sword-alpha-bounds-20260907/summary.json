@@ -1,0 +1,147 @@
+{
+  "ok": true,
+  "canvasSize": 256,
+  "source": "Codex image_gen originals; unchanged SHA-256 checked after both imports",
+  "cases": [
+    {
+      "case": "baseline",
+      "foregroundAlphaThreshold": 1,
+      "edgePaddingPx": 0,
+      "jobId": "ec6df051-61f8-4150-9ff2-9fcf1cd2b812",
+      "pack": "/Users/kartz/Development/Forge-sword-static-delivery/docs/qa/artifacts/forge-sword-alpha-bounds-20260907/jobs/ec6df051-61f8-4150-9ff2-9fcf1cd2b812/exports/sword-alpha-baseline/sword-alpha-baseline.gsfpack",
+      "providerRequests": 0,
+      "items": [
+        {
+          "id": "cultivator-v1",
+          "visibleBoundsAlpha16": [
+            57,
+            31,
+            205,
+            238
+          ],
+          "visibleWidth": 148,
+          "visibleHeight": 207,
+          "originalSha256": "01da466e9ea1d4b37ec150f5b866f5f2d412d99ba5ec22755062b86d31fac7e9"
+        },
+        {
+          "id": "spirit-v1",
+          "visibleBoundsAlpha16": [
+            91,
+            46,
+            180,
+            209
+          ],
+          "visibleWidth": 89,
+          "visibleHeight": 163,
+          "originalSha256": "a37b507276620bfe5f9612d5454235b6d85278d881b74089e2cc0f3d12267c80"
+        },
+        {
+          "id": "jade-sword-v1",
+          "visibleBoundsAlpha16": [
+            105,
+            30,
+            147,
+            240
+          ],
+          "visibleWidth": 42,
+          "visibleHeight": 210,
+          "originalSha256": "2213f6f6d7297d52053eddcfc0d354df9d165dc6eb57443ade756c50e8dd05f0"
+        },
+        {
+          "id": "stone-lantern-v1",
+          "visibleBoundsAlpha16": [
+            60,
+            57,
+            192,
+            218
+          ],
+          "visibleWidth": 132,
+          "visibleHeight": 161,
+          "originalSha256": "0d75d6b3d492c5543354eb575e395a863f1050a281df2a173f650b4ef29c0e32"
+        },
+        {
+          "id": "moss-rock-v1",
+          "visibleBoundsAlpha16": [
+            34,
+            73,
+            199,
+            203
+          ],
+          "visibleWidth": 165,
+          "visibleHeight": 130,
+          "originalSha256": "cc7b1f76ae30fc72426a7b619a720037aa1360ff4688e768a4a58b9853f83159"
+        }
+      ]
+    },
+    {
+      "case": "foreground",
+      "foregroundAlphaThreshold": 16,
+      "edgePaddingPx": 16,
+      "jobId": "88d09bd9-2606-40a7-b88a-f27b5b7b18cf",
+      "pack": "/Users/kartz/Development/Forge-sword-static-delivery/docs/qa/artifacts/forge-sword-alpha-bounds-20260907/jobs/88d09bd9-2606-40a7-b88a-f27b5b7b18cf/exports/sword-alpha-foreground/sword-alpha-foreground.gsfpack",
+      "providerRequests": 0,
+      "items": [
+        {
+          "id": "cultivator-v1",
+          "visibleBoundsAlpha16": [
+            54,
+            32,
+            201,
+            238
+          ],
+          "visibleWidth": 147,
+          "visibleHeight": 206,
+          "originalSha256": "01da466e9ea1d4b37ec150f5b866f5f2d412d99ba5ec22755062b86d31fac7e9"
+        },
+        {
+          "id": "spirit-v1",
+          "visibleBoundsAlpha16": [
+            72,
+            33,
+            183,
+            237
+          ],
+          "visibleWidth": 111,
+          "visibleHeight": 204,
+          "originalSha256": "a37b507276620bfe5f9612d5454235b6d85278d881b74089e2cc0f3d12267c80"
+        },
+        {
+          "id": "jade-sword-v1",
+          "visibleBoundsAlpha16": [
+            107,
+            32,
+            149,
+            238
+          ],
+          "visibleWidth": 42,
+          "visibleHeight": 206,
+          "originalSha256": "2213f6f6d7297d52053eddcfc0d354df9d165dc6eb57443ade756c50e8dd05f0"
+        },
+        {
+          "id": "stone-lantern-v1",
+          "visibleBoundsAlpha16": [
+            45,
+            33,
+            211,
+            237
+          ],
+          "visibleWidth": 166,
+          "visibleHeight": 204,
+          "originalSha256": "0d75d6b3d492c5543354eb575e395a863f1050a281df2a173f650b4ef29c0e32"
+        },
+        {
+          "id": "moss-rock-v1",
+          "visibleBoundsAlpha16": [
+            26,
+            77,
+            230,
+            237
+          ],
+          "visibleWidth": 204,
+          "visibleHeight": 160,
+          "originalSha256": "cc7b1f76ae30fc72426a7b619a720037aa1360ff4688e768a4a58b9853f83159"
+        }
+      ]
+    }
+  ]
+}

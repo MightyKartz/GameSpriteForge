@@ -118,6 +118,7 @@ pub enum JobOperationKind {
     #[default]
     LegacyPipeline,
     PrepareAsset,
+    PrepareStatic,
     PrepareCharacterPack,
     GenerateCharacterPack,
     CreateStyleLock,

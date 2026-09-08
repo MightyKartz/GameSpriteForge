@@ -129,6 +129,9 @@ pub fn stage_plan_job(
         }
     }
     let (source_kind, operation_kind) = match &plan.operation {
+        AutomationOperation::PrepareStatic(_) => {
+            (SourceKind::ImportFrames, JobOperationKind::PrepareStatic)
+        }
         AutomationOperation::PrepareAsset(request) => (
             source_kind_for_input(&request.input),
             JobOperationKind::PrepareAsset,
@@ -170,6 +173,7 @@ pub fn stage_plan_job(
     };
     let mut record = store.create_job(source_kind)?;
     let (asset_id, reuse_from_job_dir) = match &plan.operation {
+        AutomationOperation::PrepareStatic(request) => (Some(request.id.clone()), None),
         AutomationOperation::GenerateCharacterPack(request) => (
             request.asset_id.clone(),
             request.reuse_from_job_dir.as_ref(),
@@ -241,6 +245,9 @@ pub fn run_operation_with_provider(
     })?;
 
     let result = match operation {
+        AutomationOperation::PrepareStatic(request) => {
+            super::static_assets::run_prepare_static(store, job_id, request)
+        }
         AutomationOperation::PrepareAsset(request) => run_prepare_asset(store, job_id, request),
         AutomationOperation::PrepareCharacterPack(request) => {
             run_prepare_character_pack(store, job_id, request)
@@ -5118,7 +5125,7 @@ fn run_install_godot(
                     .iter()
                     .any(|animation| animation.name == *required)
             });
-    let usage = serde_json::json!({
+    let mut usage = serde_json::json!({
         "schemaVersion": "1",
         "assetKey": &asset_key,
         "assetId": &pack_summary.id,
@@ -5158,6 +5165,35 @@ fn run_install_godot(
         }),
         "gameplayControllerIncluded": false,
     });
+    if matches!(pack_summary.asset_type.as_str(), "icon_set" | "prop_set") {
+        let helper: serde_json::Value = serde_json::from_slice(&fs::read(
+            request.pack_path.join("assets/godot_import.json"),
+        )?)?;
+        if let Some(rendering) = helper.get("rendering") {
+            usage["rendering"] = rendering.clone();
+            usage["anchor"] = helper["anchor"].clone();
+            usage["frameWidth"] = helper["frameWidth"].clone();
+            usage["frameHeight"] = helper["frameHeight"].clone();
+        }
+        usage["texturePaths"] = pack_summary
+            .items
+            .iter()
+            .map(|item| {
+                (
+                    item.id.clone(),
+                    serde_json::json!(format!(
+                        "res://{}",
+                        request
+                            .target
+                            .join("items")
+                            .join(format!("{}.png", item.id))
+                            .display()
+                    )),
+                )
+            })
+            .collect::<serde_json::Map<String, serde_json::Value>>()
+            .into();
+    }
     fs::write(&usage_path, serde_json::to_vec_pretty(&usage)?)?;
 
     let marker = serde_json::json!({
@@ -5849,6 +5885,12 @@ fn input_display_name(input: &AssetInput) -> Option<String> {
 
 fn steps_for_operation(operation: &AutomationOperation) -> Vec<JobStepRecord> {
     let names = match operation {
+        AutomationOperation::PrepareStatic(_) => vec![
+            "ingest".into(),
+            "normalize".into(),
+            "quality".into(),
+            "export".into(),
+        ],
         AutomationOperation::PrepareAsset(_) => vec![
             "ingest".to_string(),
             "matting".to_string(),
@@ -6056,7 +6098,7 @@ fn copy_directory(source: &Path, target: &Path) -> Result<(), std::io::Error> {
     Ok(())
 }
 
-fn hash_directory(root: &Path) -> Result<String, std::io::Error> {
+pub(super) fn hash_directory(root: &Path) -> Result<String, std::io::Error> {
     if fs::symlink_metadata(root)?.file_type().is_symlink() {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,

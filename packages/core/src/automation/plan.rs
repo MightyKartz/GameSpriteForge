@@ -321,6 +321,10 @@ fn estimate_operation(operation: &AutomationOperation) -> super::types::PlanEsti
 
 fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreError> {
     match operation {
+        AutomationOperation::PrepareStatic(request) => {
+            super::static_assets::validate_request(request)
+                .map_err(PlanStoreError::InvalidRequest)?;
+        }
         AutomationOperation::PrepareAsset(request) => {
             if request.metadata.name.trim().is_empty() {
                 return Err(PlanStoreError::InvalidRequest(
@@ -673,6 +677,12 @@ pub fn fingerprint_operation_inputs(
 ) -> Result<String, PlanStoreError> {
     let mut hasher = Sha256::new();
     match operation {
+        AutomationOperation::PrepareStatic(request) => {
+            for item in &request.items {
+                hasher.update(item.id.as_bytes());
+                hash_files(&mut hasher, std::slice::from_ref(&item.path))?;
+            }
+        }
         AutomationOperation::PrepareAsset(request) => match &request.input {
             AssetInput::PngSequence { paths } => hash_files(&mut hasher, paths)?,
             AssetInput::SpriteSheet { path, .. } => {
@@ -1680,6 +1690,11 @@ fn hash_serializable(value: &impl Serialize) -> Result<String, PlanStoreError> {
 
 fn describe_effects(operation: &AutomationOperation) -> Vec<String> {
     match operation {
+        AutomationOperation::PrepareStatic(request) => vec![
+            format!("import {} local PNG items as {} with stable IDs", request.items.len(), request.kind.as_str()),
+            "preserve alpha, normalize to the declared canvas, and write provenance and a static Pack under a new job".into(),
+            "zero Provider requests; no generation or chroma-key matting".into(),
+        ],
         AutomationOperation::PrepareAsset(request) => vec![
             format!("create a Forge job for {}", request.metadata.name),
             "write processed frames, quality evidence, preview, and .gsfpack under the job directory".into(),

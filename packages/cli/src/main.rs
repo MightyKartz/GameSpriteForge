@@ -21,7 +21,7 @@ use forge_core::automation::{
     prepare_repair_plan, run_operation_with_provider, stage_plan_job, AutomationOperation,
     AutomationPlan, CharacterRetryStage, CreateStyleLockRequest, GenerateCharacterPackRequest,
     GenerateStaticAssetSetRequest, GodotInstallRequest, PlanStore, PrepareAssetRequest,
-    PrepareCharacterPackRequest,
+    PrepareCharacterPackRequest, PrepareStaticRequest,
 };
 #[cfg(feature = "terrain-assets")]
 use forge_core::automation::{CreateEnvironmentLockRequest, GenerateTerrainSetRequest};
@@ -634,6 +634,7 @@ enum RepairCommand {
 #[derive(Subcommand)]
 enum PlanCommand {
     PrepareAsset(RequestInput),
+    PrepareStatic(RequestInput),
     PrepareCharacter(RequestInput),
     GenerateCharacter(RequestInput),
     InstallGodot(RequestInput),
@@ -1442,6 +1443,29 @@ fn run() -> Result<(), (String, String)> {
             }
         },
         Command::Plan { command } => match command {
+            PlanCommand::PrepareStatic(input) => {
+                let mut request: PrepareStaticRequest = read_request(&input)?;
+                let cwd = env::current_dir().map_err(io_error)?;
+                let root = input
+                    .request
+                    .as_ref()
+                    .and_then(|path| path.parent())
+                    .unwrap_or(&cwd);
+                let root = if root.is_absolute() {
+                    root.to_path_buf()
+                } else {
+                    cwd.join(root)
+                };
+                for item in &mut request.items {
+                    if item.path.is_relative() {
+                        item.path = root.join(&item.path);
+                    }
+                }
+                let plan = plan_store()?
+                    .prepare(AutomationOperation::PrepareStatic(request))
+                    .map_err(display_error)?;
+                success(&plan)
+            }
             PlanCommand::PrepareAsset(input) => {
                 let request: PrepareAssetRequest = read_request(&input)?;
                 let plan = plan_store()?

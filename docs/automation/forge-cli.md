@@ -4,9 +4,14 @@
 quality evidence, durable jobs, Pack export, and Godot installation. Desktop and MCP
 clients are not part of the CLI release.
 
+For **Codex-generated PNGs → local Forge processing → Godot**, read the
+[local asset guide](codex-local-assets.md). It distinguishes published v0.2.1
+capabilities from the static/animation development builds used by Sword. Codex's
+built-in image generation is an external source workflow, not a Forge Provider.
+
 ## Output contract
 
-Every command invoked with `--json` writes exactly one JSON value to stdout:
+Successfully parsed commands invoked with `--json` write one JSON value to stdout:
 
 ```json
 {
@@ -16,9 +21,11 @@ Every command invoked with `--json` writes exactly one JSON value to stdout:
 }
 ```
 
-Errors set `ok` to `false`, include stable `code` and `message` fields, and exit
-non-zero. Diagnostics go to stderr. Credentials and authorization responses never
-appear in either stream.
+Handled runtime errors set `ok` to `false`, include stable `code` and `message`
+fields, and exit non-zero. CLI parser failures (such as an unavailable subcommand
+or an invalid flag) instead print usage diagnostics to stderr and may have no JSON
+stdout. Check the exit status before decoding. Credentials and authorization
+responses are not diagnostic output.
 
 ## Product commands
 
@@ -53,6 +60,65 @@ used by low-level automation. Without `--wait` it returns a Job ID and a detache
 worker continues the job.
 
 ## Plans and jobs
+
+### Local transparent PNG sets
+
+`plan prepare-static` prepares a local `icon_set` or `prop_set` without a Provider
+or Style Lock. It uses the same single-use plan, durable Job, Pack validation, and
+Godot installation flow as other CLI operations:
+
+```bash
+forge plan prepare-static --request /absolute/static-items.json --json
+forge plan execute --token TOKEN --wait --json
+```
+
+```json
+{
+  "schemaVersion": "1",
+  "kind": "prop_set",
+  "id": "sword-props",
+  "name": "Sword props",
+  "license": "private",
+  "sampling": "linear",
+  "canvasSize": 128,
+  "foregroundAlphaThreshold": 16,
+  "edgePaddingPx": 16,
+  "items": [
+    { "id": "jade_blade", "name": "Jade blade", "path": "sources/jade-blade.png" }
+  ]
+}
+```
+
+Paths are relative to the request file, or the current directory with `--stdin`.
+Set `sampling` explicitly to `linear` or `nearest`. Canvas size is 64, 128, 256,
+or 512; a set contains 1–64 items with unique stable IDs. Input must be PNG with
+transparent background and visible foreground, at most 4096 px per dimension and
+32 MiB per file. Local import never applies chroma-key matting: it preserves the
+source alpha, fits the foreground to 82% of the canvas, centers icons, and places
+props on the ground line described below. Nearest uses nearest-neighbor resizing;
+linear uses Lanczos resizing and linear engine filtering.
+
+For images with faint distant alpha residue, `foregroundAlphaThreshold` (1–255,
+default 1) chooses the subject bounds. `edgePaddingPx` (0–64, default 0) expands
+that crop in source pixels before normalization. Values of 16 and 16 work for the
+Sword concept-derived source set. Pixels inside the padded crop retain their
+original alpha; the threshold is not an alpha cutoff. The quality report records
+both the subject bounds and the padded crop with exclusive right/bottom coordinates.
+Padding is included in the normalized extent, so the visible subject may sit a few
+output pixels above the prop origin. Omitted fields preserve the original behavior.
+
+The Job retains original PNGs, source and normalized SHA-256 values, recipe/input
+fingerprints, and a local quality report. The static Pack records `import_frames`
+provenance and zero Provider requests; its explicit `assetType` stays `icon_set`
+or `prop_set`, and Godot receives textures or Sprite2D scenes. `game_ready` here
+means structural PNG/canvas checks passed; style consistency is not evaluated.
+The initial local importer does not register an asset-project catalog or support
+targeted retries: prepare a new request to revise a local set, and install without
+`--catalog-project`. Normal Godot install ownership, registry, and rollback apply.
+
+This entry point is included in the current default source build; the published
+v0.2.1 binary predates it. Until the new release, use a verified absolute source CLI
+path. See the [integration record](../qa/forge-local-assets-integration-2026-09-08.md).
 
 A plan validates and fingerprints local inputs without generating media or changing a
 Godot project. Its token expires after 15 minutes, is consumed once, and refuses to
@@ -97,9 +163,11 @@ missing/corrupt media, invalid Alpha, crop, canvas, frame, or other hard gates.
 - `.gsfpack` V2 adds `assetType`, static `items`, consistency evidence, and Style
   provenance. The reader remains compatible with V1 Character Packs.
 
-All jobs lock one Provider, Profile, model selection, and Style revision. Forge rejects
-missing capabilities instead of silently switching Provider or degrading to unrelated
-text-to-image calls.
+Provider-generated jobs lock one Provider, Profile, model selection, and Style
+revision. Local preparation and Godot installation use their input/recipe
+fingerprints and do not require a Provider or generated Style Lock. Forge rejects
+missing generation capabilities instead of silently switching Provider or degrading
+to unrelated text-to-image calls.
 
 ## Consistency profile
 
@@ -146,8 +214,10 @@ use owner-only OAuth file storage:
 forge provider login --provider xai --method oauth --credential-store file
 ```
 
-Official macOS binaries use the fixed code-signing identifier
-`dev.gamespriteforge.cli` and one Developer ID team across releases.
+The published v0.2.1 binaries are **unsigned and not notarized**. Local development
+signing can use the fixed identifier `dev.gamespriteforge.cli`; that configuration
+does not establish release signing. See [the release notes](../releases/v0.2.1.md)
+and [development signing instructions](../../CONTRIBUTING.md).
 
 ## Godot 4.6.x delivery
 
@@ -160,6 +230,14 @@ text `.tres`/`.tscn` files at or above 1 MiB and any embedded Image
   `AnimatedSprite2D` scene, and directional playback metadata.
 - Icon sets receive one external PNG per item and an item-to-`res://` mapping.
 - Prop sets receive one external PNG and one `Sprite2D` scene per item.
+
+New static Packs preserve Style `sampling` as `rendering.textureFilter` (`nearest`
+or `linear`) in the manifest, Pack source metadata, and Godot helper. Props use the
+normalized ground line `(canvas / 2, canvas - canvas / 16)` as their local origin;
+icons use the canvas center. `forge_usage.json` includes this rendering/anchor
+metadata and a `texturePaths` map from item ID to installed `res://` texture for UI
+consumers. Static Packs without the rendering contract retain their former centered
+geometry and inherited Godot filtering.
 
 Every install writes `forge_usage.json`, registers atomically in
 `.forge/assets.json`, replaces only Forge-owned targets, and restores the previous
@@ -181,12 +259,14 @@ copies the source Job's normalized static images, recalculates `consistency@1.3.
 zero Provider requests. An optional `--item` limits the explicit target while all reused
 items are also rechecked against the current baseline.
 
-## Character release gate
+## Historical character-generation acceptance
 
-`v0.2.0-cli.1` must not be tagged until three clean xAI Style → Character → Pack →
-Godot runs finish without review, all four actions are `game_ready`, provenance and
-usage can be reconstructed, and credential/temporary-URL scans are clean. The offline
-fixture and CI contracts are necessary but do not replace this real-model gate.
+The `v0.2.0-cli.1` generation work used a three-run xAI Style → Character → Pack →
+Godot acceptance target, including four `game_ready` actions and reconstructable
+provenance/usage. This is historical generation criteria, not an unfulfilled gate
+on the already published v0.2.1. See the [v0.2.1 scope](../releases/v0.2.1.md)
+and [release verification](../qa/forge-cli-v0.2.1-release-2026-09-07.md).
+Offline fixtures and local-image checks do not establish real-model art quality.
 
 ## Development store overrides
 

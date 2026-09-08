@@ -851,6 +851,54 @@ pub fn export_static_pack(
     items: &[StaticPackItem],
     report: &ConsistencyReportV1,
 ) -> Result<StaticPackOutput, AssetProjectError> {
+    let item_provenance = items
+        .iter()
+        .map(|item| {
+            let attempt = report
+                .items
+                .iter()
+                .find(|entry| entry.id == item.id)
+                .map(|entry| entry.attempt)
+                .unwrap_or_default();
+            (
+                item.id.clone(),
+                serde_json::json!({
+                    "providerId": provider_id, "styleRevision": style.revision,
+                    "attempt": attempt, "sha256": hash_file(&item.image_path).ok(),
+                }),
+            )
+        })
+        .collect();
+    export_static_pack_with_source(
+        exports_root,
+        asset,
+        StaticPackSource {
+            sampling: style.sampling.clone(),
+            source: serde_json::json!({
+                "kind": "provider_generation", "name": provider_id,
+                "metadata": {"provider":provider_id, "styleRevision":style.revision,
+                    "styleBaselineProfile":style.baseline_profile, "consistencyProfile":CONSISTENCY_PROFILE}
+            }),
+            item_provenance,
+        },
+        items,
+        report,
+    )
+}
+
+pub(crate) struct StaticPackSource {
+    pub sampling: SamplingMode,
+    pub source: serde_json::Value,
+    pub item_provenance: std::collections::BTreeMap<String, serde_json::Value>,
+}
+
+pub(crate) fn export_static_pack_with_source(
+    exports_root: &Path,
+    asset: &StaticAssetSetSpecV1,
+    mut source: StaticPackSource,
+    items: &[StaticPackItem],
+    report: &impl Serialize,
+) -> Result<StaticPackOutput, AssetProjectError> {
     if items.is_empty() || items.len() != asset.items.len() {
         return Err(AssetProjectError::Invalid(
             "static pack requires one generated image per declared item".into(),
@@ -899,23 +947,12 @@ pub fn export_static_pack(
         .iter()
         .enumerate()
         .map(|(index, item)| {
-            let attempt = report
-                .items
-                .iter()
-                .find(|entry| entry.id == item.id)
-                .map(|entry| entry.attempt)
-                .unwrap_or_default();
             serde_json::json!({
                 "id": item.id,
                 "name": item.name,
                 "frame": index,
                 "texture": format!("assets/items/{}.png", item.id),
-                "provenance": {
-                    "providerId": provider_id,
-                    "styleRevision": style.revision,
-                    "attempt": attempt,
-                    "sha256": hash_file(&item.image_path).ok(),
-                },
+                "provenance": source.item_provenance.get(&item.id),
             })
         })
         .collect::<Vec<_>>();
@@ -942,6 +979,23 @@ pub fn export_static_pack(
         })
         .collect::<Vec<_>>();
     let canvas = image::open(&frames[0])?.width();
+    let anchor = serde_json::json!({
+        "type": if asset.kind == StaticAssetKind::IconSet { "center" } else { "feet" },
+        "x": canvas as f32 / 2.0,
+        // normalize_static_image aligns the exclusive bottom of the foreground
+        // to this ground line, leaving the same canvas/16 transparent margin.
+        "y": if asset.kind == StaticAssetKind::IconSet {
+            canvas as f32 / 2.0
+        } else {
+            (canvas - canvas / 16) as f32
+        },
+    });
+    let rendering = serde_json::json!({
+        "profile": "godot-sprite-rendering@1.0.0",
+        "textureFilter": source.sampling,
+        "pixelSnap": source.sampling == SamplingMode::Nearest,
+        "mirrorPolicy": "auto",
+    });
     let mut manifest = serde_json::json!({
         "assetType": asset.kind.as_str(),
         "name": asset.name,
@@ -953,11 +1007,8 @@ pub fn export_static_pack(
             "rows": sheet.atlas.rows,
         },
         "animations": animations,
-        "anchor": {
-            "type": if asset.kind == StaticAssetKind::IconSet { "center" } else { "feet" },
-            "x": canvas as f32 / 2.0,
-            "y": if asset.kind == StaticAssetKind::IconSet { canvas as f32 / 2.0 } else { canvas as f32 },
-        },
+        "anchor": anchor,
+        "rendering": rendering,
         "items": manifest_items,
     });
     if sheet_images.len() > 1 {
@@ -979,30 +1030,8 @@ pub fn export_static_pack(
         recommendations: vec![],
         notes: vec!["static_asset_set".into()],
     };
-    let forgepack_items = items
-        .iter()
-        .enumerate()
-        .map(|(index, item)| {
-            let attempt = report
-                .items
-                .iter()
-                .find(|entry| entry.id == item.id)
-                .map(|entry| entry.attempt)
-                .unwrap_or_default();
-            serde_json::json!({
-                "id": item.id,
-                "name": item.name,
-                "frame": index,
-                "texture": format!("assets/items/{}.png", item.id),
-                "provenance": {
-                    "providerId": provider_id,
-                    "styleRevision": style.revision,
-                    "attempt": attempt,
-                    "sha256": hash_file(&item.image_path).ok(),
-                },
-            })
-        })
-        .collect::<Vec<_>>();
+    source.source["metadata"]["rendering"] = rendering.clone();
+    source.source["metadata"]["anchor"] = anchor.clone();
     let forgepack = serde_json::json!({
         "schemaVersion": "2.0.0",
         "assetType": asset.kind.as_str(),
@@ -1012,18 +1041,9 @@ pub fn export_static_pack(
         "createdAt": chrono::Utc::now(),
         "creator": { "name": "Game Sprite Forge" },
         "license": { "type": asset.license },
-        "source": {
-            "kind": "provider_generation",
-            "name": provider_id,
-            "metadata": {
-                "provider": provider_id,
-                "styleRevision": style.revision,
-                "styleBaselineProfile": style.baseline_profile,
-                "consistencyProfile": CONSISTENCY_PROFILE,
-            }
-        },
+        "source": source.source,
         "animations": animations,
-        "items": forgepack_items,
+        "items": manifest_items,
         "assets": {
             "frames": "assets/frames",
             "spriteSheet": "assets/sprite_sheet.png",
@@ -1070,6 +1090,10 @@ pub fn export_static_pack(
             "assetType": asset.kind.as_str(),
             "items": manifest["items"],
             "textures": sheet_images,
+            "frameWidth": canvas,
+            "frameHeight": canvas,
+            "anchor": anchor,
+            "rendering": rendering,
         }))?,
     )?;
     fs::write(

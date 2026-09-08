@@ -1,0 +1,29 @@
+{
+  "ok": true,
+  "forge": "/Users/kartz/Development/Forge-sword-static-delivery/target/debug/forge",
+  "godot": "/Applications/Godot.app/Contents/MacOS/Godot",
+  "cases": [
+    {
+      "kind": "prop_set",
+      "sampling": "linear",
+      "jobId": "5609b412-64b4-483c-ac7f-bc56de133a4b",
+      "pack": "/Users/kartz/Development/Forge-sword-static-delivery/docs/qa/artifacts/forge-local-static-20260907/jobs/5609b412-64b4-483c-ac7f-bc56de133a4b/exports/prop_set-linear/prop_set-linear.gsfpack",
+      "providerRequests": 0
+    },
+    {
+      "kind": "prop_set",
+      "sampling": "nearest",
+      "jobId": "496edcf5-8cd2-4e45-94f8-0c032cf10f38",
+      "pack": "/Users/kartz/Development/Forge-sword-static-delivery/docs/qa/artifacts/forge-local-static-20260907/jobs/496edcf5-8cd2-4e45-94f8-0c032cf10f38/exports/prop_set-nearest/prop_set-nearest.gsfpack",
+      "providerRequests": 0
+    },
+    {
+      "kind": "icon_set",
+      "sampling": "linear",
+      "jobId": "50ad3f44-500d-4875-a91e-51ef6f425a50",
+      "pack": "/Users/kartz/Development/Forge-sword-static-delivery/docs/qa/artifacts/forge-local-static-20260907/jobs/50ad3f44-500d-4875-a91e-51ef6f425a50/exports/icon_set-linear/icon_set-linear.gsfpack",
+      "providerRequests": 0
+    }
+  ],
+  "source": "deterministic local test PNGs; no Provider calls"
+}
