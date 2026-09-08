@@ -29,7 +29,7 @@ credential_scan_matches() {
 }
 
 if "${FORGE}" --help | grep -E '^  (subject|schema|component|environment|terrain|building|map)[[:space:]]'; then
-  echo "post-v0.2 command leaked into the v0.2 CLI surface" >&2
+  echo "experimental command leaked into the default CLI surface" >&2
   exit 1
 fi
 

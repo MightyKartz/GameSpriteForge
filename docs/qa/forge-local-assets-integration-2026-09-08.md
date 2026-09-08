@@ -6,9 +6,9 @@ consumer binaries are retained. Real Provider generation is outside this work.
 
 | Batch | Scope | Status |
 | --- | --- | --- |
-| 1 | Local static intake, rendering/anchors, alpha bounds, skills/docs and CI | Local checks passed; GitHub checks pending |
+| 1 | Local static intake, rendering/anchors, alpha bounds, skills/docs and CI | Merged through PR #20; GitHub quality matrix passed |
 | 2 | Preserved animation coordinates/timing and whole-sheet preprocessing | Local checks passed; GitHub checks pending |
-| 3 | Build/capability identity, v0.3.0 RC and final package verification | Pending |
+| 3 | Build/capability identity, v0.3.0 RC and final package verification | Release candidate preparation |
 | 4 | Isolated consumer replay, Sword lock migration and rollback evidence | Pending |
 
 ## Batch 1
@@ -60,3 +60,18 @@ This includes the single/character repair regressions. Formatting, warning-free
 workspace Clippy, default CLI build, five animation CLI/Godot cases, three static
 CLI/Godot cases and shell syntax passed. See
 [the animation summary](artifacts/forge-local-assets-integration-20260908/animation.json).
+
+## Batch 3
+
+Adds compiled build identity and stable capabilities to doctor, with null values
+for unknown Git identity. Tests cover worktrees, source archives, dirty source,
+feature changes and incremental rebuild behavior. Default-marker filtering keeps
+the release's optional feature list empty. Release verification compares the
+executable with its payload metadata and verifies bundled FFmpeg/FFprobe selection.
+The first candidate is v0.3.0-rc.1; publication and installed replay remain pending.
+
+Local build-identity validation passed: five CLI tests, formatting, warning-free
+workspace Clippy, default CLI build, installer contract and shell syntax. The
+development doctor correctly reported a dirty debug build and all seven capability
+IDs; [the identity summary](artifacts/forge-local-assets-integration-20260908/build-identity.json)
+distinguishes this evidence from a release payload check.

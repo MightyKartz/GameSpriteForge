@@ -1,0 +1,65 @@
+{
+  "kind": "local-source-validation",
+  "sourceCommit": "9667d518928afe4dc4ad0c61b8b2fd555980171b",
+  "version": "0.3.0-rc.1",
+  "checks": [
+    {
+      "check": "fmt",
+      "exitCode": 0
+    },
+    {
+      "check": "clippy",
+      "exitCode": 0
+    },
+    {
+      "check": "cli-tests",
+      "exitCode": 0
+    },
+    {
+      "check": "build",
+      "exitCode": 0
+    },
+    {
+      "check": "identity",
+      "exitCode": 0
+    },
+    {
+      "check": "installer",
+      "exitCode": 0
+    },
+    {
+      "check": "shell",
+      "exitCode": 0
+    }
+  ],
+  "cliTestsPassed": 5,
+  "identity": {
+    "ok": true,
+    "cliVersion": "0.3.0-rc.1",
+    "build": {
+      "gitCommit": "9667d518928afe4dc4ad0c61b8b2fd555980171b",
+      "dirty": true,
+      "target": "aarch64-apple-darwin",
+      "profile": "debug",
+      "features": []
+    },
+    "capabilities": [
+      "local_static_import",
+      "local_animation_import",
+      "preserve_source_coordinates",
+      "local_animation_timing",
+      "whole_sheet_source_transform",
+      "pack_validation",
+      "godot_install"
+    ],
+    "packagedPayloadChecked": false
+  },
+  "notes": [
+    "Development checkout had the documented release preparation edits; dirty=true is expected.",
+    "This is not evidence for an installed release package. RC publication and installed replay are separate gates."
+  ],
+  "rejectionChecks": [
+    "debug build rejected as release",
+    "incorrect expected commit rejected"
+  ]
+}

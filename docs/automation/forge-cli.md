@@ -27,6 +27,22 @@ or an invalid flag) instead print usage diagnostics to stderr and may have no JS
 stdout. Check the exit status before decoding. Credentials and authorization
 responses are not diagnostic output.
 
+### Compiled build identity
+
+Starting with v0.3.0, `doctor --json` includes `data.build` with `gitCommit`,
+`dirty`, `target`, `profile` and `features`, plus `data.capabilities` containing
+stable IDs. `gitCommit`/`dirty` are `null` when the build has no trustworthy Git
+identity (for example, a source archive). These describe the executable at compile
+time, not the current checkout around it. `features` lists enabled named Cargo
+features, omitting the empty `default` marker. Runtime Godot/FFmpeg availability
+remains in the existing doctor fields.
+
+The default v0.3.0 capabilities are `local_static_import`,
+`local_animation_import`, `preserve_source_coordinates`, `local_animation_timing`,
+`whole_sheet_source_transform`, `pack_validation` and `godot_install`. A capability
+does not certify source artwork quality. Consumers should lock a tested binary
+hash and check the capabilities their requests require.
+
 ## Product commands
 
 ```text

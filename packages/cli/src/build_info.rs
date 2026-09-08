@@ -31,6 +31,9 @@ pub fn current() -> BuildInfo {
 pub const CAPABILITIES: &[&str] = &[
     "local_static_import",
     "local_animation_import",
+    "preserve_source_coordinates",
+    "local_animation_timing",
+    "whole_sheet_source_transform",
     "pack_validation",
     "godot_install",
 ];

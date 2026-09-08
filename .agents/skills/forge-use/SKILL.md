@@ -15,6 +15,11 @@ builds, also check the pinned source commit and binary SHA-256: different binari
 currently report `0.2.1` while accepting different request fields. Do not replace
 a game's pinned executable with a convenient `forge` on PATH.
 
+v0.3.0 adds `doctor.data.build` and `doctor.data.capabilities`. Use those compiled
+fields to check the expected commit, source state and required capabilities; an
+unknown Git identity is `null`, not a clean-build claim. Continue verifying the
+consumer's binary SHA-256. Runtime tool availability is reported separately.
+
 - Published v0.2.1 supports the existing local animation, Pack and Godot workflows.
 - `plan prepare-static` is included in the current default source build. The
   published v0.2.1 predates it; use a verified source binary until the new release.

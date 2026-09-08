@@ -22,6 +22,7 @@ fn main() {
     let features: BTreeSet<String> = env::vars()
         .filter_map(|(key, _)| {
             key.strip_prefix("CARGO_FEATURE_")
+                .filter(|name| *name != "DEFAULT")
                 .map(|name| name.to_ascii_lowercase().replace('_', "-"))
         })
         .collect();
