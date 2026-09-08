@@ -1,6 +1,7 @@
 mod plan;
 mod repair;
 mod runner;
+mod static_assets;
 mod types;
 
 pub use plan::{fingerprint_operation_inputs, PlanStore, PlanStoreError, PLAN_TTL_MINUTES};
@@ -18,6 +19,6 @@ pub use types::{
     CreateSubjectLockRequest, FixedGridSplit, GenerateBuildingKitRequest,
     GenerateCharacterPackRequest, GenerateStaticAssetSetRequest, GenerateTerrainSetRequest,
     GeneratedCharacterSpec, GenerationPolicy, GodotInstallRequest, MattingRecipe, PlanEstimateV1,
-    PrepareAssetRequest, PrepareCharacterPackRequest, PreparedPlan, QualityPolicy,
-    SpriteSheetSplit,
+    PrepareAssetRequest, PrepareCharacterPackRequest, PrepareStaticItem, PrepareStaticRequest,
+    PreparedPlan, QualityPolicy, SpriteSheetSplit,
 };

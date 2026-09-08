@@ -472,6 +472,25 @@ func _install_static_set(helper: Dictionary, target_res: String, asset_type: Str
 			var sprite := Sprite2D.new()
 			sprite.name = "Sprite2D"
 			sprite.texture = texture
+			# Absent in legacy static Packs: preserve inherited filtering and
+			# centered geometry rather than reinterpreting old placements.
+			if helper.has("rendering"):
+				var rendering: Dictionary = _required_dict(helper, "rendering", "static helper")
+				match String(rendering.get("textureFilter", "")):
+					"nearest":
+						sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+					"linear":
+						sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+					_:
+						_fail("Unsupported static rendering.textureFilter")
+				sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_DISABLED
+				var anchor: Dictionary = _required_dict(helper, "anchor", "static helper")
+				var anchor_position := Vector2(float(anchor["x"]), float(anchor["y"]))
+				if bool(rendering.get("pixelSnap", false)):
+					if !anchor_position.is_equal_approx(anchor_position.round()):
+						_fail("Pixel-snapped static anchor must use integer coordinates")
+				sprite.centered = false
+				sprite.position = -anchor_position
 			root.add_child(sprite)
 			sprite.owner = root
 			var packed := PackedScene.new()

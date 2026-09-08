@@ -64,6 +64,19 @@ static_matrix_gate() {
     bash "${ROOT}/scripts/test-static-asset-matrix.sh"
 }
 
+local_static_gate() {
+  local godot_binary
+  godot_binary="${FORGE_GODOT_PATH:-$(command -v godot)}"
+  test -x "${godot_binary}" &&
+  cargo build --locked -q -p forge-cli --manifest-path "${ROOT}/Cargo.toml" &&
+  FORGE_GODOT_PATH="${godot_binary}" GODOT_BIN="${godot_binary}" \
+  cargo test --manifest-path "${ROOT}/Cargo.toml" -p core \
+    --test static_delivery_tests -- --ignored --nocapture &&
+  python3 "${ROOT}/scripts/test-local-static-cli.py" \
+    --forge "${ROOT}/target/debug/forge" --godot "${godot_binary}" \
+    --output "${REPORT_DIR}/local-static"
+}
+
 world_contract_gate() {
   cargo test --manifest-path "${ROOT}/Cargo.toml" \
     -p providers --test world_generation_contract -- --nocapture &&
@@ -76,6 +89,7 @@ run_gate "character-v2-contract" "release_blocking" character_contract_gate
 run_gate "character-v2-full-matrix" "release_blocking" character_matrix_gate
 run_gate "static-cli-contract" "release_blocking" static_contract_gate
 run_gate "static-five-style-matrix" "release_blocking" static_matrix_gate
+run_gate "local-static-delivery" "release_blocking" local_static_gate
 run_gate "world-assets-experimental" "experimental" world_contract_gate
 FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 

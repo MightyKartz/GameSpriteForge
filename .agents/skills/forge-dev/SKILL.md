@@ -47,11 +47,11 @@ Capability checkpoint, checked 2026-09-08; recheck Git and command help when usi
 
 - Published v0.2.1 supports existing animation preparation and Godot delivery, but
   predates `plan prepare-static`.
-- `codex/sword-static-delivery` at
-  `c1f448082c34f531738126e38e41f5a9d66ca1a7` adds local static PNG intake, static
-  rendering/ground anchors, and alpha-bound controls with default features. It was
-  not merged into `main` at this checkpoint. Do not infer availability from the
-  version string or silently change another project's pinned CLI.
+- The current default source build includes local static PNG intake, static
+  rendering/ground anchors, and alpha-bound controls, originally verified at
+  `c1f448082c34f531738126e38e41f5a9d66ca1a7`. The published v0.2.1 predates these
+  capabilities. Do not infer availability from the version string or silently
+  change another project's pinned CLI.
 - Subject/Character V2, world assets, and game-art manifest commands are optional
   source-build capabilities. Read feature gates and the selected command's help.
 
@@ -105,7 +105,7 @@ python3 scripts/test-local-static-cli.py --forge /absolute/path/to/forge --godot
 The ignored test loads saved resources in real Godot 4.6.x, including legacy static
 Packs. For a nonstandard Godot location, set both `FORGE_GODOT_PATH` (Forge installer)
 and `GODOT_BIN` (the Rust test's final scene check). The Python script's `--godot`
-selects its final scene check; set `FORGE_GODOT_PATH` for its install Jobs as well.
+selects both its install Jobs and final scene check.
 Keep evidence clear about fixture resource validation versus reviewed artwork.
 
 For broader CLI integration, use `FORGE_BINARY=/absolute/path/to/forge bash

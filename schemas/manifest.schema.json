@@ -127,8 +127,13 @@
     "itemProvenance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["providerId", "styleRevision", "attempt", "sha256"],
+      "oneOf": [
+        { "required": ["providerId", "styleRevision", "attempt", "sha256"] },
+        { "required": ["sourceKind", "sha256", "normalizedSha256"] }
+      ],
       "properties": {
+        "sourceKind": { "const": "import_png" },
+        "normalizedSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
         "providerId": { "type": "string", "minLength": 1 },
         "styleRevision": { "type": "string", "minLength": 1 },
         "attempt": { "type": "integer", "minimum": 1 },

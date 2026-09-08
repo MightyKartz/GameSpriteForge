@@ -7,23 +7,24 @@ model as a Provider: the handoff is a local image file.
 
 ## Availability: check before following these examples
 
-Audited on **2026-09-08**, against main baseline `b44e1d3` and the two local
-development branches below. The development capabilities are **not in the
-published v0.2.1 download** and are not added to main by this documentation change.
+Updated for the first integration batch on **2026-09-08**. Local static delivery
+is now included in this source checkout. The published **v0.2.1 download predates
+the new local request capabilities**; an updated release is being prepared.
 
-| Workflow | Required implementation | Published v0.2.1 / audited main |
+| Workflow | Current default source build | Published v0.2.1 |
 | --- | --- | --- |
-| Existing local animation processing, Pack validation, Godot install | Default CLI | Available |
-| Transparent PNG sets with `plan prepare-static`, static filtering/ground anchors, alpha-bound options | `codex/sword-static-delivery`, `c1f448082c34f531738126e38e41f5a9d66ca1a7` | Not available |
-| Local request `preserve_source`, explicit rendering and frame timing | `codex/sword-animation-delivery`, `9efc15b2075464a0e8a16861331245a55187c645` | Not available in these local request forms |
-| Whole-sheet transparent padding and translation | Same animation branch, `d4b18e2c2792db9877e5d5517ef390bbc254e2d2` | Not available |
+| Existing local animation processing, Pack validation, Godot install | Available | Available |
+| Transparent PNG sets with `plan prepare-static`, static filtering/ground anchors, alpha-bound options | Available | Not available |
+| Local request `preserve_source`, explicit rendering and frame timing | Pending animation integration | Not available in these local request forms |
+| Whole-sheet transparent padding and translation | Pending animation integration | Not available |
 
-The animation branch includes the static work. Sword deliberately retains separate
-static and animation binary locks so animation development cannot silently change
-existing static imports. These are local development references, not promised
-remote branches or installable releases. Use an existing verified checkout if
-available; otherwise integration/release of the required implementation remains
-work to do. Do not silently fall back to the stable binary.
+Sword still retains separate static (`c1f4480`) and animation (`d4b18e2`) binary
+locks until a release passes consumer replay. The animation implementation is on
+`codex/sword-animation-delivery`; a local branch is not an installable release.
+Do not silently fall back to the stable binary. The original
+[audit](../qa/forge-sword-workflow-audit-2026-09-08.md) is historical evidence;
+follow the [integration record](../qa/forge-local-assets-integration-2026-09-08.md)
+for subsequent changes.
 
 All three binaries can report `forge 0.2.1`. Record the absolute binary path,
 source commit, feature set, SHA-256 and `doctor --json` output. Check `plan --help`

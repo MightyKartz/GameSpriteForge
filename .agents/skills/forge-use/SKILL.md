@@ -16,8 +16,8 @@ currently report `0.2.1` while accepting different request fields. Do not replac
 a game's pinned executable with a convenient `forge` on PATH.
 
 - Published v0.2.1 supports the existing local animation, Pack and Godot workflows.
-- `plan prepare-static` is currently on `codex/sword-static-delivery` at `c1f4480`;
-  it is absent from the published v0.2.1 and the main baseline audited on 2026-09-08.
+- `plan prepare-static` is included in the current default source build. The
+  published v0.2.1 predates it; use a verified source binary until the new release.
 - Local `preserve_source`, request-level rendering/timing, and whole-sheet
   padding/offset require the animation development implementation at `d4b18e2`
   on `codex/sword-animation-delivery`.
