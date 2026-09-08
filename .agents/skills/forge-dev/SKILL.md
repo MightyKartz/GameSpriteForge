@@ -51,14 +51,16 @@ requested development workflow. `packages/cli/Cargo.toml` declares `default = []
 
 Capability checkpoint, checked 2026-09-08; recheck Git and command help when using it:
 
-- Published v0.2.1 supports existing animation preparation and Godot delivery, but
-  predates `plan prepare-static`.
-- The current default source build includes local static PNG intake, static
-  rendering/ground anchors, and alpha-bound controls, originally verified at
-  `c1f448082c34f531738126e38e41f5a9d66ca1a7`. The published v0.2.1 predates these
-  capabilities. Do not infer availability from the version string or silently
-  change another project's pinned CLI.
-- The current source also includes local `preserve_source`, rendering/timing and
+- v0.3.0's default CLI includes local static PNG intake, static rendering/ground
+  anchors, and alpha-bound controls. This is the stable PNG → static Pack → Godot
+  path; no optional source feature is required.
+- The earlier v0.2.1 supports existing animation preparation and Godot delivery,
+  but predates `plan prepare-static` and the new local animation request fields.
+  Do not infer development-build availability from the version string or silently
+  change another project's pinned CLI. Verify consumer contracts before updating
+  its lock for future imports; preserve existing asset receipts and source history.
+  Actual re-imports produce new receipts.
+- v0.3.0 also includes local `preserve_source`, rendering/timing and
   whole-sheet preprocessing, with repair preserving the requested coordinates.
   Use `scripts/test-local-animation-delivery.py` with Pillow and Godot for the
   synthetic CLI/Pack/native-resource contract. Animation remains experimental.
@@ -80,8 +82,8 @@ Its `game_ready` verdict covers structural checks, not visual or style approval.
 
 Local static normalization preserves source copies and alpha without chroma-key
 matting. `foregroundAlphaThreshold` selects subject bounds; `edgePaddingPx` retains
-nearby soft edges. They default to 1/0. The Sword evidence used 16/16 for distant alpha
-residue; inspect the actual source before reusing those values. Props use a ground
+nearby soft edges. They default to 1/0; adjust them only after inspecting the
+source and normalized output. Props use a ground
 origin and icons a center origin. Godot UI consumers of icon textures must apply the
 rendering contract themselves; the installed prop scenes carry it directly.
 
@@ -120,8 +122,8 @@ Keep evidence clear about fixture resource validation versus reviewed artwork.
 
 For broader CLI integration, use `FORGE_BINARY=/absolute/path/to/forge bash
 scripts/test-cli-product.sh`; for a release, follow `.github/workflows/release-cli.yml`
-and the existing packaging/verification scripts. The published v0.2.1 binaries are
-unsigned and not notarized. Local development signing does not change release status.
+and the existing packaging/verification scripts. v0.3.0 retains unsigned,
+unnotarized distribution. Local development signing does not change release status.
 
 ## Retained desktop work only
 

@@ -1,37 +1,44 @@
-# Codex artwork → Forge → Godot
+# PNG artwork → Forge → Godot
 
-Use Codex's built-in image generation for the artwork, then Forge for reproducible
-local processing, Pack validation and Godot installation. Sword uses this workflow
-for its static props and prototype animation. Forge does not call Codex's image
-model as a Provider: the handoff is a local image file.
+Create artwork with Codex or another image tool, then use Forge to prepare local
+static Packs, inspect the results and install them into Godot. You can also start
+with existing transparent PNGs. The handoff is a local image file; Forge does not
+call Codex's image model as a Provider.
 
-## Availability: check before following these examples
+## Use Forge v0.3.0
 
-Updated for the static and animation integration batches on **2026-09-08**. Local
-static delivery and preserved animation are included in this source checkout.
-The published **v0.2.1 download predates
-the new local request capabilities**; an updated release is being prepared.
+The v0.3.0 default CLI includes local transparent PNG import and static Godot
+delivery. Use the [installation instructions](../../README.md#install) for
+**macOS Apple Silicon**, and install **Godot 4.6.x** separately. The local
+animation commands are also included, but character animation remains in
+development and testing.
 
-| Workflow | Current default source build | Published v0.2.1 |
+| Workflow | v0.3.0 | Earlier v0.2.1 |
 | --- | --- | --- |
 | Existing local animation processing, Pack validation, Godot install | Available | Available |
 | Transparent PNG sets with `plan prepare-static`, static filtering/ground anchors, alpha-bound options | Available | Not available |
-| Local request `preserve_source`, explicit rendering and frame timing | Available; animation experimental | Not available in these local request forms |
-| Whole-sheet transparent padding and translation | Available | Not available |
+| Local request `preserve_source`, explicit rendering and frame timing | Experimental animation | Not available in these local request forms |
+| Whole-sheet transparent padding and translation | Experimental animation | Not available |
 
-Sword still retains separate static (`c1f4480`) and animation (`d4b18e2`) binary
-locks until a release passes consumer replay. Both implementations are integrated
-in the current source; a source checkout is not an installable release.
-Do not silently fall back to the stable binary. The original
-[audit](../qa/forge-sword-workflow-audit-2026-09-08.md) is historical evidence;
-follow the [integration record](../qa/forge-local-assets-integration-2026-09-08.md)
-for subsequent changes.
+Check the executable you will use:
 
-All three binaries can report `forge 0.2.1`. Record the absolute binary path,
-source commit, feature set, SHA-256 and `doctor --json` output. Check `plan --help`
-for `prepare-static`; newer fields on existing commands require the matching
-implementation and a successful request plan as well. A source checkout's HEAD
-does not identify a stale `target/debug/forge` left by an earlier build.
+```bash
+forge --version
+forge doctor --json
+forge plan --help
+```
+
+Record its absolute path and SHA-256 in your project's toolchain lock. Starting
+with v0.3.0, `doctor --json` reports the compiled identity in `data.build` and
+supported contracts in `data.capabilities`. For static delivery, check for
+`local_static_import`, `pack_validation` and `godot_install`. Development binaries
+can share a version string while accepting different request fields; the current
+checkout does not identify an older executable left in `target/debug`.
+
+When a game already pins a CLI, verify its required contracts before updating
+the lock for future imports. Keep existing asset receipts and source history
+unchanged; actual re-imports create new receipts. See the
+[release notes](../releases/v0.3.0.md) for scope and compatibility.
 
 ## Choose the source and asset type
 
@@ -53,7 +60,7 @@ Lock. The original image-generation action may consume Codex usage. Report
 **zero Forge Provider requests**, not zero total generation cost. Provider-backed
 `style create` / `generate` is a separate route in the [CLI guide](forge-cli.md).
 
-## Import transparent static items (development build)
+## Import transparent static items
 
 Set `FORGE_BIN` to the verified executable and use dedicated job/plan stores. For
 Godot delivery, set `FORGE_GODOT_PATH` if automatic discovery selects the wrong
@@ -70,8 +77,8 @@ Save a request such as `asset-specs/local-props.json`:
   "license": "private",
   "sampling": "linear",
   "canvasSize": 256,
-  "foregroundAlphaThreshold": 16,
-  "edgePaddingPx": 16,
+  "foregroundAlphaThreshold": 1,
+  "edgePaddingPx": 0,
   "items": [
     { "id": "lantern", "name": "Stone lantern", "path": "../sources/lantern.png" },
     { "id": "rock", "name": "Moss rock", "path": "../sources/rock.png" }
@@ -111,8 +118,8 @@ centered; props use center X and a ground line at `canvasSize - canvasSize / 16`
 `foregroundAlphaThreshold` (1–255, default 1) selects subject bounds.
 `edgePaddingPx` (0–64, default 0) expands the crop in source pixels. Alpha is retained
 inside that crop, including pixels below the threshold; resampling then creates
-the normalized output. These controls are useful for distant faint alpha residue,
-but `16/16` is only a tested Sword choice. Inspect the result on light and dark
+the normalized output. Increase these values only after inspecting faint alpha
+residue or edges that need more space. Inspect the result on light and dark
 backgrounds. Padding can leave the visible subject slightly above the nominal
 ground anchor. Do not assume normalized output is pixel-identical to its source.
 
@@ -122,7 +129,9 @@ The initial importer does not register a Forge asset-project catalog or support
 item retries. To revise the set, submit a new request; install without
 `--catalog-project`. Keep stable IDs to update the same installed asset.
 
-## Preserve intentional animation coordinates (development build)
+<a id="preserve-intentional-animation-coordinates-development-build"></a>
+
+## Preserve intentional animation coordinates (experimental)
 
 Use `plan prepare-asset` for one action and `plan prepare-character` for multiple
 actions. Example single-action request for an already aligned three-frame sequence:
@@ -135,7 +144,7 @@ actions. Example single-action request for an already aligned three-frame sequen
     "paths": ["/absolute/idle-0.png", "/absolute/idle-1.png", "/absolute/idle-2.png"]
   },
   "metadata": {
-    "name": "Cultivator idle", "animation": "idle", "fps": 10,
+    "name": "Character idle", "animation": "idle", "fps": 10,
     "loop": true, "frameDurationsMs": [70, 150, 230]
   },
   "normalize": {
@@ -218,5 +227,5 @@ to the skill directory keeps one maintained copy; do not overwrite an existing
 skill with the same name. The skill guides tool selection and delivery and does
 not install or upgrade the Forge executable.
 
-For current verification and remaining integration work, see the
-[Sword workflow audit](../qa/forge-sword-workflow-audit-2026-09-08.md).
+For the supported platform and release scope, see the
+[v0.3.0 release notes](../releases/v0.3.0.md).

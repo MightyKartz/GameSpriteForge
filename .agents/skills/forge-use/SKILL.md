@@ -10,28 +10,33 @@ and import receipts when they exist. Forge source development belongs to `forge-
 
 ## Select the actual toolchain
 
-Record the absolute CLI path, `--version`, and `doctor --json`. For development
-builds, also check the pinned source commit and binary SHA-256: different binaries
-currently report `0.2.1` while accepting different request fields. Do not replace
-a game's pinned executable with a convenient `forge` on PATH.
+Use v0.3.0 for the stable local PNG → static Pack → Godot workflow. Record the
+absolute CLI path, `--version`, `doctor --json` and binary SHA-256. Development
+builds can share a version string while accepting different request fields, so
+also check their pinned source commit. Do not replace a game's pinned executable
+with a convenient `forge` on PATH.
 
 v0.3.0 adds `doctor.data.build` and `doctor.data.capabilities`. Use those compiled
 fields to check the expected commit, source state and required capabilities; an
 unknown Git identity is `null`, not a clean-build claim. Continue verifying the
 consumer's binary SHA-256. Runtime tool availability is reported separately.
 
-- Published v0.2.1 supports the existing local animation, Pack and Godot workflows.
-- `plan prepare-static` is included in the current default source build. The
-  published v0.2.1 predates it; use a verified source binary until the new release.
+- v0.3.0 includes `plan prepare-static`, Pack validation and Godot installation
+  in the default CLI; no source build or optional feature is needed for this path.
+- The earlier v0.2.1 supports existing local animation, Pack and Godot workflows,
+  but predates `prepare-static` and the new local animation request fields.
 - Local `preserve_source`, request-level rendering/timing, and whole-sheet
-  padding/offset are also included in the current source build. Published v0.2.1
-  does not accept those local request forms. Animation remains experimental.
+  padding/offset are included in v0.3.0. Character animation remains in development
+  and testing; availability is not production or visual approval.
 
 Check `plan --help` for commands. Request fields also need a known source revision
 and a successful plan; the presence of `prepare-asset` alone does not establish
 support. See the [local asset guide](../../../docs/automation/codex-local-assets.md)
 for contracts and availability. If a required build is unavailable, report that
-specific gap rather than dropping fields or claiming a stable upgrade supplies it.
+specific gap rather than dropping fields. When upgrading a pinned consumer,
+verify its required contracts before updating its lock for future imports. Keep
+existing asset receipts and source history unchanged; create new receipts only
+for actual re-imports.
 
 ## Choose a workflow
 
@@ -62,8 +67,8 @@ that this job succeeded.
 
 For static art, choose `linear` for painted edges or `nearest` for pixel art.
 `foregroundAlphaThreshold` selects crop bounds, not an alpha cutoff;
-`edgePaddingPx` retains surrounding source pixels. The Sword values `16/16` are
-one tested choice, not a universal preset. Inspect the normalized result.
+`edgePaddingPx` retains surrounding source pixels. Start with their defaults,
+`1/0`, and adjust after source inspection. Inspect the normalized result.
 
 For preserved animation, all actions need the same frame canvas and common anchor;
 margins must be zero. Fractional anchors need `pixelSnap:false`. Whole-sheet

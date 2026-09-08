@@ -5,9 +5,10 @@ quality evidence, durable jobs, Pack export, and Godot installation. Desktop and
 clients are not part of the CLI release.
 
 For **Codex-generated PNGs → local Forge processing → Godot**, read the
-[local asset guide](codex-local-assets.md). It distinguishes published v0.2.1
-capabilities from the static/animation development builds used by Sword. Codex's
-built-in image generation is an external source workflow, not a Forge Provider.
+[local asset guide](codex-local-assets.md). The v0.3.0 default CLI includes the
+stable local PNG → static Pack → Godot workflow. Character animation remains
+in development and testing. Codex's built-in image generation is an external
+source workflow, not a Forge Provider.
 
 ## Output contract
 
@@ -80,14 +81,14 @@ worker continues the job.
 ### Local animation contracts
 
 Use `plan prepare-asset --request ... --json` for one action and
-`plan prepare-character --request ... --json` for multiple actions. The current
-source build accepts `normalize.mode: preserve_source`, request-level `rendering`,
+`plan prepare-character --request ... --json` for multiple actions. v0.3.0
+accepts `normalize.mode: preserve_source`, request-level `rendering`,
 and per-action `frameDurationsMs`, plus explicit whole-sheet padding/offset in
-fixed-grid inputs. These local request forms are newer than published v0.2.1.
-They preserve intentional drawing coordinates and timing through Pack/Godot
+fixed-grid inputs. These local request forms are newer than v0.2.1; character
+animation remains experimental. They preserve drawing coordinates and timing through Pack/Godot
 delivery; they do not establish visual quality. Automatic repair leaves preserved
 coordinates unchanged and returns canvas/anchor issues for manual review. See the
-[local asset guide](codex-local-assets.md#preserve-intentional-animation-coordinates-development-build)
+[local asset guide](codex-local-assets.md#preserve-intentional-animation-coordinates-experimental)
 for the request shapes and limits.
 
 ### Local transparent PNG sets
@@ -105,15 +106,15 @@ forge plan execute --token TOKEN --wait --json
 {
   "schemaVersion": "1",
   "kind": "prop_set",
-  "id": "sword-props",
-  "name": "Sword props",
+  "id": "forest_props",
+  "name": "Forest props",
   "license": "private",
   "sampling": "linear",
   "canvasSize": 128,
-  "foregroundAlphaThreshold": 16,
-  "edgePaddingPx": 16,
+  "foregroundAlphaThreshold": 1,
+  "edgePaddingPx": 0,
   "items": [
-    { "id": "jade_blade", "name": "Jade blade", "path": "sources/jade-blade.png" }
+    { "id": "lantern", "name": "Stone lantern", "path": "sources/lantern.png" }
   ]
 }
 ```
@@ -129,8 +130,8 @@ linear uses Lanczos resizing and linear engine filtering.
 
 For images with faint distant alpha residue, `foregroundAlphaThreshold` (1–255,
 default 1) chooses the subject bounds. `edgePaddingPx` (0–64, default 0) expands
-that crop in source pixels before normalization. Values of 16 and 16 work for the
-Sword concept-derived source set. Pixels inside the padded crop retain their
+that crop in source pixels before normalization. Choose these values after
+inspecting the source and normalized result. Pixels inside the padded crop retain their
 original alpha; the threshold is not an alpha cutoff. The quality report records
 both the subject bounds and the padded crop with exclusive right/bottom coordinates.
 Padding is included in the normalized extent, so the visible subject may sit a few
@@ -145,9 +146,9 @@ The initial local importer does not register an asset-project catalog or support
 targeted retries: prepare a new request to revise a local set, and install without
 `--catalog-project`. Normal Godot install ownership, registry, and rollback apply.
 
-This entry point is included in the current default source build; the published
-v0.2.1 binary predates it. Until the new release, use a verified absolute source CLI
-path. See the [integration record](../qa/forge-local-assets-integration-2026-09-08.md).
+This entry point is included in the v0.3.0 default CLI; the earlier v0.2.1 binary
+predates it. Use the [local asset guide](codex-local-assets.md) for installation
+and an end-to-end request example.
 
 A plan validates and fingerprints local inputs without generating media or changing a
 Godot project. Its token expires after 15 minutes, is consumed once, and refuses to
@@ -243,9 +244,9 @@ use owner-only OAuth file storage:
 forge provider login --provider xai --method oauth --credential-store file
 ```
 
-The published v0.2.1 binaries are **unsigned and not notarized**. Local development
+The v0.3.0 binaries remain **unsigned and not notarized**. Local development
 signing can use the fixed identifier `dev.gamespriteforge.cli`; that configuration
-does not establish release signing. See [the release notes](../releases/v0.2.1.md)
+does not establish release signing. See [the release notes](../releases/v0.3.0.md)
 and [development signing instructions](../../CONTRIBUTING.md).
 
 ## Godot 4.6.x delivery
