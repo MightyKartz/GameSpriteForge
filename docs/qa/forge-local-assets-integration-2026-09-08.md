@@ -7,7 +7,7 @@ consumer binaries are retained. Real Provider generation is outside this work.
 | Batch | Scope | Status |
 | --- | --- | --- |
 | 1 | Local static intake, rendering/anchors, alpha bounds, skills/docs and CI | Merged through PR #20; GitHub quality matrix passed |
-| 2 | Preserved animation coordinates/timing and whole-sheet preprocessing | Local checks passed; GitHub checks pending |
+| 2 | Preserved animation coordinates/timing and whole-sheet preprocessing | Merged through PR #21; GitHub quality matrix passed |
 | 3 | Build/capability identity, v0.3.0 RC and final package verification | Release candidate preparation |
 | 4 | Isolated consumer replay, Sword lock migration and rollback evidence | Pending |
 
@@ -75,3 +75,8 @@ workspace Clippy, default CLI build, installer contract and shell syntax. The
 development doctor correctly reported a dirty debug build and all seven capability
 IDs; [the identity summary](artifacts/forge-local-assets-integration-20260908/build-identity.json)
 distinguishes this evidence from a release payload check.
+
+Independent release-check review removed a test-only payload PATH injection.
+Installed doctor now has to discover its sibling FFmpeg/FFprobe through the same
+public executable link used by an ordinary installation; the verifier still
+requires both reported paths to point inside that exact versioned payload.

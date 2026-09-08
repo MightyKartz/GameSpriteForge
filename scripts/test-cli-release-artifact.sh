@@ -41,13 +41,13 @@ for kind in fresh upgrade; do
   "${TEST_ROOT}/${kind}/bin/forge" --version | grep -F -- "${VERSION#v}"
   "${PAYLOAD}/bin/ffmpeg" -version >/dev/null
   "${PAYLOAD}/bin/ffprobe" -version >/dev/null
-  PATH="${PAYLOAD}/bin:${PATH}" python3 "${ROOT}/scripts/verify-cli-build.py" \
+  python3 "${ROOT}/scripts/verify-cli-build.py" \
     --forge "${TEST_ROOT}/${kind}/bin/forge" --version "${VERSION#v}" \
     --release --build-info "${PAYLOAD}/BUILD_INFO.json"
 done
 
 PAYLOAD="${TEST_ROOT}/upgrade/share/versions/${VERSION}"
-PATH="${PAYLOAD}/bin:${PATH}" FORGE_BINARY="${TEST_ROOT}/upgrade/bin/forge" FORGE_VERIFY_GODOT=1 \
+FORGE_BINARY="${TEST_ROOT}/upgrade/bin/forge" FORGE_VERIFY_GODOT=1 \
   bash "${ROOT}/scripts/test-cli-product.sh"
 python3 "${ROOT}/scripts/test-local-static-cli.py" \
   --forge "${TEST_ROOT}/upgrade/bin/forge" --godot "$(command -v godot)" \
