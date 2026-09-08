@@ -125,6 +125,35 @@ scripts/test-cli-product.sh`; for a release, follow `.github/workflows/release-c
 and the existing packaging/verification scripts. v0.3.0 retains unsigned,
 unnotarized distribution. Local development signing does not change release status.
 
+## Verify installed release artifacts
+
+Exercise fresh installation, same-version reinstall and old-to-new upgrade with
+the actual release archives and installer. Use the installer's public
+`<bin-dir>/forge` symlink for CLI calls, including `scripts/verify-cli-build.py`.
+Pass an absolute path without resolving that symlink before execution. Do not
+prepend the payload's `bin` directory to `PATH`: either shortcut can hide a
+launcher or bundled-helper discovery bug.
+
+Disable external FFmpeg/FFprobe discovery during installed-package checks. Point
+the search override at an empty temporary directory and disable macOS default
+tool directories; keep Godot available separately:
+
+```bash
+forge_empty_tool_dir="$(mktemp -d)"
+GAME_SPRITE_FORGE_FFMPEG_SEARCH_DIRS="$forge_empty_tool_dir" \
+GAME_SPRITE_FORGE_DISABLE_MACOS_DEFAULT_TOOL_DIRS=1 \
+  bash scripts/test-cli-release-artifact.sh \
+    /absolute/current-release TAG /absolute/previous-release PREVIOUS_TAG
+```
+
+Compare compiled version/commit with the expected tag using the identity
+verifier's `--version`, `--commit` and `--release` options. Supply `--build-info`
+from that installation's payload and check that reported `ffmpegPath` and
+`ffprobePath` point into the same payload. Resolving returned helper paths for
+comparison is appropriate; resolving the public launcher before calling it is
+not. Retain installation and identity results as release evidence; source-build
+or fixture-only passes do not replace checks of the packaged binaries.
+
 ## Retained desktop work only
 
 When the task changes `apps/mac`, preserve sprite sheet intake as: choose file,
