@@ -1,0 +1,40 @@
+{
+  "ok": true,
+  "scope": "Isolated synthetic fixture; installed skill used without reading Forge source or other skills.",
+  "skill_path": ".agents/skills/forge-use/SKILL.md",
+  "skill_sha256": "c37cd4c77c6ccf74a8b8e95fe2d2ffe71c39a26ea674831684e8cb0df5ced351",
+  "cli_sha256": "33dfc7f64ab44dceeb9a46bcb851196e886810c0b42f0817130f4f0d5c472187",
+  "steps": [
+    "Read installed SKILL.md, references/local-static.md and bundled example",
+    "Inspect supplied PNGs, preserve originals, record RGBA dimensions/alpha/hash",
+    "Verify exact CLI path/version/doctor/build/capabilities/help/binary hash",
+    "Copy example as prop_set with stable IDs, honest synthetic-fixture rights statement, linear sampling, alpha threshold 1 and padding 0",
+    "Use project-local job/plan stores; inspect zero-Provider prepare plan",
+    "Execute once, require succeeded, inspect job report and artifacts",
+    "Validate and inspect returned Pack; inspect normalized contact sheet",
+    "Inspect zero-Provider Godot installation plan with explicit asset key and target",
+    "Execute install, inspect report/usage/project registry; verify source/installed hashes",
+    "Load 2 Texture2D resources and instantiate 2 Sprite2D scenes in actual Godot; verify anchor and filtering; render light/dark structural preview",
+    "Save immutable import receipt, process evidence and this result"
+  ],
+  "zero_provider_requests_confirmed": true,
+  "pack_valid": true,
+  "prepare_job_succeeded": true,
+  "install_job_succeeded": true,
+  "source_hashes_matched": 2,
+  "installed_texture_hashes_matched": 2,
+  "godot_texture_loads_passed": 2,
+  "godot_scene_anchor_filter_checks_passed": 2,
+  "godot_exit_code": 0,
+  "visual_review_status": "not_human_reviewed",
+  "quality_verdict": "game_ready",
+  "quality_verdict_scope": "Structural checks only; styleConsistencyEvaluated:false and visualReviewRequired:true",
+  "skill_missing_required_commands": false,
+  "command_guessing_required": false,
+  "skill_notes": [
+    "All Forge commands, request fields, response field checks and install target requirements were supplied by the installed skill and reference.",
+    "A custom Godot resource-check script was authored to validate the delivered resources, as requested; the skill does not supply a test harness.",
+    "First custom Godot script invocation had a GDScript type-inference parse error; an explicit bool annotation fixed it and final resource run exited 0. This was a validation harness error, not a Forge or skill error.",
+    "asset inspect exposes generic animations/frameCount fields for static props; assetType:prop_set and returned items/usage.nodeType:Sprite2D confirm static delivery."
+  ]
+}

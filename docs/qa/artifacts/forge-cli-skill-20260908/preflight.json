@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1",
+  "sourceCommit": "80fa6dc5d9e86bc00e3615ea18a027cb8ce21026",
+  "quality": {
+    "url": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/34191672913",
+    "conclusion": "success",
+    "matrixGatesPassed": 8,
+    "skillContractsPassed": 26
+  },
+  "releasePreflight": {
+    "url": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/34191684942",
+    "conclusion": "success",
+    "githubReleaseCreated": false,
+    "packagedSkillContractsPassed": 26,
+    "packagedSkillCommandCount": 66,
+    "freshInstall": true,
+    "sameVersionReinstall": true,
+    "upgradeFrom": "v0.3.0",
+    "binarySha256": "0d05447aad920c6add7e7d3818da2ad3c77e3b2c98a6561e15a45836d73a1c7c",
+    "bundleContentHash": "e5d93005c28e3d3f3b7463c2b89ed2e90ec30ec705eaac1db66abd0ce0935791",
+    "dirty": false,
+    "profile": "release",
+    "features": []
+  }
+}
