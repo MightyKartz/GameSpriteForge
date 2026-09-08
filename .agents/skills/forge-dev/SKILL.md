@@ -67,6 +67,18 @@ Capability checkpoint, checked 2026-09-08; recheck Git and command help when usi
 - Subject/Character V2, world assets, and game-art manifest commands are optional
   source-build capabilities. Read feature gates and the selected command's help.
 
+## Bundled product skill
+
+From v0.3.1 the default CLI embeds `.agents/skills/forge-use/`. Maintain this as
+one self-contained source, with runtime links inside the bundle. The explicit
+file list lives in `packages/cli/src/skill.rs`; update it when adding resources.
+The build watches the skill directory, and skill-only edits must trigger CI.
+Run `scripts/test-cli-skill.py --forge /absolute/path/to/forge` for isolated
+installation, content identity, update backups and modification/symlink protection.
+Use the public launcher for packaged checks. Never install into a real consumer
+or personal skill directory as a test. Codex discovery, Godot availability and
+image generation remain separate from successful file installation.
+
 ## Local processing and generation
 
 Codex's built-in image generation can supply source PNGs to Forge. It is a separate

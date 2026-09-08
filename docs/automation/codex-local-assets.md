@@ -218,14 +218,20 @@ record later visual approval separately from the immutable import result.
 
 ## Reuse in another Codex game project
 
-The repo includes [forge-use](../../.agents/skills/forge-use/SKILL.md) for product
-use and [forge-dev](../../.agents/skills/forge-dev/SKILL.md) for Forge development.
-A sibling game project does not automatically discover Forge's repo-local skill.
-To use it there, make the Forge skill available through that project's or your
-personal skill directory, preserving its links to this source checkout. A symlink
-to the skill directory keeps one maintained copy; do not overwrite an existing
-skill with the same name. The skill guides tool selection and delivery and does
-not install or upgrade the Forge executable.
+Starting with v0.3.1, the CLI includes a self-contained `forge-use` skill. From
+your game project, run `forge skill install --project .`, or choose
+`forge skill install --user` for personal use across projects. Check the selected
+scope with `forge skill check --project . --json` or `forge skill check --user --json`.
+No Forge checkout or separate skill download is needed. The installer preserves
+modified and unrecognized skills; CLI upgrades do not automatically update them.
+See [Codex setup](codex-skill.md) for discovery, updates and existing symlink
+installations. The skill does not install Codex, an image model or Godot, or
+upgrade the game's pinned executable.
+
+The repo retains [forge-use](../../.agents/skills/forge-use/SKILL.md) as its single
+maintained source and [forge-dev](../../.agents/skills/forge-dev/SKILL.md) for Forge
+development. A sibling project does not automatically discover this checkout's
+repo-local skills.
 
 For the supported platform and release scope, see the
-[v0.3.0 release notes](../releases/v0.3.0.md).
+[v0.3.1 release notes](../releases/v0.3.1.md).

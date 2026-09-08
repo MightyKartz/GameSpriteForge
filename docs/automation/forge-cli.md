@@ -48,6 +48,9 @@ hash and check the capabilities their requests require.
 
 ```text
 forge doctor --json
+forge skill show --json
+forge skill install --project /absolute/game --json
+forge skill check --project /absolute/game --json
 forge provider list --json
 forge provider login --provider xai --method api-key
 forge provider login --provider xai --method oauth
@@ -75,6 +78,22 @@ forge plan execute --token TOKEN [--wait] --json
 `generate` prepares and immediately consumes the same fingerprinted single-use plan
 used by low-level automation. Without `--wait` it returns a Job ID and a detached
 worker continues the job.
+
+### Bundled Codex skill
+
+v0.3.1 adds `bundled_forge_use_skill` to the compiled capability list and includes
+the self-contained `forge-use` bundle. `skill install` and `skill check` require
+exactly one scope: `--project PATH` or `--user`. They do not use Plans, Jobs or
+Provider credentials. `skill show` displays the bundled entrypoint; with `--json`
+its data includes `name`, `schemaVersion`, `cliVersion`, `build`, `contentHash`
+and `files` (`path`, `sha256`, `content`).
+
+`skill check --json` returns `data.status` as `missing`, `current`, `outdated`,
+`modified` or `unmanaged`, along with the target and issues. A completed inspection
+has `ok: true` even when the skill is missing or needs updating. Installation
+returns `action` (`installed`, `unchanged`, `updated`); updates report a
+`backupPath`. Runtime failures use the standard error envelope. See
+[Codex setup](codex-skill.md) for the content identity, update and conflict rules.
 
 ## Plans and jobs
 

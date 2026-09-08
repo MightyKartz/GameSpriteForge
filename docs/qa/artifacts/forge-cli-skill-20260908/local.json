@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1",
+  "stage": "local-source-validation",
+  "sourceBaseCommit": "ab16fa501babfcf6c0b4e8ae8ffde923e868b768",
+  "sourceDirty": true,
+  "cliVersion": "0.3.1",
+  "build": {
+    "dirty": true,
+    "features": [],
+    "gitCommit": "ab16fa501babfcf6c0b4e8ae8ffde923e868b768",
+    "profile": "debug",
+    "target": "aarch64-apple-darwin"
+  },
+  "binarySha256": "7f8bcc4d4b1a45623508e7d34afd1401c0048da9de0b3b6db459f159209ad75e",
+  "bundleContentHash": "e5d93005c28e3d3f3b7463c2b89ed2e90ec30ec705eaac1db66abd0ce0935791",
+  "bundleFiles": 6,
+  "bundleRelativeLinks": 13,
+  "rust": {
+    "passed": 274,
+    "failed": 0,
+    "ignored": 1,
+    "testSuites": 27,
+    "command": "cargo test --locked --workspace --no-fail-fast"
+  },
+  "separatelyExecutedGodotTests": {
+    "passed": 1,
+    "failed": 0
+  },
+  "format": "pass",
+  "clippy": "pass",
+  "skillValidation": "pass",
+  "cliContracts": {
+    "passed": 26,
+    "failed": 0,
+    "commandCount": 66,
+    "caseNames": [
+      "show_complete_bundle",
+      "project_install_check_and_idempotent_reinstall",
+      "isolated_user_install_check_and_idempotent_reinstall",
+      "protect_managed_edited",
+      "protect_managed_deleted",
+      "protect_managed_extra",
+      "protect_managed_extra-directory",
+      "protect_unmanaged_directory",
+      "protect_manifest_invalid-json",
+      "protect_manifest_wrong-owner",
+      "protect_manifest_wrong-content-hash",
+      "protect_manifest_path_traversal",
+      "protect_symlink_agents",
+      "protect_symlink_agents-skills",
+      "protect_symlink_agents-skills-forge-use",
+      "protect_symlink_project_root",
+      "protect_symlink_manifest",
+      "protect_symlink_managed-file",
+      "protect_symlink_managed_directory",
+      "protect_symlink_forge-skill-staging",
+      "protect_symlink_forge-skill-backups",
+      "protect_symlink_forge-use.install.lock",
+      "upgrade_real_older_content_and_preserve_backup",
+      "invalid_arguments_have_no_side_effects",
+      "standalone_binary_install_without_repository_or_media_helpers",
+      "installed_local_examples_create_real_zero_provider_plans"
+    ]
+  },
+  "codexDiscovery": {
+    "passed": true,
+    "cases": [
+      {
+        "scope": "project",
+        "passed": true,
+        "discoveredScope": "repo",
+        "enabled": true,
+        "name": "forge-use",
+        "codex": "Codex Desktop/0.153.4 (Mac OS 26.6.2; arm64) dumb (forge-skill-qa; 0.3.1)",
+        "modelCalls": 0
+      },
+      {
+        "scope": "user",
+        "passed": true,
+        "discoveredScope": "user",
+        "enabled": true,
+        "name": "forge-use",
+        "codex": "Codex Desktop/0.153.4 (Mac OS 26.6.2; arm64) dumb (forge-skill-qa; 0.3.1)",
+        "modelCalls": 0
+      }
+    ]
+  },
+  "realProviderRequests": 0,
+  "sourceScope": "isolated synthetic fixtures; no consumer or personal configuration changes"
+}

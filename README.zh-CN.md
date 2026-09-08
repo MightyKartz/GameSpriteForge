@@ -43,7 +43,7 @@ Forge 是一款整理 2D 图标和道具的 CLI。用 Codex 或你喜欢的图�
 
 ## 安装
 
-稳定版本为 [v0.3.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.0)，支持 **macOS Apple Silicon**。需要引擎交付时，另行安装 **Godot 4.6.x**。二进制文件尚未签名或公证。
+稳定版本为 [v0.3.1](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.1)，支持 **macOS Apple Silicon**。需要引擎交付时，另行安装 **Godot 4.6.x**。二进制文件尚未签名或公证。
 
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/MightyKartz/GameSpriteForge/main/install.sh | sh
@@ -56,6 +56,14 @@ forge --version
 forge doctor --json
 ```
 
+配合 Codex 使用时，在游戏项目目录执行：
+
+```bash
+forge skill install --project .
+```
+
+在 Codex 中打开项目，请它使用 `forge-use` 制作游戏素材。CLI 已内置使用指引和示例，无需另外下载源码仓库。个人级安装与更新方式见 [Codex 配置指南](docs/automation/codex-skill.md)。
+
 制作第一组素材，请参考[本地 PNG 指南](docs/automation/codex-local-assets.md)，完成透明图片导入、Pack 检查和 Godot 安装。
 
 Forge 也能通过在线服务商生成图标和道具集，详见 [CLI 指南](docs/automation/forge-cli.md)与[示例规格](examples/cli)。在线生成需要使用自己的服务商账号，可能产生费用；本地整理使用你已有的美术素材。
@@ -64,15 +72,15 @@ Forge 也能通过在线服务商生成图标和道具集，详见 [CLI 指南](
 
 **角色动画目前仍处于测试开发阶段。** 角色生成、动画复用和多方向动画仍需检查实际画面。实验性的动画复用辅助工具随源码提供，CLI 安装器不包含该工具。
 
-高级角色一致性和世界素材工作流也需要启用可选源码功能。版本的具体范围见 [v0.3.0 发布说明](docs/releases/v0.3.0.md)。
+高级角色一致性和世界素材工作流也需要启用可选源码功能。版本的具体范围见 [v0.3.1 发布说明](docs/releases/v0.3.1.md)。
 
 ## 文档
 
 - [CLI 指南](docs/automation/forge-cli.md)：命令、素材生成与处理、Godot 交付。
 - [PNG 图片工作流](docs/automation/codex-local-assets.md)：整理 Codex 或其他工具制作的 PNG，并交付到 Godot。
-- [产品使用 Skill](.agents/skills/forge-use/SKILL.md)：供 Codex 制作、检查和交付游戏素材时使用。
+- [Codex 配置指南](docs/automation/codex-skill.md)：将内置的 `forge-use` skill 安装到游戏项目。
 - [示例规格](examples/cli)：以现有示例开始制作自己的素材。
-- [发布说明](docs/releases/v0.3.0.md)：平台支持和版本范围。
+- [发布说明](docs/releases/v0.3.1.md)：平台支持和版本范围。
 - [展示素材](docs/media/showcase/README.md)：图片来源与可复现的 Godot 演示。
 - [参与开发](CONTRIBUTING.md)：源码构建与开发检查。
 

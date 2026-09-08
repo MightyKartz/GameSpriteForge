@@ -9,7 +9,7 @@ on:
       version:
         description: "Release version to preflight (no GitHub Release is created)"
         required: true
-        default: "v0.3.0"
+        default: "v0.3.1"
         type: string
 
 permissions:
@@ -107,6 +107,9 @@ jobs:
           export FORGE_GODOT_PATH="${godot_binary}"
           export GODOT_BIN="${godot_binary}"
           FORGE_BINARY="${GITHUB_WORKSPACE}/target/aarch64-apple-darwin/release/forge" bash scripts/test-cli-product.sh
+          python3 scripts/test-cli-skill.py \
+            --forge "${GITHUB_WORKSPACE}/target/aarch64-apple-darwin/release/forge" \
+            --output "${RUNNER_TEMP}/bundled-skill"
           cargo test -p core --test static_delivery_tests -- --ignored --nocapture
           python3 scripts/test-local-static-cli.py \
             --forge "${GITHUB_WORKSPACE}/target/aarch64-apple-darwin/release/forge" \
@@ -150,12 +153,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "${RUNNER_TEMP}/previous-release"
-          gh release download v0.2.1 --dir "${RUNNER_TEMP}/previous-release" \
+          gh release download v0.3.0 --dir "${RUNNER_TEMP}/previous-release" \
             --pattern 'forge-aarch64-apple-darwin.zip*'
           export PATH="${RUNNER_TEMP}/godot-bin:${PATH}"
           bash scripts/test-cli-release-artifact.sh \
             "${GITHUB_WORKSPACE}" "${FORGE_RELEASE_TAG}" \
-            "${RUNNER_TEMP}/previous-release" v0.2.1
+            "${RUNNER_TEMP}/previous-release" v0.3.0
 
       - name: Generate SBOM
         env:
