@@ -4,9 +4,14 @@
 quality evidence, durable jobs, Pack export, and Godot installation. Desktop and MCP
 clients are not part of the CLI release.
 
+For **Codex-generated PNGs → local Forge processing → Godot**, read the
+[local asset guide](codex-local-assets.md). It distinguishes published v0.2.1
+capabilities from the static/animation development builds used by Sword. Codex's
+built-in image generation is an external source workflow, not a Forge Provider.
+
 ## Output contract
 
-Every command invoked with `--json` writes exactly one JSON value to stdout:
+Successfully parsed commands invoked with `--json` write one JSON value to stdout:
 
 ```json
 {
@@ -16,9 +21,11 @@ Every command invoked with `--json` writes exactly one JSON value to stdout:
 }
 ```
 
-Errors set `ok` to `false`, include stable `code` and `message` fields, and exit
-non-zero. Diagnostics go to stderr. Credentials and authorization responses never
-appear in either stream.
+Handled runtime errors set `ok` to `false`, include stable `code` and `message`
+fields, and exit non-zero. CLI parser failures (such as an unavailable subcommand
+or an invalid flag) instead print usage diagnostics to stderr and may have no JSON
+stdout. Check the exit status before decoding. Credentials and authorization
+responses are not diagnostic output.
 
 ## Product commands
 
@@ -97,9 +104,11 @@ missing/corrupt media, invalid Alpha, crop, canvas, frame, or other hard gates.
 - `.gsfpack` V2 adds `assetType`, static `items`, consistency evidence, and Style
   provenance. The reader remains compatible with V1 Character Packs.
 
-All jobs lock one Provider, Profile, model selection, and Style revision. Forge rejects
-missing capabilities instead of silently switching Provider or degrading to unrelated
-text-to-image calls.
+Provider-generated jobs lock one Provider, Profile, model selection, and Style
+revision. Local preparation and Godot installation use their input/recipe
+fingerprints and do not require a Provider or generated Style Lock. Forge rejects
+missing generation capabilities instead of silently switching Provider or degrading
+to unrelated text-to-image calls.
 
 ## Consistency profile
 
@@ -146,8 +155,10 @@ use owner-only OAuth file storage:
 forge provider login --provider xai --method oauth --credential-store file
 ```
 
-Official macOS binaries use the fixed code-signing identifier
-`dev.gamespriteforge.cli` and one Developer ID team across releases.
+The published v0.2.1 binaries are **unsigned and not notarized**. Local development
+signing can use the fixed identifier `dev.gamespriteforge.cli`; that configuration
+does not establish release signing. See [the release notes](../releases/v0.2.1.md)
+and [development signing instructions](../../CONTRIBUTING.md).
 
 ## Godot 4.6.x delivery
 
@@ -181,12 +192,14 @@ copies the source Job's normalized static images, recalculates `consistency@1.3.
 zero Provider requests. An optional `--item` limits the explicit target while all reused
 items are also rechecked against the current baseline.
 
-## Character release gate
+## Historical character-generation acceptance
 
-`v0.2.0-cli.1` must not be tagged until three clean xAI Style → Character → Pack →
-Godot runs finish without review, all four actions are `game_ready`, provenance and
-usage can be reconstructed, and credential/temporary-URL scans are clean. The offline
-fixture and CI contracts are necessary but do not replace this real-model gate.
+The `v0.2.0-cli.1` generation work used a three-run xAI Style → Character → Pack →
+Godot acceptance target, including four `game_ready` actions and reconstructable
+provenance/usage. This is historical generation criteria, not an unfulfilled gate
+on the already published v0.2.1. See the [v0.2.1 scope](../releases/v0.2.1.md)
+and [release verification](../qa/forge-cli-v0.2.1-release-2026-09-07.md).
+Offline fixtures and local-image checks do not establish real-model art quality.
 
 ## Development store overrides
 

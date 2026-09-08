@@ -3,6 +3,11 @@
 The public product is the Rust `forge` CLI. The retained desktop and MCP code
 are not part of the default build or release.
 
+Use the repo's [forge-dev skill](.agents/skills/forge-dev/SKILL.md) for source work
+and [forge-use skill](.agents/skills/forge-use/SKILL.md) for asset production.
+The [Codex artwork workflow](docs/automation/codex-local-assets.md) records which
+local development implementations are required by existing game consumers.
+
 ## Development build
 
 ```bash

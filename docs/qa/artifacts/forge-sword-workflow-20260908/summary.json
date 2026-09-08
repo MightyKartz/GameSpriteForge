@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-08",
+  "mainCodeBaseline": "b44e1d3a189c036e061355e519a1fbbbe97f4808",
+  "remoteProviderRequests": 0,
+  "newImageGenerationCalls": 0,
+  "swordProjectMutated": false,
+  "godotVersion": "4.6.3.stable.official.7d41c59c4",
+  "binaries": {
+    "rebuiltMain": {
+      "version": "0.2.1",
+      "features": [],
+      "sha256": "3d9945e6b8e3ff4720c06e68b76d4d71cfa6c2b029e2ede37366c69543445b37",
+      "replacedStaleVersion": "0.2.0-cli.1"
+    },
+    "swordStatic": {
+      "version": "0.2.1",
+      "commit": "c1f448082c34f531738126e38e41f5a9d66ca1a7",
+      "sha256": "bd4eca69e8afc87c7631981cac39e03f59aca7766bee6b71d4fec1e6caaa0e47",
+      "matchesConsumerLock": true
+    },
+    "swordAnimation": {
+      "version": "0.2.1",
+      "commit": "d4b18e2c2792db9877e5d5517ef390bbc254e2d2",
+      "sha256": "071bfe3dc3f485ade00c85143741ea40571e87f594681b752440f5df43c61306",
+      "matchesConsumerLock": true
+    }
+  },
+  "mainWorkspaceTests": {
+    "passed": 242,
+    "failed": 0,
+    "ignored": 0
+  },
+  "mainCliProduct": {
+    "passed": true,
+    "fixtureProviderOnly": true,
+    "nativeGodotFramesVerified": 32
+  },
+  "localStatic": {
+    "passed": true,
+    "cases": [
+      {
+        "kind": "prop_set",
+        "sampling": "linear",
+        "providerRequests": 0
+      },
+      {
+        "kind": "prop_set",
+        "sampling": "nearest",
+        "providerRequests": 0
+      },
+      {
+        "kind": "icon_set",
+        "sampling": "linear",
+        "providerRequests": 0
+      }
+    ]
+  },
+  "localAnimation": {
+    "passed": true,
+    "cases": [
+      "single",
+      "character",
+      "nearest",
+      "legacy"
+    ],
+    "providerRequests": 0,
+    "assertions": [
+      "four local plans and installs estimate zero Provider requests",
+      "decoded RGBA pixels preserved",
+      "shared canvas and anchor across actions",
+      "Pack validation passes",
+      "Godot native durations, sampling, anchor and loop verified",
+      "legacy defaults preserved",
+      "invalid duration and cross-action canvas rejected"
+    ]
+  },
+  "sourceTransform": {
+    "passed": true,
+    "cases": [
+      {
+        "id": "ghost",
+        "qualityVerdict": "prototype_usable",
+        "sourceSha256": "1fb8ee106f7bc52fa78a9fe8f60d79049563400493b93999cbf866ededb90671",
+        "derivedSha256": "2e90596486f29fa53f835df84795332dae7338d683dca5779d35e922d74f202e",
+        "discardedNontransparentPixels": 0
+      },
+      {
+        "id": "boss_idle",
+        "qualityVerdict": "prototype_usable",
+        "sourceSha256": "f204d75319f3b71064ac9dd1e96779d856fc6609f9d8d347e52232e74d524539",
+        "derivedSha256": "8a3ed70f0f8f71271a6a03d40997f00e18b2f75d2ecd1c575864e32b54388bb8",
+        "discardedNontransparentPixels": 0
+      },
+      {
+        "id": "boss_slam",
+        "qualityVerdict": "prototype_usable",
+        "sourceSha256": "fa11a8f21a6cdc364234be001739a586e2889b5f47a11159917917c33f156583",
+        "derivedSha256": "576b559ddca3036eaa6c8171b90a0f2956079ccd95621005f5e98158fac2eb1e",
+        "discardedNontransparentPixels": 0
+      }
+    ],
+    "lossyOffsetRejected": true
+  },
+  "readOnlySwordInspection": {
+    "passed": true,
+    "binaryLocksMatched": 2,
+    "staticSourceCopiesMatched": 5,
+    "staticImagegenOriginalsMatched": 5,
+    "installedStaticTexturesMatched": 5,
+    "animationSourcesMatched": 8,
+    "installedAnimationAtlasesMatched": 8,
+    "existingPacksValidated": 9
+  },
+  "limits": [
+    "No new real Provider generation or imagegen run",
+    "No fresh installer or bundled FFmpeg selection test",
+    "No new visual approval or iPhone acceptance",
+    "Sword static and animation features remain unmerged development implementations"
+  ],
+  "skillForwardTest": {
+    "passed": true,
+    "kind": "prop_set",
+    "sampling": "nearest",
+    "prepareLifecycle": "succeeded",
+    "installLifecycle": "succeeded",
+    "sourceHashesUnchanged": true,
+    "sourceCount": 2,
+    "packSha256": "f00e1d91948d9b2e9fab6360ded083e27893a5697affe0e402871bf4cf074132",
+    "providerEvidence": {
+      "planProviderRequestEstimate": 0,
+      "planMaximumProviderRequests": 0,
+      "providerRequestCount": 0,
+      "providerRequestOccurred": false,
+      "imageGenerationToolsCalled": false,
+      "providerGenerationCommandsCalled": false,
+      "providerProvenance": []
+    },
+    "humanVisualApproval": false,
+    "visualObservation": "Godot light/dark preview shows both intact props. Some source-derived magenta fringe pixels remain around silhouettes; no visual acceptance or edge cleanup performed.",
+    "temporaryGodotCacheIsolationDeviationResolved": true
+  },
+  "documentationValidation": {
+    "forgeUseQuickValidate": true,
+    "forgeDevQuickValidate": true,
+    "npmScriptChecks": true,
+    "markdownRelativeLinks": true,
+    "jsonExamplesParse": true,
+    "cargoFmt": true
+  }
+}

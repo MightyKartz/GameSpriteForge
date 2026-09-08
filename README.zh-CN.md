@@ -67,6 +67,8 @@ forge doctor --json
 ## 文档
 
 - [CLI 指南](docs/automation/forge-cli.md)：命令、素材生成与处理、Godot 交付。
+- [Codex 图片工作流](docs/automation/codex-local-assets.md)：用 Forge 处理已生成的 PNG，注明所需开发版本。
+- [产品使用 Skill](.agents/skills/forge-use/SKILL.md)：供 Codex 制作、检查和交付游戏素材时使用。
 - [示例规格](examples/cli)：以现有示例开始制作自己的素材。
 - [发布说明](docs/releases/v0.2.1.md)：平台支持和版本范围。
 - [展示素材](docs/media/showcase/README.md)：图片来源与可复现的 Godot 演示。
