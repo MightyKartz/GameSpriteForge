@@ -1,7 +1,8 @@
 # Local PNGs → static Pack → Godot
 
 Use this route for Codex-generated artwork and existing transparent static PNGs.
-Follow the [toolchain and Job checks](../SKILL.md) before running the workflow.
+Follow the [toolchain and Job checks](../SKILL.md) (`"$FORGE_BIN" guide overview`
+when reading the embedded guide) before running the workflow.
 
 ## Preserve and inspect sources
 
@@ -21,9 +22,18 @@ chroma-key matting in this workflow.
 
 ## Prepare a request
 
-Copy [the local static example](../examples/local-static.json) into the game's
-asset-spec directory. Change IDs, names, paths and `license` for the real sources;
-the example's `private` label grants no rights. Its paths assume this layout:
+Copy [the local static example](../examples/local-static.json) from an installed
+skill into the game's asset-spec directory, or retrieve it from a verified CLI
+with `embedded_usage_guide` into a new request file:
+
+```bash
+"$FORGE_BIN" guide static-example > /absolute/asset-specs/local-static.json
+```
+
+Confirm the command succeeded before editing or consuming the file; a failed
+command can leave an empty redirected file. Change IDs, names, paths and `license`
+for the real sources; the example's `private` label grants no rights. Its paths
+assume this layout:
 
 ```text
 asset-specs/local-static.json

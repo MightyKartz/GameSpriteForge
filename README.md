@@ -11,6 +11,14 @@ Forge is a CLI for preparing 2D icons and props. Create artwork with Codex or yo
 [CLI guide](docs/automation/forge-cli.md) ·
 [Examples](examples/cli)
 
+## Use it with Codex
+
+After [installing the CLI](#install), open your game project in Codex and ask:
+
+> Use Forge and the available image tool to create a set of forest inventory icons for this Godot game. Read Forge's embedded guide first, keep the original artwork, then review and import the assets.
+
+With Forge v0.3.2, Codex can read the instructions and request examples directly from the CLI. No skill installation or Forge source checkout is needed. Image creation uses a separate Codex tool; Forge handles local PNG processing, Packs and Godot delivery. An existing PNG set can go straight to Forge.
+
 ## Bring artwork from your preferred tools
 
 Use AI-generated artwork, hand-drawn sprites, or images you already have. Import one transparent PNG per inventory icon, pickup, or scene prop. Local preparation needs no Forge Provider account or generated style guide.
@@ -43,7 +51,7 @@ Check task progress, inspect results, and submit a revised set when artwork chan
 
 ## Install
 
-Stable version: [v0.3.1](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.1) for **macOS Apple Silicon**. Install **Godot 4.6.x** separately for engine delivery. The binaries are unsigned and not notarized.
+Stable version: [v0.3.2](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.2) for **macOS Apple Silicon**. Install **Godot 4.6.x** separately for engine delivery. The binaries are unsigned and not notarized. For an existing game, retain its pinned CLI until you have verified an upgrade.
 
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/MightyKartz/GameSpriteForge/main/install.sh | sh
@@ -54,15 +62,20 @@ Open a new terminal, then check the installation:
 ```bash
 forge --version
 forge doctor --json
+forge guide
 ```
 
-To use Forge with Codex, run this from your game project:
+`forge guide` reads this executable's bundled instructions offline. Use the verified absolute executable path throughout a game's workflow. Updating that CLI also updates the guide it serves.
+
+### Optional: install a Codex skill
+
+If you want Codex to discover `forge-use` by name, install the bundled skill into your game project:
 
 ```bash
 forge skill install --project .
 ```
 
-Open the project in Codex and ask it to use `forge-use` to prepare your game assets. The CLI includes the instructions and examples, so you do not need to download the source repository. See [Codex setup](docs/automation/codex-skill.md) for personal installation and updates.
+Or use `forge skill install --user` for personal use across projects. Installing only the CLI does not register a Codex skill. Installed skill files require an explicit update after a CLI upgrade, and Forge preserves user modifications. See [Codex usage and optional setup](docs/automation/codex-skill.md) for details.
 
 For your first set, follow the [local PNG guide](docs/automation/codex-local-assets.md). It covers importing transparent images, checking the Pack, and installing it into Godot.
 
@@ -72,15 +85,15 @@ Forge can also generate icon and prop sets through an online provider. See the [
 
 **Character animation is still being developed and tested.** Generation, animation reuse, and directional workflows need visual review. The experimental reuse helper is available in the source repository; it is not installed with the CLI.
 
-Advanced character consistency and world-asset workflows also require optional source-build features. See the [v0.3.1 release notes](docs/releases/v0.3.1.md) for the release scope.
+Advanced character consistency and world-asset workflows also require optional source-build features. See the [v0.3.2 release notes](docs/releases/v0.3.2.md) for the release scope.
 
 ## Documentation
 
 - [CLI guide](docs/automation/forge-cli.md) — commands, generation, processing, and Godot delivery.
 - [PNG artwork workflow](docs/automation/codex-local-assets.md) — prepare PNGs from Codex or other tools and deliver them to Godot.
-- [Codex setup](docs/automation/codex-skill.md) — install the bundled `forge-use` skill into your game project.
+- [Codex usage and optional setup](docs/automation/codex-skill.md) — read the embedded guide or optionally install `forge-use`.
 - [Example specifications](examples/cli) — starting points for your own assets.
-- [Release notes](docs/releases/v0.3.1.md) — platform support and release scope.
+- [Release notes](docs/releases/v0.3.2.md) — platform support and release scope.
 - [Showcase assets](docs/media/showcase/README.md) — image sources and the reproducible Godot demo.
 - [Contributing](CONTRIBUTING.md) — source builds and development checks.
 

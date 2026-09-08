@@ -37,6 +37,7 @@ pub const CAPABILITIES: &[&str] = &[
     "pack_validation",
     "godot_install",
     "bundled_forge_use_skill",
+    "embedded_usage_guide",
 ];
 
 #[cfg(test)]

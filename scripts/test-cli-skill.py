@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise the embedded Forge skill and safe installation through the CLI, offline.
+"""Exercise the embedded usage guide and safe skill installation through the CLI, offline.
 
 Only the supplied executable is used; its public symlink is not resolved before
 execution. Every project, user home, source image and store belongs to a new test
@@ -23,6 +23,14 @@ import zlib
 
 MANIFEST = ".forge-skill-manifest.json"
 SKILL = "forge-use"
+GUIDE_RESOURCES = (
+    ("overview", "SKILL.md", "text/markdown"),
+    ("static", "references/local-static.md", "text/markdown"),
+    ("provider", "references/provider.md", "text/markdown"),
+    ("animation", "references/animation.md", "text/markdown"),
+    ("static-example", "examples/local-static.json", "application/json"),
+    ("provider-example", "examples/provider-icons.json", "application/json"),
+)
 
 
 def require(condition, message):
@@ -125,14 +133,25 @@ class Harness:
             "GAME_SPRITE_FORGE_DISABLE_MACOS_DEFAULT_TOOL_DIRS": "1",
         })
 
-    def call(self, args, success=True, parse_error=False, forge=None):
-        command = [str(forge or self.forge), *map(str, args), "--json"]
-        result = subprocess.run(command, cwd=self.root, env=self.env,
+    def execute(self, args, forge=None, cwd=None):
+        command = [str(forge or self.forge), *map(str, args)]
+        result = subprocess.run(command, cwd=cwd or self.root, env=self.env,
                                 capture_output=True, text=True, timeout=60)
         record = {"argv": command, "exitCode": result.returncode,
+                  "cwd": str(cwd or self.root),
                   "stdout": result.stdout, "stderr": result.stderr}
         self.calls.append({"argv": command, "exitCode": result.returncode})
         write_json(self.logs / f"{len(self.calls):03d}.json", record)
+        return result, record
+
+    def plain(self, args, forge=None, cwd=None):
+        result, record = self.execute(args, forge=forge, cwd=cwd)
+        require(result.returncode == 0, f"Plain command failed: {record}")
+        require(not result.stderr, f"Plain command wrote unexpected stderr: {record}")
+        return result.stdout
+
+    def call(self, args, success=True, parse_error=False, forge=None, cwd=None):
+        result, record = self.execute([*args, "--json"], forge=forge, cwd=cwd)
         if parse_error and not result.stdout.strip():
             require(not success and result.returncode != 0 and result.stderr.strip(),
                     f"Invalid arguments were not rejected: {args}: {record}")
@@ -245,6 +264,88 @@ class Harness:
                 links += 1
         self.completed("show_complete_bundle", files=len(files), relativeLinks=links,
                        contentHash=value["contentHash"])
+
+    def assert_guide(self, value, relative):
+        for key in ("name", "schemaVersion", "cliVersion", "build", "contentHash"):
+            require(value.get(key) == self.bundle[key], f"Wrong guide identity {key}: {value}")
+        embedded = next(entry for entry in self.bundle["files"] if entry["path"] == relative)
+        for key in ("path", "sha256", "content"):
+            require(value.get(key) == embedded[key], f"Guide differs from bundle {relative}: {key}")
+        expected_resources = [{"topic": topic, "path": path, "mediaType": media_type}
+                              for topic, path, media_type in GUIDE_RESOURCES]
+        require(value.get("resources") == expected_resources,
+                f"Incomplete or incorrect guide resource inventory: {value.get('resources')}")
+
+    def guide_without_install(self):
+        project = self.project("guide-uninstalled-game")
+        require(not self.target(project).exists() and not (self.home / ".agents").exists(),
+                "Guide test must begin without project or personal skill installation")
+        sentinel = "LOCAL FILE CONTENT MUST NEVER BECOME GUIDE OUTPUT"
+        # Shadow every valid bundle path in the working directory. Guide output
+        # must still come from the executable, even when these files exist.
+        for _, relative, _ in GUIDE_RESOURCES:
+            shadow = project / relative
+            shadow.parent.mkdir(parents=True, exist_ok=True)
+            shadow.write_text(sentinel + "\n", encoding="utf-8")
+        outside = self.root / "guide-private-sentinel.txt"
+        outside.write_text(sentinel + "\n", encoding="utf-8")
+        protected = (project, self.home, outside, self.root / "jobs", self.root / "plans")
+        before = [snapshot(path) for path in protected]
+
+        overview = self.call(["guide"], cwd=project)
+        self.assert_guide(overview, "SKILL.md")
+        require(self.plain(["guide"], cwd=project) == overview["content"],
+                "Default plain guide is not the original overview")
+        self.completed("guide_defaults_to_overview_without_skill_installation")
+
+        examples = []
+        for topic, relative, media_type in GUIDE_RESOURCES:
+            value = self.call(["guide", topic], cwd=project)
+            self.assert_guide(value, relative)
+            require(self.call(["guide", relative], cwd=project) == value,
+                    f"Guide path and topic differ: {topic}")
+            plain = self.plain(["guide", topic], cwd=project)
+            require(plain == value["content"], f"Plain topic is not original content: {topic}")
+            require(self.plain(["guide", relative], cwd=project) == plain,
+                    f"Plain path and topic differ: {topic}")
+            if media_type == "application/json":
+                request = json.loads(plain)
+                require(isinstance(request, dict) and request.get("schemaVersion") == "1"
+                        and request.get("kind") in ("icon_set", "prop_set")
+                        and isinstance(request.get("items"), list) and request["items"],
+                        f"Guide example is not a directly usable request: {topic}")
+                examples.append(relative)
+        self.completed("guide_topics_and_paths_match_plain_and_json_bundle", resources=len(GUIDE_RESOURCES))
+        self.completed("guide_json_examples_are_unwrapped_request_documents", paths=examples)
+
+        invalid = ["missing", "guide-private-sentinel.txt", "../guide-private-sentinel.txt",
+                   "references/../../guide-private-sentinel.txt", str(outside),
+                   "./SKILL.md", "references/../SKILL.md", "references\\local-static.md",
+                   "references/%2e%2e/%2e%2e/guide-private-sentinel.txt"]
+        for resource in invalid:
+            error = self.call(["guide", resource], success=False, cwd=project)
+            require(error.get("code") == "guide_resource_not_found", f"Wrong guide refusal: {error}")
+            require(sentinel not in json.dumps(error), f"Guide exposed a local file: {resource}")
+        self.completed("guide_rejects_unknown_and_traversal_resources", requests=len(invalid))
+
+        top_help = self.plain(["--help"], cwd=project)
+        guide_help = self.plain(["guide", "--help"], cwd=project)
+        require(re.search(r"^\s+guide\s+", top_help, re.MULTILINE), "Top-level help does not expose guide")
+        require("RESOURCE" in guide_help and "--json" in guide_help,
+                "Guide help does not expose resource selection and JSON output")
+        require([snapshot(path) for path in protected] == before,
+                "Guide/help changed the game, home, local files, Job store or Plan store")
+        require(not (project / ".agents").exists() and not (self.home / ".agents").exists()
+                and not (project / ".codex").exists() and not (self.home / ".codex").exists(),
+                "Reading guide installed a skill or created Codex settings")
+        self.completed("guide_reading_has_no_project_home_job_or_plan_side_effects")
+
+        # Doctor reports its store locations and currently creates their empty
+        # directories. Keep capability discovery outside the guide read-only check.
+        doctor = self.call(["doctor"], cwd=project)
+        require("embedded_usage_guide" in doctor.get("capabilities", []),
+                "Doctor does not advertise embedded_usage_guide")
+        self.completed("guide_help_and_capability_discovery")
 
     def basic_scopes(self):
         project = self.project("project-scope")
@@ -462,33 +563,43 @@ class Harness:
         shown = self.call(["skill", "show"], forge=binary)
         require(shown == self.bundle, "Standalone binary cannot reproduce its embedded bundle")
         project = self.project("standalone-game")
-        self.install(project, forge=binary)
-        self.assert_result(self.call(["skill", "check", "--project", project], forge=binary),
-                           self.target(project), "project", "current")
-        self.completed("standalone_binary_install_without_repository_or_media_helpers")
+        require(not (self.home / ".agents").exists(),
+                "Standalone guide must be tested before personal skill installation")
+        protected = (project, self.home, portable, self.root / "jobs", self.root / "plans")
+        before = [snapshot(path) for path in protected]
+        # Run the copied executable from a fresh game with no source checkout,
+        # skill directory or helpers beside it or on PATH.
+        for topic, relative, _ in GUIDE_RESOURCES:
+            value = self.call(["guide", topic], forge=binary, cwd=project)
+            self.assert_guide(value, relative)
+            require(self.plain(["guide", relative], forge=binary, cwd=project) == value["content"],
+                    f"Standalone guide cannot reproduce embedded resource: {relative}")
+        require([snapshot(path) for path in protected] == before,
+                "Standalone guide created or modified runtime files")
+        self.completed("standalone_binary_guide_without_installation_repository_or_media_helpers")
 
-        # Exercise an actual installed request example unchanged. Only its local
-        # input files are synthesized; no Provider/Style Lock is invented.
+        # Export the guide's actual request example unchanged, before installing
+        # any skill. Only its local input images are synthesized.
         examples = []
-        for relative in sorted(self.expected):
-            if not relative.endswith(".json"):
+        for topic, relative, media_type in GUIDE_RESOURCES:
+            if media_type != "application/json":
                 continue
-            try:
-                value = read_json(self.target(project) / relative)
-            except json.JSONDecodeError:
-                continue
+            exported = self.plain(["guide", topic], forge=binary, cwd=project)
+            value = json.loads(exported)
             if (isinstance(value, dict) and value.get("kind") in ("icon_set", "prop_set")
                     and value.get("items") and all(isinstance(item.get("path"), str) for item in value["items"])):
-                examples.append((relative, value))
+                examples.append((relative, value, exported))
         require(examples, "Embedded bundle contains no runnable local prepare-static JSON example")
         verified = []
-        for number, (relative, request) in enumerate(examples):
+        for number, (relative, request, exported) in enumerate(examples):
             example_root = self.root / f"example-{number}"
             example_root.mkdir()
             specs = example_root / "asset-specs"
             specs.mkdir()
             copied = specs / PurePosixPath(relative).name
-            shutil.copyfile(self.target(project) / relative, copied)
+            copied.write_text(exported, encoding="utf-8")
+            require(sha256(copied.read_bytes()) == self.expected[relative],
+                    "Exported guide request differs from embedded example")
             for index, item in enumerate(request["items"]):
                 source = Path(item["path"])
                 require(not source.is_absolute(), f"Example requires an absolute user path: {relative}")
@@ -496,24 +607,32 @@ class Harness:
                 require(source.is_relative_to(example_root), f"Example source escapes isolated fixture: {relative}")
                 require(source.suffix.lower() == ".png", f"Unexpected example source type: {relative}")
                 make_png(source, index)
-            plan = self.call(["plan", "prepare-static", "--request", copied], forge=binary)
+            plan = self.call(["plan", "prepare-static", "--request", copied], forge=binary, cwd=project)
             require(isinstance(plan.get("token"), str) and plan["token"], "Example did not create a real plan")
             estimate = plan["estimate"]
             require(estimate["providerRequestEstimate"] == 0 and estimate["maximumProviderRequests"] == 0,
                     f"Local example can request a Provider: {plan}")
             verified.append({"path": relative, "kind": request["kind"], "providerRequestEstimate": 0})
-        self.assert_install(self.target(project))
-        self.completed("installed_local_examples_create_real_zero_provider_plans", examples=verified)
+        require(not (project / ".agents").exists() and not (self.home / ".agents").exists(),
+                "Guide example planning unexpectedly installed a skill")
+        self.completed("guide_local_examples_create_real_zero_provider_plans_without_skill_installation",
+                       examples=verified)
+
+        self.install(project, forge=binary)
+        self.assert_result(self.call(["skill", "check", "--project", project], forge=binary),
+                           self.target(project), "project", "current")
+        self.completed("standalone_binary_install_without_repository_or_media_helpers")
 
     def run(self):
         try:
             self.show()
+            self.guide_without_install()
+            self.standalone_and_example()
             self.basic_scopes()
             self.modified_and_unmanaged()
             self.symlinks()
             self.upgrade()
             self.invalid_arguments()
-            self.standalone_and_example()
         except Exception as error:
             write_json(self.root / "summary.json", self.summary(False, str(error)))
             raise

@@ -11,6 +11,14 @@ Forge 是一款整理 2D 图标和道具的 CLI。用 Codex 或你喜欢的图�
 [CLI 指南](docs/automation/forge-cli.md) ·
 [示例](examples/cli)
 
+## 直接配合 Codex 使用
+
+[安装 CLI](#安装)后，在 Codex 中打开游戏项目，可以这样说：
+
+> 请用 Forge 和可用的图像工具，为这个 Godot 游戏制作一组森林主题背包图标。先读取 Forge 内置指南，保留原图，检查并导入素材。
+
+使用 Forge v0.3.2 时，Codex 可以直接从 CLI 读取操作指引和请求示例，无需安装 skill 或下载 Forge 源码。图片生成由独立的 Codex 工具完成，Forge 负责本地 PNG 处理、Pack 和 Godot 交付。已有的透明 PNG 可以直接交给 Forge。
+
 ## 使用你喜欢的工具制作美术
 
 导入 AI 生成的图片、手绘精灵，或你已经拥有的美术素材。每个背包图标、拾取物或场景道具使用一张独立的透明 PNG。本地整理无需 Forge Provider 账号，也无需生成风格设定。
@@ -43,7 +51,7 @@ Forge 是一款整理 2D 图标和道具的 CLI。用 Codex 或你喜欢的图�
 
 ## 安装
 
-稳定版本为 [v0.3.1](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.1)，支持 **macOS Apple Silicon**。需要引擎交付时，另行安装 **Godot 4.6.x**。二进制文件尚未签名或公证。
+稳定版本为 [v0.3.2](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.2)，支持 **macOS Apple Silicon**。需要引擎交付时，另行安装 **Godot 4.6.x**。二进制文件尚未签名或公证。已有游戏应先验证升级，再调整固定的 CLI 版本。
 
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/MightyKartz/GameSpriteForge/main/install.sh | sh
@@ -54,15 +62,20 @@ curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/MightyKa
 ```bash
 forge --version
 forge doctor --json
+forge guide
 ```
 
-配合 Codex 使用时，在游戏项目目录执行：
+`forge guide` 离线读取当前可执行文件内置的说明。游戏工作流应始终使用已验证的可执行文件绝对路径；升级该 CLI 后，读取到的指南也随版本更新。
+
+### 可选：安装 Codex skill
+
+希望 Codex 按名称发现 `forge-use` 时，可以在游戏项目目录执行：
 
 ```bash
 forge skill install --project .
 ```
 
-在 Codex 中打开项目，请它使用 `forge-use` 制作游戏素材。CLI 已内置使用指引和示例，无需另外下载源码仓库。个人级安装与更新方式见 [Codex 配置指南](docs/automation/codex-skill.md)。
+也可以用 `forge skill install --user` 选择跨项目的个人安装。仅安装 CLI 不会自动注册 Codex skill。已安装的 skill 需要在 CLI 升级后显式更新，Forge 会保护用户修改。详见 [Codex 使用与可选配置](docs/automation/codex-skill.md)。
 
 制作第一组素材，请参考[本地 PNG 指南](docs/automation/codex-local-assets.md)，完成透明图片导入、Pack 检查和 Godot 安装。
 
@@ -72,15 +85,15 @@ Forge 也能通过在线服务商生成图标和道具集，详见 [CLI 指南](
 
 **角色动画目前仍处于测试开发阶段。** 角色生成、动画复用和多方向动画仍需检查实际画面。实验性的动画复用辅助工具随源码提供，CLI 安装器不包含该工具。
 
-高级角色一致性和世界素材工作流也需要启用可选源码功能。版本的具体范围见 [v0.3.1 发布说明](docs/releases/v0.3.1.md)。
+高级角色一致性和世界素材工作流也需要启用可选源码功能。版本的具体范围见 [v0.3.2 发布说明](docs/releases/v0.3.2.md)。
 
 ## 文档
 
 - [CLI 指南](docs/automation/forge-cli.md)：命令、素材生成与处理、Godot 交付。
 - [PNG 图片工作流](docs/automation/codex-local-assets.md)：整理 Codex 或其他工具制作的 PNG，并交付到 Godot。
-- [Codex 配置指南](docs/automation/codex-skill.md)：将内置的 `forge-use` skill 安装到游戏项目。
+- [Codex 使用与可选配置](docs/automation/codex-skill.md)：直接读取内置指南，或按需安装 `forge-use`。
 - [示例规格](examples/cli)：以现有示例开始制作自己的素材。
-- [发布说明](docs/releases/v0.3.1.md)：平台支持和版本范围。
+- [发布说明](docs/releases/v0.3.2.md)：平台支持和版本范围。
 - [展示素材](docs/media/showcase/README.md)：图片来源与可复现的 Godot 演示。
 - [参与开发](CONTRIBUTING.md)：源码构建与开发检查。
 

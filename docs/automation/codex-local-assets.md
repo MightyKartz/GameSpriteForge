@@ -5,10 +5,16 @@ static Packs, inspect the results and install them into Godot. You can also star
 with existing transparent PNGs. The handoff is a local image file; Forge does not
 call Codex's image model as a Provider.
 
-## Use Forge v0.3.0
+## Select Forge and read its guide
 
-The v0.3.0 default CLI includes local transparent PNG import and static Godot
-delivery. Use the [installation instructions](../../README.md#install) for
+The v0.3.2 CLI includes an offline usage guide, so Codex can use Forge without
+installing a skill or downloading the source repository. Open your game project
+and ask Codex to use the local Forge CLI, read its guide, then prepare your PNGs
+and deliver the reviewed assets to Godot. See [Codex usage](codex-skill.md) for
+the resource list and optional skill installation.
+
+The default CLI has included local transparent PNG import and static Godot
+delivery since v0.3.0. Use the [installation instructions](../../README.md#install) for
 **macOS Apple Silicon**, and install **Godot 4.6.x** separately. The local
 animation commands are also included, but character animation remains in
 development and testing.
@@ -20,12 +26,16 @@ development and testing.
 | Local request `preserve_source`, explicit rendering and frame timing | Experimental animation | Not available in these local request forms |
 | Whole-sheet transparent padding and translation | Experimental animation | Not available |
 
-Check the executable you will use:
+Use the game's existing verified executable when it pins one. Otherwise locate
+the local installation and verify it. Set its absolute path once and use it for
+all subsequent commands:
 
 ```bash
-forge --version
-forge doctor --json
-forge plan --help
+export FORGE_BIN="/absolute/path/to/forge"
+"$FORGE_BIN" --version
+"$FORGE_BIN" doctor --json
+"$FORGE_BIN" plan --help
+shasum -a 256 "$FORGE_BIN"
 ```
 
 Record its absolute path and SHA-256 in your project's toolchain lock. Starting
@@ -38,7 +48,22 @@ checkout does not identify an older executable left in `target/debug`.
 When a game already pins a CLI, verify its required contracts before updating
 the lock for future imports. Keep existing asset receipts and source history
 unchanged; actual re-imports create new receipts. See the
-[release notes](../releases/v0.3.0.md) for scope and compatibility.
+[v0.3.0 release notes](../releases/v0.3.0.md) for the original processing baseline.
+
+When the selected CLI advertises `embedded_usage_guide` (v0.3.2 and later), read
+its matching workflow and example directly:
+
+```bash
+"$FORGE_BIN" guide
+"$FORGE_BIN" guide static
+"$FORGE_BIN" guide static-example
+```
+
+The guide is read-only and offline. A newer CLI carries its matching guide, while
+any installed skill remains an independent copy requiring explicit updates.
+Older pinned CLIs, including v0.3.0, have no `guide`; use the file documentation
+and check their capabilities. v0.3.1 can expose its complete bundle through
+`"$FORGE_BIN" skill show --json`. Do not change a game's CLI just to read a guide.
 
 ## Choose the source and asset type
 
@@ -66,7 +91,17 @@ Set `FORGE_BIN` to the verified executable and use dedicated job/plan stores. Fo
 Godot delivery, set `FORGE_GODOT_PATH` if automatic discovery selects the wrong
 engine. Keep the stores long enough to retain source and processing evidence.
 
-Save a request such as `asset-specs/local-props.json`:
+On a CLI with `embedded_usage_guide`, retrieve the bundled example into a new
+request file:
+
+```bash
+"$FORGE_BIN" guide static-example > /absolute/asset-specs/local-props.json
+```
+
+Confirm the command succeeded before editing or consuming the file; a failed
+command can leave an empty redirected file. The same example is available in an
+installed skill at `examples/local-static.json`. For older pinned CLIs, you can
+save this request as `asset-specs/local-props.json`:
 
 ```json
 {
@@ -218,15 +253,19 @@ record later visual approval separately from the immutable import result.
 
 ## Reuse in another Codex game project
 
-Starting with v0.3.1, the CLI includes a self-contained `forge-use` skill. From
-your game project, run `forge skill install --project .`, or choose
-`forge skill install --user` for personal use across projects. Check the selected
-scope with `forge skill check --project . --json` or `forge skill check --user --json`.
-No Forge checkout or separate skill download is needed. The installer preserves
-modified and unrecognized skills; CLI upgrades do not automatically update them.
-See [Codex setup](codex-skill.md) for discovery, updates and existing symlink
-installations. The skill does not install Codex, an image model or Godot, or
-upgrade the game's pinned executable.
+Use the next game's own verified `FORGE_BIN`, read `"$FORGE_BIN" guide` if
+supported, and follow its instructions. No skill installation is required.
+Installing the CLI alone does not make its embedded guide a discoverable Codex
+skill.
+
+If you want skill discovery, v0.3.1 and later support the optional
+`"$FORGE_BIN" skill install --project .` or personal
+`"$FORGE_BIN" skill install --user`. Check the matching scope with `skill check`.
+The installer preserves modified and unrecognized skills; CLI upgrades do not
+automatically update installed copies. See [Codex usage and optional setup](codex-skill.md)
+for discovery, updates and existing symlink installations. Neither guide reads
+nor skill installation installs Codex, an image model or Godot, or upgrades the
+game's pinned executable.
 
 The repo retains [forge-use](../../.agents/skills/forge-use/SKILL.md) as its single
 maintained source and [forge-dev](../../.agents/skills/forge-dev/SKILL.md) for Forge
@@ -234,4 +273,4 @@ development. A sibling project does not automatically discover this checkout's
 repo-local skills.
 
 For the supported platform and release scope, see the
-[v0.3.1 release notes](../releases/v0.3.1.md).
+[v0.3.2 release notes](../releases/v0.3.2.md).

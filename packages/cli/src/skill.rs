@@ -1,4 +1,4 @@
-//! A deliberately small, offline installer for the one skill bundled with Forge.
+//! An offline usage guide and optional installer backed by one embedded bundle.
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs::{self, File, OpenOptions};
@@ -19,32 +19,79 @@ const MAX_MANIFEST_BYTES: u64 = 1024 * 1024;
 static NEXT_ID: AtomicU64 = AtomicU64::new(0);
 type Result<T> = std::result::Result<T, (String, String)>;
 
-const SOURCE_FILES: &[(&str, &str)] = &[
-    (
-        "SKILL.md",
-        include_str!("../../../.agents/skills/forge-use/SKILL.md"),
-    ),
-    (
-        "references/local-static.md",
-        include_str!("../../../.agents/skills/forge-use/references/local-static.md"),
-    ),
-    (
-        "references/provider.md",
-        include_str!("../../../.agents/skills/forge-use/references/provider.md"),
-    ),
-    (
-        "references/animation.md",
-        include_str!("../../../.agents/skills/forge-use/references/animation.md"),
-    ),
-    (
-        "examples/local-static.json",
-        include_str!("../../../.agents/skills/forge-use/examples/local-static.json"),
-    ),
-    (
-        "examples/provider-icons.json",
-        include_str!("../../../.agents/skills/forge-use/examples/provider-icons.json"),
-    ),
+struct SourceFile {
+    resource: GuideResource,
+    content: &'static str,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+struct GuideResource {
+    topic: &'static str,
+    path: &'static str,
+    media_type: &'static str,
+}
+
+const SOURCE_FILES: &[SourceFile] = &[
+    SourceFile {
+        resource: GuideResource {
+            topic: "overview",
+            path: "SKILL.md",
+            media_type: "text/markdown",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/SKILL.md"),
+    },
+    SourceFile {
+        resource: GuideResource {
+            topic: "static",
+            path: "references/local-static.md",
+            media_type: "text/markdown",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/references/local-static.md"),
+    },
+    SourceFile {
+        resource: GuideResource {
+            topic: "provider",
+            path: "references/provider.md",
+            media_type: "text/markdown",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/references/provider.md"),
+    },
+    SourceFile {
+        resource: GuideResource {
+            topic: "animation",
+            path: "references/animation.md",
+            media_type: "text/markdown",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/references/animation.md"),
+    },
+    SourceFile {
+        resource: GuideResource {
+            topic: "static-example",
+            path: "examples/local-static.json",
+            media_type: "application/json",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/examples/local-static.json"),
+    },
+    SourceFile {
+        resource: GuideResource {
+            topic: "provider-example",
+            path: "examples/provider-icons.json",
+            media_type: "application/json",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/examples/provider-icons.json"),
+    },
 ];
+
+#[derive(Args)]
+pub struct GuideArgs {
+    /// Short name or exact bundled path. Use --json to discover all resources.
+    #[arg(default_value = "overview", value_name = "RESOURCE")]
+    resource: String,
+    /// Return content, build identity, hashes, and the resource index as JSON.
+    #[arg(long)]
+    json: bool,
+}
 
 #[derive(Subcommand)]
 pub enum SkillCommand {
@@ -53,7 +100,7 @@ pub enum SkillCommand {
         #[arg(long)]
         json: bool,
     },
-    /// Install the bundled skill, preserving local changes and old versions.
+    /// Optionally install the bundled skill for Codex discovery, preserving local changes.
     Install(ScopeArgs),
     /// Inspect an installation without changing files.
     Check(ScopeArgs),
@@ -91,7 +138,7 @@ struct Manifest {
     files: BTreeMap<String, String>,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 struct BundleFile {
     path: String,
     sha256: String,
@@ -105,7 +152,25 @@ struct Bundle {
     files: Vec<BundleFile>,
 }
 
+#[derive(Debug, Serialize)]
+struct Guide<'a> {
+    #[serde(flatten)]
+    identity: &'a BundleIdentity,
+    #[serde(flatten)]
+    file: &'a BundleFile,
+    resources: Vec<GuideResource>,
+}
+
 impl Bundle {
+    fn embedded() -> Self {
+        Self::new(
+            &SOURCE_FILES
+                .iter()
+                .map(|source| (source.resource.path, source.content))
+                .collect::<Vec<_>>(),
+        )
+    }
+
     fn new(files: &[(&str, &str)]) -> Self {
         let files: Vec<_> = files
             .iter()
@@ -142,6 +207,43 @@ impl Bundle {
                 .map(|file| (file.path.clone(), file.sha256.clone()))
                 .collect(),
         }
+    }
+}
+
+fn select_guide<'a>(bundle: &'a Bundle, resource: &str) -> Result<Guide<'a>> {
+    // Resource arguments are identifiers, never filesystem paths to resolve.
+    let source = SOURCE_FILES
+        .iter()
+        .find(|source| source.resource.topic == resource || source.resource.path == resource);
+    let file = source.and_then(|source| {
+        bundle
+            .files
+            .iter()
+            .find(|file| file.path == source.resource.path)
+    });
+    let file = file.ok_or_else(|| {
+        error(
+            "guide_resource_not_found",
+            format!(
+                "unknown guide resource {resource:?}; run forge guide --json to list resources"
+            ),
+        )
+    })?;
+    Ok(Guide {
+        identity: &bundle.identity,
+        file,
+        resources: SOURCE_FILES.iter().map(|source| source.resource).collect(),
+    })
+}
+
+pub fn run_guide(args: GuideArgs) -> Result<()> {
+    let bundle = Bundle::embedded();
+    let guide = select_guide(&bundle, &args.resource)?;
+    if args.json {
+        crate::success(&guide)
+    } else {
+        print!("{}", guide.file.content);
+        Ok(())
     }
 }
 
@@ -245,13 +347,13 @@ impl Location {
 }
 
 pub fn run(command: SkillCommand) -> Result<()> {
-    let bundle = Bundle::new(SOURCE_FILES);
+    let bundle = Bundle::embedded();
     match command {
         SkillCommand::Show { json } => {
             if json {
                 crate::success(&bundle)
             } else {
-                print!("{}", SOURCE_FILES[0].1);
+                print!("{}", SOURCE_FILES[0].content);
                 Ok(())
             }
         }
@@ -788,6 +890,120 @@ fn rename_new(_source: &Path, _target: &Path) -> std::io::Result<()> {
     ))
 }
 
+#[cfg(test)]
+mod guide_tests {
+    use super::*;
+    use clap::Parser;
+
+    #[test]
+    fn guide_defaults_to_overview_and_resolves_each_topic_and_exact_path() {
+        let cli = crate::Cli::try_parse_from(["forge", "guide"]).unwrap();
+        let crate::Command::Guide(args) = cli.command else {
+            panic!("guide command was not parsed");
+        };
+        assert_eq!(args.resource, "overview");
+        assert!(!args.json);
+
+        let bundle = Bundle::embedded();
+        let expected = [
+            ("overview", "SKILL.md", "text/markdown"),
+            ("static", "references/local-static.md", "text/markdown"),
+            ("provider", "references/provider.md", "text/markdown"),
+            ("animation", "references/animation.md", "text/markdown"),
+            (
+                "static-example",
+                "examples/local-static.json",
+                "application/json",
+            ),
+            (
+                "provider-example",
+                "examples/provider-icons.json",
+                "application/json",
+            ),
+        ];
+        let guide = select_guide(&bundle, &args.resource).unwrap();
+        assert_eq!(guide.resources.len(), expected.len());
+        assert_eq!(guide.resources.len(), bundle.files.len());
+        for (topic, path, media_type) in expected {
+            assert!(guide.resources.contains(&GuideResource {
+                topic,
+                path,
+                media_type,
+            }));
+            let by_topic = select_guide(&bundle, topic).unwrap();
+            let by_path = select_guide(&bundle, path).unwrap();
+            assert_eq!(by_topic.file.path, path);
+            assert!(std::ptr::eq(by_topic.file, by_path.file));
+            assert_eq!(
+                by_topic.file.sha256,
+                digest(by_topic.file.content.as_bytes())
+            );
+            if media_type == "application/json" {
+                serde_json::from_str::<serde_json::Value>(&by_topic.file.content).unwrap();
+            }
+        }
+    }
+
+    #[test]
+    fn guide_rejects_unknown_and_nonexact_paths_with_a_stable_error() {
+        let bundle = Bundle::embedded();
+        for resource in [
+            "",
+            "unknown",
+            "Static",
+            "../SKILL.md",
+            "./SKILL.md",
+            "/SKILL.md",
+            "references/../SKILL.md",
+            "references//local-static.md",
+            "references\\local-static.md",
+            ".agents/skills/forge-use/SKILL.md",
+        ] {
+            let cli = crate::Cli::try_parse_from(["forge", "guide", resource, "--json"])
+                .expect("resource validation must reach the structured runtime error handler");
+            let crate::Command::Guide(args) = cli.command else {
+                panic!("guide command was not parsed");
+            };
+            assert!(args.json);
+            let failure = select_guide(&bundle, &args.resource).unwrap_err();
+            assert_eq!(failure.0, "guide_resource_not_found");
+        }
+    }
+
+    #[test]
+    fn guide_json_preserves_bundle_identity_and_selected_file_without_extra_contents() {
+        let bundle = Bundle::embedded();
+        let bundle_json = serde_json::to_value(&bundle).unwrap();
+        let guide_json =
+            serde_json::to_value(select_guide(&bundle, "static-example").unwrap()).unwrap();
+        for field in [
+            "name",
+            "schemaVersion",
+            "cliVersion",
+            "build",
+            "contentHash",
+        ] {
+            assert_eq!(guide_json[field], bundle_json[field], "{field}");
+        }
+        let file = bundle_json["files"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|file| file["path"] == "examples/local-static.json")
+            .unwrap();
+        for field in ["path", "sha256", "content"] {
+            assert_eq!(guide_json[field], file[field], "{field}");
+        }
+        assert!(guide_json.get("files").is_none());
+        for resource in guide_json["resources"].as_array().unwrap() {
+            assert_eq!(resource.as_object().unwrap().len(), 3);
+            assert!(resource["topic"].is_string());
+            assert!(resource["path"].is_string());
+            assert!(resource["mediaType"].is_string());
+        }
+    }
+}
+
 #[cfg(all(test, any(target_os = "macos", target_os = "linux")))]
 mod tests {
     use super::*;
@@ -831,7 +1047,7 @@ mod tests {
     fn install_is_idempotent_and_preserves_a_complete_old_bundle_outside_discovery() {
         let fixture = Fixture::new();
         let old = old_bundle();
-        let new = Bundle::new(SOURCE_FILES);
+        let new = Bundle::embedded();
         fixture.location.prepare(false).unwrap();
         assert!(
             !fixture.location.agents().exists(),
@@ -899,7 +1115,7 @@ mod tests {
     fn local_edits_extra_files_and_unmanaged_directories_are_preserved() {
         let fixture = Fixture::new();
         let old = old_bundle();
-        let new = Bundle::new(SOURCE_FILES);
+        let new = Bundle::embedded();
         install(&fixture.location, &old).unwrap();
         fs::write(fixture.target().join("SKILL.md"), "My local instructions").unwrap();
         assert_eq!(
@@ -944,7 +1160,7 @@ mod tests {
     fn unsafe_manifest_and_symlink_children_never_authorize_an_update() {
         let fixture = Fixture::new();
         let old = old_bundle();
-        let new = Bundle::new(SOURCE_FILES);
+        let new = Bundle::embedded();
         install(&fixture.location, &old).unwrap();
         let original = fixture.manifest_bytes();
         let mut forged = old.manifest();
@@ -997,7 +1213,7 @@ mod tests {
             let link = fixture.location.root.join(relative);
             fs::create_dir_all(link.parent().unwrap()).unwrap();
             symlink(&external, &link).unwrap();
-            let failure = install(&fixture.location, &Bundle::new(SOURCE_FILES)).unwrap_err();
+            let failure = install(&fixture.location, &Bundle::embedded()).unwrap_err();
             assert!(
                 matches!(failure.0.as_str(), "skill_unsafe_path" | "skill_unmanaged"),
                 "{failure:?}"
@@ -1019,7 +1235,7 @@ mod tests {
         .unwrap();
         let original = fixture.manifest_bytes();
         assert_eq!(
-            install(&fixture.location, &Bundle::new(SOURCE_FILES))
+            install(&fixture.location, &Bundle::embedded())
                 .unwrap_err()
                 .0,
             "skill_unsafe_path"
@@ -1069,7 +1285,7 @@ mod tests {
         fixture.location.prepare(true).unwrap();
         let lock = WriteLock::acquire(&fixture.location.agents()).unwrap();
         assert_eq!(
-            install(&fixture.location, &Bundle::new(SOURCE_FILES))
+            install(&fixture.location, &Bundle::embedded())
                 .unwrap_err()
                 .0,
             "skill_busy"
@@ -1078,7 +1294,7 @@ mod tests {
         assert!(!fixture.target().exists());
         drop(lock);
         assert_eq!(
-            install(&fixture.location, &Bundle::new(SOURCE_FILES))
+            install(&fixture.location, &Bundle::embedded())
                 .unwrap()
                 .status,
             Status::Current
