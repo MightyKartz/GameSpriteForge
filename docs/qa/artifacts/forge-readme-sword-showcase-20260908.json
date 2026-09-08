@@ -1,0 +1,38 @@
+{
+  "date": "2026-09-08",
+  "scope": "README and media only; existing Sword resources replayed in a separate Godot presentation",
+  "godot_version": "4.6.3.stable.official.7d41c59c4",
+  "ffmpeg_version": "8.0.1",
+  "renderer_sha256": "fcb94238611de1fd93a24e2820a6a651f5fd222901294c6f4d9b3e3c4815cec9",
+  "render_script_sha256": "6a96e886c7519ba2d51f8c28b555dc23d977592c50047001abfe38ee562eb2eb",
+  "inputs_match_provenance": 21,
+  "consumer_resources_unchanged": true,
+  "readme_local_links_checked": 40,
+  "readmes_have_no_skill_installation_content": true,
+  "outputs": {
+    "spells": {
+      "sha256": "372e68c22d2954dd26ae741d87084acb5490c6dee3584cac1f10e893dbfa3417",
+      "bytes": 475501,
+      "frames": 210,
+      "capture_fps": 50,
+      "width": 1040,
+      "height": 440,
+      "gif_duration_ms": 4200,
+      "gif_frames": 210,
+      "distinct_frames": 24,
+      "loop_forever": true
+    },
+    "enemies": {
+      "sha256": "37673080327cb6bbac32532bbd624ce22d2a6667344cfcde4ca4b9a44b488b3a",
+      "bytes": 770428,
+      "frames": 200,
+      "capture_fps": 50,
+      "width": 1040,
+      "height": 440,
+      "gif_duration_ms": 4000,
+      "gif_frames": 200,
+      "distinct_frames": 38,
+      "loop_forever": true
+    }
+  }
+}

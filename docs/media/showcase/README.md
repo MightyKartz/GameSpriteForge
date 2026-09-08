@@ -1,16 +1,71 @@
 # Product showcase assets
 
 These images support the English and Chinese product READMEs. They illustrate
-icons and props, local background removal, and using prepared sprites in Godot.
-Character animation is deliberately outside this showcase.
+icons and props, local background removal, and existing Sword animation assets
+prepared with Forge and replayed in Godot. The animation previews are prototype
+examples; character animation remains in development.
 
 | Image | What it shows |
 | --- | --- |
 | [gallery.png](gallery.png) | Eight illustrative objects, displayed using actual Forge-matted PNGs. |
 | [processing.png](processing.png) | The same potion before and after Forge background removal. |
-| [godot.png](godot.png) | An authored Godot scene using those PNGs. The scenery and inventory layout are presentation code. |
+| [godot.png](godot.png) | An earlier authored Godot scene using those PNGs, retained here but no longer embedded in the main READMEs. |
+| [sword-spells.gif](sword-spells.gif) | Sword's existing fire, frost and lightning frames replayed in a dedicated Godot showcase. |
+| [sword-enemies.gif](sword-enemies.gif) | Sword's existing wisp, stone golem, vine spirit and guardian slam animations in the same showcase. |
 
-## Sources and processing
+## Sword animation previews
+
+The source artwork was generated with Codex's built-in image tool for the Sword
+game prototype. Forge processed those images locally and delivered animation
+Packs and Godot SpriteFrames. This showcase uses the installed resources, with
+their original frame order, duration weights, source coordinates and anchors.
+It makes no new image generation, video generation or Forge Provider requests.
+
+The two GIFs are captures of a **separate asset presentation scene**, not gameplay
+or an iPhone recording. Layout, labels, starting phase and repetition between
+one-shot effects belong to the presentation. The spells begin at visible phases
+so the still thumbnail shows all three effects. Each animation has one constant display transform;
+there is no frame interpolation, per-frame alignment or generated motion.
+Original non-uniform timing is sampled on a 50 FPS capture clock (20 ms steps),
+so frame transitions can be rounded by less than 20 ms. Looping actors retain
+their resource loop timing; spells restart after a short gap and the guardian
+holds its last frame between demonstrations.
+
+Both captures are 1040 × 440 pixels. Spells run for 4.2 seconds and enemies for
+4 seconds before repeating. GIF palette quantization changes display colors;
+the full-color installed PNGs remain untouched in Sword.
+
+The [Sword provenance record](sword-provenance.json) preserves source and installed
+resource hashes, original Forge build identities, historical Pack validation and
+review states. These were earlier imports, not new imports with the current CLI.
+Source PNGs and installed textures were rehashed for this showcase; the original
+Pack directory fingerprints were recomputed and matched the receipts and installed
+usage records. Historical validation and review states are retained; this is not
+a new import or visual approval. Prototype reviews do not establish production
+readiness or universal character generation quality.
+
+Only the two display GIFs, their provenance and the new presentation scripts are
+published here. Sword's source artwork, installed asset sheets, game code and
+private Job stores are not included. See the [showcase QA note](../../qa/forge-readme-sword-showcase-2026-09-08.md)
+for capture verification.
+
+To reproduce with access to the same local Sword resources, Python 3, Godot 4.6.x,
+FFmpeg and a graphical session, run from the Forge repository root:
+
+```bash
+python3 docs/media/showcase/render_sword.py \
+  --sword /path/to/Sword --godot /path/to/godot --ffmpeg /path/to/ffmpeg
+```
+
+[render_sword.py](render_sword.py) checks installed texture and Pack evidence,
+copies the selected resources into a temporary project under `target/qa/`, and
+runs [render_sword.gd](render_sword.gd) in Godot. FFmpeg encodes the captured PNGs
+as GIFs; the script replaces the two GIFs in this directory and writes a local
+render receipt. It does not run Sword's importers or modify the Sword checkout.
+The original local resources are required; this is not a standalone asset pack.
+If source assets change, update their provenance and review the new captures.
+
+## Forest artwork: sources and processing
 
 The source artwork was created on 2026-09-07 with Codex's built-in image generation
 tool: one new image and one background edit. The [prompts](prompts.md) record both
@@ -33,7 +88,7 @@ processing settings, and the observed Job result. The full source sheet and loca
 Job/Plan stores remain outside Git; only the selected reusable sprites and images
 needed to render this presentation are included here.
 
-## Evidence limits
+## Forest artwork: evidence limits
 
 This run passed ingestion, matting, normalization, and quality analysis. Its Pack
 export was **blocked**, with `prototype_usable` quality and `awaiting_review`
@@ -47,7 +102,7 @@ objects as an animation. Small chroma fringes remain on some edges; the images a
 not a claim of perfect matting. The Godot scene is a composed example, not a map
 generated by Forge or a screenshot of a Forge desktop application.
 
-## Re-render the images
+## Re-render the forest images
 
 From the repository root, with Godot 4.6.x on `PATH`:
 
