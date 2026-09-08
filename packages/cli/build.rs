@@ -116,6 +116,7 @@ fn watched_paths(root: &Path) -> BTreeSet<PathBuf> {
         "schemas",
         "profiles",
         "scripts/godot",
+        ".agents/skills/forge-use",
     ] {
         add_existing(&mut paths, root.join(relative));
     }

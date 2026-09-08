@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1",
+  "kind": "prop_set",
+  "id": "forest_props",
+  "name": "Forest props",
+  "license": "private",
+  "sampling": "linear",
+  "canvasSize": 256,
+  "foregroundAlphaThreshold": 1,
+  "edgePaddingPx": 0,
+  "items": [
+    { "id": "lantern", "name": "Stone lantern", "path": "../sources/lantern.png" },
+    { "id": "rock", "name": "Moss rock", "path": "../sources/rock.png" }
+  ]
+}
