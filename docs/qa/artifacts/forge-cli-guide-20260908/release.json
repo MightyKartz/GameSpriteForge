@@ -1,0 +1,47 @@
+{
+  "status": "pass",
+  "releaseUrl": "https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.2",
+  "tag": "v0.3.2",
+  "commit": "922ce83e33b1a9c085570c3e34051d739b4167f9",
+  "runId": 34198372444,
+  "publishedAt": "2026-09-08T07:31:06Z",
+  "assetsVerified": 9,
+  "archiveSha256": "fb72ba869b220f132e5674493c686f9a129af7ce35bbaf4cbe71a8b03a8a1002",
+  "binarySha256": "d6af1cc17892574c010470fa00aeea82c8626fbb280fee37e5ecfbfed07dbca9",
+  "contentHash": "5f63b2adfb9e69e63e5b29d0692f8e3796c9fb3a13527a6e46e4494129e70165",
+  "zipCrcAndManifestVerified": true,
+  "attestationVerified": true,
+  "downloadedSbomMatchesVerifiedPredicate": true,
+  "actualDownloadedArchive": {
+    "freshInstall": true,
+    "sameVersionReinstall": true,
+    "upgradeFrom": "v0.3.1",
+    "guideAndSkillCases": 33,
+    "commandCount": 118,
+    "cliProductContract": true,
+    "localStaticCases": 3,
+    "localAnimationCases": 5,
+    "externalFfmpegDiscoveryDisabled": true,
+    "publicLauncherUsed": true
+  },
+  "normalInstallation": {
+    "version": "0.3.2",
+    "build": {
+      "gitCommit": "922ce83e33b1a9c085570c3e34051d739b4167f9",
+      "dirty": false,
+      "target": "aarch64-apple-darwin",
+      "profile": "release",
+      "features": []
+    },
+    "defaultLatestInstaller": true,
+    "releaseBinaryHashMatched": true,
+    "guideContentHashMatched": true,
+    "samePayloadHelpersVerified": true,
+    "oldVersionsAndSwordLocksAndShellProfilePreserved": true
+  },
+  "rustTests": {
+    "passed": 277,
+    "failed": 0,
+    "ignored": 1
+  }
+}

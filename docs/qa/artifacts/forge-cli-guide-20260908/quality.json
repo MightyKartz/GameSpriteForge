@@ -1,0 +1,15 @@
+{
+  "status": "pass",
+  "url": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/34197085775",
+  "headSha": "930b0e500b6811f9cd2cfeacb4c70ba396765dc1",
+  "gatesPassed": 8,
+  "guideAndSkillContractsPassed": 33,
+  "guideAndSkillCommandCount": 118,
+  "supersededRun": {
+    "id": 34196848478,
+    "conclusion": "cancelled",
+    "reason": "Replaced by the run for the clarified prop-scene guide"
+  },
+  "mergedPr": 28,
+  "mergeCommit": "922ce83e33b1a9c085570c3e34051d739b4167f9"
+}
