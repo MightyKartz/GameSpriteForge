@@ -27,6 +27,12 @@ Build the selected checkout, use its absolute binary path, and record the source
 commit, build features, and binary SHA-256 alongside QA evidence. `--version` alone
 does not distinguish a development binary from a released binary with the same version.
 
+v0.3.0's doctor output carries compiled build identity and stable capability IDs.
+When adding a local contract, update capabilities alongside its implementation.
+Release verification uses `scripts/verify-cli-build.py` to match commit, version,
+default features and packaged `BUILD_INFO.json`; source archives report unknown
+Git values as `null`.
+
 From the selected repository root, a default-feature verification starts with:
 
 ```bash

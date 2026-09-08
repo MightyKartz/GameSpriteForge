@@ -17,8 +17,8 @@ fail() {
   exit 1
 }
 
-[ "$(uname -s)" = "Darwin" ] || fail "v0.2 supports macOS only"
-[ "$(uname -m)" = "arm64" ] || fail "v0.2 supports Apple Silicon (arm64) only"
+[ "$(uname -s)" = "Darwin" ] || fail "Forge CLI supports macOS only"
+[ "$(uname -m)" = "arm64" ] || fail "Forge CLI supports Apple Silicon (arm64) only"
 command -v curl >/dev/null 2>&1 || fail "curl is required"
 command -v shasum >/dev/null 2>&1 || fail "shasum is required"
 command -v ditto >/dev/null 2>&1 || fail "ditto is required"
