@@ -4,7 +4,7 @@
 
 **把你的 PNG 图片整理成 Godot 游戏素材。**
 
-Forge 是一款整理 2D 图标和道具的 CLI。用 Codex 或你喜欢的图片工具制作美术，将透明 PNG 交给 Forge，再把整理好的素材集交付到游戏项目。你可以直接在终端使用，也可以让 Codex、Claude 配合完成流程。
+Forge 是一款整理 2D 游戏美术素材的 CLI。用 Codex 或你喜欢的图片工具制作美术，将透明 PNG 交给 Forge，再把整理好的素材集交付到游戏项目。你可以直接在终端使用，也可以让 Codex、Claude 配合完成流程。
 
 [最新发布](https://github.com/MightyKartz/GameSpriteForge/releases/latest) ·
 [安装](#安装) ·
@@ -15,9 +15,9 @@ Forge 是一款整理 2D 图标和道具的 CLI。用 Codex 或你喜欢的图�
 
 [安装 CLI](#安装)后，在 Codex 中打开游戏项目，可以这样说：
 
-> 请用 Forge 和可用的图像工具，为这个 Godot 游戏制作一组森林主题背包图标。先读取 Forge 内置指南，保留原图，检查并导入素材。
+> 请用 Forge 和可用的图像工具，为这个 Godot 游戏制作一组森林主题背包图标。先运行 `forge guide`，保留原图，检查并导入素材。
 
-使用 Forge v0.3.2 时，Codex 可以直接从 CLI 读取操作指引和请求示例，无需安装 skill 或下载 Forge 源码。图片生成由独立的 Codex 工具完成，Forge 负责本地 PNG 处理、Pack 和 Godot 交付。已有的透明 PNG 可以直接交给 Forge。
+Codex 使用图像工具制作源图，Forge 负责整理 PNG、打包素材并交付到 Godot。你也可以直接使用已有的透明 PNG。
 
 ## 使用你喜欢的工具制作美术
 
@@ -41,13 +41,17 @@ Forge 是一款整理 2D 图标和道具的 CLI。用 Codex 或你喜欢的图�
 
 把静态素材 Pack 交付到 Godot 项目，获得纹理、可直接使用的道具场景，以及放置和渲染设置。在引擎中预览，再根据游戏效果调整大小与行为。
 
-![使用处理后的 PNG 精灵搭建的 Godot 演示场景](docs/media/showcase/godot.png)
+### Sword 项目原型素材预览
 
-*使用 Forge 处理后的 PNG，在 Godot 中搭建的演示场景。*
+这些素材已交付给 Sword 游戏原型：Codex 生成源图，Forge 处理交付，再由 Godot 回放动画。下方预览将已交付的动画帧放进独立展示场景中播放。
 
-### 按需继续制作
+![Sword 原型法术：离火、寒霜、落雷](docs/media/showcase/sword-spells.gif)
 
-查看任务进度、检查结果，美术有变化时提交更新后的素材集。Forge 支持终端、脚本和编程智能体，既适合处理几张素材，也能重复执行批量任务。
+*离火、寒霜、落雷。*
+
+![Sword 原型怪物：游魂、石傀、妖藤，以及守卫落击动作](docs/media/showcase/sword-enemies.gif)
+
+*游魂、石傀、妖藤，以及守卫落击动作。*
 
 ## 安装
 
@@ -65,17 +69,7 @@ forge doctor --json
 forge guide
 ```
 
-`forge guide` 离线读取当前可执行文件内置的说明。游戏工作流应始终使用已验证的可执行文件绝对路径；升级该 CLI 后，读取到的指南也随版本更新。
-
-### 可选：安装 Codex skill
-
-希望 Codex 按名称发现 `forge-use` 时，可以在游戏项目目录执行：
-
-```bash
-forge skill install --project .
-```
-
-也可以用 `forge skill install --user` 选择跨项目的个人安装。仅安装 CLI 不会自动注册 Codex skill。已安装的 skill 需要在 CLI 升级后显式更新，Forge 会保护用户修改。详见 [Codex 使用与可选配置](docs/automation/codex-skill.md)。
+`forge guide` 读取当前 CLI 版本附带的操作指引与请求示例，离线也能使用。
 
 制作第一组素材，请参考[本地 PNG 指南](docs/automation/codex-local-assets.md)，完成透明图片导入、Pack 检查和 Godot 安装。
 
@@ -83,18 +77,15 @@ Forge 也能通过在线服务商生成图标和道具集，详见 [CLI 指南](
 
 ## 开发中的功能
 
-**角色动画目前仍处于测试开发阶段。** 角色生成、动画复用和多方向动画仍需检查实际画面。实验性的动画复用辅助工具随源码提供，CLI 安装器不包含该工具。
-
-高级角色一致性和世界素材工作流也需要启用可选源码功能。版本的具体范围见 [v0.3.2 发布说明](docs/releases/v0.3.2.md)。
+**角色动画目前仍处于测试开发阶段。** 用于游戏前仍需检查实际动画效果。版本的具体范围见 [v0.3.2 发布说明](docs/releases/v0.3.2.md)。
 
 ## 文档
 
 - [CLI 指南](docs/automation/forge-cli.md)：命令、素材生成与处理、Godot 交付。
 - [PNG 图片工作流](docs/automation/codex-local-assets.md)：整理 Codex 或其他工具制作的 PNG，并交付到 Godot。
-- [Codex 使用与可选配置](docs/automation/codex-skill.md)：直接读取内置指南，或按需安装 `forge-use`。
 - [示例规格](examples/cli)：以现有示例开始制作自己的素材。
 - [发布说明](docs/releases/v0.3.2.md)：平台支持和版本范围。
-- [展示素材](docs/media/showcase/README.md)：图片来源与可复现的 Godot 演示。
+- [展示素材](docs/media/showcase/README.md)：美术来源与 Godot 预览。
 - [参与开发](CONTRIBUTING.md)：源码构建与开发检查。
 
 ## 许可证
