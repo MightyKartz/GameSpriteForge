@@ -1,0 +1,293 @@
+{
+  "scope": "Published package evidence; offline product fixtures are separate from local consumer imports.",
+  "sourceQuality": {
+    "rc2": {
+      "runUrl": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/34182255572",
+      "pullRequestHead": "5ec6e73dac48396d4a4c73514812d3b6e1f56c0e",
+      "testedMergeCommit": "13336606939cee95e85502860a403d53c14067b7",
+      "gates": [
+        {
+          "id": "rust-quality",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "character-v2-contract",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "character-v2-full-matrix",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "static-cli-contract",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "static-five-style-matrix",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "local-static-delivery",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "local-animation-delivery",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "world-assets-experimental",
+          "scope": "experimental",
+          "status": "pass"
+        }
+      ],
+      "rustPassed": 267,
+      "rustFailed": 0,
+      "rustIgnoredByDefault": 1,
+      "ignoredGodotTestCoveredByExplicitGate": true
+    },
+    "stable": {
+      "runUrl": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/34182361419",
+      "pullRequestHead": "86ca3d00c71c0d0d9d450be2587ef5463d7f9396",
+      "testedMergeCommit": "9238e3dd8893ce08310e4c8751856d7b123b30b2",
+      "gates": [
+        {
+          "id": "rust-quality",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "character-v2-contract",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "character-v2-full-matrix",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "static-cli-contract",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "static-five-style-matrix",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "local-static-delivery",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "local-animation-delivery",
+          "scope": "release_blocking",
+          "status": "pass"
+        },
+        {
+          "id": "world-assets-experimental",
+          "scope": "experimental",
+          "status": "pass"
+        }
+      ],
+      "rustPassed": 267,
+      "rustFailed": 0,
+      "rustIgnoredByDefault": 1,
+      "ignoredGodotTestCoveredByExplicitGate": true
+    }
+  },
+  "rc2": {
+    "tag": "v0.3.0-rc.2",
+    "commit": "87d453ba7bbbfd004ad8fe5ae9e0c614532191ef",
+    "releaseUrl": "https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.0-rc.2",
+    "binarySha256": "673cb52f3048a90129d0b50fe04e0a19712bbc72683635cb38e97582232519dc",
+    "archiveSha256": "ed3d1aafc625b2ab4be227bc8d1c17254713a4802aada150e8d1479019a579c8",
+    "identity": {
+      "ok": true,
+      "cliVersion": "0.3.0-rc.2",
+      "build": {
+        "gitCommit": "87d453ba7bbbfd004ad8fe5ae9e0c614532191ef",
+        "dirty": false,
+        "target": "aarch64-apple-darwin",
+        "profile": "release",
+        "features": []
+      },
+      "capabilities": [
+        "local_static_import",
+        "local_animation_import",
+        "preserve_source_coordinates",
+        "local_animation_timing",
+        "whole_sheet_source_transform",
+        "pack_validation",
+        "godot_install"
+      ],
+      "packagedPayloadChecked": true
+    },
+    "checks": [
+      {
+        "check": "tag-identity",
+        "exitCode": 0
+      },
+      {
+        "check": "remote-tag-ref",
+        "exitCode": 0
+      },
+      {
+        "check": "remote-tag-peel-0",
+        "exitCode": 0
+      },
+      {
+        "check": "release-metadata",
+        "exitCode": 0
+      },
+      {
+        "check": "download",
+        "exitCode": 0
+      },
+      {
+        "check": "archive-checksum",
+        "exitCode": 0
+      },
+      {
+        "check": "attestation",
+        "exitCode": 0
+      },
+      {
+        "check": "published-installer",
+        "exitCode": 0
+      },
+      {
+        "check": "installed-identity",
+        "exitCode": 0
+      },
+      {
+        "check": "actual-artifact-contract",
+        "exitCode": 0
+      }
+    ],
+    "installerMatchesTaggedSource": true,
+    "sbomComponentVersion": "0.3.0-rc.2",
+    "oldToNewUpgrade": "v0.2.1 -> v0.3.0-rc.2",
+    "providerScope": "Local asset imports have zero Provider requests; product fixtures use only the offline fixture Provider.",
+    "remoteTagCommitMatches": true,
+    "downloadedSbomMatchesVerifiedPredicate": true,
+    "sbomSha256": "e23c1998e56dd84f51c8fdb93d16f54d795c5a822636a69c1e42c66ffcab87b8",
+    "externalHelperSearchDisabledForWholeArtifactContract": true
+  },
+  "stable": {
+    "tag": "v0.3.0",
+    "commit": "60904c02a52f6831626ebbc4475f9c25db162931",
+    "releaseUrl": "https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.0",
+    "binarySha256": "e3693d317bd61937f0a0e1aa66306a88a9065dd3b47b35c62e2b07064149b912",
+    "archiveSha256": "6883d9c8b01a24bcc470e61fa59549e0233cb62451c48677679f618939762f48",
+    "identity": {
+      "ok": true,
+      "cliVersion": "0.3.0",
+      "build": {
+        "gitCommit": "60904c02a52f6831626ebbc4475f9c25db162931",
+        "dirty": false,
+        "target": "aarch64-apple-darwin",
+        "profile": "release",
+        "features": []
+      },
+      "capabilities": [
+        "local_static_import",
+        "local_animation_import",
+        "preserve_source_coordinates",
+        "local_animation_timing",
+        "whole_sheet_source_transform",
+        "pack_validation",
+        "godot_install"
+      ],
+      "packagedPayloadChecked": true
+    },
+    "checks": [
+      {
+        "check": "tag-identity",
+        "exitCode": 0
+      },
+      {
+        "check": "remote-tag-ref",
+        "exitCode": 0
+      },
+      {
+        "check": "remote-tag-peel-0",
+        "exitCode": 0
+      },
+      {
+        "check": "release-metadata",
+        "exitCode": 0
+      },
+      {
+        "check": "download",
+        "exitCode": 0
+      },
+      {
+        "check": "archive-checksum",
+        "exitCode": 0
+      },
+      {
+        "check": "attestation",
+        "exitCode": 0
+      },
+      {
+        "check": "published-installer",
+        "exitCode": 0
+      },
+      {
+        "check": "installed-identity",
+        "exitCode": 0
+      },
+      {
+        "check": "actual-artifact-contract",
+        "exitCode": 0
+      }
+    ],
+    "installerMatchesTaggedSource": true,
+    "sbomComponentVersion": "0.3.0",
+    "oldToNewUpgrade": "v0.2.1 -> v0.3.0",
+    "providerScope": "Local asset imports have zero Provider requests; product fixtures use only the offline fixture Provider.",
+    "remoteTagCommitMatches": true,
+    "downloadedSbomMatchesVerifiedPredicate": true,
+    "sbomSha256": "fca7b37c936cb577e37c2aa4aadf7689f81af87ffa256f6ad41824a3f352edb2",
+    "externalHelperSearchDisabledForWholeArtifactContract": true
+  },
+  "normalInstallation": {
+    "tag": "v0.3.0",
+    "githubLatestStable": "v0.3.0",
+    "commit": "60904c02a52f6831626ebbc4475f9c25db162931",
+    "binarySha256": "e3693d317bd61937f0a0e1aa66306a88a9065dd3b47b35c62e2b07064149b912",
+    "profileUnchanged": true,
+    "identity": {
+      "ok": true,
+      "cliVersion": "0.3.0",
+      "build": {
+        "gitCommit": "60904c02a52f6831626ebbc4475f9c25db162931",
+        "dirty": false,
+        "target": "aarch64-apple-darwin",
+        "profile": "release",
+        "features": []
+      },
+      "capabilities": [
+        "local_static_import",
+        "local_animation_import",
+        "preserve_source_coordinates",
+        "local_animation_timing",
+        "whole_sheet_source_transform",
+        "pack_validation",
+        "godot_install"
+      ],
+      "packagedPayloadChecked": true
+    },
+    "publicLauncherVerified": true,
+    "versionedBinaryPinnedForConsumer": true
+  }
+}

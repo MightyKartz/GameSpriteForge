@@ -1,0 +1,103 @@
+{
+  "scope": "Aggregate isolated local consumer evidence; private source media and project files remain local. RC2 reflects its tested consumer baseline.",
+  "rc2": {
+    "decision": "ALLOW_STABLE_RELEASE",
+    "scope": "Sword isolated consumer gate; stable package still requires its own verification",
+    "formal_clean_and_unchanged": true,
+    "forge_version": "0.3.0-rc.2",
+    "forge_commit": "87d453ba7bbbfd004ad8fe5ae9e0c614532191ef",
+    "binary_sha256": "673cb52f3048a90129d0b50fe04e0a19712bbc72683635cb38e97582232519dc",
+    "wrapper_default_lock_resolution": "PASS",
+    "replay_order": [
+      "static",
+      "scenery",
+      "animation"
+    ],
+    "packs_valid": 11,
+    "registry_entries_valid": 11,
+    "provider_requests": 0,
+    "check_exit_code": 0,
+    "tests": 137,
+    "assertions": 8064,
+    "failed": 0,
+    "skipped": 0,
+    "resource_counts": {
+      "packs": 11,
+      "static_items": 10,
+      "actions": 9,
+      "frames": 42,
+      "pngs": 19
+    },
+    "native_runtime_equal": true,
+    "png_rgba_equal": true,
+    "metadata_equal": true,
+    "source_images_sha_verified": 21,
+    "old_binaries_sha_verified": 2,
+    "comparisonSchema": 2,
+    "semanticCaptureSha256": "562ebd163637e699aface9d27a7e350d3b1ff301de5f8858f8bde93305c23edd"
+  },
+  "stable": {
+    "decision": "ALLOW_FORMAL_MIGRATION",
+    "scope": "Verified stable package and exact final lock/tool draft passed isolated Sword replay; formal migration remains a separate guarded operation",
+    "formal_clean_and_unchanged": true,
+    "forge_version": "0.3.0",
+    "forge_commit": "60904c02a52f6831626ebbc4475f9c25db162931",
+    "binary_sha256": "e3693d317bd61937f0a0e1aa66306a88a9065dd3b47b35c62e2b07064149b912",
+    "wrapper_default_lock_resolution": "PASS",
+    "replay_order": [
+      "static",
+      "scenery",
+      "animation"
+    ],
+    "packs_valid": 12,
+    "registry_entries_valid": 12,
+    "provider_requests": 0,
+    "check_exit_code": 0,
+    "tests": 145,
+    "assertions": 8124,
+    "failed": 0,
+    "skipped": 0,
+    "resource_counts": {
+      "packs": 12,
+      "static_items": 10,
+      "actions": 10,
+      "frames": 48,
+      "pngs": 20
+    },
+    "native_runtime_equal": true,
+    "png_rgba_equal": true,
+    "metadata_equal": true,
+    "source_images_sha_verified": 22,
+    "old_binaries_sha_verified": 2,
+    "comparisonSchema": 2,
+    "semanticCaptureSha256": "fda1cd641e753579fd8c4f44d393f5d6dce199a70ee0e3421549c815ef336bc3"
+  },
+  "formalMigration": {
+    "status": "complete",
+    "historicalProducerRecordsRetained": true,
+    "formalReimportPerformed": false,
+    "formalChecks": {
+      "checkExitCode": 0,
+      "tests": 145,
+      "assertions": 8124,
+      "failed": 0,
+      "skipped": 0,
+      "wrapperDefaultIdentityVerified": true,
+      "protectedExistingFilesUnchanged": 225,
+      "formalRegistrySha256": "3b47ab38f4b63627079cf2d99d53cbb57530c3e541e75601b023723f474cb7f1",
+      "formalRegistryUnchanged": true,
+      "sourceImagesShaVerified": 22,
+      "oldBinariesShaVerified": 2,
+      "rollbackLocksMatchOriginalBytes": true,
+      "doctorSha256": "de69eb5af49a68ecf91cc9865cb1e9b9351ea04f4fb385a1c422705b683aa980",
+      "originalCheckLogSha256": "ce02daaaa67fe8b399798d7f14cb395849c3e39efe14566f5de03970f7796b0c",
+      "checkLog": "formal-check.txt",
+      "checkLogSha256": "68518544acf5a3a427c03eaa85eeedcbdb4fbfda93d3b5b3b26112ccc28e32f0"
+    },
+    "activeLocksUseVerifiedVersionedStableBinary": true,
+    "oldLocksAndExecutablesRetained": true,
+    "localConsumerCommitCreated": true,
+    "consumerUploaded": false,
+    "workingTreeCleanAfterCommit": true
+  }
+}
