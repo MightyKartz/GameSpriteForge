@@ -75,7 +75,8 @@ const JSON_SCHEMA_VERSION: &str = "1";
 #[command(
     name = "forge",
     version,
-    about = "Agent-first game asset generation and Godot delivery"
+    about = "Agent-first game asset generation and Godot delivery",
+    after_help = "Start with `forge guide`, then read a topic with `forge guide static`,\n`forge guide provider`, or `forge guide animation`. No skill installation is needed.\nUse `forge guide --json` to discover all resources and examples.\n`forge skill install` is optional for Codex skill discovery."
 )]
 struct Cli {
     #[command(subcommand)]
@@ -85,7 +86,9 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     Doctor(JsonFlag),
-    /// Inspect and install the bundled forge-use skill for Codex.
+    /// Read the embedded usage guide or a topic without installing a skill.
+    Guide(skill::GuideArgs),
+    /// Inspect the bundled forge-use skill or optionally install it for Codex.
     Skill {
         #[command(subcommand)]
         command: skill::SkillCommand,
@@ -738,6 +741,7 @@ fn main() {
 fn run() -> Result<(), (String, String)> {
     let cli = Cli::parse();
     match cli.command {
+        Command::Guide(args) => skill::run_guide(args),
         Command::Skill { command } => skill::run(command),
         Command::Doctor(_) => {
             let profile = automation_profile();

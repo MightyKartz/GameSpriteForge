@@ -1,0 +1,174 @@
+{
+  "ok": true,
+  "binarySha256": "5972ed1b95ff6bcdc2d59beeee160ef873c46b3cd315acd565e4a6b92adc528a",
+  "build": {
+    "dirty": true,
+    "features": [],
+    "gitCommit": "1784c7a3b08e90cbab9e5671a490d9708d759847",
+    "profile": "debug",
+    "target": "aarch64-apple-darwin"
+  },
+  "contentHash": "3de3687ec98e1a48620c5382b5b39faff24c4ef264705cadb9db35d8a8655250",
+  "commandCount": 118,
+  "providerRequestsExecuted": 0,
+  "scope": "temporary projects/home; synthetic local PNGs; plans only; no Godot or Provider execution",
+  "caseCount": 33,
+  "cases": [
+    {
+      "name": "show_complete_bundle",
+      "passed": true,
+      "files": 6,
+      "relativeLinks": 13,
+      "contentHash": "3de3687ec98e1a48620c5382b5b39faff24c4ef264705cadb9db35d8a8655250"
+    },
+    {
+      "name": "guide_defaults_to_overview_without_skill_installation",
+      "passed": true
+    },
+    {
+      "name": "guide_topics_and_paths_match_plain_and_json_bundle",
+      "passed": true,
+      "resources": 6
+    },
+    {
+      "name": "guide_json_examples_are_unwrapped_request_documents",
+      "passed": true,
+      "paths": [
+        "examples/local-static.json",
+        "examples/provider-icons.json"
+      ]
+    },
+    {
+      "name": "guide_rejects_unknown_and_traversal_resources",
+      "passed": true,
+      "requests": 9
+    },
+    {
+      "name": "guide_reading_has_no_project_home_job_or_plan_side_effects",
+      "passed": true
+    },
+    {
+      "name": "guide_help_and_capability_discovery",
+      "passed": true
+    },
+    {
+      "name": "standalone_binary_guide_without_installation_repository_or_media_helpers",
+      "passed": true
+    },
+    {
+      "name": "guide_local_examples_create_real_zero_provider_plans_without_skill_installation",
+      "passed": true,
+      "examples": [
+        {
+          "path": "examples/local-static.json",
+          "kind": "prop_set",
+          "providerRequestEstimate": 0
+        }
+      ]
+    },
+    {
+      "name": "standalone_binary_install_without_repository_or_media_helpers",
+      "passed": true
+    },
+    {
+      "name": "project_install_check_and_idempotent_reinstall",
+      "passed": true
+    },
+    {
+      "name": "isolated_user_install_check_and_idempotent_reinstall",
+      "passed": true
+    },
+    {
+      "name": "protect_managed_edited",
+      "passed": true
+    },
+    {
+      "name": "protect_managed_deleted",
+      "passed": true
+    },
+    {
+      "name": "protect_managed_extra",
+      "passed": true
+    },
+    {
+      "name": "protect_managed_extra-directory",
+      "passed": true
+    },
+    {
+      "name": "protect_unmanaged_directory",
+      "passed": true
+    },
+    {
+      "name": "protect_manifest_invalid-json",
+      "passed": true
+    },
+    {
+      "name": "protect_manifest_wrong-owner",
+      "passed": true
+    },
+    {
+      "name": "protect_manifest_wrong-content-hash",
+      "passed": true
+    },
+    {
+      "name": "protect_manifest_path_traversal",
+      "passed": true
+    },
+    {
+      "name": "protect_symlink_agents",
+      "passed": true
+    },
+    {
+      "name": "protect_symlink_agents-skills",
+      "passed": true
+    },
+    {
+      "name": "protect_symlink_agents-skills-forge-use",
+      "passed": true
+    },
+    {
+      "name": "protect_symlink_project_root",
+      "passed": true
+    },
+    {
+      "name": "protect_symlink_manifest",
+      "passed": true
+    },
+    {
+      "name": "protect_symlink_managed-file",
+      "passed": true
+    },
+    {
+      "name": "protect_symlink_managed_directory",
+      "passed": true
+    },
+    {
+      "name": "protect_symlink_forge-skill-staging",
+      "passed": true
+    },
+    {
+      "name": "protect_symlink_forge-skill-backups",
+      "passed": true
+    },
+    {
+      "name": "protect_symlink_forge-use.install.lock",
+      "passed": true
+    },
+    {
+      "name": "upgrade_real_older_content_and_preserve_backup",
+      "passed": true,
+      "previousContentHash": "70766198f40711bc8f7d70951d3c5c1dd4edd2dc47980895459067720883e672",
+      "backupPath": "/Users/kartz/Development/Forge/target/qa/v032-guide/contracts-final/older-managed-bundle/.agents/.forge-skill-backups/32166-1788850418827911000-2/forge-use"
+    },
+    {
+      "name": "invalid_arguments_have_no_side_effects",
+      "passed": true,
+      "requests": 8
+    }
+  ],
+  "cliRustTestsPassed": 17,
+  "workspaceClippy": "pass",
+  "formatting": "pass",
+  "skillValidation": "pass",
+  "localMarkdownTargetsChecked": 81
+}

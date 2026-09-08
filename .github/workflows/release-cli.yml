@@ -9,7 +9,7 @@ on:
       version:
         description: "Release version to preflight (no GitHub Release is created)"
         required: true
-        default: "v0.3.1"
+        default: "v0.3.2"
         type: string
 
 permissions:
@@ -153,12 +153,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "${RUNNER_TEMP}/previous-release"
-          gh release download v0.3.0 --dir "${RUNNER_TEMP}/previous-release" \
+          gh release download v0.3.1 --dir "${RUNNER_TEMP}/previous-release" \
             --pattern 'forge-aarch64-apple-darwin.zip*'
           export PATH="${RUNNER_TEMP}/godot-bin:${PATH}"
           bash scripts/test-cli-release-artifact.sh \
             "${GITHUB_WORKSPACE}" "${FORGE_RELEASE_TAG}" \
-            "${RUNNER_TEMP}/previous-release" v0.3.0
+            "${RUNNER_TEMP}/previous-release" v0.3.1
 
       - name: Generate SBOM
         env:

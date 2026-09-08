@@ -52,22 +52,33 @@ The local animation CLI/Godot smoke requires Pillow; install
 Python 3.12. Its source-transform fixtures are synthetic and do not require
 consumer artwork or Provider credentials.
 
-## Bundled Codex skill
+## Embedded guide and optional Codex skill
 
 The single maintained skill source is `.agents/skills/forge-use/`. Keep every
 runtime reference and example inside that directory; the CLI embeds its explicit
-file list at compile time. When adding a bundled file, update the list in
-`packages/cli/src/skill.rs` and verify the complete installed bundle:
+file list at compile time. `forge guide` serves that same content directly, and
+optional skill installation writes it into a Codex discovery directory. Maintain
+both relative resource links for installed skills and `guide` commands for
+reading embedded references/examples without installation. Do not add a second
+guide content tree.
+
+When adding a bundled file, update the list in `packages/cli/src/skill.rs`, expose
+it in the guide resource list, and verify guide reads and the complete installed
+bundle:
 
 ```bash
 cargo build --locked -p forge-cli --no-default-features
 python3 scripts/test-cli-skill.py --forge "$PWD/target/debug/forge"
 ```
 
-This check exercises a standalone binary and isolated project/user installations,
-including update backups and preservation of modified content. Release checks
+This check exercises offline guide reads from a standalone binary and isolated
+project/user installations, including exact resource content, update backups and
+preservation of modified content. Release checks
 also run it through the installer's public launcher. Skill-only changes must run
-CI because they change the binary's embedded payload.
+CI because they change the binary's embedded payload. Guide reads must remain
+read-only with no credential or Job-store access. Updating a CLI changes the
+guide that executable returns; installed skill copies retain explicit update and
+user-modification protection. CLI installation does not register a Codex skill.
 
 Before submitting changes:
 

@@ -67,17 +67,29 @@ Capability checkpoint, checked 2026-09-08; recheck Git and command help when usi
 - Subject/Character V2, world assets, and game-art manifest commands are optional
   source-build capabilities. Read feature gates and the selected command's help.
 
-## Bundled product skill
+## Embedded guide and optional product skill
 
 From v0.3.1 the default CLI embeds `.agents/skills/forge-use/`. Maintain this as
 one self-contained source, with runtime links inside the bundle. The explicit
 file list lives in `packages/cli/src/skill.rs`; update it when adding resources.
+From v0.3.2 `guide [RESOURCE] [--json]` reads that same content without skill
+installation. Keep relative links usable in an installed bundle and provide
+`guide` commands for references/examples read from an executable. Do not create
+a second guide source. Plain output must preserve the original resource bytes;
+JSON must identify the selected file and the same bundle/build as `skill show`.
+Keep `embedded_usage_guide` in the build capabilities alongside the contract.
+Guide reads are offline and read-only, without Provider credentials, Plans,
+Jobs or Codex configuration. A CLI upgrade changes its embedded guide but does
+not update separately installed skill files or a consumer's toolchain lock.
+
 The build watches the skill directory, and skill-only edits must trigger CI.
 Run `scripts/test-cli-skill.py --forge /absolute/path/to/forge` for isolated
-installation, content identity, update backups and modification/symlink protection.
+guide reads, installation, content identity, update backups and modification/symlink protection.
 Use the public launcher for packaged checks. Never install into a real consumer
 or personal skill directory as a test. Codex discovery, Godot availability and
-image generation remain separate from successful file installation.
+image generation remain separate from successful file installation. Codex can
+read the guide without discovering a skill; installing only the CLI does not
+register the embedded bundle with Codex.
 
 ## Local processing and generation
 

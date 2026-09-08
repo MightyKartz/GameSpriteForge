@@ -10,6 +10,11 @@ stable local PNG → static Pack → Godot workflow. Character animation remains
 in development and testing. Codex's built-in image generation is an external
 source workflow, not a Forge Provider.
 
+For direct Codex use, v0.3.2 adds `guide`: agents can read the bundled workflow
+and examples without installing a skill or checking out Forge. Select the game's
+verified absolute executable as `FORGE_BIN` and use it for guide reads and asset
+commands alike. Do not replace an existing pin with whichever `forge` is on PATH.
+
 ## Output contract
 
 Successfully parsed commands invoked with `--json` write one JSON value to stdout:
@@ -48,6 +53,7 @@ hash and check the capabilities their requests require.
 
 ```text
 forge doctor --json
+forge guide [RESOURCE] [--json]
 forge skill show --json
 forge skill install --project /absolute/game --json
 forge skill check --project /absolute/game --json
@@ -79,7 +85,45 @@ forge plan execute --token TOKEN [--wait] --json
 used by low-level automation. Without `--wait` it returns a Job ID and a detached
 worker continues the job.
 
-### Bundled Codex skill
+### Embedded usage guide
+
+v0.3.2 adds the compiled capability `embedded_usage_guide`. `guide [RESOURCE]`
+reads one resource from the same self-contained bundle used by `skill show` and
+`skill install`; there is one maintained content source. Omitting `RESOURCE`
+selects `overview` (`SKILL.md`). The accepted topics and exact bundle-relative paths are:
+
+| Topic | Path |
+| --- | --- |
+| `overview` | `SKILL.md` |
+| `static` | `references/local-static.md` |
+| `provider` | `references/provider.md` |
+| `animation` | `references/animation.md` |
+| `static-example` | `examples/local-static.json` |
+| `provider-example` | `examples/provider-icons.json` |
+
+Plain output is the selected file's exact UTF-8 content without a heading or
+wrapper. `--json` returns the standard envelope with these `data` fields:
+
+- `name`, `schemaVersion`, `cliVersion`, `build`, `contentHash`: the same bundle
+  and compiled CLI identity as `skill show --json`.
+- `path`, `sha256`, `content`: the selected resource and its original content.
+- `resources`: all available resources, each with `topic`, `path`, `mediaType`.
+
+Only the listed resources are accepted; unknown topics and other paths return
+`guide_resource_not_found`. This command does not read arbitrary filesystem
+paths. It is offline and read-only, without Provider credential
+access, Plans, Jobs, skill installation or Codex configuration changes. Plain
+JSON examples can be saved with `"$FORGE_BIN" guide static-example > request.json`.
+Choose a new output path and check command success before consuming it: a failed
+command can leave an empty redirected file. Adapt the example before planning.
+
+Reading a guide from an upgraded CLI returns that version's embedded content.
+Separately installed skill files still require explicit updates. Keep an older
+game pin when using older contracts: v0.3.1 exposes its complete bundle with
+`skill show --json`; v0.3.0 has neither command and needs matching file
+documentation. Check capabilities and help before invoking a newer command.
+
+### Optional bundled Codex skill
 
 v0.3.1 adds `bundled_forge_use_skill` to the compiled capability list and includes
 the self-contained `forge-use` bundle. `skill install` and `skill check` require
@@ -93,7 +137,9 @@ and `files` (`path`, `sha256`, `content`).
 has `ok: true` even when the skill is missing or needs updating. Installation
 returns `action` (`installed`, `unchanged`, `updated`); updates report a
 `backupPath`. Runtime failures use the standard error envelope. See
-[Codex setup](codex-skill.md) for the content identity, update and conflict rules.
+[Codex usage and optional setup](codex-skill.md) for the content identity, update
+and conflict rules. Installing the CLI alone does not register a Codex skill;
+`guide` provides the default workflow without skill installation.
 
 ## Plans and jobs
 

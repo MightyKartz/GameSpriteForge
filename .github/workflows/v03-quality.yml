@@ -96,7 +96,7 @@ jobs:
           FORGE_V03_REPORT_DIR: ${{ runner.temp }}/forge-v03-quality
         run: bash scripts/test-v03-release-matrix.sh
 
-      - name: Verify bundled skill installation
+      - name: Verify embedded guide and optional skill installation
         run: |
           cargo build --locked -p forge-cli --no-default-features
           python3 scripts/test-cli-skill.py --forge "${GITHUB_WORKSPACE}/target/debug/forge" --output "${RUNNER_TEMP}/forge-v03-quality/skill"

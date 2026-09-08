@@ -7,14 +7,19 @@ description: Use Forge CLI to prepare local game art, generate icon or prop sets
 
 Start from the game's asset specs, toolchain lock and import receipts. This skill
 is self-contained: its required references and examples travel with the bundle.
-Installing it does not install or upgrade Forge, enable Codex image tools, or
-replace a project's pinned executable. Forge source development is a separate task.
+Forge v0.3.2 exposes this same bundle through `guide`, so reading and using it
+requires no skill installation or source checkout. An optional skill installation
+lets Codex discover it by name. Neither route installs or upgrades Forge, enables
+Codex image tools, or replaces a project's pinned executable. Forge source
+development is a separate task.
 
 ## Select the actual toolchain
 
-The capability baseline is the default Forge v0.3.0 CLI. Use the game's verified
-absolute executable path, including its installed launcher when applicable; do
-not substitute a convenient `forge` on PATH. Record that path and binary SHA-256:
+The asset-processing baseline is the default Forge v0.3.0 CLI. Use the game's
+verified absolute executable path, including its installed launcher when
+applicable. If no executable is pinned, locate the local installation and verify
+it before selecting it. Do not substitute a convenient `forge` on PATH for an
+existing lock. Record the selected path and binary SHA-256:
 
 ```bash
 export FORGE_BIN="/absolute/path/to/forge"
@@ -36,18 +41,44 @@ The stable local PNG → static Pack → Godot route requires `local_static_impo
 consumer contracts before updating any existing lock for future imports. Preserve
 old receipts and source history; actual re-imports create new receipts.
 
+## Read the matching guide
+
+On v0.3.2 or a verified build with `embedded_usage_guide`, `"$FORGE_BIN" guide`
+reads this entrypoint and the commands below read its bundled resources offline.
+They are read-only and use no Provider, Job store or Codex configuration. Keep
+using that same executable for the workflow. A CLI upgrade carries its matching
+guide; it does not update any separately installed skill files.
+
+When this skill is installed, the relative links below work within its directory.
+When reading it through the CLI, use the corresponding `guide` command instead
+of looking for those files in the game project. Older pinned executables such as
+v0.3.0 have no `guide` command: use matching file documentation and verify the
+older CLI's capabilities without changing its pin just to access documentation.
+v0.3.1 can expose the complete bundle through `"$FORGE_BIN" skill show --json`.
+Installed skill files can also be read directly; check their instructions against
+the pinned executable's capabilities.
+
 ## Choose the workflow
 
 - **Codex image generation or existing static PNGs:** read
-  [local static preparation and Godot delivery](references/local-static.md).
+  [local static preparation and Godot delivery](references/local-static.md),
+  or run `"$FORGE_BIN" guide static`.
   Use one PNG per icon or prop. Codex's image model is an external source tool,
   not a Forge Provider; local preparation needs no Provider login or Style Lock.
-- **Forge Provider generation:** read the [Provider workflow](references/provider.md)
-  for Style → icon/prop generation, usage evidence and targeted retry. This route
+- **Forge Provider generation:** read the [Provider workflow](references/provider.md),
+  or run `"$FORGE_BIN" guide provider`. It covers Style → icon/prop generation,
+  usage evidence and targeted retry. This route
   can make Provider requests. A local PNG alone does not require it.
-- **Actual animation frames:** read [experimental animation](references/animation.md)
-  for preserved coordinates, timing and sheet preprocessing. Unrelated still
+- **Actual animation frames:** read [experimental animation](references/animation.md),
+  or run `"$FORGE_BIN" guide animation`. It covers preserved coordinates, timing
+  and sheet preprocessing. Unrelated still
   items are not animation frames. Character animation remains experimental.
+
+The references link to local request examples. Without an installed bundle, read
+them with `"$FORGE_BIN" guide static-example` or `"$FORGE_BIN" guide provider-example`.
+Plain output is the resource's exact text; `--json` adds its path, SHA-256, bundle
+and CLI identity, and the resource list. Check command exit status before using
+the output, especially when redirecting an example into a new request file.
 
 ## Execute and assess results
 

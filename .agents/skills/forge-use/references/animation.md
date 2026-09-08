@@ -3,12 +3,14 @@
 Character animation remains in development and testing. The default v0.3.0 CLI
 can process local animation and preserve coordinates/timing; availability does not
 establish visual quality. For a still character or unrelated items, use
-[local static preparation](local-static.md).
+[local static preparation](local-static.md) (`"$FORGE_BIN" guide static`).
 
 Verify `local_animation_import`, `preserve_source_coordinates`,
 `local_animation_timing`, and, when needed, `whole_sheet_source_transform` in the
 selected executable's capabilities. v0.2.1 predates these newer local request
-fields. Respect the [toolchain and Job checks](../SKILL.md).
+fields. Respect the [toolchain and Job checks](../SKILL.md)
+(`"$FORGE_BIN" guide overview`). These `guide` commands require a verified CLI
+with `embedded_usage_guide`; installed links work with older pinned executables.
 
 ## Preserve intentional drawing coordinates
 
@@ -79,7 +81,8 @@ remain manual actions; the plan can still contain other supported corrections.
 Inspect both changes and remaining manual actions before executing a repair.
 
 Validate the Pack, then follow [Godot delivery](local-static.md#install-into-godot)
-with a stable asset key and target. Animation installs native `SpriteFrames` and
+(`"$FORGE_BIN" guide static`) with a stable asset key and target. Animation installs
+native `SpriteFrames` and
 `AnimatedSprite2D` resources. GIF previews use uniform FPS: inspect nonuniform
 `frameDurationsMs` in Pack/Godot resources and review actual playback in-engine.
 Keep original source hashes, request, source-transform evidence and receipt;

@@ -2,8 +2,10 @@
 
 Use this route when the requested work calls for generation by a Forge Provider.
 For Codex-generated or existing PNGs, use [local preparation](local-static.md)
-without Provider login or a Style Lock. Apply the shared
-[toolchain and Job checks](../SKILL.md).
+(`"$FORGE_BIN" guide static`) without Provider login or a Style Lock. Apply the
+shared [toolchain and Job checks](../SKILL.md) (`"$FORGE_BIN" guide overview`).
+The `guide` commands require a verified CLI with `embedded_usage_guide`; installed
+skill links remain usable with an older pinned executable.
 
 ## Select the project and Provider
 
@@ -58,19 +60,27 @@ plans. They can make Provider requests; run them only within the user's authoriz
 generation scope. Do not use these commands as a no-cost validation probe. In the
 v0.3.0 baseline, `--plan-only` is not a reliable dry run for Style/static generation.
 
+Copy [the Provider icon spec](../examples/provider-icons.json) from an installed
+skill, or retrieve it from the verified CLI into a new working request:
+
 ```bash
-"$FORGE_BIN" style create --project /absolute/assets --spec /absolute/asset-specs/style.json --wait --json
-"$FORGE_BIN" style inspect --project /absolute/assets --json
-"$FORGE_BIN" generate icon-set --project /absolute/assets --spec /absolute/asset-specs/provider-icons.json --wait --json
+"$FORGE_BIN" guide provider-example > /absolute/asset-specs/provider-icons.json
 ```
 
-Copy [the Provider icon spec](../examples/provider-icons.json) to the indicated
-working path and adapt it before generating. Its `prompt` fields ask the Provider
+Confirm the command succeeded before editing or consuming that file; a failed
+command can leave an empty redirected file. Adapt it before generating. Its
+`prompt` fields ask the Provider
 to create items; they are not local `path` inputs. Use actual rights information
 for `license`. For a prop set, change `kind` to `prop_set`, choose appropriate items,
 and call `generate prop-set`. The Style Lock records references, hashes,
 Provider/model identity, palette and sampling evidence; generation locks that
 Style revision rather than mutating it.
+
+```bash
+"$FORGE_BIN" style create --project /absolute/assets --spec /absolute/asset-specs/style.json --wait --json
+"$FORGE_BIN" style inspect --project /absolute/assets --json
+"$FORGE_BIN" generate icon-set --project /absolute/assets --spec /absolute/asset-specs/provider-icons.json --wait --json
+```
 
 Require each Job to succeed, inspect `job report --id JOB --json`, and review its
 media, consistency evidence and `providerRequestOccurred`/`providerRequestCount`.
@@ -94,9 +104,11 @@ actually performed. It cannot override corrupt media, invalid alpha/canvas/frame
 data or other hard gates. Do not use acceptance as an automatic success step.
 
 Find the resulting Pack in Job artifacts, validate it, then follow
-[Godot installation and receipts](local-static.md#install-into-godot). Keep stable
+[Godot installation and receipts](local-static.md#install-into-godot)
+(`"$FORGE_BIN" guide static`). Keep stable
 asset keys/targets and preserve Provider/Style provenance in the receipt.
 Character generation and its action-specific retry stages remain experimental;
-read [animation guidance](animation.md) before selecting that route. Optional
+read [animation guidance](animation.md) (`"$FORGE_BIN" guide animation`) before
+selecting that route. Optional
 Subject V2, world assets and game-art manifests are source-build capabilities;
 they are outside this default-CLI workflow.
