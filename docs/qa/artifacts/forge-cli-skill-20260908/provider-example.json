@@ -1,0 +1,135 @@
+{
+  "ok": true,
+  "scope": "Exact bundled Provider Style/icon examples through fixture only; no Godot or retries",
+  "cli": {
+    "sha256": "33dfc7f64ab44dceeb9a46bcb851196e886810c0b42f0817130f4f0d5c472187",
+    "version": "forge 0.3.1",
+    "build": {
+      "gitCommit": "ab16fa501babfcf6c0b4e8ae8ffde923e868b768",
+      "dirty": true,
+      "target": "aarch64-apple-darwin",
+      "profile": "debug",
+      "features": []
+    },
+    "capabilities": [
+      "local_static_import",
+      "local_animation_import",
+      "preserve_source_coordinates",
+      "local_animation_timing",
+      "whole_sheet_source_transform",
+      "pack_validation",
+      "godot_install",
+      "bundled_forge_use_skill"
+    ]
+  },
+  "provider": "fixture",
+  "externalProviderRequests": 0,
+  "externalProviderEvidence": "Project explicitly initializes fixture; no authentication command, xAI selection or external Provider used. Fixture usage counters are simulated requests.",
+  "commands": [
+    {
+      "name": "version",
+      "exitCode": 0,
+      "elapsedSeconds": 0.007,
+      "succeeded": true
+    },
+    {
+      "name": "doctor",
+      "exitCode": 0,
+      "elapsedSeconds": 0.29,
+      "envelopeOk": true,
+      "succeeded": true
+    },
+    {
+      "name": "project-init",
+      "exitCode": 0,
+      "elapsedSeconds": 0.006,
+      "envelopeOk": true,
+      "succeeded": true
+    },
+    {
+      "name": "style-create",
+      "exitCode": 0,
+      "elapsedSeconds": 0.022,
+      "envelopeOk": true,
+      "succeeded": true
+    },
+    {
+      "name": "style-inspect",
+      "exitCode": 0,
+      "elapsedSeconds": 0.005,
+      "envelopeOk": true,
+      "succeeded": true
+    },
+    {
+      "name": "style-report",
+      "exitCode": 0,
+      "elapsedSeconds": 0.005,
+      "envelopeOk": true,
+      "succeeded": true
+    },
+    {
+      "name": "generate-icon-set",
+      "exitCode": 0,
+      "elapsedSeconds": 0.104,
+      "envelopeOk": true,
+      "succeeded": true
+    },
+    {
+      "name": "icons-report",
+      "exitCode": 0,
+      "elapsedSeconds": 0.005,
+      "envelopeOk": true,
+      "succeeded": true
+    },
+    {
+      "name": "pack-validate",
+      "exitCode": 0,
+      "elapsedSeconds": 0.015,
+      "envelopeOk": true,
+      "succeeded": true
+    },
+    {
+      "name": "asset-inspect",
+      "exitCode": 0,
+      "elapsedSeconds": 0.016,
+      "envelopeOk": true,
+      "succeeded": true
+    }
+  ],
+  "examples": {
+    "style": {
+      "source": ".agents/skills/forge-use/references/provider.md first JSON code block",
+      "copiedWithoutChanges": true
+    },
+    "icons": {
+      "source": ".agents/skills/forge-use/examples/provider-icons.json",
+      "copiedWithoutChanges": true
+    },
+    "needsCorrection": false
+  },
+  "style": {
+    "jobId": "2440b019-bff0-4693-8892-99b0a7e98dfb",
+    "lifecycleState": "succeeded",
+    "providerId": "fixture",
+    "revision": "852ac322cdce1b07",
+    "reportProviderRequestOccurred": true,
+    "fixtureRequestCount": 1
+  },
+  "icons": {
+    "jobId": "374ab67f-012b-4d20-a93e-8ce27a47d1bc",
+    "lifecycleState": "succeeded",
+    "itemIds": [
+      "potion",
+      "key"
+    ],
+    "reportProviderRequestOccurred": true,
+    "fixtureRequestCount": 2
+  },
+  "pack": {
+    "valid": true,
+    "assetType": "icon_set",
+    "sourceKind": "provider_generation",
+    "sourceName": "fixture",
+    "manifestSha256": "b1d7cf596061294b563e0d35a371d7e182a72ca8ae625dcde9a293026775de74"
+  }
+}

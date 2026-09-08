@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "1",
+  "status": "pass",
+  "tag": "v0.3.1",
+  "commit": "1516bfa4def9fb425d9463b877adb5c7f7493733",
+  "releaseUrl": "https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.1",
+  "releaseRun": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/34192797493",
+  "releaseRunConclusion": "success",
+  "archiveSha256": "9cd68880717db49c15a489f113329cc12eeec72f8ab04c44e0bd42ba2ad03845",
+  "binarySha256": "eca2580903704ef08c8dea0c0d5808913dac37d44831d4de143cabd742e6d0ca",
+  "bundleContentHash": "e5d93005c28e3d3f3b7463c2b89ed2e90ec30ec705eaac1db66abd0ce0935791",
+  "bundleFiles": 6,
+  "identity": {
+    "ok": true,
+    "cliVersion": "0.3.1",
+    "build": {
+      "gitCommit": "1516bfa4def9fb425d9463b877adb5c7f7493733",
+      "dirty": false,
+      "target": "aarch64-apple-darwin",
+      "profile": "release",
+      "features": []
+    },
+    "capabilities": [
+      "local_static_import",
+      "local_animation_import",
+      "preserve_source_coordinates",
+      "local_animation_timing",
+      "whole_sheet_source_transform",
+      "pack_validation",
+      "godot_install",
+      "bundled_forge_use_skill"
+    ],
+    "packagedPayloadChecked": true
+  },
+  "checks": {
+    "localAndRemoteTagMatch": true,
+    "archiveChecksum": true,
+    "zipCrc": true,
+    "payloadManifest": true,
+    "installerMatchesTaggedSource": true,
+    "attestation": true,
+    "downloadedSbomMatchesSignedPredicate": true,
+    "freshInstall": true,
+    "sameVersionReinstall": true,
+    "upgradeFromV030": true,
+    "actualPackageSkillContractsPassed": 26,
+    "actualPackageSkillCommandCount": 66,
+    "fixtureProductAndNativeGodot": true,
+    "localStaticDeliveryCasesPassed": 3,
+    "localAnimationDeliveryCasesPassed": 5,
+    "externalHelperSearchDisabled": true,
+    "normalHttpsInstaller": true,
+    "normalPublicLauncherIdentity": true,
+    "normalCodexDiscovery": {
+      "passed": true,
+      "cases": [
+        {
+          "scope": "project",
+          "passed": true,
+          "discoveredScope": "repo",
+          "enabled": true,
+          "name": "forge-use",
+          "codex": "Codex Desktop/0.153.4 (Mac OS 26.6.2; arm64) dumb (forge-skill-qa; 0.3.1)",
+          "modelCalls": 0
+        },
+        {
+          "scope": "user",
+          "passed": true,
+          "discoveredScope": "user",
+          "enabled": true,
+          "name": "forge-use",
+          "codex": "Codex Desktop/0.153.4 (Mac OS 26.6.2; arm64) dumb (forge-skill-qa; 0.3.1)",
+          "modelCalls": 0
+        }
+      ]
+    },
+    "previousCliPreserved": true,
+    "shellProfileUnchanged": true,
+    "consumerLocksUnchanged": true
+  },
+  "providerScope": "Local asset imports: zero Provider requests; product and Provider examples: offline fixture only; zero real external Provider requests."
+}
