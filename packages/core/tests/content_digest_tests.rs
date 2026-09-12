@@ -103,3 +103,52 @@ fn rejects_symlinked_files_and_roots() {
     symlink(&root, temp.path().join("root-link")).unwrap();
     assert!(directory_inventory(&temp.path().join("root-link")).is_err());
 }
+
+#[cfg(windows)]
+#[test]
+fn windows_junctions_are_rejected_by_inventory_scan_and_catalog_writes() {
+    use std::path::Path;
+    fn junction(link: &Path, target: &Path) {
+        let output = std::process::Command::new("cmd.exe")
+            .args(["/D", "/C", "mklink", "/J"])
+            .arg(link)
+            .arg(target)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "junction creation failed: {output:?}"
+        );
+    }
+    // Junctions need no symlink privilege; this exercises real reparse points
+    // rather than skipping a test when developer-mode symlinks are unavailable.
+    let temp = tempfile::tempdir().unwrap();
+    let outside = temp.path().join("outside with spaces");
+    let root = temp.path().join("sources with spaces");
+    fs::create_dir(&outside).unwrap();
+    fs::create_dir(&root).unwrap();
+    fs::write(outside.join("protected.bin"), b"unchanged outside bytes").unwrap();
+    let link = root.join("junction with spaces");
+    junction(&link, &outside);
+    assert!(directory_inventory(&link).is_err());
+    assert!(directory_inventory(&root).is_err());
+    let scan = forge_core::library::intake::scan(&root).unwrap();
+    assert!(scan.batch.items.is_empty());
+    assert_eq!(scan.issues.len(), 1);
+    assert!(scan.issues[0].message.contains("link skipped"));
+    fs::remove_dir(&link).unwrap();
+
+    let library = temp.path().join("library with spaces");
+    fs::create_dir(&library).unwrap();
+    junction(&library.join(".forge"), &outside);
+    assert!(matches!(
+        forge_core::library::initialize(&library, "Redirected"),
+        Err(forge_core::catalog::CatalogError::Symlink)
+    ));
+    fs::remove_dir(library.join(".forge")).unwrap();
+    assert_eq!(
+        fs::read(outside.join("protected.bin")).unwrap(),
+        b"unchanged outside bytes"
+    );
+    assert_eq!(fs::read_dir(&outside).unwrap().count(), 1);
+}

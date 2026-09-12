@@ -95,6 +95,16 @@ those results and the manual browser gate are resolved.
 
 ## Verification boundaries
 
+The completion audit re-ran all five real-Godot transaction tests against the
+final runtime code: native update failure/rollback, provider-neutral V3 install,
+animation failure protocol, texture/cache restoration and retained A/B/A delivery
+all passed (`/tmp/forge-library-final-rollback.log`). It also identified a missing
+Windows-specific test: Unix symlink coverage did not prove junction behavior.
+`windows_junctions_are_rejected_by_inventory_scan_and_catalog_writes` now creates
+real junctions with paths containing spaces and checks inventory, scan and catalog
+write rejection without changing the target bytes. Its actual Windows result is
+part of the latest PR check run; the local macOS tests do not claim that result.
+
 A final compatibility check reproduced an error in the legacy catalog projection:
 an imported available Pack could be blocked by an unbound historical installation
 root. The fix prefers retained/alternate media and treats optional unavailable
