@@ -97,6 +97,48 @@ fn reconcile(
     ours.cloned()
 }
 
+fn review_conflicts(
+    root: &Path,
+    base: Option<&Value>,
+    ours: Option<&Value>,
+    theirs: Option<&Value>,
+    id: &str,
+    conflicts: &mut Vec<String>,
+) -> Result<(), CatalogError> {
+    let refs = |value: Option<&Value>| -> BTreeSet<String> {
+        value
+            .and_then(|v| v.get("reviews"))
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_str)
+            .map(String::from)
+            .collect()
+    };
+    let ancestor = refs(base);
+    let left = refs(ours);
+    let right = refs(theirs);
+    let mut left_domains = BTreeMap::new();
+    for digest in left.difference(&ancestor) {
+        let review: review::ReviewRecord = read_object(root, digest)?;
+        left_domains
+            .entry((review.revision, review.domain))
+            .or_insert_with(BTreeSet::new)
+            .insert(digest.clone());
+    }
+    for digest in right.difference(&ancestor) {
+        let review: review::ReviewRecord = read_object(root, digest)?;
+        let key = (review.revision, review.domain);
+        if left_domains
+            .get(&key)
+            .is_some_and(|values| !values.contains(digest))
+        {
+            conflicts.push(format!("asset/{id}/reviews/{}/{}", key.0, key.1));
+        }
+    }
+    Ok(())
+}
+
 pub fn run(
     root: &Path,
     base_path: &Path,
@@ -172,6 +214,14 @@ pub fn run(
         });
         let [ancestor, left, right] = values;
         let (ancestor, left, right) = (ancestor?, left?, right?);
+        review_conflicts(
+            root,
+            ancestor.as_ref(),
+            left.as_ref(),
+            right.as_ref(),
+            id,
+            &mut conflicts,
+        )?;
         if let Some(value) = reconcile(
             ancestor.as_ref(),
             left.as_ref(),

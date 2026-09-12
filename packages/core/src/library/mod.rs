@@ -207,6 +207,7 @@ pub fn read_asset(
     if asset.asset_id != id
         || id.trim().is_empty()
         || asset.revisions.is_empty()
+        || asset.purpose.as_ref().is_some_and(|p| p.trim().is_empty())
         || asset.revisions.iter().any(|v| !valid_digest(v))
         || asset
             .revisions
@@ -280,6 +281,13 @@ pub fn read_revision(
     let revision: AssetRevision = read_object(root, digest)?;
     if revision.schema_version != "1"
         || revision.asset_id != asset.asset_id
+        || revision.parent_revisions.iter().any(|p| !valid_digest(p))
+        || revision
+            .parent_revisions
+            .iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .len()
+            != revision.parent_revisions.len()
         || revision
             .legacy
             .as_ref()

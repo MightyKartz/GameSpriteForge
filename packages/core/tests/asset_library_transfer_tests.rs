@@ -287,3 +287,43 @@ fn git_merge_preserves_parallel_versions_and_reports_selection_conflicts_without
     );
     assert_eq!(fs::read(&head).unwrap(), conflict_markers);
 }
+
+#[test]
+fn concurrent_review_assertions_require_explicit_resolution() {
+    let (temp, root, _source, mut batch, reference) = fixture();
+    batch.items[0].purpose = Some(" ".into());
+    assert!(intake::register(&root, &batch).is_err());
+    batch.items[0].purpose = None;
+    batch.items[0].parent_revisions = vec![reference.revision.clone(), reference.revision.clone()];
+    assert!(intake::register(&root, &batch).is_err());
+    let head = root.join(".forge/catalog.json");
+    let base = temp.path().join("base.json");
+    let ours = temp.path().join("ours.json");
+    let theirs = temp.path().join("theirs.json");
+    fs::copy(&head, &base).unwrap();
+    let evidence = temp.path().join("notes.txt");
+    fs::write(&evidence, "Fixture observation").unwrap();
+    let mut request = ReviewRequest {
+        reference,
+        domain: "technical".into(),
+        verdict: "approved".into(),
+        statement: "Branch A observation".into(),
+        reviewer: "Fixture".into(),
+        evidence,
+    };
+    review::record(&root, &request).unwrap();
+    fs::copy(&head, &ours).unwrap();
+    fs::copy(&base, &head).unwrap();
+    request.verdict = "rejected".into();
+    request.statement = "Branch B observation".into();
+    review::record(&root, &request).unwrap();
+    fs::copy(&head, &theirs).unwrap();
+    let original = fs::read(&head).unwrap();
+    let preview = library::merge::run(&root, &base, &ours, &theirs, None).unwrap();
+    assert_eq!(preview.conflicts.len(), 1);
+    assert!(preview.conflicts[0].contains("/reviews/"));
+    let result =
+        library::merge::run(&root, &base, &ours, &theirs, Some(&preview.expected_sha256)).unwrap();
+    assert!(!result.applied);
+    assert_eq!(original, fs::read(head).unwrap());
+}

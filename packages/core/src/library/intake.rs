@@ -288,6 +288,18 @@ fn register_inner(
         if item.asset_id.trim().is_empty() || item.name.trim().is_empty() {
             return Err(invalid("assetId and name cannot be empty"));
         }
+        if item.purpose.as_ref().is_some_and(|p| p.trim().is_empty())
+            || item
+                .parent_revisions
+                .iter()
+                .collect::<std::collections::BTreeSet<_>>()
+                .len()
+                != item.parent_revisions.len()
+        {
+            return Err(invalid(
+                "purpose must be nonempty and parent revisions must be unique",
+            ));
+        }
         if item.expected_content != content_at(&item.path)? {
             return Err(invalid(format!("content drift: {}", item.path.display())));
         }

@@ -110,7 +110,8 @@ After Git brings both branches' immutable objects into one store, save the three
 catalog versions to separate JSON files. Run `project merge-assets --project PATH
 --base base.json --ours ours.json --theirs theirs.json --json`. A conflict-free
 preview can be applied with `--apply --expected-sha256 DIGEST`. Parallel append-only
-history is preserved. Conflicting selections or metadata are explicitly reported;
+history is preserved. Conflicting selections, metadata or concurrent review
+assertions for the same revision/domain are explicitly reported;
 resolve those inputs and preview again. Forge does not use timestamps to choose
 a winner. `verify-assets --rebuild-index` checks the merged authoritative records
 and recreates only a disposable cache. Queries never migrate or repair storage.
