@@ -14,7 +14,8 @@ use super::{
 use crate::{
     asset_project::{
         export_static_pack_with_source, hash_file, SamplingMode, StaticAssetItemSpecV1,
-        StaticAssetKind, StaticAssetSetSpecV1, StaticPackItem, StaticPackSource,
+        StaticAssetKind, StaticAssetSetSpecV1, StaticCanvasPolicy, StaticPackItem,
+        StaticPackSource,
     },
     job::{JobArtifactRecord, JobLifecycleState, JobRecord, JobState, JobStore},
 };
@@ -37,8 +38,22 @@ pub(super) fn validate_request(request: &PrepareStaticRequest) -> Result<(), Str
     {
         return Err("prepare-static requires an engine-safe id, name, and explicit license".into());
     }
-    if !(64..=512).contains(&request.canvas_size) || !request.canvas_size.is_power_of_two() {
-        return Err("canvasSize must be a power of two from 64 through 512".into());
+    match request.canvas_policy {
+        StaticCanvasPolicy::Normalize => {
+            if !request
+                .canvas_size
+                .is_some_and(|size| (64..=512).contains(&size) && size.is_power_of_two())
+            {
+                return Err(
+                    "normalize requires canvasSize to be a power of two from 64 through 512".into(),
+                );
+            }
+        }
+        StaticCanvasPolicy::PreserveSource => {
+            if request.canvas_size.is_some() || request.edge_padding_px != 0 {
+                return Err("preserve_source does not accept canvasSize or nonzero edgePaddingPx; source pixels and origin are retained".into());
+            }
+        }
     }
     if request.items.is_empty() || request.items.len() > 64 {
         return Err("prepare-static requires 1..=64 items".into());
@@ -49,6 +64,7 @@ pub(super) fn validate_request(request: &PrepareStaticRequest) -> Result<(), Str
         );
     }
     let mut ids = HashSet::new();
+    let mut dimensions = None;
     for item in &request.items {
         if !valid_id(&item.id)
             || item.name.trim().is_empty()
@@ -59,7 +75,13 @@ pub(super) fn validate_request(request: &PrepareStaticRequest) -> Result<(), Str
                 item.id
             ));
         }
-        let image = read_png(&item.path)?;
+        let image = read_png(&item.path, request.canvas_policy)?;
+        if request.canvas_policy == StaticCanvasPolicy::PreserveSource {
+            if dimensions.is_some_and(|size| size != image.dimensions()) {
+                return Err("preserve_source items within one Pack must have the same source dimensions; use separate Packs for different canvases".into());
+            }
+            dimensions = Some(image.dimensions());
+        }
         if !image
             .pixels()
             .any(|pixel| pixel[3] >= request.foreground_alpha_threshold)
@@ -73,7 +95,7 @@ pub(super) fn validate_request(request: &PrepareStaticRequest) -> Result<(), Str
     Ok(())
 }
 
-fn read_png(path: &Path) -> Result<RgbaImage, String> {
+fn read_png(path: &Path, policy: StaticCanvasPolicy) -> Result<RgbaImage, String> {
     let metadata = fs::metadata(path).map_err(|e| format!("{}: {e}", path.display()))?;
     if !metadata.is_file() || metadata.len() > 32 * 1024 * 1024 {
         return Err(format!(
@@ -92,7 +114,35 @@ fn read_png(path: &Path) -> Result<RgbaImage, String> {
     if width == 0 || height == 0 || width > 4096 || height > 4096 {
         return Err("source PNG dimensions must be 1..=4096 pixels".into());
     }
+    let file = fs::File::open(path).map_err(|e| e.to_string())?;
+    let mut container = png::Decoder::new(std::io::BufReader::new(file))
+        .read_info()
+        .map_err(|e| format!("invalid PNG input: {e}"))?;
+    if container.info().animation_control.is_some() {
+        return Err("static preparation accepts still PNGs, not APNG animations".into());
+    }
+    if policy == StaticCanvasPolicy::PreserveSource
+        && (container.info().bit_depth != png::BitDepth::Eight
+            || !matches!(
+                container.info().color_type,
+                png::ColorType::Rgb | png::ColorType::Rgba
+            ))
+    {
+        return Err("preserve_source currently requires 8-bit RGB or RGBA PNG content".into());
+    }
+    container
+        .finish()
+        .map_err(|e| format!("invalid PNG container: {e}"))?;
     let decoded = image::open(path).map_err(|e| e.to_string())?;
+    if policy == StaticCanvasPolicy::PreserveSource {
+        if !matches!(
+            decoded.color(),
+            image::ColorType::Rgb8 | image::ColorType::Rgba8
+        ) {
+            return Err("preserve_source currently requires 8-bit RGB or RGBA PNG content".into());
+        }
+        return Ok(decoded.to_rgba8());
+    }
     if !decoded.color().has_alpha() {
         return Err(format!(
             "source PNG must have an alpha channel: {}",
@@ -138,6 +188,13 @@ fn normalize(
         return Err("no foreground reaches foregroundAlphaThreshold".into());
     }
     let foreground_bounds = [left, top, right + 1, bottom + 1];
+    if request.canvas_policy == StaticCanvasPolicy::PreserveSource {
+        return Ok(StaticNormalization {
+            image: image.clone(),
+            foreground_bounds,
+            crop_bounds: [0, 0, image.width(), image.height()],
+        });
+    }
     left = left.saturating_sub(request.edge_padding_px);
     top = top.saturating_sub(request.edge_padding_px);
     right = (right + request.edge_padding_px).min(image.width() - 1);
@@ -145,7 +202,7 @@ fn normalize(
     let crop_bounds = [left, top, right + 1, bottom + 1];
     let cropped =
         image::imageops::crop_imm(image, left, top, right - left + 1, bottom - top + 1).to_image();
-    let canvas = request.canvas_size;
+    let canvas = request.canvas_size.ok_or("normalize requires canvasSize")?;
     let usable = (canvas as f32 * 0.82).round() as u32;
     let ratio =
         (usable as f32 / cropped.width() as f32).min(usable as f32 / cropped.height() as f32);
@@ -197,18 +254,26 @@ pub(super) fn run_prepare_static(
         }
         let source_path = source_dir.join(format!("{}.png", item.id));
         fs::copy(&item.path, &source_path)?;
-        let image = read_png(&source_path).map_err(AutomationRunError::Processing)?;
+        let image = read_png(&source_path, request.canvas_policy)
+            .map_err(AutomationRunError::Processing)?;
         let source_hash =
             hash_file(&source_path).map_err(|e| AutomationRunError::Processing(e.to_string()))?;
         let output = normalize(&image, request).map_err(AutomationRunError::Processing)?;
         let output_path = normalized_dir.join(format!("{}.png", item.id));
-        output.image.save(&output_path)?;
+        if request.canvas_policy == StaticCanvasPolicy::PreserveSource {
+            // Preserve encoding, RGB/RGBA color mode, alpha, and every source pixel exactly.
+            fs::copy(&source_path, &output_path)?;
+        } else {
+            output.image.save(&output_path)?;
+        }
         let normalized_hash =
             hash_file(&output_path).map_err(|e| AutomationRunError::Processing(e.to_string()))?;
         provenance.insert(item.id.clone(), json!({"sourceKind":"import_png", "sha256":source_hash, "normalizedSha256":normalized_hash}));
         source_items.push(json!({"id":item.id,"sha256":source_hash,"normalizedSha256":normalized_hash,
             "sourceWidth":image.width(),"sourceHeight":image.height(),"outputWidth":output.image.width(),"outputHeight":output.image.height(),
-            "foregroundBounds":output.foreground_bounds,"cropBounds":output.crop_bounds}));
+            "foregroundBounds":output.foreground_bounds,"cropBounds":output.crop_bounds,
+            "canvasPolicy":request.canvas_policy,"sourceBytesPreserved":source_hash == normalized_hash,
+            "hasTransparentPixels":image.pixels().any(|p| p[3] == 0)}));
         items.push(StaticPackItem {
             id: item.id.clone(),
             name: item.name.clone(),
@@ -228,9 +293,10 @@ pub(super) fn run_prepare_static(
     let report = json!({"schemaVersion":"1","profile":PROFILE,"assetType":request.kind,
         "providerRequestOccurred":false,"providerRequestCount":0,"styleConsistencyEvaluated":false,
         "visualReviewRequired":true,"verdict":"game_ready","items":source_items,
-        "checks":{"validPng":true,"visibleForeground":true,"transparentBackground":true,
-            "uniformCanvas":true,"alphaPreservedWithoutChromaKey":true},
-        "normalization":{"foregroundAlphaThreshold":request.foreground_alpha_threshold,"edgePaddingPx":request.edge_padding_px},
+        "checks":{"validPng":true,"visibleForeground":true,"transparentBackground":source_items.iter().all(|item| item["hasTransparentPixels"] == true),
+            "uniformCanvas":true,"alphaPreservedWithoutChromaKey":true,
+            "sourceCanvasPreserved":request.canvas_policy == StaticCanvasPolicy::PreserveSource},
+        "normalization":{"canvasPolicy":request.canvas_policy,"foregroundAlphaThreshold":request.foreground_alpha_threshold,"edgePaddingPx":request.edge_padding_px},
         "notes":["game_ready describes local structural checks; source artwork still requires visual review", "bounds use exclusive right/bottom; edge padding is in source pixels and retained inside the normalized canvas"]});
     let report_path = record.job_dir.join("local-import-report.json");
     fs::write(&report_path, serde_json::to_vec_pretty(&report)?)?;
@@ -253,11 +319,12 @@ pub(super) fn run_prepare_static(
     };
     let source = StaticPackSource {
         sampling: request.sampling.clone(),
+        canvas_policy: request.canvas_policy,
         item_provenance: provenance,
-        source: json!({"kind":"import_frames","name":"Local transparent PNG files",
+        source: json!({"kind":"import_frames","name":"Local PNG files",
             "metadata":{"operation":PROFILE,"providerRequestOccurred":false,"providerRequestCount":0,
                 "inputFingerprint":record.input_hash,"recipeHash":record.recipe_hash,"inputs":source_items,
-                "normalization":{"foregroundAlphaThreshold":request.foreground_alpha_threshold,"edgePaddingPx":request.edge_padding_px}}}),
+                "normalization":{"canvasPolicy":request.canvas_policy,"foregroundAlphaThreshold":request.foreground_alpha_threshold,"edgePaddingPx":request.edge_padding_px}}}),
     };
     let pack = export_static_pack_with_source(
         &record.job_dir.join("exports"),

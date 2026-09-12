@@ -72,9 +72,12 @@ pub fn runtime_tool_directory() -> Option<PathBuf> {
     // macOS can report the public launcher symlink instead of its payload.
     let executable = env::current_exe().ok()?.canonicalize().ok()?;
     let directory = executable.parent()?.to_path_buf();
-    let ffmpeg = directory.join("ffmpeg");
-    let ffprobe = directory.join("ffprobe");
-    (ffmpeg.is_file() && ffprobe.is_file()).then_some(directory)
+    let has_tool = |name| {
+        path_candidates(name, &directory)
+            .iter()
+            .any(|path| path.is_file())
+    };
+    (has_tool("ffmpeg") && has_tool("ffprobe")).then_some(directory)
 }
 
 pub fn find_in_path(binary_name: &str) -> Option<String> {
@@ -168,11 +171,13 @@ fn path_candidates(binary_name: &str, directory: &Path) -> Vec<PathBuf> {
     let candidates = vec![directory.join(binary_name)];
 
     #[cfg(windows)]
-    {
+    let candidates = {
+        let mut candidates = candidates;
         if !binary_name.ends_with(".exe") {
             candidates.push(directory.join(format!("{binary_name}.exe")));
         }
-    }
+        candidates
+    };
 
     candidates
 }
@@ -199,6 +204,19 @@ mod tests {
         let found = find_in_directories("ffmpeg", vec![temp.path().to_path_buf()]).unwrap();
 
         assert_eq!(found, binary.to_string_lossy());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn find_in_directories_resolves_windows_executable_extension() {
+        let temp = tempfile::tempdir().unwrap();
+        let binary = temp.path().join("ffmpeg.exe");
+        std::fs::write(&binary, b"").unwrap();
+
+        let found = find_in_directories("ffmpeg", vec![temp.path().to_path_buf()]).unwrap();
+
+        assert_eq!(found, binary.to_string_lossy());
+        assert_eq!(path_candidates("ffmpeg.exe", temp.path()), vec![binary]);
     }
 
     #[test]

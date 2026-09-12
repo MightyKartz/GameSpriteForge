@@ -72,7 +72,7 @@ for index in range(3):
     paths.append(str(path))
 base = {'schemaVersion': '1', 'input': {'kind': 'png_sequence', 'paths': paths},
         'metadata': {'name': 'F01 single', 'animation': 'idle', 'fps': 10, 'frameDurationsMs': [70, 150, 230]},
-        'rendering': {'textureFilter': 'linear', 'pixelSnap': False},
+        'rendering': {'textureFilter': 'linear', 'pixelSnap': False, 'blendMode': 'add'},
         'normalize': {'mode': 'preserve_source', 'margin': 0, 'marginBottom': 0, 'alphaThreshold': 0,
                       'manualAnchor': {'x': 32.5, 'y': 52.25, 'lockedByUser': True}},
         'quality': {'requireGameReady': False}}
@@ -86,7 +86,7 @@ character['animations'] = [
 ]
 nearest = copy.deepcopy(base)
 nearest['metadata']['name'] = 'F01 nearest'
-nearest['rendering'] = {'textureFilter': 'nearest', 'pixelSnap': True}
+nearest['rendering'] = {'textureFilter': 'nearest', 'pixelSnap': True, 'blendMode': 'multiply'}
 nearest['normalize']['manualAnchor'] = {'x': 32, 'y': 52, 'lockedByUser': True}
 legacy = copy.deepcopy(base)
 legacy['metadata']['name'] = 'F01 legacy'
@@ -215,6 +215,12 @@ func _initialize() -> void:
 		assert(scene is PackedScene)
 		var root = scene.instantiate()
 		var sprite = root.get_node("AnimatedSprite2D")
+		assert(root.has_method("play") and root.has_method("pause") and root.has_method("seek") and root.has_method("set_speed"))
+		if name == "nearest":
+			assert(sprite.material is ShaderMaterial and sprite.material.shader.resource_path.get_file() == "forge_alpha_multiply.gdshader")
+		else:
+			assert(sprite.material is CanvasItemMaterial)
+			assert(sprite.material.blend_mode == (0 if name == "legacy" else 1))
 		var native = sprite.sprite_frames
 		var action = "attack" if name == "character" else "idle"
 		assert(native.get_frame_count(action) == (4 if name == "source_transform" else 3))

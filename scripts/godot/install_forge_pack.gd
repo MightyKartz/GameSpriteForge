@@ -42,6 +42,10 @@ func _initialize() -> void:
 		_install_audio_set(helper, target_res)
 		_complete(target_res, asset_type)
 		return
+	if asset_type == "layered":
+		_verify_layered_resources(target_res)
+		_complete(target_res, asset_type)
+		return
 	if asset_type == "terrain_set":
 		_install_terrain_set(helper, target_res)
 		_complete(target_res, asset_type)
@@ -153,6 +157,12 @@ func _initialize() -> void:
 		return
 	var root := Node2D.new()
 	root.name = "ForgeAnimatedSprite"
+	var player_script := load(target_res.path_join("forge_player.gd")) as Script
+	if player_script == null or not player_script.can_instantiate():
+		root.free()
+		_fail("Cannot load the Forge playback controller.")
+		return
+	root.set_script(player_script)
 	var sprite := AnimatedSprite2D.new()
 	sprite.name = "AnimatedSprite2D"
 	sprite.sprite_frames = native_frames
@@ -166,6 +176,22 @@ func _initialize() -> void:
 			_fail("Unsupported spriteFrames.rendering.textureFilter: %s" % texture_filter)
 			return
 	sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_DISABLED
+	var blend := String(rendering.get("blendMode", "normal"))
+	if not blend in ["normal", "add", "multiply"]:
+		_fail("Unsupported animation blendMode: " + blend)
+		return
+	if blend == "multiply":
+		var multiply_shader := load(target_res.path_join("forge_alpha_multiply.gdshader")) as Shader
+		if multiply_shader == null:
+			_fail("Missing alpha-aware multiply shader.")
+			return
+		var blend_material := ShaderMaterial.new()
+		blend_material.shader = multiply_shader
+		sprite.material = blend_material
+	else:
+		var blend_material := CanvasItemMaterial.new()
+		blend_material.blend_mode = 1 if blend == "add" else 0
+		sprite.material = blend_material
 	var default_animation := String(spec.get("defaultAnimation", animations[0].get("name", "idle")))
 	if !native_frames.has_animation(default_animation):
 		_fail("Default animation is missing from SpriteFrames: %s" % default_animation)
@@ -762,6 +788,52 @@ func _required_array(source: Dictionary, key: String, context: String) -> Array:
 		return []
 	return source[key]
 
+func _verify_layered_resources(target_res: String) -> void:
+	var manifest := _read_json(target_res.path_join("manifest.json"))
+	if _failed:
+		return
+	var root := _load_scene(target_res.path_join("layered.tscn"))
+	if _failed:
+		return
+	for method in ["play", "pause", "seek", "set_speed", "state", "reset_pose"]:
+		if not root.has_method(method):
+			root.free()
+			_fail("Layered scene has no common playback method: " + method)
+			return
+	root.call("reset_pose")
+	var container := root.get_node_or_null("Layers")
+	var layers: Array = manifest.get("layers", [])
+	if container == null or container.get_child_count() != layers.size():
+		root.free()
+		_fail("Layered scene has missing or extra layers.")
+		return
+	for index in layers.size():
+		var layer: Dictionary = layers[index]
+		var node := container.get_child(index) as Node2D
+		var sprite := node.get_node_or_null("Sprite") as Sprite2D if node != null else null
+		var pivot := Vector2(float(layer["pivot"][0]), float(layer["pivot"][1]))
+		var transform: Dictionary = layer["transform"]
+		var position := pivot + Vector2(float(transform["position"][0]), float(transform["position"][1]))
+		var scale_value := Vector2(float(transform["scale"][0]), float(transform["scale"][1]))
+		var expected_filter := CanvasItem.TEXTURE_FILTER_NEAREST if String(manifest["sampling"]) == "nearest" else CanvasItem.TEXTURE_FILTER_LINEAR
+		if node == null or String(node.name) != String(layer["id"]) or sprite == null or sprite.texture == null:
+			root.free()
+			_fail("Layered scene texture/order differs from its manifest.")
+			return
+		if sprite.texture.get_size() != Vector2(float(manifest["canvas"]["width"]), float(manifest["canvas"]["height"])) or sprite.centered or not sprite.position.is_equal_approx(-pivot):
+			root.free()
+			_fail("Layered scene lost its shared canvas/pivot.")
+			return
+		if not node.position.is_equal_approx(position) or not node.scale.is_equal_approx(scale_value) or not is_equal_approx(node.rotation, deg_to_rad(float(transform["rotationDegrees"]))) or not is_equal_approx(node.modulate.a, float(transform["opacity"])):
+			root.free()
+			_fail("Layered initial transform differs from the manifest.")
+			return
+		if not _blend_matches(sprite, String(layer["blend"])) or sprite.texture_filter != expected_filter:
+			root.free()
+			_fail("Layered blend/filter differs from the manifest.")
+			return
+	root.free()
+
 func _fail(message: String) -> void:
 	_failed = true
 	push_error(message)
@@ -773,6 +845,9 @@ func _fail(message: String) -> void:
 func _verify_native_resources(helper: Dictionary, pack_path: String, target_res: String, asset_type: String) -> void:
 	if asset_type == "audio_set":
 		_verify_audio_set(helper, pack_path, target_res)
+		return
+	if asset_type == "layered":
+		_verify_layered_resources(target_res)
 		return
 	if asset_type == "icon_set" or asset_type == "prop_set":
 		var items := _required_array(helper, "items", "godot_import.json")
@@ -888,9 +963,15 @@ func _verify_native_resources(helper: Dictionary, pack_path: String, target_res:
 		_fail("Installed AnimatedSprite2D scene does not reference the expected SpriteFrames/default animation.")
 		return
 	_verify_rendering(sprite, spec.get("rendering", {"textureFilter": "nearest", "pixelSnap": true}), spec["anchor"], Vector2(float(spec.get("frameWidth", atlas["frameWidth"])), float(spec.get("frameHeight", atlas["frameHeight"]))), true)
+	if not root.has_method("play") or not root.has_method("seek") or not root.has_method("set_speed"):
+		_fail("Installed animation scene has no common playback interface.")
 	root.free()
 
 func _verify_rendering(sprite: Node2D, rendering: Dictionary, anchor: Dictionary, size: Vector2, animated: bool) -> void:
+	if animated:
+		if not _blend_matches(sprite, String(rendering.get("blendMode", "normal"))):
+			_fail("Installed animation blendMode differs from the Pack.")
+			return
 	var filter_name := String(rendering.get("textureFilter", "nearest"))
 	var expected_filter := CanvasItem.TEXTURE_FILTER_NEAREST if filter_name == "nearest" else CanvasItem.TEXTURE_FILTER_LINEAR
 	var anchor_position := Vector2(float(anchor["x"]), float(anchor["y"]))
@@ -899,6 +980,13 @@ func _verify_rendering(sprite: Node2D, rendering: Dictionary, anchor: Dictionary
 	if sprite.texture_filter != expected_filter or sprite.texture_repeat != CanvasItem.TEXTURE_REPEAT_DISABLED or sprite.centered != centered or not sprite.position.is_equal_approx(expected_position):
 		_fail("Installed scene rendering/anchor differs from the Pack.")
 		return
+
+func _blend_matches(sprite: Node2D, mode: String) -> bool:
+	if mode == "multiply":
+		var material := sprite.material as ShaderMaterial
+		return material != null and material.shader != null and material.shader.resource_path.get_file() == "forge_alpha_multiply.gdshader"
+	var material := sprite.material as CanvasItemMaterial
+	return material != null and material.blend_mode == (1 if mode == "add" else 0)
 
 func _verify_tile_set(path: String, terrain_helper: Dictionary = {}) -> void:
 	var tile_set := ResourceLoader.load(path, "TileSet") as TileSet

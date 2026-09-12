@@ -1915,7 +1915,11 @@ fn describe_effects(operation: &AutomationOperation) -> Vec<String> {
         ],
         AutomationOperation::PrepareStatic(request) => vec![
             format!("import {} local PNG items as {} with stable IDs", request.items.len(), request.kind.as_str()),
-            "preserve alpha, normalize to the declared canvas, and write provenance and a static Pack under a new job".into(),
+            if request.canvas_policy == crate::asset_project::StaticCanvasPolicy::PreserveSource {
+                "preserve original PNG bytes, rectangular source canvas and origin; write provenance and a static Pack under a new job".into()
+            } else {
+                "preserve alpha, normalize to the declared canvas, and write provenance and a static Pack under a new job".into()
+            },
             "zero Provider requests; no generation or chroma-key matting".into(),
         ],
         AutomationOperation::PrepareAsset(request) => vec![

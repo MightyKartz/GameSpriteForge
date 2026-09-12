@@ -17,7 +17,7 @@
     "previews"
   ],
   "properties": {
-    "schemaVersion": { "enum": ["1.0.0", "2.0.0", "3.0.0"] },
+    "schemaVersion": { "enum": ["1.0.0", "2.0.0", "3.0.0", "4.0.0"] },
     "assetType": {
       "enum": [
         "animation",
@@ -26,7 +26,8 @@
         "prop_set",
         "terrain_set",
         "building_kit",
-        "map"
+        "map",
+        "layered"
       ]
     },
     "id": {
@@ -65,7 +66,8 @@
             "import_sprite_sheet",
             "import_gsfpack",
             "provider_generation",
-            "deterministic_compiler"
+            "deterministic_compiler",
+            "import_layers"
           ]
         },
         "name": { "type": "string" },
@@ -88,6 +90,9 @@
         "manifest": { "type": "string", "minLength": 1 },
         "animationHumanReview": { "type": "string", "minLength": 1 },
         "godotHelper": { "type": "string", "minLength": 1 },
+        "godotScene": { "type": "string", "minLength": 1 },
+        "godotController": { "type": "string", "minLength": 1 },
+        "godotBlendShader": { "type": "string", "minLength": 1 },
         "qualityReport": { "type": "string", "minLength": 1 },
         "consistencyReport": { "type": "string", "minLength": 1 },
         "terrainManifest": { "type": "string", "minLength": 1 },
@@ -139,6 +144,34 @@
     }
   },
   "allOf": [
+    {
+      "if": { "required": ["assetType"], "properties": { "assetType": { "const": "layered" } } },
+      "then": { "properties": { "schemaVersion": { "const": "4.0.0" } } }
+    },
+    {
+      "if": { "properties": { "schemaVersion": { "const": "4.0.0" } } },
+      "then": {
+        "required": ["assetType"],
+        "properties": {
+          "assetType": { "const": "layered" },
+          "animations": false,
+          "items": false,
+          "dependencies": false,
+          "source": { "properties": { "kind": { "const": "import_layers" } } },
+          "previews": { "required": ["image"], "properties": { "gif": false } },
+          "assets": {
+            "required": ["godotHelper", "godotScene", "godotController", "godotBlendShader"],
+            "properties": {
+              "frames": false, "spriteSheet": false, "atlas": false,
+              "animationHumanReview": false, "consistencyReport": false,
+              "terrainManifest": false, "buildingManifest": false,
+              "mapManifest": false, "mapLayout": false,
+              "validationReport": false, "atlasImage": false
+            }
+          }
+        }
+      }
+    },
     {
       "if": { "properties": { "schemaVersion": { "enum": ["1.0.0", "2.0.0"] } } },
       "then": {

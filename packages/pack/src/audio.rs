@@ -304,7 +304,7 @@ pub fn inspect_pcm_wav(path: &Path) -> Result<AudioInfo, PackError> {
     while remaining > 0 {
         let count = remaining.min(buffer.len() as u64) as usize;
         file.read_exact(&mut buffer[..count])?;
-        for bytes in buffer[..count].chunks_exact(2) {
+        for bytes in buffer[..count].as_chunks::<2>().0 {
             let value = i16::from_le_bytes([bytes[0], bytes[1]]);
             if value == i16::MIN || value == i16::MAX {
                 clipped_sample_count += 1;

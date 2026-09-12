@@ -124,5 +124,6 @@ fn pack_summary(root: &Path, id: &str) -> PackInspectSummary {
         ],
         asset_type: "character".into(),
         items: vec![],
+        layered: None,
     }
 }

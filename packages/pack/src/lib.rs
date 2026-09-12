@@ -6,6 +6,8 @@ use std::fs;
 use std::io::ErrorKind;
 use std::path::{Component, Path, PathBuf};
 
+pub mod layered;
+
 const GSFPACK_SCHEMA: &str = include_str!("../../../schemas/gsfpack.schema.json");
 const MANIFEST_SCHEMA: &str = include_str!("../../../schemas/manifest.schema.json");
 const ATLAS_SCHEMA: &str = include_str!("../../../schemas/atlas.schema.json");
@@ -82,6 +84,8 @@ pub struct PackInspectSummary {
     pub items: Vec<PackItemSummary>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub audio_items: Vec<audio::AudioItem>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layered: Option<layered::LayeredManifest>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -171,15 +175,17 @@ pub fn validate_pack_layout(pack_path: &Path) -> Result<(), PackError> {
 
     require_regular_pack_file(pack_path, "forgepack.json")?;
     let header = read_json(pack_path.join("forgepack.json"))?;
-    if header.get("schemaVersion").and_then(|v| v.as_str()) == Some("4.0.0")
-        || header.get("assetType").and_then(|v| v.as_str()) == Some("audio_set")
-    {
+    // Audio and layered Packs share v4; each type validates its own version.
+    if header.get("assetType").and_then(|v| v.as_str()) == Some("audio_set") {
         return audio::validate_audio_pack(pack_path);
     }
     let metadata: ForgePackJson =
         serde_json::from_slice(&fs::read(pack_path.join("forgepack.json"))?)?;
     if metadata.schema_version == "3.0.0" {
         return validate_world_pack_layout(pack_path, &metadata);
+    }
+    if metadata.schema_version == "4.0.0" {
+        return layered::validate_pack(pack_path, &metadata);
     }
 
     for relative in REQUIRED_FILES {
@@ -423,7 +429,7 @@ pub fn inspect_pack(pack_path: &Path) -> Result<PackInspectSummary, PackError> {
         .map(|animation| animation.name.clone())
         .unwrap_or_else(|| "idle".to_string());
 
-    Ok(PackInspectSummary {
+    let mut inspection = PackInspectSummary {
         id: summary.id,
         name: summary.name,
         version: summary.version,
@@ -447,7 +453,12 @@ pub fn inspect_pack(pack_path: &Path) -> Result<PackInspectSummary, PackError> {
         },
         asset_type,
         items,
-    })
+        layered: None,
+    };
+    if inspection.asset_type == "layered" {
+        layered::add_inspection(pack_path, &mut inspection)?;
+    }
+    Ok(inspection)
 }
 
 fn validate_world_pack_layout(pack_path: &Path, metadata: &ForgePackJson) -> Result<(), PackError> {
@@ -1202,6 +1213,14 @@ fn validate_godot_rendering_contract(
                 "rendering.pixelSnap must be a boolean",
             )
         })?;
+    if let Some(blend_mode) = rendering.get("blendMode") {
+        if !matches!(blend_mode.as_str(), Some("normal" | "add" | "multiply")) {
+            return Err(timing_error(
+                "assets/manifest.json",
+                "rendering.blendMode must be normal, add or multiply",
+            ));
+        }
+    }
     let mirror_policy = rendering
         .get("mirrorPolicy")
         .and_then(serde_json::Value::as_str)

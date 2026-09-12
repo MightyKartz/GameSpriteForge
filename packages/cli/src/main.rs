@@ -68,6 +68,7 @@ use serde::Serialize;
 
 mod audio_tools;
 mod build_info;
+mod preview;
 mod receipt;
 mod skill;
 
@@ -232,6 +233,8 @@ enum AudioCommand {
 
 #[derive(Subcommand)]
 enum SourceCommand {
+    /// Remove a flat-color background from one PNG without moving or resizing pixels.
+    Matte(RequestInput),
     Inspect {
         #[arg(long)]
         path: PathBuf,
@@ -248,6 +251,26 @@ enum SourceCommand {
 
 #[derive(Subcommand)]
 enum AssetCommand {
+    /// Create a formal shared-canvas layered Pack from local source PNGs.
+    PrepareLayered {
+        #[command(flatten)]
+        input: RequestInput,
+        #[arg(long)]
+        output: PathBuf,
+    },
+    /// Verify a PNG lock and the exact image set in selected directories without changing files.
+    VerifyImages {
+        /// Consumer repository root (image paths and relative lock paths resolve here).
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long)]
+        lock: PathBuf,
+        /// Project-relative directory to scan recursively; repeat for multiple directories.
+        #[arg(long, required = true)]
+        scan: Vec<PathBuf>,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
     List {
         #[arg(long)]
         project: Option<PathBuf>,
@@ -612,6 +635,8 @@ enum MapCommand {
 
 #[derive(Subcommand)]
 enum GodotCommand {
+    /// Create an isolated native preview project; optionally launch its playback controls.
+    Preview(preview::PreviewArgs),
     /// Audit installed bytes against their baseline and original Pack without running Godot.
     VerifyInstall {
         #[arg(long)]
@@ -778,6 +803,8 @@ struct DoctorOutput {
     ffmpeg_path: Option<PathBuf>,
     ffprobe_path: Option<PathBuf>,
     platform_supported: bool,
+    distribution_status: &'static str,
+    tool_checks: serde_json::Value,
     providers: Vec<ProviderHealth>,
 }
 
@@ -824,6 +851,21 @@ fn run() -> Result<(), (String, String)> {
         Command::Skill { command } => skill::run(command),
         Command::Receipt { command } => success(&receipt::run(command)?),
         Command::Source { command } => match command {
+            SourceCommand::Matte(input) => {
+                let mut request: forge_core::source_matte::SourceMatteRequest =
+                    read_request(&input)?;
+                let root = request_root(&input)?;
+                if request.input.is_relative() {
+                    request.input = root.join(request.input);
+                }
+                if request.output.is_relative() {
+                    request.output = root.join(request.output);
+                }
+                success(
+                    &forge_core::source_matte::matte_png(&request)
+                        .map_err(|message| ("invalid_source_matte".into(), message))?,
+                )
+            }
             SourceCommand::Inspect {
                 path,
                 frame_width,
@@ -866,11 +908,67 @@ fn run() -> Result<(), (String, String)> {
                 godot_version,
                 ffmpeg_path: ffmpeg.as_ref().map(|paths| paths.ffmpeg_path.clone()),
                 ffprobe_path: ffmpeg.as_ref().map(|paths| paths.ffprobe_path.clone()),
-                platform_supported: cfg!(all(target_os = "macos", target_arch = "aarch64")),
+                platform_supported: cfg!(any(
+                    all(target_os = "macos", target_arch = "aarch64"),
+                    all(target_os = "windows", target_arch = "x86_64")
+                )),
+                distribution_status: if cfg!(windows) {
+                    "experimental_unsigned_portable"
+                } else {
+                    "unsigned"
+                },
+                tool_checks: serde_json::json!({
+                    "godot": {
+                        "requiredFor": ["godot_install", "godot_preview"],
+                        "supportedVersion": "4.6.x",
+                        "configure": "Set FORGE_GODOT_PATH to a Godot 4.6 console executable or put godot on PATH."
+                    },
+                    "ffmpeg": {
+                        "available": ffmpeg.is_some(),
+                        "requiredFor": ["video_decode", "video_encode"],
+                        "configure": "Use the complete portable package including bin/ffmpeg and bin/ffprobe, or add both executables to PATH."
+                    }
+                }),
                 providers: list_provider_health_noninteractive(),
             })
         }
         Command::Asset { command } => match command {
+            AssetCommand::PrepareLayered { input, output } => {
+                let mut request: forge_core::layered::PrepareLayeredRequest = read_request(&input)?;
+                let root = request_root(&input)?;
+                for layer in &mut request.layers {
+                    if layer.path.is_relative() {
+                        layer.path = root.join(&layer.path);
+                    }
+                }
+                success(
+                    &forge_core::layered::prepare_layered_pack(&request, &output)
+                        .map_err(|message| ("invalid_layered_pack".into(), message.to_string()))?,
+                )
+            }
+            AssetCommand::VerifyImages {
+                root, lock, scan, ..
+            } => {
+                let report = forge_core::image_contract::verify_images(&root, &lock, &scan)
+                    .map_err(|message| ("invalid_image_contract".into(), message))?;
+                let envelope = Envelope {
+                    schema_version: JSON_SCHEMA_VERSION,
+                    ok: report.verified,
+                    error: (!report.verified).then(|| ErrorBody {
+                        code: "image_contract_failed".into(),
+                        message: format!(
+                            "{} image contract issue(s); inspect data.issues",
+                            report.issues.len()
+                        ),
+                    }),
+                    data: Some(&report),
+                };
+                println!("{}", serde_json::to_string(&envelope).map_err(json_error)?);
+                if !report.verified {
+                    std::process::exit(1);
+                }
+                Ok(())
+            }
             AssetCommand::List {
                 project,
                 kind,
@@ -1422,6 +1520,7 @@ fn run() -> Result<(), (String, String)> {
             }
         },
         Command::Godot { command } => match command {
+            GodotCommand::Preview(args) => success(&preview::run(args)?),
             GodotCommand::VerifyInstall {
                 project,
                 asset_key,
@@ -3132,29 +3231,7 @@ fn plan_store() -> Result<PlanStore, (String, String)> {
 }
 
 fn locate_godot() -> Option<PathBuf> {
-    if let Some(path) = env::var_os("FORGE_GODOT_PATH").map(PathBuf::from) {
-        if path.is_file() {
-            return Some(path);
-        }
-    }
-    [
-        PathBuf::from("/Applications/Godot.app/Contents/MacOS/Godot"),
-        PathBuf::from("/Applications/Godot_mono.app/Contents/MacOS/Godot"),
-    ]
-    .into_iter()
-    .find(|path| path.is_file())
-    .or_else(|| {
-        ["godot4", "godot"].into_iter().find_map(|name| {
-            let output = ProcessCommand::new("/usr/bin/which")
-                .arg(name)
-                .output()
-                .ok()?;
-            output
-                .status
-                .success()
-                .then(|| PathBuf::from(String::from_utf8_lossy(&output.stdout).trim().to_string()))
-        })
-    })
+    forge_core::godot::locate_godot()
 }
 
 fn godot_version(path: &Path) -> Option<String> {
