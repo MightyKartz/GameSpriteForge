@@ -34,19 +34,51 @@ pub enum PendingPublication {
     },
 }
 
-fn pending_path(pack: &Path, id: &str) -> Result<PathBuf, CatalogError> {
+fn write_pending(pack: &Path, pending: &PendingPublication) -> Result<PathBuf, CatalogError> {
+    let bytes = serde_json::to_vec(pending)?;
     let parent = pack.parent().ok_or_else(|| invalid("Pack has no parent"))?;
-    let label = pack
-        .file_name()
-        .and_then(|s| s.to_str())
-        .ok_or_else(|| invalid("Pack name is not UTF-8"))?;
-    Ok(parent.join(format!(
-        "{label}.publication-{}.json",
-        &sha(id.as_bytes())[..20]
-    )))
+    let path = parent.join(format!("pack.publication-{}.json", sha(&bytes)));
+    if path.exists() {
+        if is_link(&fs::symlink_metadata(&path)?) || fs::read(&path)? != bytes {
+            return Err(invalid("existing publication request is corrupt"));
+        }
+        return Ok(path);
+    }
+    let mut temporary = tempfile::NamedTempFile::new_in(parent)?;
+    temporary.write_all(&bytes)?;
+    temporary.as_file().sync_all()?;
+    match temporary.persist_noclobber(&path) {
+        Ok(_) => (),
+        Err(error) => {
+            // Another identical publisher may have won. Never replace a live
+            // reader's file, which also avoids Windows sharing violations.
+            if !path.is_file()
+                || is_link(&fs::symlink_metadata(&path)?)
+                || fs::read(&path)? != bytes
+            {
+                return Err(CatalogError::Io(error.error));
+            }
+        }
+    }
+    Ok(path)
 }
 
 pub fn local_output(
+    binding: &ProjectBinding,
+    pack: &Path,
+    source: BTreeMap<String, serde_json::Value>,
+) -> Result<PathBuf, CatalogError> {
+    let path = stage_local(binding, pack, source)?;
+    complete_local(&path)?;
+    Ok(path)
+}
+
+fn complete_local(path: &Path) -> Result<(), CatalogError> {
+    recover(path).map_err(|e| invalid(format!("output is complete; publication pending at {}: {e}; run forge asset recover --input <this-path>", path.display())))?;
+    Ok(())
+}
+
+fn stage_local(
     binding: &ProjectBinding,
     pack: &Path,
     mut source: BTreeMap<String, serde_json::Value>,
@@ -69,18 +101,12 @@ pub fn local_output(
         expected_content: intake::content_at(&pack)?,
         new_revision: true,
     };
-    let path = pending_path(
-        &pack,
-        &format!("{}:{}", binding.project_path.display(), binding.asset_id),
-    )?;
     let pending = PendingPublication::Local {
         binding: binding.clone(),
         item: Box::new(item),
         source,
     };
-    crate::catalog::write_json_atomic(&path, &pending)?;
-    recover(&path).map_err(|e| invalid(format!("output is complete; publication pending at {}: {e}; run forge asset recover --input <this-path>", path.display())))?;
-    Ok(path)
+    write_pending(&pack, &pending)
 }
 
 /// Called by existing generation publications. Retains the exact V2 provenance
@@ -92,12 +118,8 @@ pub(crate) fn stage_catalog(
     if !entry.pack_path.is_dir() {
         return Ok(None);
     }
-    let path = pending_path(
+    let path = write_pending(
         &entry.pack_path,
-        &format!("{}:{}", project.display(), entry.asset_id),
-    )?;
-    crate::catalog::write_json_atomic(
-        &path,
         &PendingPublication::Catalog {
             project: project.into(),
             entry: Box::new(entry.clone()),
@@ -190,11 +212,8 @@ pub(crate) fn finalize_job(
             source.insert("producerBuild".into(), producer.clone());
         }
     }
-    let result = local_output(binding, &pack.path, source);
-    let pending = pending_path(
-        &pack.path,
-        &format!("{}:{}", binding.project_path.display(), binding.asset_id),
-    )?;
+    let pending = stage_local(binding, &pack.path, source)?;
+    let result = complete_local(&pending);
     let pending_hash = fs::read(&pending).ok().map(|bytes| sha(&bytes));
     store
         .update_record(&job.job_id, |record| {

@@ -226,15 +226,16 @@ fn concurrent_publication_and_head_restore_keep_complete_histories() {
     let root = temp.path();
     let old = entry(root);
     library::initialize(root, "Resources").unwrap();
-    let barrier = Arc::new(Barrier::new(4));
-    let workers: Vec<_> = (0..4)
+    let barrier = Arc::new(Barrier::new(8));
+    let workers: Vec<_> = (0..8)
         .map(|index| {
             let root = root.to_path_buf();
             let mut new = old.clone();
             let barrier = barrier.clone();
-            new.source_job_id = format!("job-{index}");
+            new.source_job_id = format!("job-{}", index / 2);
             thread::spawn(move || {
                 barrier.wait();
+                publish_catalog_asset(&root, new.clone()).unwrap();
                 publish_catalog_asset(&root, new).unwrap();
             })
         })
@@ -508,7 +509,20 @@ fn bound_local_job_publishes_once_and_pending_output_recovers_without_execution(
     let error = finalize::local_output(&binding, &produced.pack_path, source).unwrap_err();
     assert!(error.to_string().contains("publication pending"));
     fs::write(root.join(PROJECT_CATALOG_RELATIVE), &head).unwrap();
-    finalize::recover(&pending).unwrap();
+    // The second execution keeps its own durable request; it cannot replace
+    // the first execution's recovery evidence.
+    let second = fs::read_dir(produced.pack_path.parent().unwrap())
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .find(|p| {
+            fs::read(p)
+                .ok()
+                .and_then(|b| serde_json::from_slice::<serde_json::Value>(&b).ok())
+                .is_some_and(|v| v["source"]["executionId"] == "second-execution")
+        })
+        .unwrap();
+    assert_ne!(pending, second);
+    finalize::recover(&second).unwrap();
     assert_eq!(
         library::intake::history(&root, "local-props")
             .unwrap()

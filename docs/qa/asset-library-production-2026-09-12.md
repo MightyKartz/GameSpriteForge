@@ -24,3 +24,11 @@ Clean default-feature build: source `5f9c2d03fcfa3b0fbfa75ca0fe27313c82c6c652`,
 The library CLI smoke and three static CLI preparation/registration/recovery/native
 Godot 4.6.3 delivery cases passed against this binary, with zero Provider requests.
 All 30 CLI tests and strict all-target Clippy passed.
+
+Windows source CI exposed a publication-journal race: separate executions shared
+one mutable recovery filename before catalog locking. Requests now use their full
+serialized SHA-256 and no-clobber publication, preserving every execution and
+avoiding Windows replacement/sharing conflicts. The concurrency fixture now runs
+eight workers publishing four executions twice; repeated identical publications
+and independent executions both preserve exactly four revisions. Failed execution
+recovery also asserts that the first request remains separate and unchanged.
