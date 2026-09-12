@@ -136,6 +136,8 @@ def consume(forge, bundle_root, out, godot, require_foreign):
     report = run('project', 'verify-assets', '--project', library, '--rebuild-index')['audit']
     assert report['completeMedia'] and len(report['revisions']) == 4, report
     assert {r['assetId']: r['revision'] for r in report['revisions']} == baseline['revisions']
+    legacy_entries = run('asset', 'list', '--project', library)
+    assert len(legacy_entries) == 1 and legacy_entries[0]['packSha256'] == baseline['legacyPackSha256'], legacy_entries
     members = run('asset', 'search', '--project', library, '--query', 'coin')
     assert any(i['assetId'] == 'fixture.props' for i in members['items']), members
     preview = run('asset', 'preview', '--project', library, '--out', out / 'preview')

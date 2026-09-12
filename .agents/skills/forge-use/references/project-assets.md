@@ -102,6 +102,11 @@ Ordinary Git can transport `.forge/catalog.json`, `library/identity.json` and
 metadata alone cannot recover absent media. On another machine, explicitly map an
 existing root with `project bind-root --project PATH --root-id ROOT --path LOCAL`.
 Its audit reports mismatched bytes rather than silently updating content identity.
+Use native `asset search/history` for the full revision/availability picture.
+The legacy `asset list` projection preserves its old response shape and historical
+Pack hashes; entries without any resolvable Pack root are omitted there. Unbound
+optional spec/installation roots do not block available Packs or erase stored
+historical associations.
 Logical paths use `/`; incompatible names, links and case collisions are rejected.
 Canonical content digests travel unchanged; legacy Pack hashes retain their
 original POSIX/Windows convention and are separately verified against actual bytes.

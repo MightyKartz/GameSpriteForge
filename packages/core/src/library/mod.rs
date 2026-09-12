@@ -713,23 +713,40 @@ pub fn catalog_view(root: &Path) -> Result<ProjectCatalogV2, CatalogError> {
             .locations
             .get(digest)
             .ok_or_else(|| invalid("revision location is missing"))?;
-        entry.pack_path = resolve_location(root, location)?;
+        // Prefer any verified retained/alternate location. The old projection
+        // cannot represent an unbound root; native search/history still expose
+        // that revision and its unavailable status without inventing a path.
+        let pack = delivery::resolve(
+            root,
+            &delivery::VersionRef {
+                asset_id: id.clone(),
+                revision: digest.clone(),
+            },
+        )
+        .map(|resolved| resolved.path)
+        .ok()
+        .or_else(|| resolve_location(root, location).ok());
+        let Some(pack) = pack else {
+            continue;
+        };
+        entry.pack_path = pack;
         entry.spec_path = asset
             .spec_locations
             .get(digest)
-            .map(|p| resolve_location(root, p))
-            .transpose()?;
+            .and_then(|p| resolve_location(root, p).ok());
         if let Some(installed) = asset
             .installations
             .iter()
             .rev()
             .find(|i| &i.revision == digest)
         {
-            entry.installed = Some(CatalogInstallRefV1 {
-                godot_project: resolve_location(root, &installed.project)?,
-                target: installed.target.clone(),
-                installed_at: installed.installed_at,
-            });
+            entry.installed = resolve_location(root, &installed.project)
+                .ok()
+                .map(|project| CatalogInstallRefV1 {
+                    godot_project: project,
+                    target: installed.target.clone(),
+                    installed_at: installed.installed_at,
+                });
         }
         assets.insert(id.clone(), entry);
     }

@@ -93,6 +93,16 @@ those results and the manual browser gate are resolved.
 
 ## Verification boundaries
 
+A final compatibility check reproduced an error in the legacy catalog projection:
+an imported available Pack could be blocked by an unbound historical installation
+root. The fix prefers retained/alternate media and treats optional unavailable
+spec/install projections as absent, preserving the complete native history. The
+same previously exported bundle failed `asset list` on the recorded pre-fix binary
+and passed list/hash checks plus real Godot installation after the fix. A dedicated
+Rust regression test and both CI transfer directions now cover this case. This
+change requires its own final clean build/package verification; the identities
+above remain evidence for their explicitly named commits.
+
 Exported shared records exclude local root mappings, caches and unrelated history.
 Selected Pack bytes and immutable provenance remain unchanged; arbitrary user
 notes and original Pack metadata are not automatically scrubbed. Review them
