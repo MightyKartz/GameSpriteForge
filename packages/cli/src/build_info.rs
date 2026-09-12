@@ -29,6 +29,10 @@ pub fn current() -> BuildInfo {
 // Stable IDs describe compiled CLI entry points; runtime tool availability is
 // reported separately by doctor. Add new IDs only alongside their implementation.
 pub const CAPABILITIES: &[&str] = &[
+    "local_audio_import",
+    "audio_pack_validation",
+    "audio_godot_delivery",
+    "optional_audio_tool_discovery",
     "local_static_import",
     "local_animation_import",
     "preserve_source_coordinates",

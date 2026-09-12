@@ -1,4 +1,4 @@
-//! Godot 4.6 texture cache ownership, shared by transactions and read-only audits.
+//! Godot 4.6 image/audio cache ownership, shared by transactions and read-only audits.
 //!
 //! MD5 is only Godot's resource-path filename convention, never an integrity hash.
 use std::collections::BTreeSet;
@@ -63,7 +63,7 @@ pub(crate) fn cache_prefixes_for_target(
             .extension()
             .and_then(|value| value.to_str())
             .unwrap_or_default();
-        if extension.eq_ignore_ascii_case("png") {
+        if extension.eq_ignore_ascii_case("png") || extension.eq_ignore_ascii_case("wav") {
             prefixes.insert(texture_prefix(&project, &path)?);
         } else if extension == "import" {
             let prefix = texture_prefix(&project, &path.with_extension(""))?;
@@ -150,7 +150,7 @@ fn is_texture_cache_name(name: &str, prefix: &str) -> bool {
     let Some(suffix) = name.strip_prefix(prefix) else {
         return false;
     };
-    if matches!(suffix, ".ctex" | ".md5") {
+    if matches!(suffix, ".ctex" | ".md5") || (prefix.contains(".wav-") && suffix == ".sample") {
         return true;
     }
     // Godot can produce multiple compression variants, e.g. .s3tc.ctex / .etc2.ctex.
@@ -201,6 +201,41 @@ fn invalid(message: impl std::fmt::Display) -> io::Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn wav_cache_is_owned_before_import_and_rejects_foreign_sidecars() {
+        let root = tempfile::tempdir().unwrap();
+        let project = fs::canonicalize(root.path()).unwrap();
+        let target = project.join("addons/forge_assets/sounds/sources");
+        fs::create_dir_all(&target).unwrap();
+        fs::write(target.join("hit.wav"), b"RIFF").unwrap();
+        let prefix = texture_prefix(&project, &target.join("hit.wav")).unwrap();
+        assert!(cache_prefixes_for_target(&project, &target)
+            .unwrap()
+            .contains(&prefix));
+        let cache = project.join(".godot/imported");
+        fs::create_dir_all(&cache).unwrap();
+        for name in [
+            format!("{prefix}.sample"),
+            format!("{prefix}.md5"),
+            "hit.wav-other.sample".into(),
+        ] {
+            fs::write(cache.join(name), b"cache").unwrap();
+        }
+        assert_eq!(cache_files_for_target(&project, &target).unwrap().len(), 2);
+        fs::write(
+            target.join("hit.wav.import"),
+            format!("path=\"res://.godot/imported/{prefix}.sample\"\n"),
+        )
+        .unwrap();
+        assert_eq!(cache_files_for_target(&project, &target).unwrap().len(), 2);
+        fs::write(
+            target.join("hit.wav.import"),
+            "path=\"res://.godot/imported/foreign.sample\"\n",
+        )
+        .unwrap();
+        assert!(cache_files_for_target(&project, &target).is_err());
+    }
 
     #[test]
     fn exact_godot_path_prefix_isolates_same_named_textures_and_formats() {

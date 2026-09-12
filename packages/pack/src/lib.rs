@@ -1,3 +1,5 @@
+pub mod audio;
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::fs;
@@ -78,6 +80,8 @@ pub struct PackInspectSummary {
     pub animations: Vec<PackAnimationSummary>,
     pub asset_type: String,
     pub items: Vec<PackItemSummary>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub audio_items: Vec<audio::AudioItem>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -108,6 +112,7 @@ struct ForgePackJson {
     id: String,
     name: String,
     version: String,
+    #[serde(default)]
     previews: PackPreviews,
     assets: PackAssets,
     #[serde(default)]
@@ -121,7 +126,7 @@ struct PackItem {
     texture: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct PackPreviews {
     #[serde(default)]
@@ -165,6 +170,12 @@ pub fn validate_pack_layout(pack_path: &Path) -> Result<(), PackError> {
     require_pack_root_directory(pack_path)?;
 
     require_regular_pack_file(pack_path, "forgepack.json")?;
+    let header = read_json(pack_path.join("forgepack.json"))?;
+    if header.get("schemaVersion").and_then(|v| v.as_str()) == Some("4.0.0")
+        || header.get("assetType").and_then(|v| v.as_str()) == Some("audio_set")
+    {
+        return audio::validate_audio_pack(pack_path);
+    }
     let metadata: ForgePackJson =
         serde_json::from_slice(&fs::read(pack_path.join("forgepack.json"))?)?;
     if metadata.schema_version == "3.0.0" {
@@ -316,7 +327,7 @@ pub fn import_pack(pack_path: &Path) -> Result<ImportedPack, PackError> {
     Ok(ImportedPack {
         summary,
         root: pack_path.to_path_buf(),
-        frame_paths: if metadata.schema_version == "3.0.0" {
+        frame_paths: if matches!(metadata.schema_version.as_str(), "3.0.0" | "4.0.0") {
             vec![]
         } else {
             frame_pngs(pack_path)?
@@ -337,7 +348,7 @@ pub fn read_pack_summary(pack_path: &Path) -> Result<PackSummary, PackError> {
 
     let metadata: ForgePackJson =
         serde_json::from_slice(&fs::read(pack_path.join("forgepack.json"))?)?;
-    let frame_count = if metadata.schema_version == "3.0.0" {
+    let frame_count = if matches!(metadata.schema_version.as_str(), "3.0.0" | "4.0.0") {
         0
     } else {
         frame_pngs(pack_path)?.len()
@@ -429,6 +440,11 @@ pub fn inspect_pack(pack_path: &Path) -> Result<PackInspectSummary, PackError> {
         quality_report_path: pack_path.join("quality-report.json"),
         default_animation,
         animations,
+        audio_items: if asset_type == "audio_set" {
+            serde_json::from_value::<audio::AudioManifest>(manifest.clone())?.items
+        } else {
+            vec![]
+        },
         asset_type,
         items,
     })

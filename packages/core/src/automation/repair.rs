@@ -230,7 +230,8 @@ fn read_quality_snapshot(
         | AutomationOperation::CompileMap(_)
         | AutomationOperation::InstallGodot(_)
         | AutomationOperation::BuildProject(_)
-        | AutomationOperation::PrepareStatic(_) => Err(RepairError::UnsupportedJob),
+        | AutomationOperation::PrepareStatic(_)
+        | AutomationOperation::PrepareAudio(_) => Err(RepairError::UnsupportedJob),
     }
 }
 
@@ -304,7 +305,8 @@ fn apply_safe_repairs(
         | AutomationOperation::CompileMap(_)
         | AutomationOperation::InstallGodot(_)
         | AutomationOperation::BuildProject(_)
-        | AutomationOperation::PrepareStatic(_) => {}
+        | AutomationOperation::PrepareStatic(_)
+        | AutomationOperation::PrepareAudio(_) => {}
     }
 }
 

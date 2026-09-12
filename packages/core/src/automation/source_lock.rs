@@ -8,6 +8,9 @@ use super::{AssetInput, AutomationOperation};
 pub fn local_source_files(operation: &AutomationOperation) -> Result<Vec<PathBuf>, String> {
     let mut paths = Vec::new();
     match operation {
+        AutomationOperation::PrepareAudio(request) => {
+            paths.extend(request.items.iter().map(|item| item.path.clone()));
+        }
         AutomationOperation::PrepareStatic(request) => {
             paths.extend(request.items.iter().map(|item| item.path.clone()));
         }
@@ -62,6 +65,7 @@ fn directory_files(path: &Path, paths: &mut Vec<PathBuf>) -> Result<(), String> 
 
 pub fn validate_source_locks(operation: &AutomationOperation) -> Result<(), String> {
     let locks = match operation {
+        AutomationOperation::PrepareAudio(request) => &request.source_locks,
         AutomationOperation::PrepareStatic(request) => &request.source_locks,
         AutomationOperation::PrepareAsset(request) => &request.source_locks,
         AutomationOperation::PrepareCharacterPack(request) => &request.source_locks,

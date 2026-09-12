@@ -2,6 +2,8 @@
 
 状态：阶段性实施规格；已交付范围见 [CLI 协议](../automation/forge-cli.md)，阶段结果见 [实施状态](../qa/forge-complete-visual-implementation-status.md)。本文保留完整视觉资产系统的目标合同，不代表默认 CLI 已支持全部规划能力。
 
+2026-09-12 范围补充：本地音频素材导入、处理、Pack 与 Godot 交付作为独立 CLI 流程加入；参见 [音频指南](../../.agents/skills/forge-use/references/audio.md)。外部音频生成工具由用户自行安装和运行，Forge 提供可选工具说明与目录检测；本文“不生成音频”的边界继续适用。
+
 版本：1.0
 
 日期：2026-08-04

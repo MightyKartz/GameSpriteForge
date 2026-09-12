@@ -23,6 +23,7 @@ PACK_DIR="$(awk -F= '/^PACK_DIR=/{print $2}' "$ARTIFACT_ROOT/generate.log")"
 PROJECT_DIR="$ARTIFACT_ROOT/godot-project"
 mkdir -p "$PROJECT_DIR/addons/game_sprite_forge"
 cp "$ROOT/scripts/godot/import_forge_pack.gd" "$PROJECT_DIR/addons/game_sprite_forge/import_forge_pack.gd"
+cp "$ROOT/scripts/godot/install_forge_pack.gd" "$PROJECT_DIR/addons/game_sprite_forge/install_forge_pack.gd"
 cp "$ROOT/examples/godot/forge-import-smoke/project.godot" "$PROJECT_DIR/project.godot"
 cp "$ROOT/examples/godot/forge-import-smoke/verify_installed_frames.gd" "$PROJECT_DIR/verify_installed_frames.gd"
 

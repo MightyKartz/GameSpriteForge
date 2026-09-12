@@ -1,4 +1,5 @@
 pub mod asset_project;
+pub mod audio;
 pub mod automation;
 pub mod benchmark;
 pub mod catalog;

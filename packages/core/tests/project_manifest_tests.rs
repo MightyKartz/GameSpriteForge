@@ -97,6 +97,7 @@ fn project_manifest_rejects_symlinked_forge_metadata_directory() {
 
 fn pack_summary(root: &Path, id: &str) -> PackInspectSummary {
     PackInspectSummary {
+        audio_items: vec![],
         id: id.into(),
         name: "Knight".into(),
         version: "0.1.0".into(),

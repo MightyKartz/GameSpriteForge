@@ -321,6 +321,9 @@ fn estimate_operation(operation: &AutomationOperation) -> super::types::PlanEsti
 
 fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreError> {
     match operation {
+        AutomationOperation::PrepareAudio(request) => {
+            crate::audio::validate_request(request).map_err(PlanStoreError::InvalidRequest)?;
+        }
         AutomationOperation::PrepareStatic(request) => {
             super::static_assets::validate_request(request)
                 .map_err(PlanStoreError::InvalidRequest)?;
@@ -668,6 +671,12 @@ pub fn fingerprint_operation_inputs(
     super::source_lock::validate_source_locks(operation).map_err(PlanStoreError::InvalidRequest)?;
     let mut hasher = Sha256::new();
     match operation {
+        AutomationOperation::PrepareAudio(request) => {
+            for item in &request.items {
+                hasher.update(item.id.as_bytes());
+                hash_files(&mut hasher, std::slice::from_ref(&item.path))?;
+            }
+        }
         AutomationOperation::PrepareStatic(request) => {
             for item in &request.items {
                 hasher.update(item.id.as_bytes());
@@ -1899,6 +1908,11 @@ fn hash_serializable(value: &impl Serialize) -> Result<String, PlanStoreError> {
 
 fn describe_effects(operation: &AutomationOperation) -> Vec<String> {
     match operation {
+        AutomationOperation::PrepareAudio(request) => vec![
+            format!("import {} local WAV items as an audio Pack", request.items.len()),
+            "retain source bytes, apply explicit processing, and write PCM16 audio and technical quality evidence under a new job".into(),
+            "zero Provider requests; no model installation or generation; listening review remains separate".into(),
+        ],
         AutomationOperation::PrepareStatic(request) => vec![
             format!("import {} local PNG items as {} with stable IDs", request.items.len(), request.kind.as_str()),
             "preserve alpha, normalize to the declared canvas, and write provenance and a static Pack under a new job".into(),

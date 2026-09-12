@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://forge.local/schemas/audio-pack.schema.json",
+  "title": "Forge local audio Pack v4",
+  "$ref": "#/$defs/pack",
+  "$defs": {
+    "id": {"type":"string","pattern":"^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$"},
+    "hash": {"type":"string","pattern":"^[a-f0-9]{64}$"},
+    "name": {"type":"string","minLength":1,"maxLength":256},
+    "origin": {
+      "type":"object","additionalProperties":false,
+      "description":"Optional user assertions. Forge does not verify origin, model, seed, prompt or license.",
+      "properties": {
+        "tool":{"type":"string","maxLength":1024},"model":{"type":"string","maxLength":1024},
+        "prompt":{"type":"string","maxLength":16384},"seed":{"type":"string","maxLength":1024},
+        "license":{"type":"string","maxLength":4096}
+      }
+    },
+    "audioInfo": {
+      "type":"object","additionalProperties":false,
+      "required":["durationSeconds","sampleRate","channels","frameCount","bitsPerSample","peakAmplitude","rmsAmplitude","clippedSampleCount"],
+      "properties": {
+        "durationSeconds":{"type":"number","exclusiveMinimum":0,"maximum":3600},
+        "sampleRate":{"type":"integer","minimum":8000,"maximum":96000},
+        "channels":{"type":"integer","enum":[1,2]},"frameCount":{"type":"integer","minimum":1},
+        "bitsPerSample":{"const":16},"peakAmplitude":{"type":"number","minimum":0,"maximum":1},
+        "rmsAmplitude":{"type":"number","minimum":0,"maximum":1},"clippedSampleCount":{"type":"integer","minimum":0}
+      }
+    },
+    "processing": {
+      "type":"object","additionalProperties":false,
+      "required":["trimStartSeconds","fadeInMs","fadeOutMs","gainDb","crossfadeMs"],
+      "properties": {
+        "trimStartSeconds":{"type":"number","minimum":0,"exclusiveMaximum":3600},
+        "trimEndSeconds":{"type":"number","exclusiveMinimum":0,"maximum":3600},
+        "fadeInMs":{"type":"integer","minimum":0,"maximum":3600000},
+        "fadeOutMs":{"type":"integer","minimum":0,"maximum":3600000},
+        "gainDb":{"type":"number","minimum":-60,"maximum":24},
+        "crossfadeMs":{"type":"integer","minimum":0,"maximum":30000,"description":"Tail/head crossfade only when loop=true; output is shortened by this duration. No seamless quality claim."}
+      }
+    },
+    "source": {
+      "type":"object","additionalProperties":false,"required":["path","sha256","originalPath"],
+      "properties": {"path":{"type":"string","pattern":"^sources/[A-Za-z0-9][A-Za-z0-9_-]{0,79}\\.wav$"},"sha256":{"$ref":"#/$defs/hash"},"originalPath":{"type":"string","minLength":1},"origin":{"$ref":"#/$defs/origin"}}
+    },
+    "item": {
+      "type":"object","additionalProperties":false,"required":["id","name","role","path","loop","sha256","source","audio","processing"],
+      "properties": {
+        "id":{"$ref":"#/$defs/id"},"name":{"$ref":"#/$defs/name"},"role":{"enum":["music","sfx","ambience"]},
+        "path":{"type":"string","pattern":"^assets/audio/[A-Za-z0-9][A-Za-z0-9_-]{0,79}\\.wav$"},"loop":{"type":"boolean"},
+        "sha256":{"$ref":"#/$defs/hash"},"source":{"$ref":"#/$defs/source"},"audio":{"$ref":"#/$defs/audioInfo"},"processing":{"$ref":"#/$defs/processing"}
+      }
+    },
+    "items":{"type":"array","minItems":1,"maxItems":64,"items":{"$ref":"#/$defs/item"}},
+    "manifest": {
+      "type":"object","additionalProperties":false,"required":["schemaVersion","assetType","id","name","items"],
+      "properties":{"schemaVersion":{"const":"4.0.0"},"assetType":{"const":"audio_set"},"id":{"$ref":"#/$defs/id"},"name":{"$ref":"#/$defs/name"},"items":{"$ref":"#/$defs/items"}}
+    },
+    "report": {
+      "type":"object","additionalProperties":false,
+      "required":["schemaVersion","assetType","profile","verdict","providerRequestOccurred","providerRequestCount","generationPerformed","originVerified","licenseVerified","listeningReviewPerformed","seamlessLoopVerified","items","warnings"],
+      "properties": {
+        "schemaVersion":{"const":"4.0.0"},"assetType":{"const":"audio_set"},"profile":{"const":"local-audio-import@1.0.0"},"verdict":{"const":"technical_pass"},
+        "providerRequestOccurred":{"const":false},"providerRequestCount":{"const":0},"generationPerformed":{"const":false},"originVerified":{"const":false},"licenseVerified":{"const":false},
+        "listeningReviewPerformed":{"const":false},"seamlessLoopVerified":{"const":false},"items":{"$ref":"#/$defs/items"},"warnings":{"type":"array","items":{"type":"string"}}
+      }
+    },
+    "pack": {
+      "type":"object","additionalProperties":false,"required":["schemaVersion","assetType","id","name","version","previews","assets","provenance"],
+      "properties": {
+        "schemaVersion":{"const":"4.0.0"},"assetType":{"const":"audio_set"},"id":{"$ref":"#/$defs/id"},"name":{"$ref":"#/$defs/name"},"version":{"const":"1.0.0"},
+        "previews":{"type":"object","additionalProperties":false},
+        "assets":{"type":"object","additionalProperties":false,"required":["manifest","qualityReport","godotHelper"],"properties":{"manifest":{"const":"assets/manifest.json"},"qualityReport":{"const":"quality-report.json"},"godotHelper":{"const":"assets/godot_import.json"}}},
+        "provenance":{"type":"object","additionalProperties":false,"required":["kind","generationPerformed","licenseVerified"],"properties":{"kind":{"const":"local_audio_import"},"generationPerformed":{"const":false},"licenseVerified":{"const":false}}}
+      }
+    }
+  }
+}
