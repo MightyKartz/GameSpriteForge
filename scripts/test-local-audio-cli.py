@@ -148,7 +148,8 @@ class Check:
             assert item["audio"]["bitsPerSample"] == 16 and item["audio"]["frameCount"] == frames
             assert item["loop"] is looping and item["audio"]["clippedSampleCount"] == 0
             assert item["source"]["sha256"] == original_sources[f"{item_id}.wav"] == digest(pack / item["source"]["path"])
-            assert Path(item["source"]["originalPath"]) == (sources / f"{item_id}.wav").resolve()
+            # Rust canonicalization may retain the Windows verbatim prefix.
+            assert Path(item["source"]["originalPath"]).samefile(sources / f"{item_id}.wav")
         assert by_id["cue"]["source"]["origin"] == origin and "origin" not in by_id["ambience"]["source"]
         assert 0.02 < by_id["cue"]["audio"]["peakAmplitude"] < 0.11
         assert not list(pack.rglob("*.png")) and not list(pack.rglob("*.gif"))
