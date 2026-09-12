@@ -77,6 +77,10 @@ pub struct SearchArgs {
     tag: Option<String>,
     #[arg(long)]
     status: Option<String>,
+    #[arg(long, requires = "review_verdict")]
+    review_domain: Option<String>,
+    #[arg(long, requires = "review_domain")]
+    review_verdict: Option<String>,
     #[arg(long, default_value_t = 0)]
     offset: usize,
     #[arg(long, default_value_t = 20)]
@@ -124,6 +128,8 @@ pub fn search(args: SearchArgs) -> Result<(), (String, String)> {
         kind: args.kind,
         tag: args.tag,
         status: args.status,
+        review_domain: args.review_domain,
+        review_verdict: args.review_verdict,
         offset: args.offset,
         limit: args.limit,
     };
@@ -197,5 +203,150 @@ pub fn installations(args: HistoryArgs) -> Result<(), (String, String)> {
         &library::read_asset(&args.project, &catalog, &args.id)
             .map_err(error)?
             .installations,
+    )
+}
+
+#[derive(Args)]
+pub struct ReviewArgs {
+    #[command(flatten)]
+    version: VersionArgs,
+    #[arg(long, value_parser = ["technical", "visual", "auditory", "license"])]
+    domain: String,
+    #[arg(long, value_parser = ["approved", "rejected", "needs_review", "unknown"])]
+    verdict: String,
+    #[arg(long)]
+    statement: String,
+    #[arg(long)]
+    reviewer: String,
+    #[arg(long)]
+    evidence: PathBuf,
+}
+#[derive(Args)]
+pub struct PreviewArgs {
+    #[arg(long)]
+    project: PathBuf,
+    #[arg(long, conflicts_with_all = ["query", "kind", "tag"])]
+    id: Vec<String>,
+    #[arg(long)]
+    query: Option<String>,
+    #[arg(long)]
+    kind: Option<String>,
+    #[arg(long)]
+    tag: Option<String>,
+    #[arg(long, default_value_t = 20)]
+    limit: usize,
+    #[arg(long, default_value_t = 0)]
+    offset: usize,
+    /// Repeat to compare exact versions; defaults to this asset's complete history (up to 100).
+    #[arg(long, requires = "id")]
+    revision: Vec<String>,
+    #[arg(long)]
+    out: PathBuf,
+    #[command(flatten)]
+    json: crate::JsonFlag,
+}
+#[derive(Args)]
+pub struct AnnotateArgs {
+    #[arg(long)]
+    project: PathBuf,
+    #[arg(long)]
+    id: String,
+    #[arg(long)]
+    name: Option<String>,
+    #[arg(long, conflicts_with = "clear_tags")]
+    tag: Vec<String>,
+    #[arg(long)]
+    clear_tags: bool,
+    #[command(flatten)]
+    json: crate::JsonFlag,
+}
+pub fn review(args: ReviewArgs) -> Result<(), (String, String)> {
+    let request = library::review::ReviewRequest {
+        reference: args.version.reference(),
+        domain: args.domain,
+        verdict: args.verdict,
+        statement: args.statement,
+        reviewer: args.reviewer,
+        evidence: args.evidence,
+    };
+    crate::success(&library::review::record(&args.version.project, &request).map_err(error)?)
+}
+pub fn reviews(args: VersionArgs) -> Result<(), (String, String)> {
+    let catalog = library::read_catalog(&args.project).map_err(error)?;
+    let asset = library::read_asset(&args.project, &catalog, &args.id).map_err(error)?;
+    library::read_revision(&args.project, &asset, &args.revision).map_err(error)?;
+    crate::success(
+        &library::review::read_reviews(&args.project, &asset, &args.revision).map_err(error)?,
+    )
+}
+pub fn preview(args: PreviewArgs) -> Result<(), (String, String)> {
+    let (references, selection) = if args.id.is_empty() {
+        let found = library::intake::search(
+            &args.project,
+            &library::intake::SearchFilter {
+                query: args.query,
+                kind: args.kind,
+                tag: args.tag,
+                limit: args.limit,
+                offset: args.offset,
+                ..Default::default()
+            },
+        )
+        .map_err(error)?;
+        let selection =
+            serde_json::json!({"total":found.total,"offset":found.offset,"limit":found.limit});
+        (
+            found
+                .items
+                .into_iter()
+                .map(|hit| library::delivery::VersionRef {
+                    asset_id: hit.asset_id,
+                    revision: hit.revision,
+                })
+                .collect::<Vec<_>>(),
+            selection,
+        )
+    } else {
+        if !args.revision.is_empty() && args.id.len() != 1 {
+            return Err((
+                "invalid_arguments".into(),
+                "explicit revisions require exactly one --id".into(),
+            ));
+        }
+        let mut references = vec![];
+        for id in args.id {
+            let revisions = if args.revision.is_empty() {
+                library::intake::history(&args.project, &id)
+                    .map_err(error)?
+                    .into_iter()
+                    .map(|hit| hit.revision)
+                    .collect()
+            } else {
+                args.revision.clone()
+            };
+            references.extend(revisions.into_iter().map(|revision| {
+                library::delivery::VersionRef {
+                    asset_id: id.clone(),
+                    revision,
+                }
+            }));
+        }
+        let selection =
+            serde_json::json!({"total":references.len(),"offset":0,"limit":references.len()});
+        (references, selection)
+    };
+    let report = library::preview::create(&args.project, &references, &args.out).map_err(error)?;
+    let mut value = serde_json::to_value(report).map_err(crate::display_error)?;
+    value["selection"] = selection;
+    crate::success(&value)
+}
+pub fn annotate(args: AnnotateArgs) -> Result<(), (String, String)> {
+    let tags = if args.clear_tags || !args.tag.is_empty() {
+        Some(args.tag)
+    } else {
+        None
+    };
+    crate::success(
+        &library::review::annotate(&args.project, &args.id, args.name, tags).map_err(error)?,
     )
 }

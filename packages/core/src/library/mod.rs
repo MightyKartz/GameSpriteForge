@@ -23,6 +23,8 @@ const MAX_METADATA_BYTES: u64 = 16 * 1024 * 1024;
 pub mod delivery;
 pub mod finalize;
 pub mod intake;
+pub mod preview;
+pub mod review;
 mod types;
 pub use types::{
     AssetRecord, AssetRevision, InstallReference, LibraryCatalog, Location, MigrationAsset,
@@ -219,6 +221,16 @@ pub fn read_asset(
             return Err(invalid("asset reference is absent from history"));
         }
     }
+    if asset
+        .reviews
+        .iter()
+        .collect::<std::collections::BTreeSet<_>>()
+        .len()
+        != asset.reviews.len()
+    {
+        return Err(invalid("duplicate review object references"));
+    }
+    review::read_reviews(root, &asset, "")?;
     for installed in &asset.installations {
         if !asset.revisions.contains(&installed.revision) {
             return Err(invalid("installation refers to an unknown revision"));
@@ -491,6 +503,7 @@ pub(crate) fn publish_unlocked(
             spec_locations: BTreeMap::new(),
             additional_locations: BTreeMap::new(),
             installations: Vec::new(),
+            reviews: Vec::new(),
         },
     };
     for digest in &asset.revisions {
@@ -627,6 +640,7 @@ pub fn migrate(
             spec_locations: BTreeMap::new(),
             additional_locations: BTreeMap::new(),
             installations: Vec::new(),
+            reviews: Vec::new(),
         };
         if let Some(location) = spec_location {
             asset.spec_locations.insert(digest.clone(), location);

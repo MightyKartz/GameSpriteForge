@@ -54,6 +54,8 @@ pub struct AssetRecord {
     pub additional_locations: BTreeMap<String, Vec<Location>>,
     pub spec_locations: BTreeMap<String, Location>,
     pub installations: Vec<InstallReference>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reviews: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
