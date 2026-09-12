@@ -296,22 +296,29 @@ pub fn register_catalog_asset(
     project_root: &Path,
     entry: ProjectCatalogEntryV1,
 ) -> Result<PathBuf, CatalogError> {
-    validate_required_fields(
-        &entry.asset_id,
-        &entry.name,
-        &entry.kind,
-        &entry.workflow,
-        &entry.pack_sha256,
-    )?;
-    let _lock = lock_catalog(project_root)?;
-    let mut catalog = read_project_catalog(project_root)?;
-    catalog.assets.insert(entry.asset_id.clone(), entry.into());
-    write_project_catalog_unlocked(project_root, &catalog)
+    register_catalog_asset_v2(project_root, entry.into())
 }
 
 pub fn register_catalog_asset_v2(
     project_root: &Path,
     entry: ProjectCatalogEntryV2,
+) -> Result<PathBuf, CatalogError> {
+    update_catalog_asset(project_root, entry, false)
+}
+
+/// Finalize a production result once. The legacy register APIs remain explicit
+/// upserts for callers editing a V1/V2 catalog; all production uses this boundary.
+pub fn publish_catalog_asset(
+    project_root: &Path,
+    entry: ProjectCatalogEntryV2,
+) -> Result<PathBuf, CatalogError> {
+    update_catalog_asset(project_root, entry, true)
+}
+
+fn update_catalog_asset(
+    project_root: &Path,
+    mut entry: ProjectCatalogEntryV2,
+    publication: bool,
 ) -> Result<PathBuf, CatalogError> {
     validate_required_fields(
         &entry.asset_id,
@@ -322,6 +329,28 @@ pub fn register_catalog_asset_v2(
     )?;
     let _lock = lock_catalog(project_root)?;
     let mut catalog = read_project_catalog(project_root)?;
+    // Publication is keyed by execution and delivered bytes, not the time a
+    // recovery happens to reach this function. Preserve later review/install
+    // metadata and V2 provenance when a V1 caller retries the same publication.
+    if let Some(existing) = catalog.assets.get(&entry.asset_id).filter(|existing| {
+        publication
+            && !entry.source_job_id.is_empty()
+            && existing.source_job_id == entry.source_job_id
+            && existing.pack_sha256 == entry.pack_sha256
+    }) {
+        if existing.spec_sha256.is_none() && entry.spec_sha256.is_some() {
+            // Heal a pre-upgrade child V1 entry with its parent's full provenance.
+            // Keep evidence already attached to exactly these delivered bytes.
+            entry.created_at = existing.created_at;
+            entry.installed = existing.installed.clone();
+            entry.reviewed_at = existing.reviewed_at;
+            if existing.license.is_some() {
+                entry.license = existing.license.clone();
+            }
+        } else {
+            return Ok(project_root.join(PROJECT_CATALOG_RELATIVE));
+        }
+    }
     catalog.assets.insert(entry.asset_id.clone(), entry);
     write_project_catalog_unlocked(project_root, &catalog)
 }
@@ -702,5 +731,57 @@ mod tests {
         assert_eq!(linked.spec_sha256, Some("b".repeat(64)));
         assert_eq!(linked.game_ready, Some(true));
         assert_eq!(linked.license, Some("CC0-1.0".into()));
+    }
+
+    #[test]
+    fn publication_recovery_is_byte_identical_and_keeps_later_evidence() {
+        let temp = tempfile::tempdir().unwrap();
+        let entry = sample_v2_entry("hero", &"4".repeat(64));
+        let path = register_catalog_asset_v2(temp.path(), entry.clone()).unwrap();
+        link_catalog_install(temp.path(), "hero", "game".into(), "assets/hero".into()).unwrap();
+        let before = fs::read(&path).unwrap();
+        let mut resumed = entry;
+        resumed.parent_job_id = Some("recovery-parent".into());
+        resumed.created_at = Utc::now();
+        resumed.generated_at = Some(Utc::now());
+        publish_catalog_asset(temp.path(), resumed).unwrap();
+        assert_eq!(fs::read(&path).unwrap(), before);
+        publish_catalog_asset(temp.path(), sample_v1_entry("hero", &"4".repeat(64)).into())
+            .unwrap();
+        assert_eq!(
+            fs::read(&path).unwrap(),
+            before,
+            "legacy retry must not erase V2 evidence"
+        );
+    }
+
+    #[test]
+    fn new_pack_does_not_inherit_previous_publication_evidence() {
+        let temp = tempfile::tempdir().unwrap();
+        register_catalog_asset_v2(temp.path(), sample_v2_entry("hero", &"4".repeat(64))).unwrap();
+        publish_catalog_asset(temp.path(), sample_v1_entry("hero", &"5".repeat(64)).into())
+            .unwrap();
+        let catalog = read_project_catalog(temp.path()).unwrap();
+        let hero = &catalog.assets["hero"];
+        assert_eq!(hero.pack_sha256, "5".repeat(64));
+        assert!(hero.spec_sha256.is_none());
+        assert!(hero.reviewed_at.is_none());
+        assert!(hero.installed.is_none());
+    }
+
+    #[test]
+    fn parent_can_finalize_a_legacy_child_entry_without_losing_install_evidence() {
+        let temp = tempfile::tempdir().unwrap();
+        register_catalog_asset(temp.path(), sample_v1_entry("hero", &"6".repeat(64))).unwrap();
+        link_catalog_install(temp.path(), "hero", "game".into(), "assets/hero".into()).unwrap();
+        let parent = sample_v2_entry("hero", &"6".repeat(64));
+        publish_catalog_asset(temp.path(), parent.clone()).unwrap();
+        let path = temp.path().join(PROJECT_CATALOG_RELATIVE);
+        let before = fs::read(&path).unwrap();
+        let catalog = read_project_catalog(temp.path()).unwrap();
+        assert!(catalog.assets["hero"].installed.is_some());
+        assert_eq!(catalog.assets["hero"].spec_sha256, parent.spec_sha256);
+        publish_catalog_asset(temp.path(), parent).unwrap();
+        assert_eq!(fs::read(path).unwrap(), before);
     }
 }

@@ -4,6 +4,7 @@ pub mod automation;
 pub mod benchmark;
 pub mod catalog;
 pub mod component;
+pub mod content_digest;
 pub mod delivery;
 pub mod export;
 pub mod frames;

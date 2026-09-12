@@ -1,0 +1,26 @@
+{
+  "algorithm": "forge-content-inventory-v1",
+  "sha256": "734be71084448ca497e64f475e7b3fd1ceff974dd95a5b010ff55e322b15344e",
+  "legacyV2": {
+    "posix": "d8aea44f5294843e08973697ad8cc1ba62c162a55af1addcfde3fc6bcca26a90",
+    "windows": "df9704af394d1a856eedcb489c204f7887a3753f0e51cfc19d364c2bbf1d5859"
+  },
+  "files": [
+    {
+      "path": "a.txt",
+      "contentHex": "726f6f740a"
+    },
+    {
+      "path": "a/nested sound.wav",
+      "contentHex": "52494646000102ff"
+    },
+    {
+      "path": "素材/角色.png",
+      "contentHex": "89504e470d0a1a0a"
+    },
+    {
+      "path": "empty.bin",
+      "contentHex": ""
+    }
+  ]
+}
