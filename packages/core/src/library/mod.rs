@@ -137,6 +137,7 @@ pub fn read_object<T: DeserializeOwned>(root: &Path, digest: &str) -> Result<T, 
 
 fn write_object<T: Serialize>(root: &Path, value: &T) -> Result<String, CatalogError> {
     let bytes = serde_json::to_vec(value)?;
+    check_metadata_size(&bytes)?;
     let digest = sha(&bytes);
     let path = storage_path(root, &format!("{OBJECTS}/{digest}.json"))?;
     fs::create_dir_all(path.parent().unwrap())?;
@@ -156,8 +157,19 @@ fn write_object<T: Serialize>(root: &Path, value: &T) -> Result<String, CatalogE
 }
 
 fn write_json<T: Serialize>(root: &Path, relative: &str, value: &T) -> Result<(), CatalogError> {
+    let bytes = serde_json::to_vec_pretty(value)?;
+    check_metadata_size(&bytes)?;
     let path = storage_path(root, relative)?;
-    crate::catalog::write_json_atomic(&path, value)
+    crate::catalog::write_bytes_atomic(&path, &bytes)
+}
+
+fn check_metadata_size(bytes: &[u8]) -> Result<(), CatalogError> {
+    if bytes.len() as u64 > MAX_METADATA_BYTES {
+        return Err(invalid(
+            "library metadata exceeds 16 MiB; no metadata was committed",
+        ));
+    }
+    Ok(())
 }
 
 fn commit_head(root: &Path, expected: &[u8], catalog: &LibraryCatalog) -> Result<(), CatalogError> {
@@ -861,4 +873,54 @@ pub fn publication_history(
         }
     }
     Ok(entries)
+}
+
+#[cfg(test)]
+mod metadata_write_tests {
+    use super::*;
+
+    #[test]
+    fn object_size_boundary_remains_readable_and_oversize_is_not_published() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path();
+        initialize(root, "Size boundary").unwrap();
+        let before = read_bytes(root, PROJECT_CATALOG_RELATIVE).unwrap();
+        for length in [
+            MAX_METADATA_BYTES as usize - 3,
+            MAX_METADATA_BYTES as usize - 2,
+        ] {
+            let value = "x".repeat(length);
+            let digest = write_object(root, &value).unwrap();
+            assert_eq!(read_object::<String>(root, &digest).unwrap(), value);
+        }
+        let too_large = "x".repeat(MAX_METADATA_BYTES as usize - 1);
+        let digest = sha(&serde_json::to_vec(&too_large).unwrap());
+        assert!(write_object(root, &too_large).is_err());
+        assert!(!root.join(format!("{OBJECTS}/{digest}.json")).exists());
+        assert_eq!(read_bytes(root, PROJECT_CATALOG_RELATIVE).unwrap(), before);
+        assert!(read_catalog(root).unwrap().assets.is_empty());
+    }
+
+    #[test]
+    fn oversized_head_and_local_configuration_preserve_readable_previous_state() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path();
+        let mut catalog = initialize(root, "Original").unwrap();
+        let head = read_bytes(root, PROJECT_CATALOG_RELATIVE).unwrap();
+        catalog.name = "x".repeat(MAX_METADATA_BYTES as usize);
+        assert!(commit_head(root, &head, &catalog).is_err());
+        assert_eq!(read_bytes(root, PROJECT_CATALOG_RELATIVE).unwrap(), head);
+        assert_eq!(read_catalog(root).unwrap().name, "Original");
+        write_json(root, LOCAL, &LocalConfig::default()).unwrap();
+        let local = read_bytes(root, LOCAL).unwrap();
+        let oversized = LocalConfig {
+            roots: BTreeMap::from([(
+                "external".into(),
+                PathBuf::from("x".repeat(MAX_METADATA_BYTES as usize)),
+            )]),
+        };
+        assert!(write_json(root, LOCAL, &oversized).is_err());
+        assert_eq!(read_bytes(root, LOCAL).unwrap(), local);
+        assert!(local_config(root).unwrap().roots.is_empty());
+    }
 }

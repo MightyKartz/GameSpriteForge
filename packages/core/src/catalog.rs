@@ -477,13 +477,17 @@ fn validate_required_fields(
 }
 
 pub(crate) fn write_json_atomic<T: Serialize>(path: &Path, value: &T) -> Result<(), CatalogError> {
+    write_bytes_atomic(path, &serde_json::to_vec_pretty(value)?)
+}
+
+pub(crate) fn write_bytes_atomic(path: &Path, bytes: &[u8]) -> Result<(), CatalogError> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
     use std::io::Write;
     let mut temp =
         tempfile::NamedTempFile::new_in(path.parent().unwrap_or_else(|| Path::new(".")))?;
-    temp.write_all(&serde_json::to_vec_pretty(value)?)?;
+    temp.write_all(bytes)?;
     temp.as_file().sync_all()?;
     temp.persist(path)
         .map_err(|error| CatalogError::Io(error.error))?;

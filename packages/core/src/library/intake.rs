@@ -255,6 +255,7 @@ fn register_inner(
     let expected_head = read_bytes(root, PROJECT_CATALOG_RELATIVE)?;
     let mut catalog = read_catalog(root)?;
     let mut config = local_config(root)?;
+    let original_roots = config.roots.clone();
     let mut results = vec![];
     for item in &batch.items {
         if item.asset_id.trim().is_empty() || item.name.trim().is_empty() {
@@ -357,7 +358,14 @@ fn register_inner(
     let old: LibraryCatalog = serde_json::from_slice(&expected_head)?;
     if catalog.assets != old.assets {
         catalog.updated_at = Utc::now();
+        // Check the head before changing even machine-local bindings.
+        check_metadata_size(&serde_json::to_vec_pretty(&catalog)?)?;
+    }
+    // Restoring a lost binding need not change an immutable asset record.
+    if config.roots != original_roots {
         write_json(root, LOCAL, &config)?;
+    }
+    if catalog.assets != old.assets {
         commit_head(root, &expected_head, &catalog)?;
     }
     Ok(results)
