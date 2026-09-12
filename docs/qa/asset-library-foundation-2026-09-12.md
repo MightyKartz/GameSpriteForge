@@ -36,3 +36,9 @@ All fixtures are synthetic, with isolated stores. No real Provider requests,
 external audio applications or Sword asset imports were performed. This PR
 provides foundation APIs; V3 migration and resource-library CLI commands remain
 subsequent work.
+
+Default-feature executable verification also passed (`--version`, `plan --help`,
+`doctor --json`): source commit `5811f1d9454b69cfee0d070840873d663fd1a52e`,
+`dirty=false`, `features=[]`, `aarch64-apple-darwin`, debug profile.
+Binary SHA-256: `d221c70b8d49be232dce69ab3c1be51d8a40642bb46048a8f78be9312bae6865`.
+This identity predates this documentation-only evidence addition.
