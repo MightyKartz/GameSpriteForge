@@ -95,6 +95,23 @@ jobs:
             if (!(($result | ConvertFrom-Json).ok)) { throw "Installed launcher failed $command" }
             $result | Set-Content -LiteralPath ("target/qa/windows-guide/launcher-" + $command.Replace(' ','-') + '.json') -Encoding utf8
           }
+      - name: Verify upgrade from the actual pre-library Windows CLI
+        run: |
+          $baseline = '1c1e7079f22ea0dba5958e4aec79cad69f7ade65'
+          git fetch --no-tags origin $baseline
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git worktree add --detach "$env:RUNNER_TEMP/forge-historical-source" $baseline
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo +1.98.1 build --manifest-path "$env:RUNNER_TEMP/forge-historical-source/Cargo.toml" --target-dir "$env:RUNNER_TEMP/forge-historical-target" --locked --release -p forge-cli --no-default-features
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $historical = "$env:RUNNER_TEMP/forge-historical-target/release/forge.exe"
+          ./scripts/package-windows.ps1 -Forge $historical -Helpers "$env:RUNNER_TEMP/forge-ffmpeg/helpers" -Output "$env:RUNNER_TEMP/forge-historical.zip"
+          ./scripts/test-windows-package.ps1 -Archive target/windows-dist/forge-x86_64-pc-windows-msvc.zip -PreviousArchive "$env:RUNNER_TEMP/forge-historical.zip" -Output target/qa/windows-historical-upgrade -Godot "$env:RUNNER_TEMP/godot/Godot_v4.6.3-stable_win64_console.exe"
+          $history = Get-Content -LiteralPath target/qa/windows-historical-upgrade/summary.json -Raw | ConvertFrom-Json
+          $upgrade = @($history.cases | Where-Object name -EQ 'upgrade_preserves_prior_payload_and_launcher_backup')[0]
+          if (!$upgrade.binaryChanged -or $upgrade.previousBuild.gitCommit -ne $baseline) { throw 'Upgrade did not use the actual pre-library executable' }
+          python scripts/test-asset-library-cli.py --forge "$($history.cases[0].launcher)" --legacy-forge "$historical"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify Windows PowerShell 5.1 installer compatibility
         run: |
           $archive = (Resolve-Path -LiteralPath target/windows-dist/forge-x86_64-pc-windows-msvc.zip).Path
@@ -141,6 +158,7 @@ jobs:
             target/windows-dist/install-windows.ps1
             target/windows-dist/windows-package-common.ps1
             target/qa/windows-portable/summary.json
+            target/qa/windows-historical-upgrade/summary.json
             target/qa/windows-portable/powershell51-doctor.json
             target/qa/windows-guide/summary.json
             target/qa/windows-native-static/summary.json
