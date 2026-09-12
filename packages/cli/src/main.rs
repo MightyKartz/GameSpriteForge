@@ -66,6 +66,7 @@ use forge_providers::{
 };
 use serde::Serialize;
 
+mod asset_library;
 mod audio_tools;
 mod build_info;
 mod preview;
@@ -410,6 +411,9 @@ enum ProjectCommand {
         path: PathBuf,
         #[arg(long)]
         name: String,
+        /// Initialize a provider-neutral local resource library.
+        #[arg(long, conflicts_with_all = ["provider", "profile"])]
+        local_assets: bool,
         #[arg(long, default_value = "xai")]
         provider: String,
         #[arg(long, default_value = "default")]
@@ -423,6 +427,8 @@ enum ProjectCommand {
         #[command(flatten)]
         json: JsonFlag,
     },
+    /// Preview or explicitly migrate a legacy catalog into a versioned library.
+    MigrateAssets(asset_library::MigrateArgs),
     #[cfg(feature = "game-art-manifest")]
     Diff {
         #[arg(long)]
@@ -1139,8 +1145,12 @@ fn run() -> Result<(), (String, String)> {
                 name,
                 provider,
                 profile,
+                local_assets,
                 ..
             } => {
+                if local_assets {
+                    return asset_library::initialize(&path, &name);
+                }
                 let mut project = init_project(&path, &name).map_err(display_error)?;
                 if provider != "xai" || profile != "default" {
                     project.provider.id = provider;
@@ -1157,7 +1167,12 @@ fn run() -> Result<(), (String, String)> {
                 }))
             }
             ProjectCommand::Inspect { project, .. } => {
-                if project.join(FORGE_PROJECT_FILE).is_file() {
+                if forge_core::library::is_library(&project).map_err(asset_library::error)? {
+                    success(
+                        &forge_core::library::read_catalog(&project)
+                            .map_err(asset_library::error)?,
+                    )
+                } else if project.join(FORGE_PROJECT_FILE).is_file() {
                     success(&read_project(&project).map_err(display_error)?)
                 } else {
                     let inspection =
@@ -1165,6 +1180,7 @@ fn run() -> Result<(), (String, String)> {
                     success(&inspection)
                 }
             }
+            ProjectCommand::MigrateAssets(args) => asset_library::migrate(args),
             #[cfg(feature = "game-art-manifest")]
             ProjectCommand::Diff {
                 project, manifest, ..

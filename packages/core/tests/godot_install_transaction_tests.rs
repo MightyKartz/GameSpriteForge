@@ -284,6 +284,42 @@ fn real_godot_install_and_failed_update_preserve_approved_resources() {
 }
 
 #[test]
+#[ignore = "requires real Godot 4.6.x; validates provider-neutral V3 catalog installation"]
+fn real_godot_install_with_v3_catalog() {
+    let root = tempfile::tempdir().unwrap();
+    let (jobs, plans, pack, project) = fixture(root.path());
+    let library = root.path().join("library");
+    forge_core::library::initialize(&library, "Local resources").unwrap();
+    let entry = serde_json::from_value(json!({
+        "assetId":"fixture","name":"Fixture","kind":"prop_set","packPath":pack,
+        "packSha256":directory_sha256(&pack).unwrap(),"sourceJobId":"fixture-source",
+        "workflow":"static-set@1.0.0","createdAt":"2026-01-01T00:00:00Z"
+    }))
+    .unwrap();
+    forge_core::catalog::publish_catalog_asset(&library, entry).unwrap();
+    assert!(!library.join("forge-project.json").exists());
+    let mut operation = install_operation(&pack, &project);
+    if let AutomationOperation::InstallGodot(request) = &mut operation {
+        request.catalog_project_path = Some(library.clone());
+    }
+    let executable = std::env::var_os("FORGE_GODOT_PATH")
+        .unwrap_or_else(|| "/Applications/Godot.app/Contents/MacOS/Godot".into());
+    temp_env::with_var("FORGE_GODOT_PATH", Some(executable), || {
+        let plan = plans.prepare(operation).unwrap();
+        let plan = plans.claim(&plan.token).unwrap();
+        let job = stage_plan_job(&jobs, &plan).unwrap();
+        let result = run_operation(&jobs, &job.job_id, &plan.operation).unwrap();
+        assert_eq!(result.lifecycle_state, JobLifecycleState::Succeeded);
+    });
+    let catalog = forge_core::library::read_catalog(&library).unwrap();
+    let asset = forge_core::library::read_asset(&library, &catalog, "fixture").unwrap();
+    assert_eq!(asset.installations.len(), 1);
+    assert_eq!(asset.installations[0].revision, asset.revisions[0]);
+    assert_eq!(asset.installations[0].evidence, "installation_transaction");
+    forge_core::delivery::verify_install(&project, "fixture", None).unwrap();
+}
+
+#[test]
 #[ignore = "requires real Godot 4.6.x; checks native animation timing and explicit failure propagation"]
 fn real_godot_animation_verification_and_script_failure_protocol() {
     let root = tempfile::tempdir().unwrap();

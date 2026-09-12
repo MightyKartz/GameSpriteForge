@@ -5,7 +5,6 @@ use std::path::{Path, PathBuf};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use uuid::Uuid;
 
 pub const PROJECT_CATALOG_RELATIVE: &str = ".forge/catalog.json";
 pub const PROJECT_CATALOG_LOCK_RELATIVE: &str = ".forge/catalog.lock";
@@ -262,9 +261,12 @@ impl From<ProjectCatalogV1> for ProjectCatalogV2 {
     }
 }
 
-/// Reads the project catalog, upgrading V1 files to V2 in memory. A missing
-/// catalog yields an empty V2 default; schemaVersion "3" or newer is rejected.
+/// Legacy-compatible view of successful builds. A V3 library resolves immutable
+/// records and local locations; this read never migrates or rewrites a catalog.
 pub fn read_project_catalog(project_root: &Path) -> Result<ProjectCatalogV2, CatalogError> {
+    if crate::library::is_library(project_root)? {
+        return crate::library::catalog_view(project_root);
+    }
     let path = project_root.join(PROJECT_CATALOG_RELATIVE);
     if !path.is_file() {
         return Ok(ProjectCatalogV2::default());
@@ -289,6 +291,11 @@ pub fn write_project_catalog(
     catalog: &ProjectCatalogV2,
 ) -> Result<PathBuf, CatalogError> {
     let _lock = lock_catalog(project_root)?;
+    if crate::library::is_library(project_root)? {
+        return Err(CatalogError::Invalid(
+            "cannot overwrite a V3 library with a legacy catalog view".into(),
+        ));
+    }
     write_project_catalog_unlocked(project_root, catalog)
 }
 
@@ -328,6 +335,9 @@ fn update_catalog_asset(
         &entry.pack_sha256,
     )?;
     let _lock = lock_catalog(project_root)?;
+    if crate::library::is_library(project_root)? {
+        return crate::library::publish_unlocked(project_root, entry);
+    }
     let mut catalog = read_project_catalog(project_root)?;
     // Publication is keyed by execution and delivered bytes, not the time a
     // recovery happens to reach this function. Preserve later review/install
@@ -372,6 +382,14 @@ pub(crate) fn link_catalog_install_unlocked(
     godot_project: PathBuf,
     target: PathBuf,
 ) -> Result<PathBuf, CatalogError> {
+    if crate::library::is_library(project_root)? {
+        return crate::library::link_install_unlocked(
+            project_root,
+            asset_id,
+            godot_project,
+            target,
+        );
+    }
     let mut catalog = read_project_catalog(project_root)?;
     let entry = catalog
         .assets
@@ -394,14 +412,14 @@ fn catalog_schema_version(bytes: &[u8]) -> Result<String, CatalogError> {
         .ok_or_else(|| CatalogError::Invalid("schemaVersion is required".into()))
 }
 
-fn lock_catalog(project_root: &Path) -> Result<File, CatalogError> {
+pub(crate) fn lock_catalog(project_root: &Path) -> Result<File, CatalogError> {
     let file = open_catalog_lock(project_root)?;
     file.lock().map_err(CatalogError::Lock)?;
     Ok(file)
 }
 
 pub(crate) fn open_catalog_lock(project_root: &Path) -> Result<File, CatalogError> {
-    let path = project_root.join(PROJECT_CATALOG_LOCK_RELATIVE);
+    let path = crate::library::storage_path(project_root, PROJECT_CATALOG_LOCK_RELATIVE)?;
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -454,13 +472,17 @@ fn validate_required_fields(
     Ok(())
 }
 
-fn write_json_atomic<T: Serialize>(path: &Path, value: &T) -> Result<(), CatalogError> {
+pub(crate) fn write_json_atomic<T: Serialize>(path: &Path, value: &T) -> Result<(), CatalogError> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let temp = path.with_extension(format!("json.{}.tmp", Uuid::new_v4()));
-    fs::write(&temp, serde_json::to_vec_pretty(value)?)?;
-    fs::rename(temp, path)?;
+    use std::io::Write;
+    let mut temp =
+        tempfile::NamedTempFile::new_in(path.parent().unwrap_or_else(|| Path::new(".")))?;
+    temp.write_all(&serde_json::to_vec_pretty(value)?)?;
+    temp.as_file().sync_all()?;
+    temp.persist(path)
+        .map_err(|error| CatalogError::Io(error.error))?;
     Ok(())
 }
 
@@ -640,7 +662,7 @@ mod tests {
         fs::write(
             &path,
             serde_json::to_vec_pretty(&serde_json::json!({
-                "schemaVersion": "3",
+                "schemaVersion": "4",
                 "updatedAt": "2026-01-01T00:00:00Z",
                 "assets": {}
             }))
@@ -652,7 +674,7 @@ mod tests {
         assert_eq!(error.code(), "unsupported_catalog_version");
         assert!(error
             .to_string()
-            .contains("unsupported catalog schemaVersion 3"));
+            .contains("unsupported catalog schemaVersion 4"));
     }
 
     #[cfg(unix)]
