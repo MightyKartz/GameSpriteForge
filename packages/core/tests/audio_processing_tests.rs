@@ -425,3 +425,24 @@ fn pcm16_output_at_96khz_uses_classic_header_and_preserves_samples() {
     );
     forge_pack::validate_pack_layout(&output).unwrap();
 }
+
+#[test]
+fn native_absolute_paths_with_spaces_are_valid_audio_sources() {
+    let temp = tempfile::tempdir().unwrap();
+    let directory = temp.path().join("audio sources");
+    fs::create_dir(&directory).unwrap();
+    let source = directory.join("theme cue.wav");
+    wav(&source, 0.2, false);
+    let canonical = fs::canonicalize(&source).unwrap();
+    validate_request(&request(&canonical)).unwrap();
+    // Windows canonical paths use a verbatim prefix; ordinary drive paths must
+    // also pass intake before they are canonicalized for FFprobe.
+    #[cfg(windows)]
+    {
+        let native = canonical.to_string_lossy();
+        assert!(native.contains('\\'));
+        if let Some(drive_path) = native.strip_prefix(r"\\?\") {
+            validate_request(&request(Path::new(drive_path))).unwrap();
+        }
+    }
+}

@@ -21,3 +21,10 @@ See [machine-readable evidence](artifacts/pr-integration-fixes-2026-09-12.json)
 for source/build identities and hashes. The final clean binary differs from the
 pre-commit tested binary in compiled Git identity. GitHub checks validate each
 pushed head; their latest status remains authoritative. Merge #32 before #33.
+
+
+The first Windows packaged audio gate exposed a source-path check rejecting native
+backslashes. Intake now accepts native Windows separators, including canonical
+verbatim paths, while retaining protocol and WAV-content validation. A synthetic
+absolute-path-with-spaces regression covers this path before FFprobe execution;
+Windows CLI CI now also runs the audio plan/processing Rust tests.

@@ -94,7 +94,7 @@ fn local_wav(path: &Path) -> Result<(), String> {
     if text.contains("://")
         || text.starts_with("file:")
         || text.starts_with("pipe:")
-        || text.contains('\\')
+        || (!cfg!(windows) && text.contains('\\'))
     {
         return Err("audio source must be a local regular WAV path without protocols".into());
     }
