@@ -55,3 +55,9 @@ preview/review and cross-machine transfer remain the following PRs. This phase's
 legacy catalog view uses the latest successful build and its native Pack hash;
 full historical build-fingerprint selection and foreign-platform delivery
 adapters are not claimed here. Remote checks for this head are tracked on its PR.
+
+Clean default-feature verification: source `c2dc3acf7046fe41ef9c1812b4d214c16e901ee5`,
+`dirty=false`, `features=[]`, `aarch64-apple-darwin` debug build. Binary SHA-256:
+`0ac46a86f549bdf6eae648f8fd75799676ecdc4f0d36ec91cd3bf20b3dc06599`.
+The CLI smoke passed against this executable and the preserved PR 0 executable,
+including actual legacy-binary refusal of V3 catalogs.
