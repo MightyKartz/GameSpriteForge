@@ -27,7 +27,7 @@ permissions:
 jobs:
   v03-quality:
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -106,6 +106,15 @@ jobs:
           cargo test --locked -p core --test image_contract_tests
           python3 scripts/test-image-contract-cli.py --forge "${GITHUB_WORKSPACE}/target/debug/forge"
 
+      - name: Verify native static, layered and common playback contracts
+        run: |
+          cargo test --locked -p core --test prepare_static_tests --test source_matte_tests --test layered_pack_tests
+          cargo test --locked -p pack
+          python3 scripts/test-static-native-matte-cli.py --forge "${GITHUB_WORKSPACE}/target/debug/forge"
+          python3 scripts/test-layered-cli.py --forge "${GITHUB_WORKSPACE}/target/debug/forge" --godot "$FORGE_GODOT_PATH" --output "${RUNNER_TEMP}/forge-v03-quality/layered"
+          python3 scripts/test-godot-preview-ui.py --project "${RUNNER_TEMP}/forge-v03-quality/layered/preview/project" --godot "$FORGE_GODOT_PATH" --output "${RUNNER_TEMP}/forge-v03-quality/preview-ui"
+          python3 scripts/test-godot-unified-player.py --godot "$FORGE_GODOT_PATH" --controller scripts/godot/runtime/layered-player-v1.gd
+
       - name: Upload QA evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -130,7 +139,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cargo test --locked -p core --lib video::ffmpeg::tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          cargo test --locked -p core --test image_contract_tests --test delivery_audit_tests --test static_delivery_tests
+          cargo test --locked -p core --test image_contract_tests --test delivery_audit_tests --test static_delivery_tests --test prepare_static_tests --test source_matte_tests --test layered_pack_tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo test --locked -p pack
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-image-contract-cli.py --forge target/debug/forge.exe
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

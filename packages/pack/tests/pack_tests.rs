@@ -736,6 +736,38 @@ fn validates_right_only_rendering_contract() {
 }
 
 #[test]
+fn animation_blend_modes_require_valid_matching_metadata() {
+    for blend in [
+        json!("normal"),
+        json!("add"),
+        json!("multiply"),
+        json!("screen"),
+        json!(null),
+        json!(3),
+    ] {
+        let (_temp, pack) = write_right_only_timing_pack_fixture(false);
+        for (relative, pointer) in [
+            ("assets/manifest.json", "/rendering"),
+            ("assets/godot_import.json", "/spriteFrames/rendering"),
+        ] {
+            let path = pack.join(relative);
+            let mut value: serde_json::Value =
+                serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+            value.pointer_mut(pointer).unwrap()["blendMode"] = blend.clone();
+            fs::write(path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+        }
+        let valid = matches!(blend.as_str(), Some("normal" | "add" | "multiply"));
+        assert_eq!(validate_pack_layout(&pack).is_ok(), valid, "blend={blend}");
+    }
+    let (_temp, pack) = write_right_only_timing_pack_fixture(false);
+    let path = pack.join("assets/godot_import.json");
+    let mut value: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    value["spriteFrames"]["rendering"]["blendMode"] = json!("add");
+    fs::write(path, serde_json::to_vec_pretty(&value).unwrap()).unwrap();
+    assert_timing_validation_fails(&pack, "assets/godot_import.json", "rendering differs");
+}
+
+#[test]
 fn right_only_rendering_contract_rejects_left_animations() {
     let (_temp, pack) = write_right_only_timing_pack_fixture(true);
 

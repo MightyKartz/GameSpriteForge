@@ -17,6 +17,12 @@ commands alike. Do not replace an existing pin with whichever `forge` is on PATH
 
 ## Output contract
 
+The Windows/layered milestone adds [native static canvases and single PNG matting](static-native-and-matte.md),
+[formal layered Packs](layered-packs.md), and [common Godot playback and preview](godot-playback-preview.md).
+Check their capability IDs in the actual executable; the unchanged package version alone is insufficient.
+Windows build, checksums, installation and upgrade instructions are in the
+[portable distribution guide](../releases/windows-portable.md).
+
 Successfully parsed commands invoked with `--json` write one JSON value to stdout:
 
 ```json

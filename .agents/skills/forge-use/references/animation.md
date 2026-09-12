@@ -116,3 +116,41 @@ For retained source-transform reports and immutable delivery receipts, read
 also contains `examples/godot/forge-external-clock`, a generic SpriteFrames sampler
 that handles pause, loop completion and per-frame timing. Gameplay clock policy
 remains the consuming game's responsibility.
+
+## Native preview and common player
+
+Builds advertising `godot_native_preview` can create an isolated project with
+`forge godot preview --pack asset.gsfpack --output new-preview --godot PATH --json`.
+The output directory must be new. Add `--launch` to open Godot playback controls:
+clip selection, play/pause, time seek, speed and finished state. The command runs
+the ordinary transactional install plus a native scene check and keeps its Jobs
+inside the preview directory. It accepts animation, character and layered Packs.
+
+With `godot_unified_playback`, the delivered scene root exposes `play(clip, restart)`,
+`pause()`, `seek(seconds)`, `set_speed(nonnegative_speed)`, `state()` and `reset_pose()`.
+Nonuniform SpriteFrames durations remain authoritative. Completion stops a
+non-looping clip and emits `completed` once during advancement; seeking to the
+end stops without emitting completion. For an external game clock, disable the
+root's `_process` with `set_process(false)` and call `advance(delta_seconds)`;
+do not run two clocks. Speed applies once inside `advance`.
+
+With `effect_blend_modes`, animation `rendering.blendMode` accepts `normal`, `add`
+and `multiply`. Normal remains the default. Preview on the intended game
+background because additive and multiplicative effects depend on that background.
+
+## Registered layers
+
+With `layered_pack_v1`, `forge asset prepare-layered --request layers.json
+--output character.gsfpack --json` accepts a shared `canvas:{width,height,origin:[0,0]}`,
+`sampling`, and ordered `layers`. Every layer supplies `id`, `name`, local `path`,
+exact `sha256` and source-pixel `pivot`; optional `transform` defaults to identity
+and `blend` to normal. Package identity fields are `schemaVersion:"1"`, `id`,
+`name`, and `license`. Layer PNGs retain their original bytes and common canvas.
+This step does not infer layers or perform background removal.
+
+Optional `clips` carry `id`, `durationMs`, `loop`, and per-layer `tracks` with
+`layerId` and strictly ordered `keyframes`. Keyframes include both endpoints and
+contain complete `transform:{position:[x,y],rotationDegrees,scale:[x,y],opacity}`.
+Transforms interpolate linearly around each pivot. There are no bones, meshes,
+parent hierarchies or automatic occlusion repair in V1. Static composition and
+motion appearance still require artwork-specific review.

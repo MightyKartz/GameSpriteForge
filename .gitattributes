@@ -1,0 +1,4 @@
+# Trusted native runtime snapshots must have identical bytes on every platform.
+/scripts/godot/*.gd text eol=lf
+/scripts/godot/runtime/*.gd text eol=lf
+/scripts/godot/runtime/*.gdshader text eol=lf

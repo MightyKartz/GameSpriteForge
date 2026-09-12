@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
 use forge_core::{
-    asset_project::{hash_file, SamplingMode, StaticAssetKind},
+    asset_project::{hash_file, SamplingMode, StaticAssetKind, StaticCanvasPolicy},
     automation::{
         run_operation, stage_plan_job, AutomationOperation, PlanStore, PrepareStaticItem,
         PrepareStaticRequest,
@@ -28,7 +28,8 @@ fn request(root: &Path) -> PrepareStaticRequest {
         name: "Jade props".into(),
         license: "CC0-1.0".into(),
         sampling: SamplingMode::Linear,
-        canvas_size: 64,
+        canvas_size: Some(64),
+        canvas_policy: StaticCanvasPolicy::Normalize,
         foreground_alpha_threshold: 1,
         edge_padding_px: 0,
         items: vec![PrepareStaticItem {
@@ -135,7 +136,7 @@ fn local_static_plan_rejects_invalid_inputs_before_creating_jobs() {
                 request.items.push(item);
             }
             "unsafe_id" => request.items[0].id = "../jade".into(),
-            "canvas" => request.canvas_size = 100,
+            "canvas" => request.canvas_size = Some(100),
             "license" => request.license = String::new(),
             "opaque" => RgbaImage::from_pixel(16, 16, Rgba([0, 200, 80, 255]))
                 .save(&request.items[0].path)
@@ -153,6 +154,122 @@ fn local_static_plan_rejects_invalid_inputs_before_creating_jobs() {
             "{invalid} must fail"
         );
     }
+}
+
+#[test]
+fn preserves_native_rgb_and_rgba_rectangles_bytes_coordinates_and_godot_origin() {
+    for rgba in [false, true] {
+        let temp = tempfile::tempdir().unwrap();
+        let mut request = request(temp.path());
+        request.canvas_policy = StaticCanvasPolicy::PreserveSource;
+        request.canvas_size = None;
+        let path = &request.items[0].path;
+        if rgba {
+            let mut image = RgbaImage::from_pixel(37, 19, Rgba([23, 45, 67, 0]));
+            image.put_pixel(31, 2, Rgba([120, 90, 50, 1]));
+            image.put_pixel(4, 17, Rgba([10, 200, 90, 255]));
+            image.save(path).unwrap();
+        } else {
+            let mut image = image::RgbImage::from_pixel(37, 19, image::Rgb([220, 210, 200]));
+            image.put_pixel(31, 2, image::Rgb([10, 20, 30]));
+            image.save(path).unwrap();
+        }
+        let original = fs::read(path).unwrap();
+        let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+        let prepared = plans
+            .prepare(AutomationOperation::PrepareStatic(request))
+            .unwrap();
+        let plan = plans.claim(&prepared.token).unwrap();
+        let jobs = JobStore::new(temp.path().join("jobs")).unwrap();
+        let queued = stage_plan_job(&jobs, &plan).unwrap();
+        let done = run_operation(&jobs, &queued.job_id, &plan.operation).unwrap();
+        let pack = &done
+            .artifacts
+            .iter()
+            .find(|a| a.kind == "gsfpack")
+            .unwrap()
+            .path;
+        forge_pack::validate_pack_layout(pack).unwrap();
+        assert_eq!(
+            fs::read(pack.join("assets/items/jade.png")).unwrap(),
+            original
+        );
+        assert_eq!(
+            fs::read(pack.join("assets/frames/frame_001.png")).unwrap(),
+            original
+        );
+        let helper: Value =
+            serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json")).unwrap())
+                .unwrap();
+        assert_eq!(helper["frameWidth"], 37);
+        assert_eq!(helper["frameHeight"], 19);
+        assert_eq!(
+            helper["anchor"],
+            serde_json::json!({"type":"custom", "x":0.0,"y":0.0})
+        );
+        let manifest: Value =
+            serde_json::from_slice(&fs::read(pack.join("assets/manifest.json")).unwrap()).unwrap();
+        assert_eq!(manifest["sheet"]["frameHeight"], 19);
+        let report: Value = serde_json::from_slice(
+            &fs::read(done.job_dir.join("local-import-report.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            report["items"][0]["cropBounds"],
+            serde_json::json!([0, 0, 37, 19])
+        );
+        assert_eq!(report["items"][0]["sourceBytesPreserved"], true);
+        assert_eq!(report["checks"]["transparentBackground"], rgba);
+    }
+}
+
+#[test]
+fn native_policy_rejects_ambiguous_resizing_and_mixed_canvases() {
+    for invalid in ["canvas", "padding", "mixed"] {
+        let temp = tempfile::tempdir().unwrap();
+        let mut request = request(temp.path());
+        request.canvas_policy = StaticCanvasPolicy::PreserveSource;
+        request.canvas_size = None;
+        match invalid {
+            "canvas" => request.canvas_size = Some(64),
+            "padding" => request.edge_padding_px = 2,
+            "mixed" => {
+                let second = temp.path().join("other.png");
+                RgbaImage::from_pixel(65, 32, Rgba([2, 3, 4, 255]))
+                    .save(&second)
+                    .unwrap();
+                request.items.push(PrepareStaticItem {
+                    id: "other".into(),
+                    name: "Other".into(),
+                    path: second,
+                });
+            }
+            _ => unreachable!(),
+        }
+        let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+        assert!(
+            plans
+                .prepare(AutomationOperation::PrepareStatic(request))
+                .is_err(),
+            "accepted {invalid}"
+        );
+    }
+}
+
+#[test]
+fn legacy_request_json_and_serialized_fingerprints_keep_normalize_default() {
+    let temp = tempfile::tempdir().unwrap();
+    let old = serde_json::to_value(request(temp.path())).unwrap();
+    assert_eq!(old["canvasSize"], 64);
+    assert!(old.get("canvasPolicy").is_none());
+    let parsed: PrepareStaticRequest = serde_json::from_value(old.clone()).unwrap();
+    assert_eq!(parsed.canvas_policy, StaticCanvasPolicy::Normalize);
+    assert_eq!(serde_json::to_value(parsed).unwrap(), old);
+    let mut native = old;
+    native.as_object_mut().unwrap().remove("canvasSize");
+    native["canvasPolicy"] = serde_json::json!("preserve_source");
+    let parsed: PrepareStaticRequest = serde_json::from_value(native).unwrap();
+    assert_eq!(parsed.canvas_size, None);
 }
 
 #[test]

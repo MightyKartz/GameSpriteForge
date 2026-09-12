@@ -5,6 +5,7 @@
 
 # Local dependency and build output
 target/
+__pycache__/
 **/.godot/
 
 # Local machine/tool state

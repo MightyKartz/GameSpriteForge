@@ -72,9 +72,12 @@ pub fn runtime_tool_directory() -> Option<PathBuf> {
     // macOS can report the public launcher symlink instead of its payload.
     let executable = env::current_exe().ok()?.canonicalize().ok()?;
     let directory = executable.parent()?.to_path_buf();
-    let ffmpeg = directory.join("ffmpeg");
-    let ffprobe = directory.join("ffprobe");
-    (ffmpeg.is_file() && ffprobe.is_file()).then_some(directory)
+    let has_tool = |name| {
+        path_candidates(name, &directory)
+            .iter()
+            .any(|path| path.is_file())
+    };
+    (has_tool("ffmpeg") && has_tool("ffprobe")).then_some(directory)
 }
 
 pub fn find_in_path(binary_name: &str) -> Option<String> {

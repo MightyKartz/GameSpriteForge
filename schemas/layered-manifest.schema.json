@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/layered-manifest.schema.json",
+  "title": "Forge shared-canvas flat layered asset",
+  "description": "Layers draw back to front in array order. Coordinates are source pixels. No per-layer cropping or resampling. Keyframes are complete absolute local transforms and interpolate linearly, including rotationDegrees.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "assetType", "id", "name", "canvas", "sampling", "layers", "clips"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "assetType": { "const": "layered" },
+    "id": { "$ref": "#/$defs/id" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "canvas": {
+      "type": "object", "additionalProperties": false,
+      "required": ["width", "height", "origin"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1, "maximum": 4096 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 4096 },
+        "origin": { "const": [0, 0] }
+      }
+    },
+    "sampling": { "enum": ["nearest", "linear"] },
+    "layers": { "type": "array", "minItems": 1, "maxItems": 64, "items": { "$ref": "#/$defs/layer" } },
+    "clips": { "type": "array", "maxItems": 64, "items": { "$ref": "#/$defs/clip" } },
+    "defaultClip": { "$ref": "#/$defs/id" }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
+    "vector": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number" } },
+    "transform": {
+      "type": "object", "additionalProperties": false,
+      "required": ["position", "rotationDegrees", "scale", "opacity"],
+      "properties": {
+        "position": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "minimum": -1000000, "maximum": 1000000 } },
+        "rotationDegrees": { "type": "number", "minimum": -360000, "maximum": 360000 },
+        "scale": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "minimum": 0.0001, "maximum": 1000 } },
+        "opacity": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "layer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "texture", "sha256", "pivot", "transform", "blend"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "texture": { "type": "string", "pattern": "^assets/layers/[A-Za-z][A-Za-z0-9_-]*\\.png$" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "pivot": { "$ref": "#/$defs/vector" },
+        "transform": { "$ref": "#/$defs/transform" },
+        "blend": { "enum": ["normal", "add", "multiply"] }
+      }
+    },
+    "clip": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "durationMs", "loop", "tracks"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "durationMs": { "type": "integer", "minimum": 1, "maximum": 3600000 },
+        "loop": { "type": "boolean" },
+        "tracks": {
+          "type": "array", "minItems": 1, "maxItems": 64,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["layerId", "keyframes"],
+            "properties": {
+              "layerId": { "$ref": "#/$defs/id" },
+              "keyframes": {
+                "type": "array", "minItems": 2, "maxItems": 1000,
+                "items": {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["timeMs", "transform"],
+                  "properties": {
+                    "timeMs": { "type": "integer", "minimum": 0, "maximum": 3600000 },
+                    "transform": { "$ref": "#/$defs/transform" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

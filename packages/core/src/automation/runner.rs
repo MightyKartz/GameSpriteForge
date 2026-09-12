@@ -5129,6 +5129,7 @@ fn run_install_godot(
         }
 
         let (scene_path, frames_path) = match pack_summary.asset_type.as_str() {
+            "layered" => (target.join("layered.tscn"), target.join("manifest.json")),
             "icon_set" => (target.join("items"), target.join("items")),
             "prop_set" => (target.join("scenes"), target.join("items")),
             "terrain_set" => (
@@ -5169,6 +5170,10 @@ fn run_install_godot(
                 AutomationRunError::Processing("Godot target has no asset key".into())
             })?;
         let (scene_relative, frames_relative) = match pack_summary.asset_type.as_str() {
+            "layered" => (
+                request.target.join("layered.tscn"),
+                request.target.join("manifest.json"),
+            ),
             "icon_set" => (request.target.join("items"), request.target.join("items")),
             "prop_set" => (request.target.join("scenes"), request.target.join("items")),
             "terrain_set" => (
@@ -5236,6 +5241,7 @@ fn run_install_godot(
             "loopSelection": loop_selection,
             "providerRetryMethods": provider_retry_methods,
             "nodeType": match pack_summary.asset_type.as_str() {
+                "layered" => "Node2D",
                 "icon_set" => "Texture2D",
                 "prop_set" => "Sprite2D",
                 "terrain_set" => "TileSet",
@@ -5250,6 +5256,12 @@ fn run_install_godot(
             }),
             "gameplayControllerIncluded": false,
         });
+        if let Some(layered) = &pack_summary.layered {
+            usage["layered"] = serde_json::to_value(layered)?;
+            usage["layeredManifestPath"] =
+                serde_json::json!(crate::delivery::godot_resource_path(&frames_relative));
+            usage["playbackControllerIncluded"] = serde_json::json!(true);
+        }
         if matches!(pack_summary.asset_type.as_str(), "animation" | "character") {
             let helper: serde_json::Value = serde_json::from_slice(&fs::read(
                 request.pack_path.join("assets/godot_import.json"),
@@ -5451,6 +5463,29 @@ fn copy_godot_pack_sources(
 ) -> Result<(), AutomationRunError> {
     let helper: serde_json::Value =
         serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json"))?)?;
+    if asset_type == "layered" {
+        let summary = forge_pack::inspect_pack(pack)
+            .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
+        let manifest = summary
+            .layered
+            .ok_or_else(|| AutomationRunError::Processing("layered manifest missing".into()))?;
+        fs::create_dir_all(target.join("layers"))?;
+        for layer in &manifest.layers {
+            fs::copy(
+                pack.join(&layer.texture),
+                target.join("layers").join(format!("{}.png", layer.id)),
+            )?;
+        }
+        for name in [
+            "manifest.json",
+            "layered.tscn",
+            "forge_layered_player.gd",
+            "forge_alpha_multiply.gdshader",
+        ] {
+            fs::copy(pack.join("assets").join(name), target.join(name))?;
+        }
+        return Ok(());
+    }
     if matches!(asset_type, "terrain_set" | "building_kit" | "map") {
         let mut textures = Vec::new();
         match asset_type {
@@ -5547,6 +5582,14 @@ fn copy_godot_pack_sources(
         }
         return Ok(());
     }
+    fs::write(
+        target.join("forge_player.gd"),
+        include_str!("../../../../scripts/godot/forge_layered_player.gd"),
+    )?;
+    fs::write(
+        target.join("forge_alpha_multiply.gdshader"),
+        forge_pack::layered::GODOT_ALPHA_MULTIPLY_SHADER_V1,
+    )?;
     let textures = helper
         .pointer("/spriteFrames/textures")
         .and_then(|value| value.as_array())
@@ -6179,19 +6222,7 @@ fn steps_for_operation(operation: &AutomationOperation) -> Vec<JobStepRecord> {
 }
 
 fn locate_godot() -> Option<PathBuf> {
-    if let Some(path) = std::env::var_os("FORGE_GODOT_PATH").map(PathBuf::from) {
-        if path.is_file() {
-            return Some(path);
-        }
-    }
-    let candidates = [
-        PathBuf::from("/Applications/Godot.app/Contents/MacOS/Godot"),
-        PathBuf::from("/Applications/Godot_mono.app/Contents/MacOS/Godot"),
-    ];
-    candidates
-        .into_iter()
-        .find(|path| path.is_file())
-        .or_else(|| ["godot4", "godot"].into_iter().find_map(which))
+    crate::godot::locate_godot()
 }
 
 fn require_godot_46(output: &std::process::Output) -> Result<(), AutomationRunError> {
@@ -6241,16 +6272,6 @@ fn ensure_target_inside_project(project: &Path, target: &Path) -> Result<(), Aut
         }
     }
     Ok(())
-}
-
-fn which(name: &str) -> Option<PathBuf> {
-    let output = Command::new("/usr/bin/which").arg(name).output().ok()?;
-    if !output.status.success() {
-        return None;
-    }
-    let path = String::from_utf8(output.stdout).ok()?;
-    let path = PathBuf::from(path.trim());
-    path.is_file().then_some(path)
 }
 
 fn copy_directory(source: &Path, target: &Path) -> Result<(), std::io::Error> {

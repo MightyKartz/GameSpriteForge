@@ -17,6 +17,23 @@ pub struct AnimationRendering {
     pub pixel_snap: bool,
     #[serde(default)]
     pub mirror_policy: AnimationMirrorPolicy,
+    #[serde(default, skip_serializing_if = "AnimationBlendMode::is_normal")]
+    pub blend_mode: AnimationBlendMode,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum AnimationBlendMode {
+    #[default]
+    Normal,
+    Add,
+    Multiply,
+}
+
+impl AnimationBlendMode {
+    fn is_normal(&self) -> bool {
+        *self == Self::Normal
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -40,6 +57,7 @@ impl Default for AnimationRendering {
             texture_filter: crate::asset_project::SamplingMode::Nearest,
             pixel_snap: true,
             mirror_policy: AnimationMirrorPolicy::Auto,
+            blend_mode: AnimationBlendMode::Normal,
         }
     }
 }

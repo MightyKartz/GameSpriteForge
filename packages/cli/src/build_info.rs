@@ -30,6 +30,13 @@ pub fn current() -> BuildInfo {
 // reported separately by doctor. Add new IDs only alongside their implementation.
 pub const CAPABILITIES: &[&str] = &[
     "local_static_import",
+    "static_preserve_source_canvas",
+    "single_png_chroma_matting",
+    "layered_pack_v1",
+    "layered_transform_opacity_tracks",
+    "godot_unified_playback",
+    "godot_native_preview",
+    "effect_blend_modes",
     "local_animation_import",
     "preserve_source_coordinates",
     "local_animation_timing",
