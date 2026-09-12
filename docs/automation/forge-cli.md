@@ -17,6 +17,12 @@ commands alike. Do not replace an existing pin with whichever `forge` is on PATH
 
 ## Output contract
 
+The Windows/layered milestone adds [native static canvases and single PNG matting](static-native-and-matte.md),
+[formal layered Packs](layered-packs.md), and [common Godot playback and preview](godot-playback-preview.md).
+Check their capability IDs in the actual executable; the unchanged package version alone is insufficient.
+Windows build, checksums, installation and upgrade instructions are in the
+[portable distribution guide](../releases/windows-portable.md).
+
 Successfully parsed commands invoked with `--json` write one JSON value to stdout:
 
 ```json
@@ -77,6 +83,7 @@ forge job retry --id JOB --item ITEM_OR_ANIMATION \
 forge job review --id JOB --accept --reason "visual review" --json
 
 forge pack validate --path /absolute/Pack.gsfpack --json
+forge asset verify-images --root /absolute/project --lock tools/asset-lock.json --scan game --json
 forge source inspect --path /absolute/source.png --json
 forge receipt export --job JOB [--install-job INSTALL_JOB] --out receipt.json --json
 forge receipt verify --path receipt.json [--pack /absolute/retained.gsfpack] --json
@@ -152,14 +159,21 @@ and conflict rules. Installing the CLI alone does not register a Codex skill;
 
 The current source build adds capabilities `reviewed_source_hashes`, `local_request_relative_paths`,
 `source_png_inspection`, `effect_quality_profile`, `preview_timing_diagnostics`,
-`delivery_receipts`, `godot_install_verification`, `transactional_godot_install`
-and `godot_import_cache_integrity`.
+`delivery_receipts`, `godot_install_verification`, `transactional_godot_install`,
+`godot_import_cache_integrity` and `project_image_contract_verification`.
 These are not a claim about the existing v0.3.2 release archive. Check the actual
 binary/build hash before selecting them. Read the maintained
 [delivery guide](../../.agents/skills/forge-use/references/delivery.md) or
 `forge guide delivery` for commands, source locks, receipt relocation/trust and
 installation audit limits; [animation guidance](../../.agents/skills/forge-use/references/animation.md)
 covers opt-in effect semantics and GIF quantization.
+
+`asset verify-images` checks an existing project's declared PNG hashes,
+dimensions, alpha constraints and exact scanned file set without writing a lock,
+using Jobs or starting Godot. The report is limited to image contracts and lists
+unverified metadata; it does not establish installation or export provenance.
+See [project image contracts](image-contracts.md) for the schema, explicit scan
+scope and mismatch results.
 
 Local preparation paths and `sourceLocks` resolve relative to `--request`'s file;
 stdin paths resolve against cwd. This corrects older animation commands that

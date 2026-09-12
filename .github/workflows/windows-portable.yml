@@ -1,0 +1,150 @@
+name: Windows portable package
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'packages/**'
+      - 'Cargo.*'
+      - 'schemas/**'
+      - '.agents/skills/forge-use/**'
+      - 'scripts/*windows*.ps1'
+      - 'scripts/test-cli-skill.py'
+      - 'scripts/test-layered*.py'
+      - 'scripts/test-static-native-matte-cli.py'
+      - 'scripts/test-godot-unified-player.py'
+      - 'scripts/test-godot-preview-ui.py'
+      - 'scripts/requirements-local-assets.txt'
+      - 'scripts/godot/**'
+      - 'docs/releases/windows*.md'
+      - '.github/workflows/windows-portable.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - 'Cargo.*'
+      - 'schemas/**'
+      - '.agents/skills/forge-use/**'
+      - 'scripts/*windows*.ps1'
+      - 'scripts/test-cli-skill.py'
+      - 'scripts/test-layered*.py'
+      - 'scripts/test-static-native-matte-cli.py'
+      - 'scripts/test-godot-unified-player.py'
+      - 'scripts/test-godot-preview-ui.py'
+      - 'scripts/requirements-local-assets.txt'
+      - 'scripts/godot/**'
+      - '.github/workflows/windows-portable.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  windows-portable:
+    runs-on: windows-2025
+    timeout-minutes: 75
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Build clean Windows CLI
+        run: |
+          rustup toolchain install 1.98.1 --profile minimal
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo +1.98.1 build --locked --release -p forge-cli --no-default-features
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install --requirement scripts/requirements-local-assets.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Build pinned LGPL helpers from source
+        run: |
+          ./scripts/build-windows-ffmpeg.ps1 -WorkDirectory "$env:RUNNER_TEMP/forge-ffmpeg" -Jobs 4 -SevenZip 'C:/Program Files/7-Zip/7z.exe'
+      - name: Obtain checksum-pinned Godot for package doctor verification
+        run: |
+          $archive = "$env:RUNNER_TEMP/godot.zip"
+          Invoke-WebRequest -Uri 'https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_win64.exe.zip' -OutFile $archive -MaximumRetryCount 3
+          $expected = 'd44ea7ef5bab754cacd49d581b6062836b2eea12a82e1d183aebfad9cd8c7db2bd82513337bd657d6d2d5c04d46239c0570b029faf1343e81e8a2fa7b85dd83b'
+          if ((Get-FileHash -LiteralPath $archive -Algorithm SHA512).Hash.ToLowerInvariant() -ne $expected) { throw 'Godot archive checksum mismatch' }
+          Expand-Archive -LiteralPath $archive -DestinationPath "$env:RUNNER_TEMP/godot"
+      - name: Package and test real Windows installation
+        run: |
+          New-Item -ItemType Directory -Path target/windows-dist -Force | Out-Null
+          ./scripts/package-windows.ps1 -Forge target/release/forge.exe -Helpers "$env:RUNNER_TEMP/forge-ffmpeg/helpers" -Output target/windows-dist/forge-x86_64-pc-windows-msvc.zip
+          Copy-Item scripts/install-windows.ps1,scripts/windows-package-common.ps1 target/windows-dist/
+          ./scripts/test-windows-package.ps1 -Archive target/windows-dist/forge-x86_64-pc-windows-msvc.zip -Output target/qa/windows-portable -Godot "$env:RUNNER_TEMP/godot/Godot_v4.6.3-stable_win64_console.exe"
+          python scripts/test-cli-skill.py --forge "$env:GITHUB_WORKSPACE/target/release/forge.exe" --guide-only --output "$env:GITHUB_WORKSPACE/target/qa/windows-guide"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $packageReport = Get-Content -LiteralPath target/qa/windows-portable/summary.json -Raw | ConvertFrom-Json
+          foreach ($command in @('guide','skill show')) {
+            $cliArgs = @($command.Split(' ')) + @('--json')
+            $launcher = $packageReport.cases[0].launcher
+            $result = & $launcher @cliArgs
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            if (!(($result | ConvertFrom-Json).ok)) { throw "Installed launcher failed $command" }
+            $result | Set-Content -LiteralPath ("target/qa/windows-guide/launcher-" + $command.Replace(' ','-') + '.json') -Encoding utf8
+          }
+      - name: Verify Windows PowerShell 5.1 installer compatibility
+        run: |
+          $archive = (Resolve-Path -LiteralPath target/windows-dist/forge-x86_64-pc-windows-msvc.zip).Path
+          $checksum = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
+          $installation = "$env:RUNNER_TEMP/forge powershell51"
+          $installer = "$env:GITHUB_WORKSPACE/scripts/install-windows.ps1"
+          $result = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$installer" -Archive "$archive" -Sha256 "$checksum" -InstallDirectory "$installation"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $first = $result | ConvertFrom-Json
+          if ($first.action -ne 'installed') { throw 'PowerShell 5.1 fresh install failed' }
+          $result = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$installer" -Archive "$archive" -Sha256 "$checksum" -InstallDirectory "$installation"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (($result | ConvertFrom-Json).action -ne 'unchanged') { throw 'PowerShell 5.1 reinstall was not unchanged' }
+          & "$installation/bin/forge.cmd" doctor --json | Set-Content target/qa/windows-portable/powershell51-doctor.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify static, layered and native preview through installed launcher
+        run: |
+          $summary = Get-Content -LiteralPath target/qa/windows-portable/summary.json -Raw | ConvertFrom-Json
+          $launcher = $summary.cases[0].launcher
+          $godot = "$env:RUNNER_TEMP/godot/Godot_v4.6.3-stable_win64_console.exe"
+          python scripts/test-static-native-matte-cli.py --forge "$launcher" --output target/qa/windows-native-static
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/test-layered-cli.py --forge "$launcher" --godot "$godot" --output target/qa/windows-layered-preview
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/test-godot-preview-ui.py --project target/qa/windows-layered-preview/preview/project --godot "$godot" --output target/qa/windows-preview-ui
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/test-godot-unified-player.py --godot "$godot" --controller scripts/godot/runtime/layered-player-v1.gd --output target/qa/windows-unified-controller
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Upload verified portable package and evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: forge-windows-portable-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            target/windows-dist/*.zip
+            target/windows-dist/*.sha256
+            target/windows-dist/install-windows.ps1
+            target/windows-dist/windows-package-common.ps1
+            target/qa/windows-portable/summary.json
+            target/qa/windows-portable/powershell51-doctor.json
+            target/qa/windows-guide/summary.json
+            target/qa/windows-native-static/summary.json
+            target/qa/windows-layered-preview/summary.json
+            target/qa/windows-preview-ui/summary.json
+            target/qa/windows-unified-controller/stdout.txt
+            target/qa/windows-unified-controller/stderr.txt
+          if-no-files-found: error
+          retention-days: 14
+      - name: Retain build diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: forge-windows-diagnostics-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/forge-ffmpeg/build.log
+            ${{ runner.temp }}/forge-ffmpeg/helpers/FFMPEG_BUILD.json
+            target/qa/windows-portable/summary.json
+            target/qa/windows-native-static/**
+            target/qa/windows-layered-preview/**
+            target/qa/windows-unified-controller/**
+          if-no-files-found: warn
+          retention-days: 14

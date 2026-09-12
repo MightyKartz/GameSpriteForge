@@ -874,6 +874,7 @@ pub fn export_static_pack(
         asset,
         StaticPackSource {
             sampling: style.sampling.clone(),
+            canvas_policy: StaticCanvasPolicy::Normalize,
             source: serde_json::json!({
                 "kind": "provider_generation", "name": provider_id,
                 "metadata": {"provider":provider_id, "styleRevision":style.revision,
@@ -886,8 +887,23 @@ pub fn export_static_pack(
     )
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum StaticCanvasPolicy {
+    #[default]
+    Normalize,
+    PreserveSource,
+}
+
+impl StaticCanvasPolicy {
+    pub fn is_normalize(&self) -> bool {
+        *self == Self::Normalize
+    }
+}
+
 pub(crate) struct StaticPackSource {
     pub sampling: SamplingMode,
+    pub canvas_policy: StaticCanvasPolicy,
     pub source: serde_json::Value,
     pub item_provenance: std::collections::BTreeMap<String, serde_json::Value>,
 }
@@ -920,7 +936,11 @@ pub(crate) fn export_static_pack_with_source(
             columns: (items.len() as f32).sqrt().ceil().max(1.0) as u32,
             padding_px: 2,
             margin_px: 2,
-            max_texture_size: 4096,
+            max_texture_size: if source.canvas_policy == StaticCanvasPolicy::PreserveSource {
+                8192
+            } else {
+                4096
+            },
             allow_multi_sheet: true,
         },
     )?;
@@ -978,18 +998,23 @@ pub(crate) fn export_static_pack_with_source(
             )
         })
         .collect::<Vec<_>>();
-    let canvas = image::open(&frames[0])?.width();
-    let anchor = serde_json::json!({
-        "type": if asset.kind == StaticAssetKind::IconSet { "center" } else { "feet" },
-        "x": canvas as f32 / 2.0,
-        // normalize_static_image aligns the exclusive bottom of the foreground
-        // to this ground line, leaving the same canvas/16 transparent margin.
-        "y": if asset.kind == StaticAssetKind::IconSet {
-            canvas as f32 / 2.0
-        } else {
-            (canvas - canvas / 16) as f32
-        },
-    });
+    let first = image::open(&frames[0])?;
+    let (canvas_width, canvas_height) = (first.width(), first.height());
+    let anchor = if source.canvas_policy == StaticCanvasPolicy::PreserveSource {
+        serde_json::json!({"type":"custom", "x":0.0, "y":0.0})
+    } else {
+        serde_json::json!({
+            "type": if asset.kind == StaticAssetKind::IconSet { "center" } else { "feet" },
+            "x": canvas_width as f32 / 2.0,
+            // normalize_static_image aligns the exclusive bottom of the foreground
+            // to this ground line, leaving the same canvas/16 transparent margin.
+            "y": if asset.kind == StaticAssetKind::IconSet {
+                canvas_height as f32 / 2.0
+            } else {
+                (canvas_height - canvas_height / 16) as f32
+            },
+        })
+    };
     let rendering = serde_json::json!({
         "profile": "godot-sprite-rendering@1.0.0",
         "textureFilter": source.sampling,
@@ -1001,8 +1026,8 @@ pub(crate) fn export_static_pack_with_source(
         "name": asset.name,
         "sheet": {
             "image": "assets/sprite_sheet.png",
-            "frameWidth": canvas,
-            "frameHeight": canvas,
+            "frameWidth": canvas_width,
+            "frameHeight": canvas_height,
             "columns": sheet.atlas.columns,
             "rows": sheet.atlas.rows,
         },
@@ -1033,6 +1058,7 @@ pub(crate) fn export_static_pack_with_source(
     };
     source.source["metadata"]["rendering"] = rendering.clone();
     source.source["metadata"]["anchor"] = anchor.clone();
+    source.source["metadata"]["canvasPolicy"] = serde_json::json!(source.canvas_policy);
     let forgepack = serde_json::json!({
         "schemaVersion": "2.0.0",
         "assetType": asset.kind.as_str(),
@@ -1091,8 +1117,8 @@ pub(crate) fn export_static_pack_with_source(
             "assetType": asset.kind.as_str(),
             "items": manifest["items"],
             "textures": sheet_images,
-            "frameWidth": canvas,
-            "frameHeight": canvas,
+            "frameWidth": canvas_width,
+            "frameHeight": canvas_height,
             "anchor": anchor,
             "rendering": rendering,
         }))?,

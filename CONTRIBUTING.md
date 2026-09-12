@@ -16,6 +16,26 @@ cargo build -p forge-cli
 cargo test
 ```
 
+Windows source development requires Rust's MSVC toolchain and Visual Studio C++
+build tools/Windows SDK. From a configured developer PowerShell:
+
+```powershell
+cargo build --locked -p forge-cli --no-default-features
+cargo test --locked -p core --test image_contract_tests --test delivery_audit_tests --test static_delivery_tests
+python scripts/test-image-contract-cli.py --forge target/debug/forge.exe
+```
+
+The Windows CI job checks source compilation and offline delivery contracts. It
+does not create an official Windows release or change `doctor.platformSupported`.
+Its embedded-guide check uses `test-cli-skill.py --guide-only`: Windows can read
+`guide` and `skill show`, but the CLI's safe `skill install` implementation still
+supports macOS/Linux only. Full skill installation/update tests remain in macOS CI.
+Use `FORGE_GODOT_PATH` and `GODOT_BIN` for a separately verified native Godot
+executable when running the ignored integration tests. Preserve a consumer's
+pinned CLI and toolchain lock until its own import/export checks approve a new build.
+
+For image-lock verification, see [image contracts](docs/automation/image-contracts.md).
+
 ### Stable macOS Keychain access
 
 Rust's default linker signature is ad-hoc and changes after every rebuild. macOS

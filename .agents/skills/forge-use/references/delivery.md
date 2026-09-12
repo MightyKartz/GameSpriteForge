@@ -128,6 +128,37 @@ does not establish that caches are ready for native loading.
 The audit does not recreate caches. Changed existing cache bytes or routing fail
 verification instead of being treated as an absent cache.
 
+## Check the consumer's image lock
+
+With `project_image_contract_verification`, verify an existing project image
+contract after installing or transferring assets:
+
+```bash
+"$FORGE_BIN" asset verify-images --root /absolute/project \
+  --lock tools/asset-lock.json --scan game --json
+```
+
+The lock uses schema version `1` (number or string) and an `images` array with
+`id`, root-relative `path`, `sha256`, `width`, `height` and `requiresAlpha` per
+entry. Optional `expectedCounts.images` checks the declared count. `--lock` may
+also be absolute. At least one root-relative `--scan` directory is required;
+repeat it for separate directories. The combined PNG set must match the lock
+exactly, excluding `.godot` and `.git`; symlinks and escaping paths are rejected.
+Hashes, dimensions and declared pixel constraints are checked. Alpha-required
+images need PNG type 6 RGBA, transparent and visible pixels, and a clear outer
+border unless `requiresClearBorder:false`; `requiresOpaque:true` requires every
+pixel to be opaque.
+
+The report identifies its scope as `image_contract_only` and lists additional
+unverified fields in `notCheckedFields`. Mismatches retain diagnostic `data` and
+issues with `ok:false` and exit status 1. This reads files without changing the
+lock, using a Job store or starting Godot. Legacy installed PNGs can be checked,
+but success does not establish installation receipts, rig/audio contracts,
+Godot caches, exported PCK/EXE identity or visual approval. Keep those separate
+project and delivery checks; never accept unknown PNGs just to make the lock pass.
+
+## Plan and execute an installation
+
 An explicit `--target` wins when planning installation. Otherwise, an explicit
 validated `--asset-key` supplies `addons/forge_assets/KEY`; with neither, the Pack
 ID supplies that directory. Display filenames, including Chinese names, do not

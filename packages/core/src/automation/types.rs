@@ -4,7 +4,9 @@ use std::path::PathBuf;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::asset_project::{SamplingMode, StaticAssetKind, StaticAssetSetSpecV1};
+use crate::asset_project::{
+    SamplingMode, StaticAssetKind, StaticAssetSetSpecV1, StaticCanvasPolicy,
+};
 use crate::export::{AnimationRendering, PreviewGifParameters, SpriteSheetParameters};
 use crate::frames::NormalizeOptions;
 use crate::job::RepairContext;
@@ -97,7 +99,10 @@ pub struct PrepareStaticRequest {
     pub name: String,
     pub license: String,
     pub sampling: SamplingMode,
-    pub canvas_size: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub canvas_size: Option<u32>,
+    #[serde(default, skip_serializing_if = "StaticCanvasPolicy::is_normalize")]
+    pub canvas_policy: StaticCanvasPolicy,
     #[serde(default = "default_foreground_alpha_threshold")]
     pub foreground_alpha_threshold: u8,
     #[serde(default)]

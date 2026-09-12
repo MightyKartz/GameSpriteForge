@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 from pathlib import Path, PurePosixPath
+import posixpath
 import re
 import shutil
 import stat
@@ -103,9 +104,10 @@ def make_png(path, index):
 
 
 class Harness:
-    def __init__(self, forge, root):
+    def __init__(self, forge, root, guide_only=False):
         self.forge = forge
         self.root = root
+        self.guide_only = guide_only
         self.calls = []
         self.cases = []
         self.bundle = None
@@ -137,7 +139,11 @@ class Harness:
     def execute(self, args, forge=None, cwd=None):
         command = [str(forge or self.forge), *map(str, args)]
         result = subprocess.run(command, cwd=cwd or self.root, env=self.env,
-                                capture_output=True, text=True, timeout=60)
+                                capture_output=True, timeout=60)
+        # The CLI protocol is UTF-8. Decode bytes directly to preserve embedded
+        # CRLF content instead of applying locale decoding or newline translation.
+        result.stdout = result.stdout.decode("utf-8")
+        result.stderr = result.stderr.decode("utf-8")
         record = {"argv": command, "exitCode": result.returncode,
                   "cwd": str(cwd or self.root),
                   "stdout": result.stdout, "stderr": result.stderr}
@@ -259,7 +265,7 @@ class Harness:
                 parsed = urlsplit(destination)
                 if parsed.scheme or parsed.netloc or not parsed.path:
                     continue
-                linked = os.path.normpath(str(PurePosixPath(relative).parent / unquote(parsed.path)))
+                linked = posixpath.normpath(str(PurePosixPath(relative).parent / unquote(parsed.path)))
                 require(linked in files or any(path.startswith(linked.rstrip("/") + "/") for path in files),
                         f"Broken embedded link: {relative} -> {destination}")
                 links += 1
@@ -598,7 +604,7 @@ class Harness:
             specs = example_root / "asset-specs"
             specs.mkdir()
             copied = specs / PurePosixPath(relative).name
-            copied.write_text(exported, encoding="utf-8")
+            copied.write_bytes(exported.encode("utf-8"))
             require(sha256(copied.read_bytes()) == self.expected[relative],
                     "Exported guide request differs from embedded example")
             for index, item in enumerate(request["items"]):
@@ -619,21 +625,23 @@ class Harness:
         self.completed("guide_local_examples_create_real_zero_provider_plans_without_skill_installation",
                        examples=verified)
 
-        self.install(project, forge=binary)
-        self.assert_result(self.call(["skill", "check", "--project", project], forge=binary),
-                           self.target(project), "project", "current")
-        self.completed("standalone_binary_install_without_repository_or_media_helpers")
+        if not self.guide_only:
+            self.install(project, forge=binary)
+            self.assert_result(self.call(["skill", "check", "--project", project], forge=binary),
+                               self.target(project), "project", "current")
+            self.completed("standalone_binary_install_without_repository_or_media_helpers")
 
     def run(self):
         try:
             self.show()
             self.guide_without_install()
             self.standalone_and_example()
-            self.basic_scopes()
-            self.modified_and_unmanaged()
-            self.symlinks()
-            self.upgrade()
-            self.invalid_arguments()
+            if not self.guide_only:
+                self.basic_scopes()
+                self.modified_and_unmanaged()
+                self.symlinks()
+                self.upgrade()
+                self.invalid_arguments()
         except Exception as error:
             write_json(self.root / "summary.json", self.summary(False, str(error)))
             raise
@@ -642,12 +650,16 @@ class Harness:
         print(json.dumps(summary, indent=2))
 
     def summary(self, ok, error=None):
-        value = {"ok": ok, "forge": str(self.forge), "binarySha256": sha256(self.forge.read_bytes()),
+        value = {"ok": ok, "mode": "guide-only" if self.guide_only else "full",
+                 "forge": str(self.forge), "binarySha256": sha256(self.forge.read_bytes()),
                  "build": self.bundle.get("build") if self.bundle else None,
                  "contentHash": self.bundle.get("contentHash") if self.bundle else None,
                  "cases": self.cases, "commandCount": len(self.calls),
                  "providerRequestsExecuted": 0,
                  "scope": "temporary projects/home; synthetic local PNGs; plans only; no Godot or Provider execution"}
+        if self.guide_only:
+            value["notRun"] = ["skill_installation_and_check", "modified_and_unmanaged_protection",
+                               "skill_updates_and_backups", "symlink_protection", "skill_invalid_arguments"]
         if error:
             value["error"] = error
         return value
@@ -658,6 +670,8 @@ def main():
     parser.add_argument("--forge", type=Path, required=True,
                         help="Absolute executable path; preserve the public installer symlink")
     parser.add_argument("--output", type=Path, help="Optional new directory retaining test evidence")
+    parser.add_argument("--guide-only", action="store_true",
+                        help="Verify embedded guides and local example planning without skill installation checks")
     args = parser.parse_args()
     if not args.forge.is_absolute() or not args.forge.is_file():
         parser.error("--forge must name an existing absolute executable path")
@@ -665,10 +679,10 @@ def main():
     # of installed-package acceptance. Test directories may normalize /tmp.
     if args.output:
         args.output.mkdir(parents=True, exist_ok=False)
-        Harness(args.forge, args.output.resolve()).run()
+        Harness(args.forge, args.output.resolve(), guide_only=args.guide_only).run()
     else:
         with tempfile.TemporaryDirectory(prefix="forge-cli-skill-") as temporary:
-            Harness(args.forge, Path(temporary).resolve()).run()
+            Harness(args.forge, Path(temporary).resolve(), guide_only=args.guide_only).run()
 
 
 if __name__ == "__main__":

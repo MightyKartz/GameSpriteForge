@@ -111,6 +111,7 @@
             "linear"
           ]
         },
+        "blendMode": { "enum": ["normal", "add", "multiply"] },
         "pixelSnap": {
           "type": "boolean"
         },

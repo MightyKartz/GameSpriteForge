@@ -139,6 +139,10 @@ pub fn safe_relative(path: &Path) -> bool {
             .all(|part| matches!(part, Component::Normal(_)))
 }
 
+pub(crate) fn godot_resource_path(relative: &Path) -> String {
+    format!("res://{}", relative.to_string_lossy().replace('\\', "/"))
+}
+
 pub fn safe_project_target(project: &Path, relative: &Path) -> io::Result<PathBuf> {
     if !safe_relative(relative)
         || !relative.starts_with("addons/forge_assets")
@@ -211,9 +215,12 @@ pub fn verify_install(
         ("scenePath", &entry.scene_path),
         ("spriteFramesPath", &entry.sprite_frames_path),
     ] {
+        // Earlier Windows builds emitted native separators in usage JSON.
+        // Keep their recorded bytes intact while comparing the same resource URI.
+        let recorded_uri = usage[field].as_str().map(|uri| uri.replace('\\', "/"));
         if !relative.starts_with(&entry.godot_target)
             || !safe_relative(relative)
-            || usage[field] != format!("res://{}", relative.display())
+            || recorded_uri != Some(godot_resource_path(relative))
             || !project.join(relative).exists()
         {
             return Err(invalid(format!(
@@ -292,6 +299,7 @@ pub fn verify_install(
         }
     }
     let (scene, frames) = match summary.asset_type.as_str() {
+        "layered" => ("layered.tscn", "manifest.json"),
         "icon_set" => ("items", "items"),
         "prop_set" => ("scenes", "items"),
         "terrain_set" => ("forge_terrain_preview.tscn", "forge_terrain_set.tres"),
@@ -337,7 +345,35 @@ pub fn verify_install(
         }
     }
     let mut textures = BTreeMap::<PathBuf, PathBuf>::new();
-    if matches!(summary.asset_type.as_str(), "icon_set" | "prop_set") {
+    if let Some(layered) = &summary.layered {
+        if entry.kind != crate::project::ProjectAssetKind::Layered {
+            return Err(invalid("registered asset kind differs from layered Pack"));
+        }
+        if usage.get("layered") != Some(&serde_json::to_value(layered)?) {
+            return Err(invalid(
+                "installed layered contract differs from the original Pack",
+            ));
+        }
+        for layer in &layered.layers {
+            insert_texture(
+                &mut textures,
+                PathBuf::from(&layer.texture),
+                PathBuf::from(format!("layers/{}.png", layer.id)),
+            )?;
+        }
+        for name in [
+            "manifest.json",
+            "layered.tscn",
+            "forge_layered_player.gd",
+            "forge_alpha_multiply.gdshader",
+        ] {
+            if fs::read(pack.join("assets").join(name))? != fs::read(target.join(name))? {
+                return Err(invalid(format!(
+                    "installed layered resource differs: {name}"
+                )));
+            }
+        }
+    } else if matches!(summary.asset_type.as_str(), "icon_set" | "prop_set") {
         let items = helper["items"]
             .as_array()
             .ok_or_else(|| invalid("Pack items missing"))?;

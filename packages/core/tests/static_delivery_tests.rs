@@ -115,6 +115,34 @@ fn make_legacy(pack: &Path) {
     write_json(pack.join("forgepack.json"), &metadata);
 }
 
+fn fixture_native_pack(root: &Path) -> PathBuf {
+    fs::create_dir_all(root).unwrap();
+    let source = root.join("source.png");
+    image::RgbImage::from_pixel(37, 19, image::Rgb([40, 90, 130]))
+        .save(&source)
+        .unwrap();
+    let request = serde_json::from_value(json!({
+        "schemaVersion":"1", "kind":"prop_set", "id":"native-static", "name":"Native static",
+        "license":"CC0-1.0", "sampling":"linear", "canvasPolicy":"preserve_source",
+        "items":[{"id":"stone", "name":"Native stone", "path":source}]
+    }))
+    .unwrap();
+    let plans = PlanStore::new(root.join("plans")).unwrap();
+    let prepared = plans
+        .prepare(AutomationOperation::PrepareStatic(request))
+        .unwrap();
+    let plan = plans.claim(&prepared.token).unwrap();
+    let jobs = JobStore::new(root.join("jobs")).unwrap();
+    let staged = stage_plan_job(&jobs, &plan).unwrap();
+    let done = run_operation(&jobs, &staged.job_id, &plan.operation).unwrap();
+    done.artifacts
+        .iter()
+        .find(|item| item.kind == "gsfpack")
+        .unwrap()
+        .path
+        .clone()
+}
+
 #[test]
 fn static_pack_preserves_sampling_and_ground_anchor() {
     for kind in [StaticAssetKind::IconSet, StaticAssetKind::PropSet] {
@@ -196,8 +224,18 @@ fn static_pack_installs_in_real_godot_with_legacy_compatibility() {
             SamplingMode::Nearest,
             true,
         ),
+        (
+            "native",
+            StaticAssetKind::PropSet,
+            SamplingMode::Linear,
+            false,
+        ),
     ] {
-        let pack = fixture_pack(&root.join(name), kind, sampling);
+        let pack = if name == "native" {
+            fixture_native_pack(&root.join(name))
+        } else {
+            fixture_pack(&root.join(name), kind, sampling)
+        };
         if legacy {
             make_legacy(&pack);
         }
@@ -219,6 +257,17 @@ fn static_pack_installs_in_real_godot_with_legacy_compatibility() {
         assert_eq!(completed.next_actions, ["inspect_project", "job_report"]);
         let usage = read_json(project.join(target).join("forge_usage.json"));
         assert_eq!(
+            usage["scenePath"],
+            format!(
+                "res://addons/forge_assets/{name}/{}",
+                if name == "icons" { "items" } else { "scenes" }
+            )
+        );
+        assert_eq!(
+            usage["spriteFramesPath"],
+            format!("res://addons/forge_assets/{name}/items")
+        );
+        assert_eq!(
             usage["texturePaths"]["stone"],
             format!("res://addons/forge_assets/{name}/items/stone.png")
         );
@@ -233,13 +282,27 @@ fn static_pack_installs_in_real_godot_with_legacy_compatibility() {
             );
             assert_eq!(
                 usage["anchor"]["y"],
-                if name == "icons" { 32.0 } else { 60.0 }
+                if name == "native" {
+                    0.0
+                } else if name == "icons" {
+                    32.0
+                } else {
+                    60.0
+                }
             );
+            if name == "native" {
+                assert_eq!(usage["frameWidth"], 37);
+                assert_eq!(usage["frameHeight"], 19);
+                assert_eq!(
+                    fs::read(project.join("addons/forge_assets/native/items/stone.png")).unwrap(),
+                    fs::read(root.join("native/source.png")).unwrap()
+                );
+            }
         }
     }
     fs::write(project.join("verify.gd"), r#"extends SceneTree
 func _initialize() -> void:
-	for name in ["linear", "nearest", "legacy"]:
+	for name in ["linear", "nearest", "legacy", "native"]:
 		var packed = load("res://addons/forge_assets/%s/scenes/stone.tscn" % name)
 		assert(packed is PackedScene)
 		var root = packed.instantiate()
@@ -247,11 +310,15 @@ func _initialize() -> void:
 		if name == "legacy":
 			assert(sprite.centered and sprite.position == Vector2.ZERO)
 			assert(sprite.texture_filter == CanvasItem.TEXTURE_FILTER_PARENT_NODE)
+		elif name == "native":
+			assert(not sprite.centered and sprite.position == Vector2.ZERO)
+			assert(sprite.get_rect() == Rect2(0, 0, 37, 19))
+			assert(sprite.texture_filter == CanvasItem.TEXTURE_FILTER_LINEAR)
 		else:
 			assert(not sprite.centered and sprite.position == Vector2(-32, -60))
 			assert(sprite.texture_filter == (CanvasItem.TEXTURE_FILTER_LINEAR if name == "linear" else CanvasItem.TEXTURE_FILTER_NEAREST))
 		root.free()
-	print("PASS static Godot delivery: linear, nearest, icons, legacy")
+	print("PASS static Godot delivery: linear, nearest, icons, legacy, native rectangle origin")
 	quit(0)
 "#).unwrap();
     let godot = std::env::var("GODOT_BIN")

@@ -1,6 +1,6 @@
 # Local PNGs → static Pack → Godot
 
-Use this route for Codex-generated artwork and existing transparent static PNGs.
+Use this route for Codex-generated artwork and existing static PNGs.
 Follow the [toolchain and Job checks](../SKILL.md) (`"$FORGE_BIN" guide overview`
 when reading the embedded guide) before running the workflow.
 
@@ -18,7 +18,9 @@ For an existing collection sheet, preserve the sheet and record how each separat
 item source was derived. Do not treat unrelated props as consecutive frames.
 Inspect actual transparency, subject edges and framing before import. Forge
 normalizes alpha-bearing PNGs; it does not remove an opaque background or apply
-chroma-key matting in this workflow.
+chroma-key matting in the default static workflow. Source builds can explicitly
+remove a flat background with `source matte`, or retain a reviewed rectangular
+RGB/RGBA canvas with `canvasPolicy:"preserve_source"`, as described below.
 
 ## Prepare a request
 
@@ -46,7 +48,7 @@ Paths resolve relative to the request file, or to the working directory with
 sampling. For UI icons, use `kind:"icon_set"`; for pixel art choose `nearest`.
 Keep item IDs stable across revisions. IDs start with an ASCII letter or digit,
 contain only ASCII letters, digits, `_` or `-`, and are at most 80 bytes. Item IDs
-must be unique even ignoring case. A set accepts 1–64 items. PNGs need an alpha
+must be unique even ignoring case. A set accepts 1–64 items. Default normalized PNGs need an alpha
 channel, transparent background and visible foreground, at most 4096 pixels per
 dimension and 32 MiB per file. Canvas sizes are 64, 128, 256 or 512.
 
@@ -92,6 +94,55 @@ Icons are centered. Props use the ground origin
 `(canvasSize / 2, canvasSize - canvasSize / 16)`. Padding belongs to the normalized
 extent, so the visible subject can sit slightly above that origin. Normalization
 does not promise pixel-identical source output.
+
+### Keep a reviewed native canvas
+
+For native-sized backgrounds, overlays, and already-framed images, set
+`canvasPolicy:"preserve_source"`, omit `canvasSize`, and leave `edgePaddingPx`
+at zero. This opt-in accepts 8-bit RGB/RGBA PNGs, including opaque backgrounds,
+within the same 4096-pixel and 32-MiB input limits. All items in one Pack must
+have identical source dimensions; separate different canvases into separate Packs.
+Rectangles and non-power-of-two sizes are valid. The existing plan/execute/install
+commands apply unchanged.
+
+Native item textures and retained frames preserve original PNG bytes, pixel
+coordinates, and alpha. Atlas/preview images remain derived evidence. The report
+records `sourceBytesPreserved`, dimensions, source/output hashes, and
+`canvasPolicy`; opaque images truthfully report `transparentBackground:false`.
+The helper uses real width/height and a custom `(0,0)` anchor. Generated prop
+scenes have an uncentered `Sprite2D` at `(0,0)`; icon consumers apply the origin
+and filter to their own nodes. Default requests still use normalized square
+canvases and the previous center/ground anchors.
+
+### Matte one flat-background source locally
+
+Run `"$FORGE_BIN" source matte --request /absolute/matte.json --json` with:
+
+```json
+{
+  "schemaVersion":"1",
+  "input":"sources/portrait-on-white.png",
+  "output":"derived/portrait-matte.png",
+  "parameters":{
+    "keyMode":"manual", "manualKeyColor":"#FFFFFF",
+    "threshold":24, "softness":32, "despillStrength":0.0, "haloPixels":0
+  }
+}
+```
+
+Paths resolve against the request file. The explicit output must be a new PNG;
+the source and any existing output are protected. Processing retains original
+dimensions and coordinates, applies the local chroma algorithm, and clears RGB
+where alpha becomes zero. Inputs are single still 8-bit RGB/RGBA PNGs (up to
+128 MiB and 33,554,432 pixels). Threshold/softness are 0–255, despill strength
+0–2, and halo erosion 0–4 pixels. Omitted parameters select `auto_corners` with
+threshold 48, softness 18, despill 0.5, and halo 0.
+
+Matting has no Provider calls or Job store. Retain its report with input/output
+hashes, dimensions, parameters, resolved key color, alpha statistics, and
+`visualReviewRequired:true`. Inspect soft edges and matching foreground colors;
+chroma keying does not understand the subject. An all-transparent result is
+rejected. Review the output before importing it with either canvas policy.
 
 The local report records `styleConsistencyEvaluated:false` and
 `visualReviewRequired:true`: its `game_ready` verdict covers structural checks.
