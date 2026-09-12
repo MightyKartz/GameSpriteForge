@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1",
+  "sourceCommit": "e14fbfdd5fde286d5cad09ac4c6e3560b4ceaed9",
+  "pr32FixCommit": "52030a9",
+  "checks": {
+    "workspace": {
+      "passed": 373,
+      "ignored": 4
+    },
+    "clippy198Workspace": "passed",
+    "clippy198OptionalFeatures": "passed",
+    "localAudio": "passed",
+    "layeredRegistryAndNativePlayback": "passed",
+    "localAnimationCases": [
+      "single",
+      "character",
+      "nearest",
+      "legacy",
+      "source_transform"
+    ],
+    "embeddedSkillCommands": 137,
+    "worldAssets": "passed",
+    "signingContract": "passed"
+  },
+  "testedCombinedBinary": {
+    "build": {
+      "gitCommit": "92b034f5edbc43a66d4fc22d8e7fa6556868831e",
+      "dirty": true,
+      "target": "aarch64-apple-darwin",
+      "profile": "debug",
+      "features": []
+    },
+    "sha256": "af113e258cd4ddfea5712595a85ebbe117ca668428beffcdb31012a7e3092f94",
+    "note": "Built from the merged working tree before committing e14fbfd; includes all compatibility fixes."
+  },
+  "finalCleanBinary": {
+    "build": {
+      "gitCommit": "e14fbfdd5fde286d5cad09ac4c6e3560b4ceaed9",
+      "dirty": false,
+      "target": "aarch64-apple-darwin",
+      "profile": "debug",
+      "features": []
+    },
+    "sha256": "ad957c4c7e66daf4fb454b96b93ccda41e3801a5f0930412c1028eb3cab9c26d"
+  },
+  "githubChecks": "pending at recording; consult PR head checks",
+  "scope": "Synthetic local assets only; no consumer assets or pins changed; main not merged."
+}
