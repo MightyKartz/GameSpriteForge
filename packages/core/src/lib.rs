@@ -8,7 +8,6 @@ pub mod frames;
 pub mod game_art;
 pub mod job;
 pub mod matting;
-pub mod preview;
 pub mod project;
 pub mod provider;
 pub mod quality;

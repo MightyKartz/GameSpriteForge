@@ -1,5 +1,9 @@
 # Transparent-Gutter Sprite Split Evidence
 
+Historical implementation evidence. Desktop commands and launcher behavior below
+were retired in the 2026-09-12 CLI cleanup. The slicing algorithm remains in Core
+and is used by CLI requests; see the [current intake contract](../architecture/sprite-tooling-followups.md).
+
 Date: 2026-06-11
 
 ## Scope

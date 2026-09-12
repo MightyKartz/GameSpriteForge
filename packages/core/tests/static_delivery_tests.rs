@@ -216,6 +216,7 @@ fn static_pack_installs_in_real_godot_with_legacy_compatibility() {
         let queued = stage_plan_job(&jobs, &plan).unwrap();
         let completed = run_operation(&jobs, &queued.job_id, &plan.operation).unwrap();
         assert_eq!(completed.lifecycle_state, JobLifecycleState::Succeeded);
+        assert_eq!(completed.next_actions, ["inspect_project", "job_report"]);
         let usage = read_json(project.join(target).join("forge_usage.json"));
         assert_eq!(
             usage["texturePaths"]["stone"],

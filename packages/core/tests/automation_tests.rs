@@ -84,6 +84,11 @@ fn prepare_asset_job_exports_valid_pack() {
         "godot-pixel-art@1.0.0"
     );
     assert!(forgepack["source"]["metadata"]["recipeHash"].is_string());
+
+    RgbaImage::from_pixel(16, 16, Rgba([255, 80, 40, 255]))
+        .save(input.join("frame_0.png"))
+        .unwrap();
+    assert_review_offers_cli_actions(&jobs, &plans, plan.operation);
 }
 
 #[test]
@@ -173,6 +178,11 @@ fn character_pack_uses_shared_canvas_and_exports_multiple_animations() {
     assert!(frames
         .iter()
         .all(|frame| frame.dimensions() == frames[0].dimensions()));
+
+    RgbaImage::from_pixel(16, 16, Rgba([255, 80, 40, 255]))
+        .save(idle.join("frame_0.png"))
+        .unwrap();
+    assert_review_offers_cli_actions(&jobs, &plans, plan.operation);
 }
 
 #[test]
@@ -555,6 +565,22 @@ fn build_project_operation(project: &Path, manifest: &Path) -> AutomationOperati
         }
     }))
     .unwrap()
+}
+
+fn assert_review_offers_cli_actions(
+    jobs: &JobStore,
+    plans: &PlanStore,
+    operation: AutomationOperation,
+) {
+    let prepared = plans.prepare(operation).unwrap();
+    let plan = plans.claim(&prepared.token).unwrap();
+    let queued = stage_plan_job(jobs, &plan).unwrap();
+    let review = run_operation(jobs, &queued.job_id, &plan.operation).unwrap();
+    assert_eq!(review.lifecycle_state, JobLifecycleState::AwaitingReview);
+    assert_eq!(
+        review.next_actions,
+        ["analyze_repair", "plan_repair_job", "job_report"]
+    );
 }
 
 fn request(paths: Vec<PathBuf>) -> PrepareAssetRequest {

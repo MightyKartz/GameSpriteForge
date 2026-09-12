@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "1",
+  "profile": "forge-v0.3-release-matrix@1.0.0",
+  "startedAt": "2026-09-12T05:14:14Z",
+  "finishedAt": "2026-09-12T05:23:29Z",
+  "git": {
+    "commit": "4e67b5d5c123cba932bb8e3dfcabe99dd1f673d7",
+    "branch": "codex/cli-only-cleanup",
+    "dirty": true,
+    "note": "Validated cleanup working tree before commit; baseline commit is not the cleanup commit."
+  },
+  "gates": [
+    {
+      "id": "rust-quality",
+      "scope": "release_blocking",
+      "status": "pass",
+      "durationSeconds": 157,
+      "exitCode": 0,
+      "logPath": "target/qa/cli-only-cleanup-20260912/matrix/logs/rust-quality.log"
+    },
+    {
+      "id": "character-v2-contract",
+      "scope": "release_blocking",
+      "status": "pass",
+      "durationSeconds": 78,
+      "exitCode": 0,
+      "logPath": "target/qa/cli-only-cleanup-20260912/matrix/logs/character-v2-contract.log"
+    },
+    {
+      "id": "character-v2-full-matrix",
+      "scope": "release_blocking",
+      "status": "pass",
+      "durationSeconds": 206,
+      "exitCode": 0,
+      "logPath": "target/qa/cli-only-cleanup-20260912/matrix/logs/character-v2-full-matrix.log"
+    },
+    {
+      "id": "static-cli-contract",
+      "scope": "release_blocking",
+      "status": "pass",
+      "durationSeconds": 23,
+      "exitCode": 0,
+      "logPath": "target/qa/cli-only-cleanup-20260912/matrix/logs/static-cli-contract.log"
+    },
+    {
+      "id": "static-five-style-matrix",
+      "scope": "release_blocking",
+      "status": "pass",
+      "durationSeconds": 32,
+      "exitCode": 0,
+      "logPath": "target/qa/cli-only-cleanup-20260912/matrix/logs/static-five-style-matrix.log"
+    },
+    {
+      "id": "local-static-delivery",
+      "scope": "release_blocking",
+      "status": "pass",
+      "durationSeconds": 32,
+      "exitCode": 0,
+      "logPath": "target/qa/cli-only-cleanup-20260912/matrix/logs/local-static-delivery.log"
+    },
+    {
+      "id": "local-animation-delivery",
+      "scope": "release_blocking",
+      "status": "pass",
+      "durationSeconds": 11,
+      "exitCode": 0,
+      "logPath": "target/qa/cli-only-cleanup-20260912/matrix/logs/local-animation-delivery.log"
+    },
+    {
+      "id": "world-assets-experimental",
+      "scope": "experimental",
+      "status": "pass",
+      "durationSeconds": 16,
+      "exitCode": 0,
+      "logPath": "target/qa/cli-only-cleanup-20260912/matrix/logs/world-assets-experimental.log"
+    }
+  ],
+  "evidence": {
+    "characterV2": "target/qa/cli-only-cleanup-20260912/matrix/character-v2-matrix.json",
+    "staticAssets": "target/qa/cli-only-cleanup-20260912/matrix/static-asset-matrix.json"
+  },
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "releaseBlockingPassed": true,
+    "experimentalPassed": true
+  },
+  "verdict": "pass",
+  "additionalChecks": {
+    "rustWorkspace": {
+      "passed": 275,
+      "failed": 0,
+      "ignored": 1
+    },
+    "realGodotStaticIgnoredTest": "passed in local-static-delivery gate",
+    "installer": "pass",
+    "signingContract": "pass",
+    "directionalReuseUnitTests": 7,
+    "godotSmoke": "pass (8 frames, native timing)",
+    "godotSmokeNegativeTiming": "pass (exit 1, no PASS)",
+    "shellSyntax": 14,
+    "markdownMissingPaths": 0,
+    "missingRustEmbeddedResources": 0,
+    "embeddedGuideAndSkill": {
+      "passed": 33,
+      "cases": 33,
+      "commandCount": 118,
+      "providerRequestsExecuted": 0
+    }
+  },
+  "defaultBuild": {
+    "binarySha256": "5be5fb79cd31c377e9a553edeb48eb76cdf8d7ba10a3141c27636ec45db94a88",
+    "build": {
+      "dirty": true,
+      "features": [],
+      "gitCommit": "4e67b5d5c123cba932bb8e3dfcabe99dd1f673d7",
+      "profile": "debug",
+      "target": "aarch64-apple-darwin"
+    },
+    "contentHash": "5f63b2adfb9e69e63e5b29d0692f8e3796c9fb3a13527a6e46e4494129e70165"
+  }
+}

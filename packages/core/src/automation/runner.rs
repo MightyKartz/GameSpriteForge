@@ -4501,7 +4501,7 @@ fn run_prepare_character_pack(
                 record.next_actions = vec![
                     "analyze_repair".into(),
                     "plan_repair_job".into(),
-                    "open_job".into(),
+                    "job_report".into(),
                 ];
                 if let Some(step) = record
                     .steps
@@ -4890,7 +4890,7 @@ fn run_prepare_asset(
                 record.next_actions = vec![
                     "analyze_repair".into(),
                     "plan_repair_job".into(),
-                    "open_job".into(),
+                    "job_report".into(),
                 ];
                 if let Some(export_step) =
                     record.steps.iter_mut().find(|step| step.name == "export")
@@ -5337,11 +5337,7 @@ fn run_install_godot(
                 .iter_mut()
                 .for_each(|step| step.state = "succeeded".into());
             record.artifacts.extend(artifacts);
-            record.next_actions = vec![
-                "inspect_project".into(),
-                "open_godot_project".into(),
-                "open_job".into(),
-            ];
+            record.next_actions = vec!["inspect_project".into(), "job_report".into()];
         })
         .map_err(Into::into)
 }

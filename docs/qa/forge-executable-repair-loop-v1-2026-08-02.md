@@ -1,5 +1,12 @@
 # Forge Executable Repair Loop V1 QA — 2026-08-02
 
+Historical repair-loop acceptance record. The CLI/Core and Pack evidence is
+retained; desktop and MCP checks below describe the former product surfaces.
+Current operation uses the [CLI protocol](../automation/forge-cli.md).
+
+Historical local evidence paths shown as code below are not distributed in this
+repository. The recorded results are retained; missing files have not been recreated.
+
 ## Scope
 
 Validation of the bounded quality-repair loop across Rust core, durable jobs, CLI, MCP 0.4.0, Codex Skill, Character Workflows UI, repaired `.gsfpack` output, and Godot installation.
@@ -46,17 +53,17 @@ Full regression passed with `cargo fmt --check`, `cargo test --workspace`, `npm 
 
 ## Evidence
 
-- [Before quality report](artifacts/forge-repair-loop-character-before-2026-08-02.json)
-- [After quality report](artifacts/forge-repair-loop-character-after-2026-08-02.json)
-- [Repair comparison](artifacts/forge-repair-loop-character-comparison-2026-08-02.json)
+- Before quality report: `artifacts/forge-repair-loop-character-before-2026-08-02.json`
+- After quality report: `artifacts/forge-repair-loop-character-after-2026-08-02.json`
+- Repair comparison: `artifacts/forge-repair-loop-character-comparison-2026-08-02.json`
 
 English repair workspace:
 
-![Executable repair UI, English](artifacts/forge-repair-loop-ui-en-US-2026-08-02.png)
+Executable repair UI, English: `artifacts/forge-repair-loop-ui-en-US-2026-08-02.png`
 
 Chinese repair workspace:
 
-![Executable repair UI, Chinese](artifacts/forge-repair-loop-ui-zh-CN-2026-08-02.png)
+Executable repair UI, Chinese: `artifacts/forge-repair-loop-ui-zh-CN-2026-08-02.png`
 
 ## Remaining boundary
 

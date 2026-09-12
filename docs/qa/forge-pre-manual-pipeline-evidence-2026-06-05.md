@@ -1,5 +1,10 @@
 # Forge Pre-Manual Pipeline Evidence
 
+Historical Rust pipeline evidence. The manual UI fixture harness and its npm
+commands were retired in the 2026-09-12 CLI cleanup. The shared sprite sheet now
+lives at `examples/inputs/forge-walk-sheet.png`; the original paths and hashes
+below record the 2026-06-05 run.
+
 Recorded on 2026-06-05.
 
 This evidence proves the local Rust processing/export/import pipeline for deterministic manual-QA fixtures before the interactive app QA session. It does not prove the Task 6 manual app QA gate, and it does not replace the required tester-selected real short video.

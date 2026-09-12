@@ -1,5 +1,8 @@
 # Forge Terrain, Building Kit, and JSON Map real-model acceptance — 2026-08-03
 
+Historical local evidence paths shown as code below are not distributed in this
+repository. The recorded results are retained; missing files have not been recreated.
+
 ## Decision
 
 The first complete real xAI → Terrain/Building V3 Packs → JSON-only Map Compiler →
@@ -55,9 +58,9 @@ changing the spec or credentials.
 
 Evidence:
 
-- [Final terrain preview](artifacts/forge-world-real-20260803/jobs/bb849334-73b3-4e52-a0e9-42540270415f/exports/moonlit-forest-ground.gsfpack/preview.png)
-- [Terrain quality report](artifacts/forge-world-real-20260803/jobs/bb849334-73b3-4e52-a0e9-42540270415f/exports/moonlit-forest-ground.gsfpack/quality-report.json)
-- [Terrain atlas](artifacts/forge-world-real-20260803/jobs/bb849334-73b3-4e52-a0e9-42540270415f/exports/moonlit-forest-ground.gsfpack/assets/terrain-atlas.png)
+- Final terrain preview: `artifacts/forge-world-real-20260803/jobs/bb849334-73b3-4e52-a0e9-42540270415f/exports/moonlit-forest-ground.gsfpack/preview.png`
+- Terrain quality report: `artifacts/forge-world-real-20260803/jobs/bb849334-73b3-4e52-a0e9-42540270415f/exports/moonlit-forest-ground.gsfpack/quality-report.json`
+- Terrain atlas: `artifacts/forge-world-real-20260803/jobs/bb849334-73b3-4e52-a0e9-42540270415f/exports/moonlit-forest-ground.gsfpack/assets/terrain-atlas.png`
 
 The final atlas has no structural seams, but its repeated horizontal bands remain visually
 detectable. A commercial quality gate needs multiple deterministic material variants and/or a
@@ -74,9 +77,9 @@ separate decal layer; lowering the current structural thresholds would not solve
 
 Evidence:
 
-- [Building preview](artifacts/forge-world-real-20260803/jobs/3f135601-bfd5-4d39-9449-ab7d777bbc44/exports/moonlit-forest-houses.gsfpack/preview.png)
-- [Building atlas](artifacts/forge-world-real-20260803/jobs/3f135601-bfd5-4d39-9449-ab7d777bbc44/exports/moonlit-forest-houses.gsfpack/assets/building-atlas.png)
-- [Building quality report](artifacts/forge-world-real-20260803/jobs/3f135601-bfd5-4d39-9449-ab7d777bbc44/exports/moonlit-forest-houses.gsfpack/quality-report.json)
+- Building preview: `artifacts/forge-world-real-20260803/jobs/3f135601-bfd5-4d39-9449-ab7d777bbc44/exports/moonlit-forest-houses.gsfpack/preview.png`
+- Building atlas: `artifacts/forge-world-real-20260803/jobs/3f135601-bfd5-4d39-9449-ab7d777bbc44/exports/moonlit-forest-houses.gsfpack/assets/building-atlas.png`
+- Building quality report: `artifacts/forge-world-real-20260803/jobs/3f135601-bfd5-4d39-9449-ab7d777bbc44/exports/moonlit-forest-houses.gsfpack/quality-report.json`
 
 The structural gate is working, but the generated examples read as repeated texture rectangles,
 not production-ready cottages. Building V2 should use semantic module references or masked edits
@@ -98,9 +101,9 @@ periodic material samples.
 
 Evidence:
 
-- [Map preview](artifacts/forge-world-real-20260803/jobs/5d8850cc-da76-4df3-9e7a-71263e2b1372/exports/moonlit-forest-village.gsfpack/preview.png)
-- [Map validation report](artifacts/forge-world-real-20260803/jobs/5d8850cc-da76-4df3-9e7a-71263e2b1372/exports/moonlit-forest-village.gsfpack/validation-report.json)
-- [Compiled layout](artifacts/forge-world-real-20260803/jobs/5d8850cc-da76-4df3-9e7a-71263e2b1372/exports/moonlit-forest-village.gsfpack/assets/map-layout.json)
+- Map preview: `artifacts/forge-world-real-20260803/jobs/5d8850cc-da76-4df3-9e7a-71263e2b1372/exports/moonlit-forest-village.gsfpack/preview.png`
+- Map validation report: `artifacts/forge-world-real-20260803/jobs/5d8850cc-da76-4df3-9e7a-71263e2b1372/exports/moonlit-forest-village.gsfpack/validation-report.json`
+- Compiled layout: `artifacts/forge-world-real-20260803/jobs/5d8850cc-da76-4df3-9e7a-71263e2b1372/exports/moonlit-forest-village.gsfpack/assets/map-layout.json`
 
 ## Pack, Godot, and security acceptance
 

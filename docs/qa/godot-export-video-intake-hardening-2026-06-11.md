@@ -2,13 +2,13 @@
 
 Date: 2026-06-11
 
+Historical engine and desktop implementation evidence. The desktop controls and
+npm entry points below were retired in the 2026-09-12 CLI cleanup. Current
+delivery is described in [Godot delivery and animation intake](../architecture/godot-export-video-intake-hardening.md).
+
 ## Scope
 
-This pass implemented the development plan at:
-
-```text
-docs/superpowers/plans/2026-06-11-forge-godot-export-video-intake-hardening.md
-```
+This pass implemented the [original development plan](https://github.com/MightyKartz/GameSpriteForge/blob/4e67b5d5c123cba932bb8e3dfcabe99dd1f673d7/docs/superpowers/plans/2026-06-11-forge-godot-export-video-intake-hardening.md).
 
 The implemented slice covers:
 

@@ -1,6 +1,6 @@
 # Forge 完整 2D 图像资产系统实施计划
 
-状态：Implementation handoff / 待 Kimi 实施、Codex 分阶段验收
+状态：阶段性实施规格；已交付范围见 [CLI 协议](../automation/forge-cli.md)，阶段结果见 [实施状态](../qa/forge-complete-visual-implementation-status.md)。本文保留完整视觉资产系统的目标合同，不代表默认 CLI 已支持全部规划能力。
 
 版本：1.0
 
@@ -98,7 +98,7 @@ Forge 1.0 的核心验收不是“拥有这些命令”，而是一个冻结的�
 - Token、API Key、Authorization header、Device Code、临时媒体 URL 不得进入 Job、Pack、日志或普通 JSON 输出。
 - `.gsfpack` V1/V2/V3 继续可读。
 - 当前 Character、Icon Set、Prop Set 命令和 JSON 自动化继续兼容。
-- 桌面与 MCP 源码不进入默认 workspace/release；不得删除其现有源码。
+- 产品与发布入口统一为 Rust CLI；桌面与 MCP 旧源码已在 2026-09-12 的 CLI 仓库清理中移除，历史实现可从 Git 提交恢复。
 - Godot 写入只允许位于 `addons/forge_assets` 和 `.forge` 的 Forge-owned 路径。
 - Godot 安装保持原子覆盖、所有权检查、备份与失败回滚。
 - `.tres/.tscn` 必须小于 1 MiB。

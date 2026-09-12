@@ -1,5 +1,12 @@
 # Forge Project Asset Loop QA — 2026-08-02
 
+Historical project asset acceptance record. Desktop UI and MCP results below
+refer to the former product surfaces; retained CLI/Core and Godot contracts
+continue through the [CLI protocol](../automation/forge-cli.md).
+
+Historical local evidence paths shown as code below are not distributed in this
+repository. The recorded results are retained; missing files have not been recreated.
+
 ## Scope
 
 Validation of the SpriteCook-inspired project asset loop: versioned Character Workflows, Codex/MCP discovery, stable Godot asset identity, provider provenance, content-aware revisions, the redesigned Character UI, and backward compatibility with the single-animation workbench.
@@ -36,18 +43,18 @@ Validation of the SpriteCook-inspired project asset loop: versioned Character Wo
 
 The project manifest and usage contract retained as evidence are:
 
-- [Project asset manifest](artifacts/forge-project-asset-loop-manifest-2026-08-02.json)
-- [Godot usage contract](artifacts/forge-project-asset-loop-usage-2026-08-02.json)
+- Project asset manifest: `artifacts/forge-project-asset-loop-manifest-2026-08-02.json`
+- Godot usage contract: `artifacts/forge-project-asset-loop-usage-2026-08-02.json`
 
 ## UI evidence
 
 English Character Workflows:
 
-![Character Workflows UI, English](artifacts/forge-project-asset-loop-ui-en-US-2026-08-02.png)
+Character Workflows UI, English: `artifacts/forge-project-asset-loop-ui-en-US-2026-08-02.png`
 
 Chinese Character Workflows:
 
-![Character Workflows UI, Chinese](artifacts/forge-project-asset-loop-ui-zh-CN-2026-08-02.png)
+Character Workflows UI, Chinese: `artifacts/forge-project-asset-loop-ui-zh-CN-2026-08-02.png`
 
 ## Product boundaries confirmed
 

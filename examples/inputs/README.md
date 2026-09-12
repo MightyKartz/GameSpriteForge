@@ -1,15 +1,17 @@
 # Example Inputs
 
-Create the MVP green-box video fixture with:
+`forge-walk-sheet.png` is a small synthetic sprite sheet used by the Rust
+`generate_godot_smoke_pack` example. It has a 4 × 2 grid of 64 × 64 cells and a
+green background for exercising grid slicing, chroma processing, Pack export,
+and native Godot import.
+
+Run the complete smoke check from any checkout with:
 
 ```bash
-ffmpeg -y -f lavfi -i color=c=0x00ff00:s=256x256:d=1:r=24 -vf "drawbox=x=96:y=88:w=64:h=96:color=white:t=fill" examples/inputs/green-box-character.mp4
+bash scripts/run-godot-pack-smoke.sh
 ```
 
-Prepare deterministic manual QA fixtures for PNG sequence, sprite sheet, and safe failure-state checks with:
-
-```bash
-npm run qa:fixtures
-```
-
-The fixtures are written under `examples/inputs/manual-qa/`. They do not create or replace the real short video required by the manual QA release gate.
+Godot must be on `PATH`, available as the standard macOS app, or selected with
+`GODOT_BIN`. Full Packs and the temporary Godot project are written beneath
+`target/qa/`. The CLI asset-delivery scripts generate their own isolated fixtures;
+see `scripts/test-local-static-cli.py` and `scripts/test-local-animation-delivery.py`.

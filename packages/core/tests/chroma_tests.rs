@@ -1,7 +1,6 @@
 use forge_core::matting::chroma::{
     apply_chroma_key, process_chroma_batch, ChromaKeyMode, ChromaParameters,
 };
-use forge_core::preview::{preview_chroma_frame, TargetCanvasMode};
 use image::{Rgba, RgbaImage};
 use std::path::PathBuf;
 
@@ -95,26 +94,4 @@ fn batch_processed_frame_dimensions_match_raw_before_normalization() {
     assert_eq!(result.frames[0].width, 7);
     assert_eq!(result.frames[0].height, 5);
     assert!(processed_dir.join("bboxes.json").exists());
-}
-
-#[test]
-fn single_frame_preview_writes_source_processed_and_manifest() {
-    let temp = tempfile::tempdir().unwrap();
-    let raw_path = temp.path().join("raw.png");
-    let previews_dir = temp.path().join("previews");
-    let image = RgbaImage::from_pixel(3, 2, Rgba([0, 255, 0, 255]));
-    image.save(&raw_path).unwrap();
-
-    let result = preview_chroma_frame(
-        &raw_path,
-        &base_params(),
-        TargetCanvasMode::Original,
-        &previews_dir,
-    )
-    .unwrap();
-
-    assert!(previews_dir.join("source.png").exists());
-    assert!(previews_dir.join("processed.png").exists());
-    assert!(previews_dir.join("preview.json").exists());
-    assert_eq!((result.processed_width, result.processed_height), (3, 2));
 }

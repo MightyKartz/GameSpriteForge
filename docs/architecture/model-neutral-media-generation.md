@@ -6,9 +6,8 @@ Forge owns the asset pipeline and treats generative models as replaceable media 
 
 ```mermaid
 flowchart LR
-  Agent["Codex / Claude"] --> MCP["Forge MCP (no credentials)"]
-  User["User terminal"] --> CLI["forge-cli OAuth login"]
-  MCP --> CLI
+  Agent["Codex / Claude"] --> CLI["forge CLI"]
+  User["User terminal"] --> CLI
   CLI --> Credentials["Credential Profile / OS key store"]
   CLI --> Provider["MediaGenerationProvider"]
   Provider --> XAI["xAI REST"]
@@ -26,7 +25,7 @@ flowchart LR
 - `CredentialProvider` is independent of `MediaGenerationProvider`; OAuth and API Key supply the same Bearer interface.
 - Provider output is untrusted until it is a regular local file below the job's Provider directory, within the size limit, format-valid, and SHA-256 hashed.
 - A schema V3 job locks one `providerId` and `profileId`. No retry path may silently change Provider or model.
-- Tokens, device codes, authorization headers, and temporary signed URLs are absent from plan JSON, JobStore records, packs, MCP responses, and normal logs.
+- Tokens, device codes, authorization headers, and temporary signed URLs are absent from plan JSON, JobStore records, packs, CLI JSON responses, and normal logs.
 
 ## Schema V3 top-down contract
 
@@ -42,4 +41,4 @@ The REST implementation follows xAI's current [image API reference](https://docs
 
 ## Extension rule
 
-Adding OpenAI, Google, Replicate, ComfyUI, or a local model means implementing the Provider contract and registering a profile. It must not require changes to Character Pack processing, quality thresholds, `.gsfpack`, MCP credential policy, or Godot installation.
+Adding OpenAI, Google, Replicate, ComfyUI, or a local model means implementing the Provider contract and registering a profile. It must not require changes to Character Pack processing, quality thresholds, `.gsfpack`, CLI credential policy, or Godot installation.

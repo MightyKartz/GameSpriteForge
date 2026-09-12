@@ -1,8 +1,8 @@
 # `forge` CLI automation protocol
 
 `forge` is the public Forge product and the source of truth for asset generation,
-quality evidence, durable jobs, Pack export, and Godot installation. Desktop and MCP
-clients are not part of the CLI release.
+quality evidence, durable jobs, Pack export, and Godot installation. The repository
+builds and distributes the CLI; agents and scripts use its command/JSON protocol.
 
 For **Codex-generated PNGs → local Forge processing → Godot**, read the
 [local asset guide](codex-local-assets.md). The v0.3.0 default CLI includes the

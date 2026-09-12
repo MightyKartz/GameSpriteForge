@@ -1,5 +1,4 @@
 pub mod gif;
-pub mod godot;
 pub mod manifest;
 pub mod sheet;
 pub mod sheet_layout;
@@ -11,7 +10,6 @@ use std::path::{Path, PathBuf};
 use crate::quality::{LoopSelectionReport, QualityReport, QualityVerdict};
 
 pub use gif::{build_preview_gif, GifBackground, PreviewGifOutput, PreviewGifParameters};
-pub use godot::{export_godot_project, GodotProjectExportOutput, GodotProjectExportParams};
 pub use manifest::{
     export_metadata, AnimationRendering, CharacterPackMetadataParams, EngineManifest,
     ExportMetadata, PackMetadataParams,

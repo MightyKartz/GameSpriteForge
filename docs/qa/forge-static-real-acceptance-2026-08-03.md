@@ -1,5 +1,8 @@
 # Forge xAI Icon/Prop Real-Model Acceptance — 2026-08-03
 
+Historical local evidence paths shown as code below are not distributed in this
+repository. The recorded results are retained; missing files have not been recreated.
+
 ## Scope
 
 - Workspace binary: `target/release/forge 0.2.0-cli.1`
@@ -41,8 +44,8 @@ weight to `#608060`, the generated style-board background. This makes foreground
 less palette-consistent than they are. Static consistency needs a foreground-aware Style
 baseline (and then fixture + real-data recalibration) before Icon Set can pass the release gate.
 
-- [All five generated icons](artifacts/forge-static-real-20260803/icon-set-all-items.png)
-- [Second-run consistency report](artifacts/forge-static-real-20260803/job-store/80805d6e-3e0f-4cd9-ad47-2937481e5d30/consistency-report.json)
+- All five generated icons: `artifacts/forge-static-real-20260803/icon-set-all-items.png`
+- Second-run consistency report: `artifacts/forge-static-real-20260803/job-store/80805d6e-3e0f-4cd9-ad47-2937481e5d30/consistency-report.json`
 
 ## Prop Set result: passed with explicit gray-zone review
 
@@ -58,9 +61,9 @@ was accepted. The review decision is stored in the Job and the resulting Pack va
 | Trail Signpost | 1 | 0.700 | 0.905 | accepted gray zone |
 | Bedroll Pack | 2 | 0.572 | 0.977 | accepted gray zone |
 
-- [Prop contact sheet](artifacts/forge-static-real-20260803/job-store/44093379-ccfb-41cc-9dd3-5c9869b601c7/exports/forest-camp-props/contact-sheet.png)
-- [Prop preview](artifacts/forge-static-real-20260803/job-store/44093379-ccfb-41cc-9dd3-5c9869b601c7/exports/forest-camp-props/preview.gif)
-- [Validated `.gsfpack`](artifacts/forge-static-real-20260803/job-store/44093379-ccfb-41cc-9dd3-5c9869b601c7/exports/forest-camp-props/forest-camp-props.gsfpack/forgepack.json)
+- Prop contact sheet: `artifacts/forge-static-real-20260803/job-store/44093379-ccfb-41cc-9dd3-5c9869b601c7/exports/forest-camp-props/contact-sheet.png`
+- Prop preview: `artifacts/forge-static-real-20260803/job-store/44093379-ccfb-41cc-9dd3-5c9869b601c7/exports/forest-camp-props/preview.gif`
+- Validated `.gsfpack`: `artifacts/forge-static-real-20260803/job-store/44093379-ccfb-41cc-9dd3-5c9869b601c7/exports/forest-camp-props/forest-camp-props.gsfpack/forgepack.json`
 
 ## Godot and security acceptance
 

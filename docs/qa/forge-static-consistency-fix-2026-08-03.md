@@ -1,5 +1,8 @@
 # Forge Static Consistency Fix and Real-Asset Replay — 2026-08-03
 
+Historical local evidence paths shown as code below are not distributed in this
+repository. The recorded results are retained; missing files have not been recreated.
+
 ## Outcome
 
 The real xAI Icon Set and Prop Set assets from the initial acceptance were replayed with
@@ -61,9 +64,9 @@ The repair:
 | Coin Pouch | 0.993 | 0.632 | `awaiting_review` |
 | Ancient Scroll | 0.962 | 1.014 | `game_ready` |
 
-- [Icon contact sheet](artifacts/forge-static-real-20260803/job-store/a3df022a-ee99-4093-ae78-031b9728838e/exports/forest-inventory-icons/contact-sheet.png)
-- [Icon preview](artifacts/forge-static-real-20260803/job-store/a3df022a-ee99-4093-ae78-031b9728838e/exports/forest-inventory-icons/preview.gif)
-- [Icon Pack manifest](artifacts/forge-static-real-20260803/job-store/a3df022a-ee99-4093-ae78-031b9728838e/exports/forest-inventory-icons/forest-inventory-icons.gsfpack/forgepack.json)
+- Icon contact sheet: `artifacts/forge-static-real-20260803/job-store/a3df022a-ee99-4093-ae78-031b9728838e/exports/forest-inventory-icons/contact-sheet.png`
+- Icon preview: `artifacts/forge-static-real-20260803/job-store/a3df022a-ee99-4093-ae78-031b9728838e/exports/forest-inventory-icons/preview.gif`
+- Icon Pack manifest: `artifacts/forge-static-real-20260803/job-store/a3df022a-ee99-4093-ae78-031b9728838e/exports/forest-inventory-icons/forest-inventory-icons.gsfpack/forgepack.json`
 
 ### Prop Set
 
@@ -81,9 +84,9 @@ The repair:
 | Trail Signpost | 0.991 | 0.905 | `game_ready` |
 | Bedroll Pack | 0.992 | 0.977 | `game_ready` |
 
-- [Prop contact sheet](artifacts/forge-static-real-20260803/job-store/93ed1e91-18ca-4376-bc11-bb24e1ac4ce4/exports/forest-camp-props/contact-sheet.png)
-- [Prop preview](artifacts/forge-static-real-20260803/job-store/93ed1e91-18ca-4376-bc11-bb24e1ac4ce4/exports/forest-camp-props/preview.gif)
-- [Prop Pack manifest](artifacts/forge-static-real-20260803/job-store/93ed1e91-18ca-4376-bc11-bb24e1ac4ce4/exports/forest-camp-props/forest-camp-props.gsfpack/forgepack.json)
+- Prop contact sheet: `artifacts/forge-static-real-20260803/job-store/93ed1e91-18ca-4376-bc11-bb24e1ac4ce4/exports/forest-camp-props/contact-sheet.png`
+- Prop preview: `artifacts/forge-static-real-20260803/job-store/93ed1e91-18ca-4376-bc11-bb24e1ac4ce4/exports/forest-camp-props/preview.gif`
+- Prop Pack manifest: `artifacts/forge-static-real-20260803/job-store/93ed1e91-18ca-4376-bc11-bb24e1ac4ce4/exports/forest-camp-props/forest-camp-props.gsfpack/forgepack.json`
 
 ## Godot and security verification
 

@@ -1,7 +1,8 @@
 # Contributing to Forge
 
-The public product is the Rust `forge` CLI. The retained desktop and MCP code
-are not part of the default build or release.
+Forge is a Rust CLI workspace. Its four packages are `cli`, `core`, `pack`, and
+`providers`; source builds and releases use Cargo. Node.js, npm, and Tauri are
+not required. The retired desktop application is available in Git history.
 
 Use the repo's [forge-dev skill](.agents/skills/forge-dev/SKILL.md) for source work
 and [forge-use skill](.agents/skills/forge-use/SKILL.md) for asset production.

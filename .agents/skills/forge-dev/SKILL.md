@@ -1,6 +1,6 @@
 ---
 name: forge-dev
-description: Use when developing or auditing Forge's Rust CLI, asset processing, Pack validation, Godot delivery, release packaging, or project documentation. Includes conditional guidance for the retained desktop app.
+description: Use when developing or auditing Forge's Rust CLI, asset processing, Pack validation, Godot delivery, release packaging, or project documentation.
 ---
 
 # Forge Dev
@@ -8,8 +8,8 @@ description: Use when developing or auditing Forge's Rust CLI, asset processing,
 ## Product and source boundaries
 
 The public product is the Rust `forge` CLI. The workspace contains `packages/cli`,
-`packages/core`, `packages/pack`, and `packages/providers`; retained desktop and MCP
-code are outside the default build and release. Use existing package and script
+`packages/core`, `packages/pack`, and `packages/providers`. The retired desktop
+application is available in Git history. Use existing package and script
 patterns. Do not copy external project source into Forge.
 
 Read the [CLI protocol](../../../docs/automation/forge-cli.md) for requests, Jobs,
@@ -120,8 +120,8 @@ A local-path pass does not establish real-Provider generation quality.
 
 ## Focused verification
 
-Select checks for the changed behavior. CLI/core changes do not require a desktop
-build. Use isolated `FORGE_JOB_STORE` and `FORGE_PLAN_STORE` directories for manual
+Select checks for the changed behavior. Use isolated `FORGE_JOB_STORE` and
+`FORGE_PLAN_STORE` directories for manual
 fixtures so QA does not use the normal asset history.
 
 ```bash
@@ -177,22 +177,3 @@ from that installation's payload and check that reported `ffmpegPath` and
 comparison is appropriate; resolving the public launcher before calling it is
 not. Retain installation and identity results as release evidence; source-build
 or fixture-only passes do not replace checks of the packaged binaries.
-
-## Retained desktop work only
-
-When the task changes `apps/mac`, preserve sprite sheet intake as: choose file,
-configure `固定网格` or `透明间隔`, then import. Keep automation mechanics out of the
-user-facing UI. Build and test the workspace app, avoiding a stale installed app
-with the same bundle ID:
-
-```bash
-npm --workspace apps/mac run build
-npm run test:scripts
-npm --workspace apps/mac run smoke:ui:mvp
-npm --workspace apps/mac run tauri -- build --debug --bundles app
-```
-
-Launch `<checkout>/target/debug/bundle/macos/Game Sprite Forge.app`, accounting for
-any configured target directory. Close stale `/Applications/Game Sprite Forge.app`
-windows or explicitly target the workspace bundle. Record the exact app path, UI
-driver, fixture, and observed result in the QA note.

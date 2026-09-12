@@ -2,6 +2,10 @@
 
 Date: 2026-06-11
 
+Historical engine acceptance evidence. The input fixture has since moved to
+`examples/inputs/forge-walk-sheet.png`. Original paths below identify this run;
+new smoke runs write transient output under `target/qa/`.
+
 ## Scope
 
 Generate a real Forge `.gsfpack`, create a clean Godot project, import the pack
@@ -75,13 +79,13 @@ Forge's `godot_import.json` and atlas metadata into native Godot resources.
 
 ## Implementation Update
 
-The smoke has been formalized as:
+The current smoke entry point is:
 
 ```bash
-npm run smoke:godot
+bash scripts/run-godot-pack-smoke.sh
 ```
 
-Latest passing artifact:
+Historical passing artifact:
 
 ```text
 docs/qa/artifacts/godot-pack-smoke-20260611-140713

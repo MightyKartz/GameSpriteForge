@@ -1,5 +1,10 @@
 # Godot Editor Helper Evidence - 2026-06-06
 
+Historical helper evidence. The retired Node wrapper and `verify_forge_helper.gd`
+below are no longer verification entry points. Run
+`bash scripts/run-godot-pack-smoke.sh` for the current importer, resource, and
+per-frame timing checks using `verify_installed_frames.gd`.
+
 ## Artifact
 
 ```text

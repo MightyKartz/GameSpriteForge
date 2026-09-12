@@ -64,8 +64,8 @@ generated artwork is automatically ready for every game.
 
 ## Historical context
 
-Earlier Forge work produced a Tauri + React desktop MVP focused on local media
-import and animation processing. Its retained application code, early 0.1.0
-packages and signing evidence are historical; the desktop and MCP clients are
-outside the current default CLI build and release. See
+Earlier Forge work produced a desktop MVP focused on local media import and
+animation processing. The retired application, its build tooling and design
+documents are preserved in Git history. The current repository contains the
+CLI toolchain and its supporting contracts, examples and tests. See
 [Contributing](CONTRIBUTING.md) for the current development boundaries.

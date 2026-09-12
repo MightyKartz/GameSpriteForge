@@ -10,5 +10,5 @@ config_version=5
 
 [application]
 
-config/name="Forge Godot Helper Smoke"
+config/name="Forge Godot Import Smoke"
 config/features=PackedStringArray("4.6")

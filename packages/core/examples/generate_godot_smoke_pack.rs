@@ -15,9 +15,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("usage: generate_godot_smoke_pack <output-root>");
     prepare_output_root(&output_root)?;
 
-    let repo = Path::new("/Users/kartz/Development/Forge");
+    let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     let fixture = repo
-        .join("examples/inputs/manual-qa/sprite-sheet/forge-walk-sheet.png")
+        .join("examples/inputs/forge-walk-sheet.png")
         .canonicalize()?;
     let job_dir = output_root.join("forge-job");
     let exports_dir = output_root.join("exports");
@@ -101,7 +101,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             id: "godot-smoke-walk".to_string(),
             name: "Godot Smoke Walk".to_string(),
             version: "0.1.0".to_string(),
-            creator_name: "Game Sprite Forge".to_string(),
+            creator_name: "Forge".to_string(),
             license_type: "private".to_string(),
             source_kind: "import_sprite_sheet".to_string(),
             source_name: Some("forge-walk-sheet.png".to_string()),

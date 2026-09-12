@@ -5,7 +5,6 @@ members = [
   "packages/pack",
   "packages/providers"
 ]
-exclude = ["apps/mac/src-tauri"]
 default-members = [
   "packages/cli",
   "packages/core",

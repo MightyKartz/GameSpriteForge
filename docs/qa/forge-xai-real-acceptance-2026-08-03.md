@@ -1,5 +1,8 @@
 # Forge xAI real-model acceptance — 2026-08-03
 
+Historical local evidence paths shown as code below are not distributed in this
+repository. The recorded results are retained; missing files have not been recreated.
+
 ## Decision
 
 The real-model gate is **pass for Style Lock, Icon Set, Prop Set, Pack validation,
@@ -36,13 +39,13 @@ as game-ready.
 
 ## Visual evidence
 
-- [Style board](artifacts/forge-xai-real-acceptance-20260803/project/.forge/styles/5e19c859eb566af5/style-board.png)
-- [Icon contact sheet](artifacts/forge-xai-real-acceptance-20260803/jobs/c3e3c91a-1764-4cb9-aa58-e2cc8d7d3e69/contact-sheet.png)
-- [Prop contact sheet](artifacts/forge-xai-real-acceptance-20260803/jobs/50774f9d-2ca7-457d-8a4b-9609045d9671/contact-sheet.png)
-- [Final character directional contact sheet](artifacts/forge-xai-real-acceptance-20260803/jobs/f152fe7e-3f0c-4f1c-abeb-cc7c3e89dd6b/contact-sheet.png)
-- [Blocked walk-right animation review GIF](artifacts/forge-xai-real-acceptance-20260803/walk-right-final-review.gif)
-- [Final character consistency report](artifacts/forge-xai-real-acceptance-20260803/jobs/f152fe7e-3f0c-4f1c-abeb-cc7c3e89dd6b/consistency-report.json)
-- [Final character animation quality report](artifacts/forge-xai-real-acceptance-20260803/jobs/f152fe7e-3f0c-4f1c-abeb-cc7c3e89dd6b/animation-quality-report.json)
+- Style board: `artifacts/forge-xai-real-acceptance-20260803/project/.forge/styles/5e19c859eb566af5/style-board.png`
+- Icon contact sheet: `artifacts/forge-xai-real-acceptance-20260803/jobs/c3e3c91a-1764-4cb9-aa58-e2cc8d7d3e69/contact-sheet.png`
+- Prop contact sheet: `artifacts/forge-xai-real-acceptance-20260803/jobs/50774f9d-2ca7-457d-8a4b-9609045d9671/contact-sheet.png`
+- Final character directional contact sheet: `artifacts/forge-xai-real-acceptance-20260803/jobs/f152fe7e-3f0c-4f1c-abeb-cc7c3e89dd6b/contact-sheet.png`
+- Blocked walk-right animation review GIF: `artifacts/forge-xai-real-acceptance-20260803/walk-right-final-review.gif`
+- Final character consistency report: `artifacts/forge-xai-real-acceptance-20260803/jobs/f152fe7e-3f0c-4f1c-abeb-cc7c3e89dd6b/consistency-report.json`
+- Final character animation quality report: `artifacts/forge-xai-real-acceptance-20260803/jobs/f152fe7e-3f0c-4f1c-abeb-cc7c3e89dd6b/animation-quality-report.json`
 
 ## Acceptance-driven implementation changes
 

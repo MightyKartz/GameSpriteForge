@@ -1,5 +1,10 @@
 # Forge model-neutral Provider V1 QA — 2026-08-02
 
+Historical Provider acceptance record. Desktop and MCP regression rows below
+refer to components removed during the 2026-09-12 CLI cleanup. The current
+[Provider architecture](../architecture/model-neutral-media-generation.md) uses
+the CLI directly.
+
 ## Scope
 
 This pass validates the first model-independent generation path: schema V3 top-down Character Packs, direct xAI OAuth/API integration, offline fixture generation, exact video sampling, quality gating, `.gsfpack` export, MCP exposure, and Godot installation. The desktop UI remains an optional review/recovery surface and was not expanded for Provider login.

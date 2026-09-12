@@ -1,5 +1,12 @@
 # Forge Automation V1 QA — 2026-07-31
 
+Historical CLI/Core acceptance record. Desktop handoff and MCP checks below refer
+to components removed during the 2026-09-12 CLI cleanup. Current usage is in the
+[CLI protocol](../automation/forge-cli.md).
+
+Historical local evidence paths shown as code below are not distributed in this
+repository. The recorded results are retained; missing files have not been recreated.
+
 ## Scope
 
 Validation of the Codex-first automation path added for PNG sequences, sprite sheets, `.gsfpack` reuse, durable background jobs, Godot 4 installation, and Forge GUI handoff. Multi-animation Character Packs remain out of V1.
@@ -29,6 +36,6 @@ Validation of the Codex-first automation path added for PNG sequences, sprite sh
 
 ## Evidence
 
-![Forge workspace app showing a succeeded Codex automation job](artifacts/forge-automation-open-job-2026-07-31.png)
+Forge workspace app showing a succeeded Codex automation job: `artifacts/forge-automation-open-job-2026-07-31.png`
 
 The banner is intentionally a recovery overlay: it does not hydrate automation output into the legacy manual workbench, and it gives direct access to the job folder, `.gsfpack`, preview, and quality evidence.
