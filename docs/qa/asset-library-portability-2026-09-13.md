@@ -26,13 +26,15 @@ and the embedded `guide project-assets` resource. No consumers are upgraded.
 
 ## Required gates still pending
 
-- CI producer/consumer jobs actually exchange the same bundle between macOS and
-  Windows in both directions. Results are not yet available for this PR.
-- Installed Windows launcher and historical-executable upgrade are still pending.
+- Latest-head remote verification is tracked in PR #40. Earlier remote builds
+  passed actual bidirectional exchange and Windows installed/historical upgrade
+  checks; their exact source identities are recorded below rather than being
+  attributed to a later commit.
 - PR 5's actual offline browser display/playback remains a manual acceptance
   gate: the browser tool rejected `file://` access. Byte/timing and HTML tests
   do not claim browser playback. The user has been asked to check the generated
-  local synthetic preview; no answer has been received yet.
+  local synthetic preview. At the time of this QA record no answer had been
+  received; the current manual gate status is tracked in PR #40's description.
 
 ## Installed macOS package and Sword sandbox
 
@@ -100,8 +102,43 @@ spec/install projections as absent, preserving the complete native history. The
 same previously exported bundle failed `asset list` on the recorded pre-fix binary
 and passed list/hash checks plus real Godot installation after the fix. A dedicated
 Rust regression test and both CI transfer directions now cover this case. This
-change requires its own final clean build/package verification; the identities
-above remain evidence for their explicitly named commits.
+change was verified again through the full installed-package sequence on clean
+default release source `18f508e82fc477100ae21c32076a363373c6ce16`:
+
+- Binary SHA-256: `51c66c8b91a939dcba975a4c0d7e83d6afb84b98e22f4a9cc2febe63ccb11e87`.
+- Archive SHA-256: `d831fe80f12503dc05a8465161786a0387f1e8cabb732f6f4d7a9183350e30cd`.
+- Local complete log: `/tmp/forge-library-package-18f508e.log`.
+- Library regression suite now contains 16 tests; transfer/merge/index contains seven.
+
+The same installed macOS launcher then consumed the actual Windows CI-produced
+bundle, with `--require-foreign`, unchanged manifest digest
+`dc03d426c9c89b1e8ec4a94e5adb371da06d1051790745e97ef4f7ac3dd29f3f`,
+and preserved Windows v2 Pack hash
+`f2c1e3ce9b18b53d23e419851fb2ec8fc8badda8fad445e39b9ea4363d7cb777`.
+Legacy list, content/review/lock checks and real Godot installation passed with
+zero Provider requests. This is actual Windows-to-macOS media transfer, not a
+same-machine directory rename.
+
+The first full [bidirectional CI run](https://github.com/MightyKartz/GameSpriteForge/actions/runs/34708988785)
+passed on PR head `4cc91b1a4ad2557c04fcd6fc975ad4c6b6f2453f`, with clean default
+debug executables built from GitHub's merge commit
+`93b08301d9700baec49dc6fc7f5e85c30bc7d672` on both operating systems.
+Windows-to-macOS used the manifest digest above; macOS-to-Windows used
+`78ca456b45397153d6a5702541cda598f29beed8ec8b0f2451f31de9c8deed77`.
+Both asserted different producer/consumer operating systems and preserved the
+same revision IDs, media inventories, consumer lock and historical hash mapping.
+
+The [Windows installed-package and historical-upgrade run](https://github.com/MightyKartz/GameSpriteForge/actions/runs/34709138612)
+passed for clean default release source `ba597b4284e8dda5644b6b046b6a116008b152b9`:
+current binary `d4bec7e707234e316c2a63230b0c9b5c5e53d6a91ada0426ec13abf093753c32`,
+archive `fd6b6fdee68041057320438cafaff367378ad8565b0e87151e122b340b45c595`.
+It used an actual separately compiled pre-library executable from
+`1c1e7079f22ea0dba5958e4aec79cad69f7ade65`, binary
+`c94f566aecc56b2b6c7169cbea60b98856dc08732fc1856f69bdeaa43629b425`;
+the test explicitly required different binary hashes and preserved the original
+payload and launcher backup. This is a historical source-build Windows upgrade,
+not a claim that the historical binary was distributed as an official Windows
+release. The independent same-executable packaging-revision test remains intact.
 
 Exported shared records exclude local root mappings, caches and unrelated history.
 Selected Pack bytes and immutable provenance remain unchanged; arbitrary user
