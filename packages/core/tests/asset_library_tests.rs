@@ -22,6 +22,13 @@ use image::{Rgba, RgbaImage};
 use serde_json::json;
 
 fn entry(root: &Path) -> ProjectCatalogEntryV2 {
+    entry_with_binding(root, None)
+}
+
+fn entry_with_binding(
+    root: &Path,
+    binding: Option<library::finalize::ProjectBinding>,
+) -> ProjectCatalogEntryV2 {
     fs::create_dir_all(root).unwrap();
     let source = root.join("source.png");
     let mut image = RgbaImage::new(16, 16);
@@ -32,7 +39,7 @@ fn entry(root: &Path) -> ProjectCatalogEntryV2 {
     }
     image.save(&source).unwrap();
     let request: PrepareStaticRequest = serde_json::from_value(json!({
-        "schemaVersion":"1", "kind":"prop_set", "id":"props", "name":"Props", "license":"private", "sampling":"linear", "canvasSize":64,
+        "assetProject":binding, "schemaVersion":"1", "kind":"prop_set", "id":"props", "name":"Props", "license":"private", "sampling":"linear", "canvasSize":64,
         "items":[{"id":"gem", "name":"Gem", "path":source}]
     })).unwrap();
     let plans = PlanStore::new(root.join("plans")).unwrap();
@@ -458,4 +465,56 @@ fn intake_pack_members_duplicate_locations_and_batch_atomicity() {
     )
     .is_err());
     assert_eq!(head, fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap());
+}
+
+#[test]
+fn bound_local_job_publishes_once_and_pending_output_recovers_without_execution() {
+    use library::finalize::{self, ProjectBinding};
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("library");
+    library::initialize(&root, "Local").unwrap();
+    let binding = ProjectBinding {
+        project_path: root.clone(),
+        asset_id: "local-props".into(),
+    };
+    let produced = entry_with_binding(&temp.path().join("production"), Some(binding.clone()));
+    let catalog = library::read_catalog(&root).unwrap();
+    let asset = library::read_asset(&root, &catalog, "local-props").unwrap();
+    assert_eq!(asset.revisions.len(), 1);
+    let revision = library::read_revision(&root, &asset, &asset.revisions[0]).unwrap();
+    assert_eq!(revision.source["sourceJobId"], produced.source_job_id);
+    assert!(revision.legacy.is_none());
+    let head = fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap();
+    let pending = fs::read_dir(produced.pack_path.parent().unwrap())
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .find(|p| {
+            p.extension().is_some_and(|e| e == "json")
+                && p.file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .contains("publication-")
+        })
+        .unwrap();
+    finalize::recover(&pending).unwrap();
+    assert_eq!(head, fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap());
+    // A completed Pack can survive registration failure. Recovery consumes only
+    // the publication request and Pack, with no Plan, worker or Provider path.
+    fs::write(root.join(PROJECT_CATALOG_RELATIVE), b"broken").unwrap();
+    let source = BTreeMap::from([
+        ("executionId".into(), json!("second-execution")),
+        ("method".into(), json!("test_fixture")),
+    ]);
+    let error = finalize::local_output(&binding, &produced.pack_path, source).unwrap_err();
+    assert!(error.to_string().contains("publication pending"));
+    fs::write(root.join(PROJECT_CATALOG_RELATIVE), &head).unwrap();
+    finalize::recover(&pending).unwrap();
+    assert_eq!(
+        library::intake::history(&root, "local-props")
+            .unwrap()
+            .len(),
+        2
+    );
+    fs::write(produced.pack_path.join("changed.bin"), b"tampered").unwrap();
+    assert!(finalize::recover(&pending).is_err());
 }

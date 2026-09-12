@@ -39,6 +39,7 @@ fn fixture(root: &Path) -> PrepareLayeredRequest {
         opacity: 0.45,
     };
     PrepareLayeredRequest {
+        asset_project: None,
         schema_version: "1".into(),
         id: "layered_fixture".into(),
         name: "Layered fixture".into(),
@@ -406,4 +407,24 @@ fn truncated_corrupt_iend_and_apng_fail_even_with_matching_source_hashes() {
             "{label}"
         );
     }
+}
+
+#[test]
+fn bound_layered_output_records_real_command_without_a_job() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("library");
+    forge_core::library::initialize(&root, "Local").unwrap();
+    let mut request = fixture(temp.path());
+    request.asset_project = Some(forge_core::library::finalize::ProjectBinding {
+        project_path: root.clone(),
+        asset_id: "layered".into(),
+    });
+    prepare_layered_pack(&request, &temp.path().join("bound.gsfpack")).unwrap();
+    let catalog = forge_core::library::read_catalog(&root).unwrap();
+    let asset = forge_core::library::read_asset(&root, &catalog, "layered").unwrap();
+    let revision = forge_core::library::read_revision(&root, &asset, &asset.revisions[0]).unwrap();
+    assert_eq!(revision.source["method"], "forge_asset_prepare_layered");
+    assert!(!revision.source.contains_key("sourceJobId"));
+    assert!(revision.legacy.is_none());
+    assert!(asset.selected_revision.is_none());
 }

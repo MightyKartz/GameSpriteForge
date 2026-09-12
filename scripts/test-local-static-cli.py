@@ -43,10 +43,12 @@ def check(forge, root, godot):
     game = root / "game"
     game.mkdir()
     (game / "project.godot").write_text('config_version=5\n[application]\nconfig/name="Local static test"\n[rendering]\nrenderer/rendering_method="gl_compatibility"\n')
+    library = root / "library"
+    run(forge, root, ["project", "init", "--path", str(library), "--name", "Static outputs", "--local-assets"])
     completed = []
     for kind, sampling in [("prop_set", "linear"), ("prop_set", "nearest"), ("icon_set", "linear")]:
         name = f"{kind}-{sampling}"
-        request = {"schemaVersion": "1", "kind": kind, "id": name, "name": name,
+        request = {"assetProject": {"projectPath": "../library", "assetId": name}, "schemaVersion": "1", "kind": kind, "id": name, "name": name,
                    "license": "CC0-1.0", "sampling": sampling, "canvasSize": 64,
                    "items": [{"id": "jade_blade", "name": "Jade blade", "path": "sources/jade.png"},
                              {"id": "stone", "name": "Stone", "path": "sources/stone.png"}]}
@@ -55,6 +57,11 @@ def check(forge, root, godot):
         plan = run(forge, root, ["plan", "prepare-static", "--request", str(request_path)])
         job = run(forge, root, ["plan", "execute", "--token", plan["token"], "--wait"])
         assert job["lifecycle_state"] == "succeeded"
+        history = run(forge, root, ["asset", "history", "--project", str(library), "--id", name])
+        assert len(history) == 1 and history[0]["status"] == "available"
+        publication = next(a for a in job["artifacts"] if a["kind"] == "asset_publication_request")
+        run(forge, root, ["asset", "recover", "--input", publication["path"]])
+        assert len(run(forge, root, ["asset", "history", "--project", str(library), "--id", name])) == 1
         report = run(forge, root, ["job", "report", "--id", job["job_id"]])
         assert report["providerRequestOccurred"] is False and report["providerRequestCount"] == 0
         pack = Path(next(a["path"] for a in job["artifacts"] if a["kind"] == "gsfpack"))

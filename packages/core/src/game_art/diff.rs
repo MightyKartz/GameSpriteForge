@@ -177,7 +177,7 @@ pub fn compute_project_diff(
             project_root.display()
         )),
     })?;
-    let catalog = read_project_catalog(project_root).map_err(|error| match error {
+    let catalog = catalog_for_manifest(project_root, validated).map_err(|error| match error {
         CatalogError::Io(source) => GameArtError::Io(format!(
             "cannot read project catalog under {}: {source}",
             project_root.display()
@@ -243,7 +243,12 @@ pub fn compute_project_diff(
                 if entry.workflow != expected_workflow(asset.kind) {
                     failed.push(reasons::WORKFLOW_CHANGED);
                 }
-                if !recorded_asset_dependencies_match(entry, &depends_on_assets, &catalog) {
+                if !recorded_asset_dependencies_match(
+                    entry,
+                    &depends_on_assets,
+                    &catalog,
+                    project_root,
+                ) {
                     failed.push(reasons::DEPENDENCIES_CHANGED);
                 }
                 if entry.spec_sha256.as_deref() != Some(spec.spec_sha256.as_str()) {
@@ -894,10 +899,34 @@ fn recorded_asset_dependencies_match(
     entry: &ProjectCatalogEntryV2,
     expected: &[String],
     catalog: &crate::catalog::ProjectCatalogV2,
+    project_root: &Path,
 ) -> bool {
     let Some(recorded) = &entry.dependencies else {
         return expected.is_empty();
     };
+    for dependency in recorded
+        .iter()
+        .filter(|d| !d.id.starts_with("style:") && !d.id.starts_with("subject:"))
+    {
+        if let Some(revision) = &dependency.revision {
+            let Some(current) = catalog.assets.get(&dependency.id) else {
+                return false;
+            };
+            if crate::library::is_library(project_root).unwrap_or(false)
+                && crate::library::revision_for_publication(
+                    project_root,
+                    &dependency.id,
+                    &current.source_job_id,
+                    &current.pack_sha256,
+                )
+                .ok()
+                .as_ref()
+                    != Some(revision)
+            {
+                return false;
+            }
+        }
+    }
     let mut recorded_entries = recorded
         .iter()
         .filter(|dependency| {
@@ -1015,6 +1044,55 @@ pub(crate) fn hash_pack(path: &Path, is_directory: bool) -> Result<String, std::
         hasher.update(contents);
     }
     Ok(format!("{:x}", hasher.finalize()))
+}
+
+/// Resolve reuse candidates without changing the user's selection or catalog
+/// head. Dependencies are resolved first so a reverted build selects a coherent
+/// set of recorded revisions, rather than each asset's latest publication.
+pub(crate) fn catalog_for_manifest(
+    root: &Path,
+    validated: &ValidatedManifest,
+) -> Result<crate::catalog::ProjectCatalogV2, CatalogError> {
+    let mut catalog = read_project_catalog(root)?;
+    if !crate::library::is_library(root)? {
+        return Ok(catalog);
+    }
+    let project = read_project(root).map_err(|e| CatalogError::Invalid(e.to_string()))?;
+    let manifest = &validated.manifest;
+    let style = manifest
+        .style_revision
+        .as_ref()
+        .or(project.current_style_revision.as_ref());
+    let graph = manifest.dependency_graph();
+    for id in topological_build_order(validated) {
+        let asset = manifest
+            .assets
+            .iter()
+            .find(|a| a.id == id)
+            .expect("validated graph");
+        let spec = validated.asset(&id).expect("validated spec");
+        let locks = resolve_asset_lock_refs(root, &asset.depends_on, &graph, &manifest.provider)
+            .map_err(|e| CatalogError::Invalid(e.to_string()))?;
+        let dependencies = graph.get(&id).cloned().unwrap_or_default();
+        for entry in crate::library::publication_history(root, &id)? {
+            if entry.kind == asset.kind.as_str()
+                && entry.workflow == expected_workflow(asset.kind)
+                && entry.spec_sha256.as_deref() == Some(spec.spec_sha256.as_str())
+                && recorded_style_revision(&entry).as_ref() == style
+                && recorded_lock_revisions_match(&entry, &locks)
+                && recorded_provider_matches(&entry, &manifest.provider)
+                && recorded_asset_dependencies_match(&entry, &dependencies, &catalog, root)
+                && matches!(
+                    verify_pack(root, &entry).map_err(|e| CatalogError::Invalid(e.to_string()))?,
+                    PackVerdict::Intact
+                )
+            {
+                catalog.assets.insert(id.clone(), entry);
+                break;
+            }
+        }
+    }
+    Ok(catalog)
 }
 
 #[cfg(test)]

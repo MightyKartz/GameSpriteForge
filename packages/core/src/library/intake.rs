@@ -94,6 +94,10 @@ fn classify(path: &Path) -> Result<(String, Vec<String>), CatalogError> {
         let mut members: Vec<String> = pack.items.into_iter().map(|i| i.id).collect();
         members.extend(pack.audio_items.into_iter().map(|i| i.id));
         members.extend(pack.animations.into_iter().map(|i| i.name));
+        if let Some(layered) = pack.layered {
+            members.extend(layered.layers.into_iter().map(|layer| layer.id));
+            members.extend(layered.clips.into_iter().map(|clip| clip.id));
+        }
         members.sort();
         members.dedup();
         return Ok(("pack".into(), members));
@@ -166,7 +170,7 @@ fn scan_path(root: &Path, path: &Path, report: &mut ScanReport) -> Result<(), Ca
     }
     let pack_candidate = metadata.is_dir()
         && (path.extension().is_some_and(|e| e == "gsfpack")
-            || path.join("manifest.json").is_file());
+            || path.join("forgepack.json").is_file());
     if metadata.is_dir() && !pack_candidate {
         let mut children = fs::read_dir(path)?.collect::<Result<Vec<_>, _>>()?;
         children.sort_by_key(|a| a.file_name());
@@ -219,6 +223,31 @@ fn scan_path(root: &Path, path: &Path, report: &mut ScanReport) -> Result<(), Ca
 }
 
 pub fn register(root: &Path, batch: &IntakeBatch) -> Result<Vec<RegisteredItem>, CatalogError> {
+    register_inner(root, batch, None)
+}
+
+pub(super) fn register_production(
+    root: &Path,
+    batch: &IntakeBatch,
+    source: &BTreeMap<String, serde_json::Value>,
+) -> Result<Vec<RegisteredItem>, CatalogError> {
+    if source
+        .get("executionId")
+        .and_then(|v| v.as_str())
+        .is_none_or(|s| s.is_empty())
+    {
+        return Err(invalid(
+            "production publication requires a stable execution ID",
+        ));
+    }
+    register_inner(root, batch, Some(source))
+}
+
+fn register_inner(
+    root: &Path,
+    batch: &IntakeBatch,
+    production: Option<&BTreeMap<String, serde_json::Value>>,
+) -> Result<Vec<RegisteredItem>, CatalogError> {
     if batch.schema_version != "1" || batch.items.is_empty() {
         return Err(invalid("expected nonempty intake schemaVersion 1"));
     }
@@ -255,12 +284,16 @@ pub fn register(root: &Path, batch: &IntakeBatch) -> Result<Vec<RegisteredItem>,
                 installations: vec![],
             }
         };
-        if asset.kind != item.kind {
+        if asset.kind != item.kind && production.is_none() {
             return Err(invalid(format!("ID kind conflict: {}", item.asset_id)));
         }
         let mut existing = None;
         for digest in &asset.revisions {
-            if read_revision(root, &asset, digest)?.content.as_ref() == Some(&item.expected_content)
+            let prior = read_revision(root, &asset, digest)?;
+            if prior.content.as_ref() == Some(&item.expected_content)
+                && production.is_none_or(|source| {
+                    source.get("executionId") == prior.source.get("executionId")
+                })
             {
                 existing = Some(digest.clone());
                 break;
@@ -285,8 +318,10 @@ pub fn register(root: &Path, batch: &IntakeBatch) -> Result<Vec<RegisteredItem>,
                     item.asset_id
                 )));
             }
-            let mut source = BTreeMap::new();
-            source.insert("method".into(), serde_json::json!("local_registration"));
+            let mut source = production.cloned().unwrap_or_default();
+            source
+                .entry("method".into())
+                .or_insert(serde_json::json!("local_registration"));
             source.insert("registeredAt".into(), serde_json::json!(Utc::now()));
             source.insert("resourceType".into(), serde_json::json!(actual_kind));
             source.insert("members".into(), serde_json::json!(members));

@@ -100,6 +100,13 @@ impl PlanStore {
         let recipe_hash = hash_serializable(&operation)?;
         let now = Utc::now();
         let mut effects = describe_effects(&operation);
+        if let Some(binding) = crate::library::finalize::binding(&operation) {
+            effects.push(format!(
+                "register validated output as {} in {}; retain publication request for recovery",
+                binding.asset_id,
+                binding.project_path.display()
+            ));
+        }
         if let Some(context) = &repair {
             effects.insert(
                 0,
@@ -320,6 +327,11 @@ fn estimate_operation(operation: &AutomationOperation) -> super::types::PlanEsti
 }
 
 fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreError> {
+    if let Some(binding) = crate::library::finalize::binding(operation) {
+        binding
+            .validate()
+            .map_err(|e| PlanStoreError::InvalidRequest(e.to_string()))?;
+    }
     match operation {
         AutomationOperation::PrepareAudio(request) => {
             crate::audio::validate_request(request).map_err(PlanStoreError::InvalidRequest)?;
@@ -680,6 +692,13 @@ pub fn fingerprint_operation_inputs(
 ) -> Result<String, PlanStoreError> {
     super::source_lock::validate_source_locks(operation).map_err(PlanStoreError::InvalidRequest)?;
     let mut hasher = Sha256::new();
+    if let Some(binding) = crate::library::finalize::binding(operation) {
+        let catalog = crate::library::read_catalog(&binding.project_path)
+            .map_err(|e| PlanStoreError::InvalidRequest(e.to_string()))?;
+        hasher.update(b"asset-project-binding-v1\0");
+        hasher.update(serde_json::to_vec(binding)?);
+        hasher.update(catalog.project_id.as_bytes());
+    }
     match operation {
         AutomationOperation::PrepareAudio(request) => {
             for item in &request.items {

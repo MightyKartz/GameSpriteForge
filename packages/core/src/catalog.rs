@@ -319,7 +319,11 @@ pub fn publish_catalog_asset(
     project_root: &Path,
     entry: ProjectCatalogEntryV2,
 ) -> Result<PathBuf, CatalogError> {
-    update_catalog_asset(project_root, entry, true)
+    let pending = crate::library::finalize::stage_catalog(project_root, &entry)?;
+    update_catalog_asset(project_root, entry, true).map_err(|error| match pending {
+        Some(path) => CatalogError::Invalid(format!("publication pending at {}: {error}; recover with forge asset recover --input <this-path>", path.display())),
+        None => error,
+    })
 }
 
 fn update_catalog_asset(

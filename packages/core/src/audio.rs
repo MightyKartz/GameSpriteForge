@@ -31,6 +31,8 @@ fn channels() -> u16 {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PrepareAudioRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_project: Option<crate::library::finalize::ProjectBinding>,
     #[serde(default = "schema_version")]
     pub schema_version: String,
     pub id: String,

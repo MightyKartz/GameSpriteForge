@@ -346,6 +346,11 @@ pub fn run_operation_with_provider(
                 .and_then(|_report| store.read_record(job_id).map_err(AutomationRunError::Job))
         }
     };
+    let result = result.and_then(|record| {
+        crate::library::finalize::finalize_job(store, &record, operation)
+            .map_err(|e| AutomationRunError::Processing(e.to_string()))?;
+        store.read_record(&record.job_id).map_err(Into::into)
+    });
     if result.is_err() && operation_is_video_character(operation) {
         if let (
             AutomationOperation::GenerateCharacterPack(request),
@@ -403,9 +408,23 @@ pub fn run_operation_with_provider(
                 record.state = JobState::Failed;
                 record.worker_pid = None;
                 record.error_summary = Some(message.clone());
-                record.error_code = Some(error.code().into());
+                if record.error_code.as_deref() != Some("asset_registration_pending") {
+                    record.error_code = Some(
+                        if message.contains("publication pending at") {
+                            "asset_registration_pending"
+                        } else {
+                            error.code()
+                        }
+                        .into(),
+                    );
+                }
                 record.recoverable = true;
-                record.next_actions = vec!["job_report".into(), "prepare_new_plan".into()];
+                if record.error_code.as_deref() == Some("asset_registration_pending") {
+                    record.next_actions =
+                        vec!["job_report".into(), "recover_asset_publication".into()];
+                } else {
+                    record.next_actions = vec!["job_report".into(), "prepare_new_plan".into()];
+                }
             });
             Err(error)
         }
@@ -2174,6 +2193,7 @@ fn run_generate_keyframe_character_pack(
     }
 
     let mut prepare = PrepareCharacterPackRequest {
+        asset_project: None,
         source_locks: vec![],
         rendering: None,
         schema_version: "2".into(),
@@ -3768,6 +3788,7 @@ fn generated_pack_request(
     workflow: &[(&str, f32, &str, &str)],
 ) -> PrepareCharacterPackRequest {
     PrepareCharacterPackRequest {
+        asset_project: None,
         source_locks: vec![],
         rendering: None,
         schema_version: "2".into(),

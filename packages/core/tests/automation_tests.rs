@@ -99,7 +99,13 @@ fn character_pack_uses_shared_canvas_and_exports_multiple_animations() {
     fs::create_dir(&idle).unwrap();
     fs::create_dir(&attack).unwrap();
     let profile = automation_profile();
+    let library = temp.path().join("library");
+    forge_core::library::initialize(&library, "Animations").unwrap();
     let request = PrepareCharacterPackRequest {
+        asset_project: Some(forge_core::library::finalize::ProjectBinding {
+            project_path: library.clone(),
+            asset_id: "knight".into(),
+        }),
         source_locks: vec![],
         rendering: None,
         schema_version: "2".into(),
@@ -147,6 +153,12 @@ fn character_pack_uses_shared_canvas_and_exports_multiple_animations() {
     let completed = run_operation(&jobs, &queued.job_id, &plan.operation).unwrap();
 
     assert_eq!(completed.lifecycle_state, JobLifecycleState::Succeeded);
+    assert_eq!(
+        forge_core::library::intake::history(&library, "knight")
+            .unwrap()
+            .len(),
+        1
+    );
     let pack = completed
         .artifacts
         .iter()
@@ -323,6 +335,7 @@ fn guided_character_workflow_requires_its_core_animations() {
     fs::create_dir(&walk).unwrap();
     let profile = automation_profile();
     let request = PrepareCharacterPackRequest {
+        asset_project: None,
         source_locks: vec![],
         rendering: None,
         schema_version: "2".into(),
@@ -588,6 +601,7 @@ fn assert_review_offers_cli_actions(
 fn request(paths: Vec<PathBuf>) -> PrepareAssetRequest {
     let profile = automation_profile();
     PrepareAssetRequest {
+        asset_project: None,
         source_locks: vec![],
         rendering: None,
         schema_version: "1".into(),
@@ -622,4 +636,36 @@ fn write_identical_frames(directory: &std::path::Path) -> Vec<PathBuf> {
             path
         })
         .collect()
+}
+
+#[test]
+fn animation_project_binding_changes_plan_identity_and_registers_output() {
+    let temp = tempdir().unwrap();
+    let library = temp.path().join("library");
+    forge_core::library::initialize(&library, "Animations").unwrap();
+    let mut request = request(write_identical_frames(temp.path()));
+    let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+    let original = plans
+        .prepare(AutomationOperation::PrepareAsset(request.clone()))
+        .unwrap();
+    request.asset_project = Some(forge_core::library::finalize::ProjectBinding {
+        project_path: library.clone(),
+        asset_id: "idle".into(),
+    });
+    let prepared = plans
+        .prepare(AutomationOperation::PrepareAsset(request))
+        .unwrap();
+    assert_ne!(prepared.input_fingerprint, original.input_fingerprint);
+    assert_ne!(prepared.recipe_hash, original.recipe_hash);
+    let plan = plans.claim(&prepared.token).unwrap();
+    let jobs = JobStore::new(temp.path().join("jobs")).unwrap();
+    let job = stage_plan_job(&jobs, &plan).unwrap();
+    let done = run_operation(&jobs, &job.job_id, &plan.operation).unwrap();
+    assert_eq!(done.lifecycle_state, JobLifecycleState::Succeeded);
+    assert_eq!(
+        forge_core::library::intake::history(&library, "idle")
+            .unwrap()
+            .len(),
+        1
+    );
 }

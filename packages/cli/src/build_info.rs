@@ -31,6 +31,7 @@ pub fn current() -> BuildInfo {
 pub const CAPABILITIES: &[&str] = &[
     "project_asset_catalog_v3",
     "project_asset_intake_search",
+    "project_asset_output_registration",
     "project_asset_catalog_migration",
     "local_audio_import",
     "audio_pack_validation",

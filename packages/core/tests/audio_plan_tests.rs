@@ -108,3 +108,33 @@ fn cancelled_audio_job_does_not_publish_pack() {
         .iter()
         .any(|artifact| artifact.kind == "gsfpack"));
 }
+
+#[test]
+fn bound_audio_output_registers_with_no_provider() {
+    if forge_core::video::resolve_ffmpeg_paths(&forge_core::video::FfmpegSearch::default()).is_err()
+    {
+        eprintln!("skipping audio processing: FFmpeg unavailable");
+        return;
+    }
+    let root = tempfile::tempdir().unwrap();
+    let library = root.path().join("library");
+    forge_core::library::initialize(&library, "Audio").unwrap();
+    let mut request = request(root.path());
+    request.asset_project = Some(forge_core::library::finalize::ProjectBinding {
+        project_path: library.clone(),
+        asset_id: "sounds".into(),
+    });
+    let plans = PlanStore::new(root.path().join("plans")).unwrap();
+    let prepared = plans
+        .prepare(AutomationOperation::PrepareAudio(request))
+        .unwrap();
+    assert_eq!(prepared.estimate.maximum_provider_requests, 0);
+    let plan = plans.claim(&prepared.token).unwrap();
+    let jobs = JobStore::new(root.path().join("jobs")).unwrap();
+    let queued = stage_plan_job(&jobs, &plan).unwrap();
+    let done = run_operation(&jobs, &queued.job_id, &plan.operation).unwrap();
+    assert_eq!(done.lifecycle_state, JobLifecycleState::Succeeded);
+    let history = forge_core::library::intake::history(&library, "sounds").unwrap();
+    assert_eq!(history.len(), 1);
+    assert!(history[0].members.contains(&"tone".into()));
+}
