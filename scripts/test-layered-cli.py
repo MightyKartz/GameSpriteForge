@@ -86,6 +86,18 @@ def check(forge, godot, root, rig_path=None, consumer=None):
     project = Path(preview["project"])
     audit = cli(forge, root, "godot", "verify-install", "--project", project, "--asset-key", request["id"], "--pack", pack)
     assert audit["verifiedTextures"] == len(layers)
+    registry_path = project / ".forge/assets.json"
+    registry_bytes = registry_path.read_bytes()
+    registry = json.loads(registry_bytes)
+    assert registry["assets"][request["id"]]["kind"] == "layered"
+    registry["assets"][request["id"]]["kind"] = "animation"
+    registry_path.write_text(json.dumps(registry), encoding="utf-8")
+    try:
+        rejected = cli(forge, root, "godot", "verify-install", "--project", project,
+                       "--asset-key", request["id"], "--pack", pack, ok=False)
+        assert "registered asset kind differs" in json.dumps(rejected)
+    finally:
+        registry_path.write_bytes(registry_bytes)
     if not rig_path:
         (project / "playback_test.gd").write_text(PLAYBACK_TEST, encoding="utf-8")
         result = subprocess.run([str(godot), "--headless", "--path", str(project), "--script", "res://playback_test.gd", "--quit-after", "120"], capture_output=True, text=True, encoding="utf-8", timeout=40)

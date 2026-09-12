@@ -4,7 +4,9 @@
 trimming, resizing, matting, or calling a Provider. The output uses
 `forgepack.json` schema `4.0.0`, asset type `layered`, and a dedicated V1 layered
 manifest. Existing animation, character, static and world Pack formats retain
-their versions and behavior.
+their versions and behavior. Godot installation registers the asset as `layered`
+in `.forge/assets.json`; read-only delivery verification rejects a mismatched
+registered kind. Reinstall a pre-fix development delivery to correct its registry.
 
 ```powershell
 forge asset prepare-layered --request ./layered-request.json --output ./character.gsfpack --json

@@ -42,6 +42,7 @@ pub struct ProviderAssetRef {
 pub enum ProjectAssetKind {
     Animation,
     Character,
+    Layered,
     IconSet,
     PropSet,
 }
@@ -189,6 +190,7 @@ pub fn register_project_asset(
     };
     let kind = match params.pack.asset_type.as_str() {
         "character" => ProjectAssetKind::Character,
+        "layered" => ProjectAssetKind::Layered,
         "icon_set" => ProjectAssetKind::IconSet,
         "prop_set" => ProjectAssetKind::PropSet,
         _ if params.pack.animations.len() > 1 => ProjectAssetKind::Character,

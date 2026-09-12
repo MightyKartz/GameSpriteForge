@@ -346,6 +346,9 @@ pub fn verify_install(
     }
     let mut textures = BTreeMap::<PathBuf, PathBuf>::new();
     if let Some(layered) = &summary.layered {
+        if entry.kind != crate::project::ProjectAssetKind::Layered {
+            return Err(invalid("registered asset kind differs from layered Pack"));
+        }
         if usage.get("layered") != Some(&serde_json::to_value(layered)?) {
             return Err(invalid(
                 "installed layered contract differs from the original Pack",
