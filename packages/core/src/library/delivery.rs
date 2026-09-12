@@ -168,6 +168,7 @@ pub fn select(root: &Path, reference: &VersionRef) -> Result<AssetRecord, Catalo
     read_revision(root, &asset, &reference.revision)?;
     if asset.selected_revision.as_ref() != Some(&reference.revision) {
         asset.selected_revision = Some(reference.revision.clone());
+        asset.dispositions.remove(&reference.revision);
         catalog
             .assets
             .insert(reference.asset_id.clone(), write_object(root, &asset)?);

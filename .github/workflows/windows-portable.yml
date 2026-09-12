@@ -14,6 +14,7 @@ on:
       - 'scripts/test-local-audio-cli.py'
       - 'scripts/test-asset-library-cli.py'
       - 'scripts/test-asset-library-review-cli.py'
+      - 'scripts/test-asset-library-portability-cli.py'
       - 'scripts/test-static-native-matte-cli.py'
       - 'scripts/test-godot-unified-player.py'
       - 'scripts/test-godot-preview-ui.py'
@@ -34,6 +35,7 @@ on:
       - 'scripts/test-local-audio-cli.py'
       - 'scripts/test-asset-library-cli.py'
       - 'scripts/test-asset-library-review-cli.py'
+      - 'scripts/test-asset-library-portability-cli.py'
       - 'scripts/test-static-native-matte-cli.py'
       - 'scripts/test-godot-unified-player.py'
       - 'scripts/test-godot-preview-ui.py'
@@ -119,6 +121,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-asset-library-review-cli.py --forge "$launcher"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/test-asset-library-portability-cli.py --forge "$launcher" --godot "$godot" --output target/qa/windows-library-portability
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-static-native-matte-cli.py --forge "$launcher" --output target/qa/windows-native-static
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-layered-cli.py --forge "$launcher" --godot "$godot" --output target/qa/windows-layered-preview
@@ -141,6 +145,7 @@ jobs:
             target/qa/windows-guide/summary.json
             target/qa/windows-native-static/summary.json
             target/qa/windows-audio/summary.json
+            target/qa/windows-library-portability/consumer/summary.json
             target/qa/windows-layered-preview/summary.json
             target/qa/windows-preview-ui/summary.json
             target/qa/windows-unified-controller/stdout.txt

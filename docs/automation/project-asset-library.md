@@ -2,9 +2,13 @@
 
 Development builds with `project_asset_catalog_v3` can initialize a local,
 provider-neutral asset library. Check the selected executable's `doctor --json`
-capabilities before use. This is PR 1 of the
-[implementation plan](../architecture/forge-project-asset-library-plan.md);
-scan/search, retention, preview and transfer commands are subsequent work.
+capabilities before use. The PR 0–6 implementation follows the
+[implementation plan](../architecture/forge-project-asset-library-plan.md).
+The complete command workflow, including transfer, root rebinding, integrity
+audit and explicit Git merge, lives in the embedded
+[project resource guide](../../.agents/skills/forge-use/references/project-assets.md)
+(`forge guide project-assets`). Remote and installed-package acceptance results
+are tracked separately from compiled capabilities.
 
 ```sh
 forge project init --path /absolute/assets --name "Local assets" --local-assets --json

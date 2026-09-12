@@ -130,10 +130,26 @@ pub fn annotate(
     name: Option<String>,
     tags: Option<Vec<String>>,
 ) -> Result<AssetRecord, CatalogError> {
+    annotate_metadata(root, id, name, tags, None)
+}
+
+pub fn annotate_metadata(
+    root: &Path,
+    id: &str,
+    name: Option<String>,
+    tags: Option<Vec<String>>,
+    purpose: Option<Option<String>>,
+) -> Result<AssetRecord, CatalogError> {
     let _lock = crate::catalog::lock_catalog(root)?;
     let head = read_bytes(root, PROJECT_CATALOG_RELATIVE)?;
     let mut catalog = read_catalog(root)?;
     let mut asset = read_asset(root, &catalog, id)?;
+    if let Some(purpose) = purpose {
+        if purpose.as_ref().is_some_and(|p| p.trim().is_empty()) {
+            return Err(invalid("purpose cannot be empty"));
+        }
+        asset.purpose = purpose;
+    }
     if let Some(name) = name {
         if name.trim().is_empty() {
             return Err(invalid("name cannot be empty"));
@@ -151,6 +167,36 @@ pub fn annotate(
     let digest = write_object(root, &asset)?;
     if catalog.assets.get(id) != Some(&digest) {
         catalog.assets.insert(id.into(), digest);
+        catalog.updated_at = Utc::now();
+        commit_head(root, &head, &catalog)?;
+    }
+    Ok(asset)
+}
+
+pub fn set_disposition(
+    root: &Path,
+    reference: &delivery::VersionRef,
+    state: &str,
+) -> Result<AssetRecord, CatalogError> {
+    if !matches!(state, "candidate" | "discarded") {
+        return Err(invalid(
+            "disposition must be candidate or discarded; use select for delivery selection",
+        ));
+    }
+    let _lock = crate::catalog::lock_catalog(root)?;
+    let head = read_bytes(root, PROJECT_CATALOG_RELATIVE)?;
+    let mut catalog = read_catalog(root)?;
+    let mut asset = read_asset(root, &catalog, &reference.asset_id)?;
+    read_revision(root, &asset, &reference.revision)?;
+    asset
+        .dispositions
+        .insert(reference.revision.clone(), state.into());
+    if asset.selected_revision.as_ref() == Some(&reference.revision) {
+        asset.selected_revision = None;
+    }
+    let object = write_object(root, &asset)?;
+    if catalog.assets.get(&reference.asset_id) != Some(&object) {
+        catalog.assets.insert(reference.asset_id.clone(), object);
         catalog.updated_at = Utc::now();
         commit_head(root, &head, &catalog)?;
     }

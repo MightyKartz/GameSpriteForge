@@ -78,6 +78,16 @@ pub fn create(
                 latest.map_or("unknown", |r| r.verdict.as_str())
             ));
         }
+        html.push_str(&format!(
+            "<p>Version status: {} · Purpose: {} · Known installation records: {}</p>",
+            intake::disposition(&asset, &reference.revision),
+            escape(asset.purpose.as_deref().unwrap_or("unspecified")),
+            asset
+                .installations
+                .iter()
+                .filter(|i| i.revision == reference.revision)
+                .count()
+        ));
         if let Some(legacy) = &revision.legacy {
             if legacy.reviewed_at.is_some() || legacy.license.is_some() {
                 html.push_str("<p class=\"muted\">Legacy review/license statements remain historical assertions in the source metadata.</p>");

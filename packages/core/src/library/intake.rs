@@ -5,12 +5,35 @@ use crate::content_digest::{digest_inventory, ContentFile, ContentInventory, CON
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct OriginAssertion {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub license: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub notes: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct IntakeItem {
     pub asset_id: String,
     pub name: String,
     pub path: PathBuf,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub origin: Option<OriginAssertion>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub purpose: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub variant: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub role: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub parent_revisions: Vec<String>,
     pub kind: String,
     #[serde(default)]
     pub tags: Vec<String>,
@@ -87,7 +110,7 @@ pub fn content_at(path: &Path) -> Result<ContentInventory, CatalogError> {
     })
 }
 
-fn classify(path: &Path) -> Result<(String, Vec<String>), CatalogError> {
+pub(super) fn classify(path: &Path) -> Result<(String, Vec<String>), CatalogError> {
     if path.is_dir() {
         forge_pack::validate_pack_layout(path).map_err(|e| invalid(e.to_string()))?;
         let pack = forge_pack::inspect_pack(path).map_err(|e| invalid(e.to_string()))?;
@@ -207,6 +230,11 @@ fn scan_path(root: &Path, path: &Path, report: &mut ScanReport) -> Result<(), Ca
     };
     let (kind, _) = classify(path)?;
     report.batch.items.push(IntakeItem {
+        origin: None,
+        purpose: None,
+        variant: None,
+        role: None,
+        parent_revisions: vec![],
         asset_id: format!("local-{}", &sha(identity.as_bytes())[..20]),
         name: path
             .file_stem()
@@ -275,6 +303,8 @@ fn register_inner(
                 name: item.name.clone(),
                 kind: item.kind.clone(),
                 tags: item.tags.clone(),
+                purpose: item.purpose.clone(),
+                dispositions: BTreeMap::new(),
                 selected_revision: None,
                 build_revision: None,
                 revisions: vec![],
@@ -288,10 +318,25 @@ fn register_inner(
         if asset.kind != item.kind && production.is_none() {
             return Err(invalid(format!("ID kind conflict: {}", item.asset_id)));
         }
+        for parent in &item.parent_revisions {
+            let prior: AssetRevision = read_object(root, parent)?;
+            if prior.schema_version != "1" {
+                return Err(invalid("parent must identify an existing revision"));
+            }
+        }
         let mut existing = None;
         for digest in &asset.revisions {
             let prior = read_revision(root, &asset, digest)?;
             if prior.content.as_ref() == Some(&item.expected_content)
+                && prior
+                    .source
+                    .get("origin")
+                    .cloned()
+                    .unwrap_or(serde_json::Value::Null)
+                    == serde_json::to_value(&item.origin)?
+                && prior.source.get("variant").and_then(|v| v.as_str()) == item.variant.as_deref()
+                && prior.source.get("role").and_then(|v| v.as_str()) == item.role.as_deref()
+                && prior.parent_revisions == item.parent_revisions
                 && production.is_none_or(|source| {
                     source.get("executionId") == prior.source.get("executionId")
                 })
@@ -325,13 +370,28 @@ fn register_inner(
                 .or_insert(serde_json::json!("local_registration"));
             source.insert("registeredAt".into(), serde_json::json!(Utc::now()));
             source.insert("resourceType".into(), serde_json::json!(actual_kind));
+            if let Some(origin) = &item.origin {
+                source.insert("origin".into(), serde_json::to_value(origin)?);
+            }
+            if let Some(variant) = &item.variant {
+                source.insert("variant".into(), serde_json::json!(variant));
+            }
+            if let Some(role) = &item.role {
+                source.insert("role".into(), serde_json::json!(role));
+            }
+            if !item.parent_revisions.is_empty() {
+                source.insert(
+                    "lineageAssertion".into(),
+                    serde_json::json!("user_declared"),
+                );
+            }
             source.insert("members".into(), serde_json::json!(members));
             let revision = AssetRevision {
                 schema_version: "1".into(),
                 asset_id: item.asset_id.clone(),
                 content: Some(item.expected_content.clone()),
                 legacy: None,
-                parent_revisions: vec![],
+                parent_revisions: item.parent_revisions.clone(),
                 source,
             };
             let digest = write_object(root, &revision)?;
@@ -368,6 +428,8 @@ pub struct SearchFilter {
     pub query: Option<String>,
     pub kind: Option<String>,
     pub tag: Option<String>,
+    pub purpose: Option<String>,
+    pub disposition: Option<String>,
     pub status: Option<String>,
     pub review_domain: Option<String>,
     pub review_verdict: Option<String>,
@@ -386,6 +448,9 @@ pub struct SearchHit {
     pub status: String,
     pub selected: bool,
     pub review_states: BTreeMap<String, String>,
+    pub purpose: Option<String>,
+    pub disposition: String,
+    pub known_installations: usize,
     pub members: Vec<String>,
 }
 #[derive(Debug, Serialize)]
@@ -409,6 +474,11 @@ pub fn history(root: &Path, id: &str) -> Result<Vec<SearchHit>, CatalogError> {
 }
 fn hit(root: &Path, asset: &AssetRecord, digest: &str) -> Result<SearchHit, CatalogError> {
     let revision = read_revision(root, asset, digest)?;
+    let mut members: Vec<String> = revision
+        .source
+        .get("members")
+        .and_then(|v| serde_json::from_value(v.clone()).ok())
+        .unwrap_or_default();
     let paths = asset
         .locations
         .get(digest)
@@ -424,6 +494,11 @@ fn hit(root: &Path, asset: &AssetRecord, digest: &str) -> Result<SearchHit, Cata
                     "changed"
                 };
                 if status == "available" {
+                    if members.is_empty() && path.is_dir() {
+                        members = classify(&path)
+                            .map(|(_, members)| members)
+                            .unwrap_or_default();
+                    }
                     break;
                 }
             }
@@ -435,6 +510,13 @@ fn hit(root: &Path, asset: &AssetRecord, digest: &str) -> Result<SearchHit, Cata
     }
     Ok(SearchHit {
         review_states,
+        purpose: asset.purpose.clone(),
+        disposition: disposition(asset, digest).into(),
+        known_installations: asset
+            .installations
+            .iter()
+            .filter(|i| i.revision == digest)
+            .count(),
         asset_id: asset.asset_id.clone(),
         name: asset.name.clone(),
         kind: asset.kind.clone(),
@@ -448,14 +530,17 @@ fn hit(root: &Path, asset: &AssetRecord, digest: &str) -> Result<SearchHit, Cata
             .or_else(|| revision.legacy.as_ref().map(|l| l.created_at.to_rfc3339())),
         status: status.into(),
         selected: asset.selected_revision.as_deref() == Some(digest),
-        members: revision
-            .source
-            .get("members")
-            .and_then(|v| serde_json::from_value(v.clone()).ok())
-            .unwrap_or_default(),
+        members,
     })
 }
 pub fn search(root: &Path, filter: &SearchFilter) -> Result<SearchResult, CatalogError> {
+    if filter
+        .disposition
+        .as_deref()
+        .is_some_and(|s| !matches!(s, "candidate" | "selected" | "discarded"))
+    {
+        return Err(invalid("unknown revision disposition"));
+    }
     if filter.limit == 0 || filter.limit > 1000 {
         return Err(invalid("limit must be 1..1000"));
     }
@@ -484,14 +569,24 @@ pub fn search(root: &Path, filter: &SearchFilter) -> Result<SearchResult, Catalo
     }
     let catalog = read_catalog(root)?;
     let mut items = vec![];
-    for id in catalog.assets.keys() {
-        let asset = read_asset(root, &catalog, id)?;
+    for asset in index::assets(root, &catalog)? {
         if filter.kind.as_ref().is_some_and(|k| k != &asset.kind)
             || filter.tag.as_ref().is_some_and(|t| !asset.tags.contains(t))
         {
             continue;
         }
         for digest in &asset.revisions {
+            if filter
+                .purpose
+                .as_ref()
+                .is_some_and(|p| asset.purpose.as_ref() != Some(p))
+                || filter
+                    .disposition
+                    .as_ref()
+                    .is_some_and(|d| disposition(&asset, digest) != d)
+            {
+                continue;
+            }
             let hit = hit(root, &asset, digest)?;
             if let (Some(domain), Some(verdict)) = (&filter.review_domain, &filter.review_verdict) {
                 if hit
@@ -534,4 +629,16 @@ pub fn search(root: &Path, filter: &SearchFilter) -> Result<SearchResult, Catalo
         offset: filter.offset,
         limit: filter.limit,
     })
+}
+
+pub fn disposition<'a>(asset: &'a AssetRecord, revision: &str) -> &'a str {
+    if asset.selected_revision.as_deref() == Some(revision) {
+        "selected"
+    } else {
+        asset
+            .dispositions
+            .get(revision)
+            .map(String::as_str)
+            .unwrap_or("candidate")
+    }
 }

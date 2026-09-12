@@ -162,6 +162,22 @@
             "type": "string",
             "pattern": "^[a-f0-9]{64}$"
           }
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dispositions": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "additionalProperties": {
+            "enum": [
+              "candidate",
+              "discarded"
+            ]
+          }
         }
       }
     },

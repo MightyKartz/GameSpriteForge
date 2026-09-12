@@ -1008,11 +1008,23 @@ fn verify_pack(
             entry.asset_id
         ))
     })?;
-    Ok(if actual == entry.pack_sha256 {
-        PackVerdict::Intact
-    } else {
-        PackVerdict::HashMismatch
-    })
+    Ok(
+        if actual == entry.pack_sha256
+            || (crate::library::is_library(project_root).unwrap_or(false)
+                && crate::library::verify_historical_publication(
+                    project_root,
+                    &entry.asset_id,
+                    &entry.source_job_id,
+                    &entry.pack_sha256,
+                    &pack_path,
+                )
+                .is_ok())
+        {
+            PackVerdict::Intact
+        } else {
+            PackVerdict::HashMismatch
+        },
+    )
 }
 
 /// Content hash of a pack. Directory entries are framed with domain, type,

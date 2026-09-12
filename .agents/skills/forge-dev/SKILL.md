@@ -115,8 +115,9 @@ distinction in provenance; do not invent Provider or Style Lock evidence.
 On a build with `plan prepare-static`, import transparent PNGs as `icon_set` or
 `prop_set` through a single-use plan, execute the Job, inspect its contact sheet and
 report, validate the Pack, and use a separate Godot install plan. This path needs no
-Provider or Style Lock and reports zero Provider requests. It currently has no asset
-catalog registration or targeted retry; prepare a new local request for revisions.
+Provider or Style Lock and reports zero Provider requests. Builds with
+`project_asset_output_registration` support explicit `assetProject` binding for
+catalog registration. It has no targeted retry; prepare a new local request for revisions.
 Its `game_ready` verdict covers structural checks, not visual or style approval.
 
 Local static normalization preserves source copies and alpha without chroma-key

@@ -252,6 +252,8 @@ enum SourceCommand {
 
 #[derive(Subcommand)]
 enum AssetCommand {
+    /// Mark a revision as a candidate or discarded without deleting media.
+    Status(asset_library::DispositionArgs),
     /// Create a read-only offline media gallery with exact revision comparisons.
     Preview(asset_library::PreviewArgs),
     /// Record a revision-specific human assertion and retain its evidence.
@@ -432,6 +434,18 @@ impl From<CharacterRetryStageArg> for CharacterRetryStage {
 
 #[derive(Subcommand)]
 enum ProjectCommand {
+    /// Preview or explicitly apply a three-way merge of shared catalog heads.
+    MergeAssets(asset_library::MergeArgs),
+    /// Check shared metadata, current media availability and retained evidence.
+    VerifyAssets(asset_library::AuditArgs),
+    /// Set a machine-local location for an existing shared root ID.
+    BindRoot(asset_library::BindRootArgs),
+    /// Transfer explicitly selected revision metadata, media and evidence.
+    ExportAssets(asset_library::ExportArgs),
+    /// Verify a portable resource bundle against an optional external digest.
+    VerifyAssetBundle(asset_library::VerifyBundleArgs),
+    /// Restore a verified portable resource bundle into a new local library.
+    ImportAssets(asset_library::ImportArgs),
     Init {
         #[arg(long)]
         path: PathBuf,
@@ -973,6 +987,7 @@ fn run() -> Result<(), (String, String)> {
             })
         }
         Command::Asset { command } => match command {
+            AssetCommand::Status(args) => asset_library::disposition(args),
             AssetCommand::Preview(args) => asset_library::preview(args),
             AssetCommand::Review(args) => asset_library::review(args),
             AssetCommand::Reviews(args) => asset_library::reviews(args),
@@ -1232,6 +1247,12 @@ fn run() -> Result<(), (String, String)> {
                     success(&inspection)
                 }
             }
+            ProjectCommand::MergeAssets(args) => asset_library::merge(args),
+            ProjectCommand::VerifyAssets(args) => asset_library::audit(args),
+            ProjectCommand::BindRoot(args) => asset_library::bind_root(args),
+            ProjectCommand::ExportAssets(args) => asset_library::export(args),
+            ProjectCommand::VerifyAssetBundle(args) => asset_library::verify_bundle(args),
+            ProjectCommand::ImportAssets(args) => asset_library::import(args),
             ProjectCommand::MigrateAssets(args) => asset_library::migrate(args),
             #[cfg(feature = "game-art-manifest")]
             ProjectCommand::Diff {

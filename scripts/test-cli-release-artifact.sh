@@ -48,6 +48,13 @@ done
 
 python3 "${ROOT}/scripts/test-cli-skill.py" \
   --forge "${TEST_ROOT}/upgrade/bin/forge" --output "${TEST_ROOT}/packaged-skill"
+python3 "${ROOT}/scripts/test-asset-library-cli.py" \
+  --forge "${TEST_ROOT}/upgrade/bin/forge" --legacy-forge "${OLD}"
+python3 "${ROOT}/scripts/test-asset-library-review-cli.py" \
+  --forge "${TEST_ROOT}/upgrade/bin/forge"
+python3 "${ROOT}/scripts/test-asset-library-portability-cli.py" \
+  --forge "${TEST_ROOT}/upgrade/bin/forge" --godot "$(command -v godot)" \
+  --output "${TEST_ROOT}/packaged-library-portability"
 
 PAYLOAD="${TEST_ROOT}/upgrade/share/versions/${VERSION}"
 FORGE_BINARY="${TEST_ROOT}/upgrade/bin/forge" FORGE_VERIFY_GODOT=1 \
