@@ -1,6 +1,6 @@
 ---
 name: forge-use
-description: Use Forge CLI to prepare local game art, generate icon or prop sets with a Forge Provider, inspect asset jobs, and deliver Packs to Godot. Includes Codex image generation followed by local PNG processing.
+description: Use Forge CLI to prepare local game art or WAV audio, generate icon or prop sets with a Forge Provider, inspect asset jobs, and deliver Packs to Godot. Audio requires a verified source build.
 ---
 
 # Use Forge for game assets
@@ -73,12 +73,17 @@ the pinned executable's capabilities.
   or run `"$FORGE_BIN" guide animation`. It covers preserved coordinates, timing
   and sheet preprocessing. Unrelated still
   items are not animation frames. Character animation remains experimental.
+- **Local music, sound effects or ambience:** read [audio preparation](references/audio.md),
+  or run `"$FORGE_BIN" guide audio` on a build with `local_audio_import`.
+  Import WAV sources from the user's chosen tools. Optional external audio tools
+  are separate installations; Forge's diagnostics never run or install them.
 - **Source inspection, reviewed hashes, durable receipts and installed audits:**
   read [delivery evidence](references/delivery.md), or run
   `"$FORGE_BIN" guide delivery`. Check each new capability against the selected binary.
 
 The references link to local request examples. Without an installed bundle, read
-them with `"$FORGE_BIN" guide static-example` or `"$FORGE_BIN" guide provider-example`.
+them with `"$FORGE_BIN" guide static-example`, `"$FORGE_BIN" guide provider-example`,
+or `"$FORGE_BIN" guide audio-example` when the selected build supports audio.
 Plain output is the resource's exact text; `--json` adds its path, SHA-256, bundle
 and CLI identity, and the resource list. Check command exit status before using
 the output, especially when redirecting an example into a new request file.
@@ -96,8 +101,9 @@ With `--json`, check process exit status before decoding stdout, then require
 does not prove Job success. Follow a detached Job with `job get --id JOB --json`.
 Read `job report`, inspect artifacts and validate the Pack before delivery.
 
-Keep structural validation separate from visual approval. Local static
+Keep structural validation separate from visual or listening approval. Local static
 `game_ready` does not evaluate style consistency or approve artwork.
+Audio `technical_pass` does not establish sound quality or a seamless loop.
 `prototype_usable` remains a prototype. Do not disable a quality gate to claim
 success or record human acceptance for a review that was not performed. Record an
 explicitly requested prototype and its remaining review status in the receipt.

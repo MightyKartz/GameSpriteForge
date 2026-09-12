@@ -40,6 +40,7 @@ pub struct ProviderAssetRef {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ProjectAssetKind {
+    AudioSet,
     Animation,
     Character,
     Layered,
@@ -189,6 +190,7 @@ pub fn register_project_asset(
         }
     };
     let kind = match params.pack.asset_type.as_str() {
+        "audio_set" => ProjectAssetKind::AudioSet,
         "character" => ProjectAssetKind::Character,
         "layered" => ProjectAssetKind::Layered,
         "icon_set" => ProjectAssetKind::IconSet,

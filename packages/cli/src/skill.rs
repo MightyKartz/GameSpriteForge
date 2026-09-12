@@ -35,6 +35,22 @@ struct GuideResource {
 const SOURCE_FILES: &[SourceFile] = &[
     SourceFile {
         resource: GuideResource {
+            topic: "audio",
+            path: "references/audio.md",
+            media_type: "text/markdown",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/references/audio.md"),
+    },
+    SourceFile {
+        resource: GuideResource {
+            topic: "audio-example",
+            path: "examples/local-audio.json",
+            media_type: "application/json",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/examples/local-audio.json"),
+    },
+    SourceFile {
+        resource: GuideResource {
             topic: "overview",
             path: "SKILL.md",
             media_type: "text/markdown",
@@ -361,7 +377,14 @@ pub fn run(command: SkillCommand) -> Result<()> {
             if json {
                 crate::success(&bundle)
             } else {
-                print!("{}", SOURCE_FILES[0].content);
+                print!(
+                    "{}",
+                    SOURCE_FILES
+                        .iter()
+                        .find(|file| file.resource.topic == "overview")
+                        .expect("embedded overview")
+                        .content
+                );
                 Ok(())
             }
         }
@@ -914,6 +937,12 @@ mod guide_tests {
 
         let bundle = Bundle::embedded();
         let expected = [
+            ("audio", "references/audio.md", "text/markdown"),
+            (
+                "audio-example",
+                "examples/local-audio.json",
+                "application/json",
+            ),
             ("overview", "SKILL.md", "text/markdown"),
             ("static", "references/local-static.md", "text/markdown"),
             ("provider", "references/provider.md", "text/markdown"),

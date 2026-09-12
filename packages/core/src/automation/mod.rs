@@ -1,3 +1,4 @@
+mod audio_assets;
 mod plan;
 mod repair;
 mod runner;

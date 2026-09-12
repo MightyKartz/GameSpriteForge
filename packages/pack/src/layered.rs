@@ -412,7 +412,9 @@ fn is_link(metadata: &fs::Metadata) -> bool {
 
 pub(super) fn validate_pack(pack: &Path, metadata: &crate::ForgePackJson) -> Result<(), PackError> {
     if metadata.asset_type.as_deref() != Some("layered") {
-        return Err(invalid("schemaVersion 4.0.0 is reserved for layered Packs"));
+        return Err(invalid(
+            "expected assetType layered for layered Pack validation",
+        ));
     }
     crate::validate_json_file(
         pack.join("forgepack.json"),

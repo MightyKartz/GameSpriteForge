@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1",
+  "id": "forest_audio",
+  "name": "Forest audio",
+  "sampleRate": 48000,
+  "channels": 2,
+  "items": [
+    {
+      "id": "forest_ambience",
+      "name": "Forest ambience",
+      "path": "../sources/forest_ambience.wav",
+      "role": "ambience",
+      "loop": true,
+      "gainDb": -3
+    },
+    {
+      "id": "pickup",
+      "name": "Pickup sound",
+      "path": "../sources/pickup.wav",
+      "role": "sfx",
+      "loop": false
+    }
+  ]
+}

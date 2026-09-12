@@ -220,7 +220,8 @@ pub fn verify_install(
         let recorded_uri = usage[field].as_str().map(|uri| uri.replace('\\', "/"));
         if !relative.starts_with(&entry.godot_target)
             || !safe_relative(relative)
-            || recorded_uri != Some(godot_resource_path(relative))
+            || (entry.kind != crate::project::ProjectAssetKind::AudioSet
+                && recorded_uri != Some(godot_resource_path(relative)))
             || !project.join(relative).exists()
         {
             return Err(invalid(format!(
@@ -258,6 +259,56 @@ pub fn verify_install(
     }
     forge_pack::validate_pack_layout(&pack).map_err(invalid)?;
     let summary = forge_pack::inspect_pack(&pack).map_err(invalid)?;
+    if summary.asset_type == "audio_set" {
+        if entry.kind != crate::project::ProjectAssetKind::AudioSet
+            || entry.asset_id != summary.id
+            || entry.name != summary.name
+            || usage["kind"] != "audio_set"
+            || usage["nodeType"] != "AudioStreamWAV"
+            || entry.scene_path != entry.godot_target.join("streams")
+            || entry.sprite_frames_path != entry.godot_target.join("sources")
+            || !entry.animations.is_empty()
+        {
+            return Err(invalid(
+                "installed audio identity or resource paths differ from the Pack",
+            ));
+        }
+        let manifest = forge_pack::audio::read_audio_manifest(&pack).map_err(invalid)?;
+        let original: Value = read_json(&pack.join("assets/manifest.json"))?;
+        if usage["audioItems"] != original["items"] {
+            return Err(invalid("installed audio metadata differs from the Pack"));
+        }
+        let mut paths = serde_json::Map::new();
+        for item in &manifest.items {
+            let resource = entry
+                .godot_target
+                .join("streams")
+                .join(format!("{}.res", item.id));
+            paths.insert(
+                item.id.clone(),
+                Value::String(godot_resource_path(&resource)),
+            );
+            if !project.join(&resource).is_file()
+                || hash_file(&target.join("sources").join(format!("{}.wav", item.id)))?
+                    != hash_file(&pack.join(&item.path))?
+            {
+                return Err(invalid(
+                    "installed audio resource is missing or source WAV differs from Pack",
+                ));
+            }
+        }
+        if usage["audioPaths"] != Value::Object(paths) {
+            return Err(invalid("installed audio paths differ from the Pack"));
+        }
+        return Ok(json!({
+            "schemaVersion":"1", "verified":true, "assetKey":asset_key,
+            "packSha256":entry.pack_sha256, "verifiedFiles":snapshot.files.len(),
+            "cacheCheck":cache_status, "nativeLoad":"not_run", "readOnly":true,
+            "target":target, "pack":pack, "verifiedAudioItems":manifest.items.len(),
+            "snapshotSha256":snapshot_sha256, "baselineAuthority":"project_registry",
+            "listeningReview":"not_assessed"
+        }));
+    }
     if entry.asset_id != summary.id
         || entry.name != summary.name
         || usage["kind"] != summary.asset_type

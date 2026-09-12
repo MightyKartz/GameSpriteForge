@@ -1,12 +1,17 @@
 extends SceneTree
 
+var _failed := false
+
 func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.size() < 1:
 		_fail("Expected a .gsfpack directory path.")
+		return
 
 	var pack_path := String(args[0]).simplify_path()
 	var forgepack := _read_json(pack_path.path_join("forgepack.json"))
+	if _failed:
+		return
 	var pack_name := String(forgepack.get("name", "Forge Export"))
 	var resource_name := _safe_resource_name(pack_name)
 	var import_root := "res://imported".path_join(resource_name)
@@ -16,6 +21,11 @@ func _initialize() -> void:
 	_prepare_import_dir(import_root)
 
 	var helper := _read_json(pack_path.path_join("assets/godot_import.json"))
+	if _failed:
+		return
+	if helper.get("assetType", forgepack.get("assetType", "")) == "audio_set":
+		_import_audio_set(pack_path, import_root, helper)
+		return
 	var sprite_frames_spec: Dictionary = _required_dict(helper, "spriteFrames", "assets/godot_import.json")
 	var atlas := _read_json(pack_path.path_join(String(sprite_frames_spec["atlas"])))
 	var textures: Array = _required_array(sprite_frames_spec, "textures", "spriteFrames")
@@ -150,6 +160,62 @@ func _initialize() -> void:
 	])
 	quit(0)
 
+func _import_audio_set(pack_path: String, import_root: String, helper: Dictionary) -> void:
+	# Audio smoke uses the same native-resource constructor and fresh-process
+	# verifier as transactional CLI installation. It never starts playback.
+	var installer: String = String(get_script().resource_path).get_base_dir().path_join("install_forge_pack.gd")
+	if not FileAccess.file_exists(installer):
+		_fail("Audio smoke requires install_forge_pack.gd beside this script.")
+		return
+	var items := _required_array(helper, "items", "audio helper")
+	if _failed:
+		return
+	var sources := import_root.path_join("sources")
+	if DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(sources)) != OK:
+		_fail("Could not create audio smoke sources directory.")
+		return
+	var ids := {}
+	for value in items:
+		if typeof(value) != TYPE_DICTIONARY:
+			_fail("Audio smoke item must be an object.")
+			return
+		var item: Dictionary = value
+		var item_id := String(item.get("id", ""))
+		if item_id.is_empty() or item_id == "." or item_id == ".." or not item_id.is_valid_filename() or ids.has(item_id) or item.get("path") != "assets/audio/" + item_id + ".wav":
+			_fail("Audio smoke item must have a unique safe id and canonical WAV path.")
+			return
+		ids[item_id] = true
+		var source := pack_path.path_join(String(item["path"]))
+		var destination := ProjectSettings.globalize_path(sources.path_join(item_id + ".wav"))
+		if DirAccess.copy_absolute(source, destination) != OK:
+			_fail("Could not copy audio smoke source: %s" % item_id)
+			return
+	for phase in ["install", "verify"]:
+		var command := PackedStringArray([
+			"--headless", "--path", ProjectSettings.globalize_path("res://"),
+			"--script", ProjectSettings.globalize_path(installer), "--", pack_path,
+			import_root.trim_prefix("res://"),
+		])
+		if phase == "verify":
+			command.append("--verify")
+		var output: Array = []
+		var status := OS.execute(OS.get_executable_path(), command, output, true)
+		var completions := 0
+		for text in output:
+			for line in String(text).split("\n"):
+				if line.contains("SCRIPT ERROR") or line.begins_with("ERROR:") or line.begins_with("FAIL "):
+					_fail("Audio smoke native %s failed: %s" % [phase, line])
+					return
+				if line.begins_with("FORGE_INSTALL_RESULT "):
+					var result: Variant = JSON.parse_string(line.trim_prefix("FORGE_INSTALL_RESULT "))
+					if typeof(result) == TYPE_DICTIONARY and result.get("schemaVersion") == "1" and result.get("status") == "succeeded" and result.get("phase") == phase and result.get("assetType") == "audio_set" and result.get("target") == import_root:
+						completions += 1
+		if status != 0 or completions != 1:
+			_fail("Audio smoke native %s did not return a successful completion result." % phase)
+			return
+	print("PASS Forge Godot import smoke: imported and verified %s native audio streams in %s" % [items.size(), import_root])
+	quit(0)
+
 func _prepare_import_dir(path: String) -> void:
 	var absolute := ProjectSettings.globalize_path(path)
 	DirAccess.make_dir_recursive_absolute(absolute)
@@ -157,20 +223,24 @@ func _prepare_import_dir(path: String) -> void:
 func _read_json(path: String) -> Dictionary:
 	if !FileAccess.file_exists(path):
 		_fail("Missing JSON file: %s" % path)
+		return {}
 	var text := FileAccess.get_file_as_string(path)
 	var parsed = JSON.parse_string(text)
 	if typeof(parsed) != TYPE_DICTIONARY:
 		_fail("Expected JSON object in %s" % path)
+		return {}
 	return parsed
 
 func _required_dict(source: Dictionary, key: String, context: String) -> Dictionary:
 	if !source.has(key) or typeof(source[key]) != TYPE_DICTIONARY:
 		_fail("Expected %s.%s to be an object." % [context, key])
+		return {}
 	return source[key]
 
 func _required_array(source: Dictionary, key: String, context: String) -> Array:
 	if !source.has(key) or typeof(source[key]) != TYPE_ARRAY:
 		_fail("Expected %s.%s to be an array." % [context, key])
+		return []
 	return source[key]
 
 func _safe_resource_name(value: String) -> String:
@@ -191,6 +261,7 @@ func _safe_resource_name(value: String) -> String:
 	return result
 
 func _fail(message: String) -> void:
+	_failed = true
 	push_error(message)
 	print("FAIL Forge Godot import smoke: %s" % message)
 	quit(1)

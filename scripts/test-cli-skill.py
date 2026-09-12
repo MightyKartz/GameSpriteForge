@@ -25,6 +25,8 @@ import zlib
 MANIFEST = ".forge-skill-manifest.json"
 SKILL = "forge-use"
 GUIDE_RESOURCES = (
+    ("audio", "references/audio.md", "text/markdown"),
+    ("audio-example", "examples/local-audio.json", "application/json"),
     ("overview", "SKILL.md", "text/markdown"),
     ("static", "references/local-static.md", "text/markdown"),
     ("provider", "references/provider.md", "text/markdown"),
@@ -318,9 +320,15 @@ class Harness:
             if media_type == "application/json":
                 request = json.loads(plain)
                 require(isinstance(request, dict) and request.get("schemaVersion") == "1"
-                        and request.get("kind") in ("icon_set", "prop_set")
                         and isinstance(request.get("items"), list) and request["items"],
                         f"Guide example is not a directly usable request: {topic}")
+                if topic == "audio-example":
+                    require(request.get("id") and all(
+                        item.get("path") and item.get("role") in ("music", "sfx", "ambience")
+                        for item in request["items"]), "Audio example lacks WAV items or roles")
+                else:
+                    require(request.get("kind") in ("icon_set", "prop_set"),
+                            f"Static example lacks a supported kind: {topic}")
                 examples.append(relative)
         self.completed("guide_topics_and_paths_match_plain_and_json_bundle", resources=len(GUIDE_RESOURCES))
         self.completed("guide_json_examples_are_unwrapped_request_documents", paths=examples)

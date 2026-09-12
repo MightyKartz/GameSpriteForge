@@ -66,6 +66,7 @@ use forge_providers::{
 };
 use serde::Serialize;
 
+mod audio_tools;
 mod build_info;
 mod preview;
 mod receipt;
@@ -87,6 +88,11 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Import local WAV assets and inspect optional, user-installed audio tools.
+    Audio {
+        #[command(subcommand)]
+        command: AudioCommand,
+    },
     /// Inspect actual PNG dimensions, alpha and optional sprite grid boundaries.
     Source {
         #[command(subcommand)]
@@ -200,6 +206,29 @@ enum Command {
 struct JsonFlag {
     #[arg(long)]
     json: bool,
+}
+
+#[derive(Subcommand)]
+enum AudioCommand {
+    /// Prepare and execute a local audio Plan; installs no generation tools.
+    Import {
+        #[command(flatten)]
+        input: RequestInput,
+        #[arg(long)]
+        wait: bool,
+    },
+    /// Read local WAV format, duration and content hash.
+    Inspect {
+        #[arg(long)]
+        path: PathBuf,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
+    /// Read-only information about optional external generation tools.
+    Tools {
+        #[command(subcommand)]
+        command: audio_tools::AudioToolsCommand,
+    },
 }
 
 #[derive(Subcommand)]
@@ -707,6 +736,7 @@ enum RepairCommand {
 
 #[derive(Subcommand)]
 enum PlanCommand {
+    PrepareAudio(RequestInput),
     PrepareAsset(RequestInput),
     PrepareStatic(RequestInput),
     PrepareCharacter(RequestInput),
@@ -806,6 +836,17 @@ fn main() {
 fn run() -> Result<(), (String, String)> {
     let cli = Cli::parse();
     match cli.command {
+        Command::Audio { command } => match command {
+            AudioCommand::Tools { command } => success(&audio_tools::run(command)?),
+            AudioCommand::Inspect { path, .. } => success(
+                &forge_core::audio::inspect_audio_source(&path)
+                    .map_err(|message| ("invalid_audio_source".into(), message))?,
+            ),
+            AudioCommand::Import { input, wait } => prepare_and_execute(
+                AutomationOperation::PrepareAudio(read_audio_request(&input)?),
+                wait,
+            ),
+        },
         Command::Guide(args) => skill::run_guide(args),
         Command::Skill { command } => skill::run(command),
         Command::Receipt { command } => success(&receipt::run(command)?),
@@ -1621,6 +1662,14 @@ fn run() -> Result<(), (String, String)> {
             }
         },
         Command::Plan { command } => match command {
+            PlanCommand::PrepareAudio(input) => {
+                let plan = plan_store()?
+                    .prepare(AutomationOperation::PrepareAudio(read_audio_request(
+                        &input,
+                    )?))
+                    .map_err(display_error)?;
+                success(&plan)
+            }
             PlanCommand::PrepareStatic(input) => {
                 let mut request: PrepareStaticRequest = read_request(&input)?;
                 let root = request_root(&input)?;
@@ -3058,6 +3107,20 @@ fn request_root(input: &RequestInput) -> Result<PathBuf, (String, String)> {
     } else {
         cwd.join(root)
     })
+}
+
+fn read_audio_request(
+    input: &RequestInput,
+) -> Result<forge_core::audio::PrepareAudioRequest, (String, String)> {
+    let mut request: forge_core::audio::PrepareAudioRequest = read_request(input)?;
+    let root = request_root(input)?;
+    for item in &mut request.items {
+        if item.path.is_relative() {
+            item.path = root.join(&item.path);
+        }
+    }
+    resolve_source_locks(&mut request.source_locks, &root);
+    Ok(request)
 }
 
 fn resolve_local_input(input: &mut forge_core::automation::AssetInput, root: &Path) {

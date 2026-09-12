@@ -314,7 +314,8 @@ fn export_from_store(
     write_new(out, &bytes)?;
     Ok(
         json!({"path":out,"sha256":digest(&bytes),"packSha256":receipt.pack.sha256,
-        "producerKnown":receipt.prepare.execution.is_some(),"visualReview":receipt.review.as_ref().and_then(|v|v["status"].as_str()).unwrap_or("not_recorded")}),
+        "producerKnown":receipt.prepare.execution.is_some(),"visualReview":receipt.review.as_ref().and_then(|v|v["status"].as_str()).unwrap_or("not_recorded"),
+        "listeningReview":"not_assessed"}),
     )
 }
 
@@ -369,7 +370,8 @@ fn verify(
         json!({"schemaVersion":"1","verified":true,"receiptSha256":sha,"packSha256":receipt.pack.sha256,
         "verifiedFiles":receipt.pack.files.len(),"installationVerified":receipt.install.is_some(),"installationCacheCheck":installation_cache_check,"producerKnown":receipt.prepare.execution.is_some(),
         "integrityBasis":if expected.is_some(){"retained_expected_sha256"}else{"self_consistency_only"},
-        "sourceVerification":"recorded_hashes_only","nativeLoad":"not_run","visualReview":receipt.review.as_ref().and_then(|v|v["status"].as_str()).unwrap_or("not_recorded"),"readOnly":true}),
+        "sourceVerification":"recorded_hashes_only","nativeLoad":"not_run","visualReview":receipt.review.as_ref().and_then(|v|v["status"].as_str()).unwrap_or("not_recorded"),"readOnly":true,
+        "listeningReview":"not_assessed"}),
     )
 }
 

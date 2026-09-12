@@ -83,6 +83,16 @@ local_animation_gate() {
     --output "${REPORT_DIR}/local-animation"
 }
 
+local_audio_gate() {
+  cargo build --locked -q -p forge-cli --no-default-features --manifest-path "${ROOT}/Cargo.toml" &&
+  python3 "${ROOT}/scripts/test-godot-audio-delivery.py" \
+    --godot "${FORGE_GODOT_PATH:-$(command -v godot)}" \
+    --output "${REPORT_DIR}/audio-native" &&
+  python3 "${ROOT}/scripts/test-local-audio-cli.py" \
+    --forge "${ROOT}/target/debug/forge" --godot "${FORGE_GODOT_PATH:-$(command -v godot)}" \
+    --output "${REPORT_DIR}/local-audio"
+}
+
 world_contract_gate() {
   cargo test --manifest-path "${ROOT}/Cargo.toml" \
     -p providers --test world_generation_contract -- --nocapture &&
@@ -109,6 +119,7 @@ run_gate "static-five-style-matrix" "release_blocking" static_matrix_gate
 run_gate "local-static-delivery" "release_blocking" local_static_gate
 run_gate "local-animation-delivery" "release_blocking" local_animation_gate
 run_gate "sword-delivery-feedback" "release_blocking" sword_feedback_gate
+run_gate "local-audio-delivery" "release_blocking" local_audio_gate
 run_gate "world-assets-experimental" "experimental" world_contract_gate
 FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 

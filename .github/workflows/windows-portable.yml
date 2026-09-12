@@ -11,6 +11,7 @@ on:
       - 'scripts/*windows*.ps1'
       - 'scripts/test-cli-skill.py'
       - 'scripts/test-layered*.py'
+      - 'scripts/test-local-audio-cli.py'
       - 'scripts/test-static-native-matte-cli.py'
       - 'scripts/test-godot-unified-player.py'
       - 'scripts/test-godot-preview-ui.py'
@@ -28,6 +29,7 @@ on:
       - 'scripts/*windows*.ps1'
       - 'scripts/test-cli-skill.py'
       - 'scripts/test-layered*.py'
+      - 'scripts/test-local-audio-cli.py'
       - 'scripts/test-static-native-matte-cli.py'
       - 'scripts/test-godot-unified-player.py'
       - 'scripts/test-godot-preview-ui.py'
@@ -107,6 +109,8 @@ jobs:
           $summary = Get-Content -LiteralPath target/qa/windows-portable/summary.json -Raw | ConvertFrom-Json
           $launcher = $summary.cases[0].launcher
           $godot = "$env:RUNNER_TEMP/godot/Godot_v4.6.3-stable_win64_console.exe"
+          python scripts/test-local-audio-cli.py --forge "$launcher" --godot "$godot" --output target/qa/windows-audio
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-static-native-matte-cli.py --forge "$launcher" --output target/qa/windows-native-static
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-layered-cli.py --forge "$launcher" --godot "$godot" --output target/qa/windows-layered-preview
@@ -128,6 +132,7 @@ jobs:
             target/qa/windows-portable/powershell51-doctor.json
             target/qa/windows-guide/summary.json
             target/qa/windows-native-static/summary.json
+            target/qa/windows-audio/summary.json
             target/qa/windows-layered-preview/summary.json
             target/qa/windows-preview-ui/summary.json
             target/qa/windows-unified-controller/stdout.txt
@@ -144,6 +149,7 @@ jobs:
             ${{ runner.temp }}/forge-ffmpeg/helpers/FFMPEG_BUILD.json
             target/qa/windows-portable/summary.json
             target/qa/windows-native-static/**
+            target/qa/windows-audio/**
             target/qa/windows-layered-preview/**
             target/qa/windows-unified-controller/**
           if-no-files-found: warn

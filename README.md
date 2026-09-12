@@ -85,6 +85,8 @@ For your first set, follow the [local artwork workflow](docs/automation/codex-lo
 
 Local icon and prop processing, Pack validation and Godot delivery are the stable foundation. **Character animation remains in development and testing**, including generation, reuse and directional workflows. The Sword previews demonstrate specific prototype assets; review animation results before using them in your game. See the [v0.3.2 release notes](docs/releases/v0.3.2.md) for the release scope.
 
+New source builds also import local WAV music, sound effects and ambience into audio Packs and native Godot streams. This workflow retains source hashes, applies explicit audio processing and records technical checks; listening review remains separate. ACE-Step and Stable Audio 3 are optional external tools, with read-only discovery only. Forge does not bundle, install or run their models. This audio workflow is outside the v0.3.2 release; check the selected build's capabilities and read the [audio guide](.agents/skills/forge-use/references/audio.md).
+
 ## Documentation
 
 - [CLI guide](docs/automation/forge-cli.md) — commands, generation, processing, and Godot delivery.

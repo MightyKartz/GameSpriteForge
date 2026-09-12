@@ -135,6 +135,20 @@ A local-path pass does not establish real-Provider generation quality.
 
 ## Focused verification
 
+Local audio uses `audio import` / `plan prepare-audio`, a v4 audio Pack, and the
+existing Godot install transaction. Keep external generation optional: `audio
+tools` only observes explicitly selected source directories and must not start
+Python, load models, download weights or read credentials. Maintain the audio
+guide and example inside the embedded `forge-use` bundle. Audio metadata describes
+technical validation and user-asserted origin; it does not establish listening or
+license approval. Native delivery uses binary `AudioStreamWAV` resources and
+tracks WAV `.sample` caches alongside image caches. Run
+`cargo test -p core --test audio_plan_tests --test audio_processing_tests`,
+`scripts/test-godot-audio-delivery.py`, and `scripts/test-local-audio-cli.py` with
+the selected absolute CLI/Godot executables. The CLI test covers relocated
+receipts, input drift, native-resource drift and cache tampering using synthetic
+WAVs. Preserve another project's existing audio and toolchain pins.
+
 Select checks for the changed behavior. Use isolated `FORGE_JOB_STORE` and
 `FORGE_PLAN_STORE` directories for manual
 fixtures so QA does not use the normal asset history.

@@ -1,0 +1,229 @@
+{
+  "schemaVersion": "1",
+  "date": "2026-09-12",
+  "status": "passed",
+  "implementationCommit": "f898309384a9c19c5f90245fb10e746b845ec27a",
+  "build": {
+    "gitCommit": "f898309384a9c19c5f90245fb10e746b845ec27a",
+    "dirty": false,
+    "target": "aarch64-apple-darwin",
+    "profile": "debug",
+    "features": []
+  },
+  "cliVersion": "0.3.2",
+  "binarySha256": "cd44b09298a09f3f95ad01c6213400602b2bf94fd29536f8d93f4c4b5d90ef11",
+  "godotVersion": "4.6.3.stable.official.7d41c59c4",
+  "ffmpegVersion": "8.0.1 (local Homebrew helper)",
+  "checks": [
+    {
+      "command": "cargo fmt --all -- --check",
+      "status": "passed"
+    },
+    {
+      "command": "cargo clippy --workspace --all-targets -- -D warnings",
+      "status": "passed"
+    },
+    {
+      "command": "cargo clippy -p forge-cli --all-targets --features consistency-v2,world-assets -- -D warnings",
+      "status": "passed"
+    },
+    {
+      "command": "cargo test --workspace --no-fail-fast",
+      "status": "passed"
+    },
+    {
+      "command": "cargo test -p forge-cli --features world-assets",
+      "status": "passed"
+    },
+    {
+      "command": "cargo test -p core --test audio_plan_tests --test audio_processing_tests",
+      "status": "passed"
+    },
+    {
+      "command": "cargo test -p pack",
+      "status": "passed"
+    },
+    {
+      "command": "scripts/test-world-assets.sh",
+      "status": "passed"
+    },
+    {
+      "command": "scripts/test-cli-signing-contract.sh",
+      "status": "passed"
+    },
+    {
+      "command": "scripts/test-cli-product.sh",
+      "status": "passed"
+    },
+    {
+      "command": "scripts/test-cli-skill.py",
+      "status": "passed"
+    },
+    {
+      "command": "scripts/test-godot-audio-delivery.py",
+      "status": "passed"
+    },
+    {
+      "command": "scripts/test-local-audio-cli.py",
+      "status": "passed"
+    }
+  ],
+  "audioE2E": [
+    {
+      "label": "doctor",
+      "exitCode": 0
+    },
+    {
+      "label": "audio-inspect",
+      "exitCode": 0
+    },
+    {
+      "label": "reject-source-lock",
+      "exitCode": 1
+    },
+    {
+      "label": "audio-plan",
+      "exitCode": 0
+    },
+    {
+      "label": "reject-changed-source",
+      "exitCode": 1
+    },
+    {
+      "label": "audio-execute",
+      "exitCode": 0
+    },
+    {
+      "label": "audio-job-report",
+      "exitCode": 0
+    },
+    {
+      "label": "reject-reused-token",
+      "exitCode": 1
+    },
+    {
+      "label": "audio-import",
+      "exitCode": 0
+    },
+    {
+      "label": "audio-job-report",
+      "exitCode": 0
+    },
+    {
+      "label": "pack-validate",
+      "exitCode": 0
+    },
+    {
+      "label": "pack-inspect",
+      "exitCode": 0
+    },
+    {
+      "label": "godot-plan",
+      "exitCode": 0
+    },
+    {
+      "label": "godot-install",
+      "exitCode": 0
+    },
+    {
+      "label": "install-audit",
+      "exitCode": 0
+    },
+    {
+      "label": "reject-native-resource-tamper",
+      "exitCode": 1
+    },
+    {
+      "label": "reject-cache-tamper",
+      "exitCode": 1
+    },
+    {
+      "label": "high-rate-import",
+      "exitCode": 0
+    },
+    {
+      "label": "audio-job-report",
+      "exitCode": 0
+    },
+    {
+      "label": "high-rate-install-plan",
+      "exitCode": 0
+    },
+    {
+      "label": "high-rate-install",
+      "exitCode": 0
+    },
+    {
+      "label": "high-rate-audit",
+      "exitCode": 0
+    },
+    {
+      "label": "receipt-export",
+      "exitCode": 0
+    },
+    {
+      "label": "receipt-verify",
+      "exitCode": 0
+    },
+    {
+      "label": "receipt-portable",
+      "exitCode": 0
+    },
+    {
+      "label": "reject-pack-tamper",
+      "exitCode": 1
+    },
+    {
+      "label": "reject-pack-validation-tamper",
+      "exitCode": 1
+    },
+    {
+      "label": "reject-receipt-hash",
+      "exitCode": 1
+    }
+  ],
+  "nativeStreams": [
+    {
+      "begin": 0,
+      "bytes": 22050,
+      "duration": 0.5,
+      "end": 0,
+      "format": 1,
+      "id": "cue",
+      "loop": 0,
+      "rate": 22050,
+      "stereo": false
+    },
+    {
+      "begin": 0,
+      "bytes": 96000,
+      "duration": 0.5,
+      "end": 24000,
+      "format": 1,
+      "id": "ambience",
+      "loop": 1,
+      "rate": 48000,
+      "stereo": true
+    },
+    {
+      "begin": 0,
+      "bytes": 192000,
+      "duration": 0.5,
+      "end": 48000,
+      "format": 1,
+      "id": "high_rate",
+      "loop": 1,
+      "rate": 96000,
+      "stereo": true
+    }
+  ],
+  "providerRequests": 0,
+  "generationPerformed": false,
+  "listeningReviewPerformed": false,
+  "sourceAssets": "synthetic local WAVs only",
+  "scopeNotes": [
+    "External model tools are cataloged and inspected by filesystem metadata only; no models, runtime installation, authentication or generation were executed.",
+    "The end-to-end run includes 48000 and 96000 Hz CLI import and real Godot delivery, cache drift, retained Pack relocation and receipt verification without the Job store.",
+    "No release archive was created or tested; existing consumer pins were preserved."
+  ]
+}

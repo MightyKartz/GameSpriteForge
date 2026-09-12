@@ -85,6 +85,8 @@ forge guide
 
 本地图标与道具处理、Pack 验证和 Godot 交付构成稳定能力。**角色动画仍处于测试开发阶段**，包括生成、复用和多方向工作流。Sword 展示的是具体原型素材的应用，用于游戏前仍需检查动画效果。版本范围见 [v0.3.2 发布说明](docs/releases/v0.3.2.md)。
 
+源码新版还支持将本地 WAV 音乐、音效和环境声制作成音频 Pack，交付 Godot 原生音频资源。流程保留来源哈希、按明确参数处理音频并记录技术检查；试听验收需单独完成。ACE-Step 和 Stable Audio 3 是可选外部工具，Forge 仅提供只读检测，不附带、安装或运行其模型。音频工作流不属于 v0.3.2 发布范围；请核对所选构建的 capabilities，并阅读[音频指南](.agents/skills/forge-use/references/audio.md)。
+
 ## 文档
 
 - [CLI 指南](docs/automation/forge-cli.md)：命令、素材生成与处理、Godot 交付。

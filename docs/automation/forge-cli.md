@@ -110,8 +110,10 @@ selects `overview` (`SKILL.md`). The accepted topics and exact bundle-relative p
 | `provider` | `references/provider.md` |
 | `animation` | `references/animation.md` |
 | `delivery` | `references/delivery.md` (new source builds) |
+| `audio` | `references/audio.md` (new source builds) |
 | `static-example` | `examples/local-static.json` |
 | `provider-example` | `examples/provider-icons.json` |
+| `audio-example` | `examples/local-audio.json` (new source builds) |
 
 Plain output is the selected file's exact UTF-8 content without a heading or
 wrapper. `--json` returns the standard envelope with these `data` fields:
@@ -154,6 +156,43 @@ and conflict rules. Installing the CLI alone does not register a Codex skill;
 `guide` provides the default workflow without skill installation.
 
 ## Plans and jobs
+
+### Source-build audio workflow
+
+New source builds expose `local_audio_import`, `audio_pack_validation`,
+`audio_godot_delivery` and `optional_audio_tool_discovery`. The published v0.3.2
+archive does not include these additions. Check the selected executable's build
+identity and capabilities; keep existing consumer locks until an upgrade is verified.
+
+```text
+forge audio tools list --json
+forge audio tools doctor --tool acestep --path /absolute/ACE-Step-1.5 --json
+forge audio tools doctor --tool stable-audio --path /absolute/stable-audio-3 --json
+forge audio inspect --path /absolute/source.wav --json
+forge audio import --request /absolute/local-audio.json --wait --json
+forge plan prepare-audio --request /absolute/local-audio.json --json
+forge plan execute --token TOKEN --wait --json
+```
+
+`audio import` prepares and consumes a single-use Plan; without `--wait` it
+returns a detached Job. `plan prepare-audio` provides the same operation with
+explicit plan review. This local WAV workflow makes zero Provider requests and
+uses the existing Pack validation, Godot installation and receipt commands.
+Read [audio preparation](../../.agents/skills/forge-use/references/audio.md) or
+`forge guide audio`; retrieve its request with `forge guide audio-example`.
+
+Tool discovery is optional, offline and limited to fixed filesystem metadata in
+an explicit checkout directory. No path reports `not_configured`; a valid directory
+can report `missing`, `partial_source_files` or `source_files_observed`. An invalid
+supplied path is an error. Observed files do not establish runtime readiness,
+weights, source identity or license eligibility. No tool installation, model
+download, authentication or inference occurs. The catalog links upstream code
+and model terms separately.
+
+Audio Packs retain source/output hashes and user-asserted origin metadata.
+Their `technical_pass` report and receipt verification do not approve audible
+quality or a seamless loop. Receipt verification reports `listeningReview` as
+`not_assessed`; retain actual listening decisions separately.
 
 ### Source-build delivery additions
 
@@ -438,3 +477,11 @@ Offline fixtures and local-image checks do not establish real-model art quality.
 export FORGE_JOB_STORE="/absolute/test/jobs"
 export FORGE_PLAN_STORE="/absolute/test/plans"
 ```
+
+### Shared v4 Pack dispatch
+
+Pack schema `4.0.0` supports both `layered` and `audio_set`. Validators dispatch by
+asset type and enforce the corresponding version and document contracts; the
+version alone does not identify audio. Unknown type/version combinations are
+rejected. Godot resource URIs use forward slashes on both macOS and Windows,
+including `audioPaths`.

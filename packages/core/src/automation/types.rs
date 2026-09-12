@@ -568,6 +568,7 @@ pub struct BuildProjectRequestV1 {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", content = "request", rename_all = "snake_case")]
 pub enum AutomationOperation {
+    PrepareAudio(crate::audio::PrepareAudioRequest),
     PrepareAsset(PrepareAssetRequest),
     PrepareStatic(PrepareStaticRequest),
     PrepareCharacterPack(PrepareCharacterPackRequest),

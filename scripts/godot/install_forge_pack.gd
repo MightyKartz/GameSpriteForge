@@ -2,6 +2,7 @@ extends SceneTree
 
 var _failed := false
 var _phase := "install"
+var _audio_results: Array = []
 
 func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
@@ -35,6 +36,10 @@ func _initialize() -> void:
 	if args.size() > 2 and args[2] == "--verify":
 		_phase = "verify"
 		_verify_native_resources(helper, pack_path, target_res, asset_type)
+		_complete(target_res, asset_type)
+		return
+	if asset_type == "audio_set":
+		_install_audio_set(helper, target_res)
 		_complete(target_res, asset_type)
 		return
 	if asset_type == "layered":
@@ -626,6 +631,141 @@ func _install_static_set(helper: Dictionary, target_res: String, asset_type: Str
 				return
 			root.free()
 
+func _audio_items(helper: Dictionary) -> Array:
+	if helper.get("schemaVersion") != "4.0.0" or helper.get("assetType") != "audio_set":
+		_fail("Audio helper must use schemaVersion 4.0.0 and assetType audio_set.")
+		return []
+	var items := _required_array(helper, "items", "audio helper")
+	if _failed:
+		return []
+	if items.is_empty():
+		_fail("Audio set must contain at least one item.")
+		return []
+	var ids := {}
+	for value in items:
+		if typeof(value) != TYPE_DICTIONARY:
+			_fail("Audio item must be an object.")
+			return []
+		var item: Dictionary = value
+		var item_id := String(item.get("id", ""))
+		if item_id.is_empty() or item_id == "." or item_id == ".." or not item_id.is_valid_filename() or ids.has(item_id):
+			_fail("Audio item id is not unique and engine-safe: %s" % item_id)
+			return []
+		ids[item_id] = true
+		if item.get("path") != "assets/audio/" + item_id + ".wav" or typeof(item.get("loop")) != TYPE_BOOL:
+			_fail("Audio item must declare its canonical WAV path and boolean loop: %s" % item_id)
+			return []
+		var audio := _required_dict(item, "audio", "audio item")
+		if _failed:
+			return []
+		for field in ["sampleRate", "channels", "frameCount", "bitsPerSample"]:
+			var number: Variant = audio.get(field)
+			if not (typeof(number) == TYPE_INT or typeof(number) == TYPE_FLOAT) or not is_finite(float(number)) or float(number) != float(int(number)) or int(number) <= 0:
+				_fail("Audio item has invalid integer metadata %s: %s" % [field, item_id])
+				return []
+		var duration: Variant = audio.get("durationSeconds")
+		if not (typeof(duration) == TYPE_INT or typeof(duration) == TYPE_FLOAT) or not is_finite(float(duration)) or float(duration) <= 0.0:
+			_fail("Audio item duration must be finite and positive: %s" % item_id)
+			return []
+		if int(audio["bitsPerSample"]) != 16 or not int(audio["channels"]) in [1, 2] or absf(float(duration) - float(audio["frameCount"]) / float(audio["sampleRate"])) > 0.5 / float(audio["sampleRate"]):
+			_fail("Audio item must describe PCM16 mono/stereo with matching duration: %s" % item_id)
+			return []
+	return items
+
+func _load_audio_source(path: String) -> AudioStreamWAV:
+	if not FileAccess.file_exists(path):
+		_fail("Audio WAV source is missing: %s" % path)
+		return null
+	# Runtime loading preserves the canonical PCM even when a project has WAV
+	# importer defaults that compress, normalize, trim or downsample other audio.
+	var stream := AudioStreamWAV.load_from_file(path, {
+		"compress/mode": 0, "force/8_bit": false, "force/mono": false,
+		"force/max_rate": false, "edit/trim": false, "edit/normalize": false,
+	})
+	if stream == null:
+		_fail("Godot could not decode audio WAV source: %s" % path)
+	return stream
+
+func _check_audio_stream(stream: AudioStreamWAV, item: Dictionary, check_loop: bool) -> void:
+	var audio: Dictionary = item["audio"]
+	var frames := int(audio["frameCount"])
+	var rate := int(audio["sampleRate"])
+	var channels := int(audio["channels"])
+	if stream == null or stream.format != AudioStreamWAV.FORMAT_16_BITS or stream.mix_rate != rate or stream.stereo != (channels == 2):
+		_fail("Native audio format differs from the Pack: %s" % item["id"])
+		return
+	if stream.data.size() != frames * channels * 2 or absf(stream.get_length() - float(audio["durationSeconds"])) > 0.5 / float(rate):
+		_fail("Native audio frame count or duration differs from the Pack: %s" % item["id"])
+		return
+	if check_loop:
+		var looping := bool(item["loop"])
+		var mode := AudioStreamWAV.LOOP_FORWARD if looping else AudioStreamWAV.LOOP_DISABLED
+		if stream.loop_mode != mode or stream.loop_begin != 0 or stream.loop_end != (frames if looping else 0):
+			_fail("Native audio loop differs from the Pack: %s" % item["id"])
+			return
+
+func _install_audio_set(helper: Dictionary, target_res: String) -> void:
+	var items := _audio_items(helper)
+	if _failed:
+		return
+	var streams_res := target_res.path_join("streams")
+	if DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(streams_res)) != OK:
+		_fail("Failed to create audio streams directory.")
+		return
+	for item in items:
+		var item_id := String(item["id"])
+		var stream := _load_audio_source(target_res.path_join("sources").path_join(item_id + ".wav"))
+		if _failed:
+			return
+		_check_audio_stream(stream, item, false)
+		if _failed:
+			return
+		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if item["loop"] else AudioStreamWAV.LOOP_DISABLED
+		stream.loop_begin = 0
+		stream.loop_end = int(item["audio"]["frameCount"]) if item["loop"] else 0
+		stream.resource_name = item_id
+		if ResourceSaver.save(stream, streams_res.path_join(item_id + ".res")) != OK:
+			_fail("Failed to save native audio stream: %s" % item_id)
+			return
+
+func _verify_audio_set(helper: Dictionary, pack_path: String, target_res: String) -> void:
+	var items := _audio_items(helper)
+	if _failed:
+		return
+	var expected_resources: Array[String] = []
+	for item in items:
+		expected_resources.append(String(item["id"]) + ".res")
+	var streams_res := target_res.path_join("streams")
+	var files := DirAccess.get_files_at(streams_res)
+	if files.size() != expected_resources.size() or not DirAccess.get_directories_at(streams_res).is_empty():
+		_fail("Installed audio has missing or extra native resources.")
+		return
+	for file_name in files:
+		if not file_name in expected_resources:
+			_fail("Installed audio has an unexpected native resource: %s" % file_name)
+			return
+	for item in items:
+		var item_id := String(item["id"])
+		var source_path := target_res.path_join("sources").path_join(item_id + ".wav")
+		var stream_path := streams_res.path_join(item_id + ".res")
+		var source := _load_audio_source(source_path)
+		if _failed:
+			return
+		var stream := ResourceLoader.load(stream_path, "AudioStreamWAV", ResourceLoader.CACHE_MODE_REPLACE) as AudioStreamWAV
+		_check_audio_stream(stream, item, true)
+		if _failed:
+			return
+		var expected_sha := String(item.get("sha256", ""))
+		if expected_sha.length() != 64 or FileAccess.get_sha256(source_path) != expected_sha or FileAccess.get_sha256(pack_path.path_join(String(item["path"]))) != expected_sha or stream.data != source.data:
+			_fail("Installed audio source or native PCM differs from the Pack: %s" % item_id)
+			return
+		_audio_results.append({
+			"id": item_id, "source": source_path, "resource": stream_path,
+			"sampleRate": stream.mix_rate, "channels": 2 if stream.stereo else 1,
+			"frameCount": item["audio"]["frameCount"], "durationSeconds": stream.get_length(),
+			"loop": bool(item["loop"]), "loopBegin": stream.loop_begin, "loopEnd": stream.loop_end,
+		})
+
 func _read_json(path: String) -> Dictionary:
 	if !FileAccess.file_exists(path):
 		_fail("Missing JSON: %s" % path)
@@ -703,6 +843,9 @@ func _fail(message: String) -> void:
 # Verification runs in a fresh Godot process so it reads saved resources instead
 # of accepting the objects that were just constructed by the installer.
 func _verify_native_resources(helper: Dictionary, pack_path: String, target_res: String, asset_type: String) -> void:
+	if asset_type == "audio_set":
+		_verify_audio_set(helper, pack_path, target_res)
+		return
 	if asset_type == "layered":
 		_verify_layered_resources(target_res)
 		return
@@ -915,6 +1058,7 @@ func _complete(target_res: String, asset_type: String) -> void:
 	print("FORGE_INSTALL_RESULT " + JSON.stringify({
 		"schemaVersion": "1", "status": "succeeded", "phase": _phase,
 		"target": target_res, "assetType": asset_type,
+		"audioStreams": _audio_results,
 	}))
 	print("PASS Forge Godot %s: %s" % [_phase, target_res])
 	quit(0)

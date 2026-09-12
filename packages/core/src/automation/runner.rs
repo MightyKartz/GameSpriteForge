@@ -136,6 +136,9 @@ pub fn stage_plan_job(
         }
     }
     let (source_kind, operation_kind) = match &plan.operation {
+        AutomationOperation::PrepareAudio(_) => {
+            (SourceKind::ImportAudio, JobOperationKind::PrepareAudio)
+        }
         AutomationOperation::PrepareStatic(_) => {
             (SourceKind::ImportFrames, JobOperationKind::PrepareStatic)
         }
@@ -180,6 +183,7 @@ pub fn stage_plan_job(
     };
     let mut record = store.create_job(source_kind)?;
     let (asset_id, reuse_from_job_dir) = match &plan.operation {
+        AutomationOperation::PrepareAudio(request) => (Some(request.id.clone()), None),
         AutomationOperation::PrepareStatic(request) => (Some(request.id.clone()), None),
         AutomationOperation::GenerateCharacterPack(request) => (
             request.asset_id.clone(),
@@ -252,6 +256,9 @@ pub fn run_operation_with_provider(
     })?;
 
     let result = match operation {
+        AutomationOperation::PrepareAudio(request) => {
+            super::audio_assets::run_prepare_audio(store, job_id, request)
+        }
         AutomationOperation::PrepareStatic(request) => {
             super::static_assets::run_prepare_static(store, job_id, request)
         }
@@ -5129,6 +5136,7 @@ fn run_install_godot(
         }
 
         let (scene_path, frames_path) = match pack_summary.asset_type.as_str() {
+            "audio_set" => (target.join("streams"), target.join("sources")),
             "layered" => (target.join("layered.tscn"), target.join("manifest.json")),
             "icon_set" => (target.join("items"), target.join("items")),
             "prop_set" => (target.join("scenes"), target.join("items")),
@@ -5170,6 +5178,10 @@ fn run_install_godot(
                 AutomationRunError::Processing("Godot target has no asset key".into())
             })?;
         let (scene_relative, frames_relative) = match pack_summary.asset_type.as_str() {
+            "audio_set" => (
+                request.target.join("streams"),
+                request.target.join("sources"),
+            ),
             "layered" => (
                 request.target.join("layered.tscn"),
                 request.target.join("manifest.json"),
@@ -5241,6 +5253,7 @@ fn run_install_godot(
             "loopSelection": loop_selection,
             "providerRetryMethods": provider_retry_methods,
             "nodeType": match pack_summary.asset_type.as_str() {
+                "audio_set" => "AudioStreamWAV",
                 "layered" => "Node2D",
                 "icon_set" => "Texture2D",
                 "prop_set" => "Sprite2D",
@@ -5314,6 +5327,40 @@ fn run_install_godot(
                 })
                 .collect::<serde_json::Map<String, serde_json::Value>>()
                 .into();
+        }
+        if pack_summary.asset_type == "audio_set" {
+            let manifest: serde_json::Value =
+                serde_json::from_slice(&fs::read(request.pack_path.join("assets/manifest.json"))?)?;
+            usage["audioItems"] = manifest["items"].clone();
+            usage["listeningReview"] = "not_assessed".into();
+            usage["audioPaths"] = manifest["items"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .map(|item| {
+                    let id = item["id"].as_str().expect("validated audio item id");
+                    (
+                        id.to_string(),
+                        serde_json::json!(crate::delivery::godot_resource_path(
+                            &request.target.join("streams").join(format!("{id}.res"))
+                        )),
+                    )
+                })
+                .collect::<serde_json::Map<String, serde_json::Value>>()
+                .into();
+            // Retain legacy registry directory fields, but expose audio-specific
+            // paths in the usage contract consumed by the game.
+            for field in [
+                "scenePath",
+                "spriteFramesPath",
+                "defaultAnimation",
+                "animations",
+                "directionalPlayback",
+                "loopSelection",
+                "items",
+            ] {
+                usage.as_object_mut().expect("usage object").remove(field);
+            }
         }
         fs::write(&usage_path, serde_json::to_vec_pretty(&usage)?)?;
 
@@ -5461,6 +5508,19 @@ fn copy_godot_pack_sources(
     target: &Path,
     asset_type: &str,
 ) -> Result<(), AutomationRunError> {
+    if asset_type == "audio_set" {
+        let manifest = forge_pack::audio::read_audio_manifest(pack)
+            .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
+        let sources = target.join("sources");
+        fs::create_dir_all(&sources)?;
+        for item in manifest.items {
+            fs::copy(
+                pack.join(&item.path),
+                sources.join(format!("{}.wav", item.id)),
+            )?;
+        }
+        return Ok(());
+    }
     let helper: serde_json::Value =
         serde_json::from_slice(&fs::read(pack.join("assets/godot_import.json"))?)?;
     if asset_type == "layered" {
@@ -6099,6 +6159,12 @@ fn input_display_name(input: &AssetInput) -> Option<String> {
 
 fn steps_for_operation(operation: &AutomationOperation) -> Vec<JobStepRecord> {
     let names = match operation {
+        AutomationOperation::PrepareAudio(_) => vec![
+            "ingest".into(),
+            "process_audio".into(),
+            "quality".into(),
+            "export".into(),
+        ],
         AutomationOperation::PrepareStatic(_) => vec![
             "ingest".into(),
             "normalize".into(),
