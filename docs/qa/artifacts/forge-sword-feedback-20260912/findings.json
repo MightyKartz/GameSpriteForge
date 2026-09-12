@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "1",
+  "scope": "read-only consumer audit and isolated synthetic reproductions; no Sword mutations",
+  "forgeSourceCommit": "4a870811c43ca4aa087e8f2a4113fca699b7b838",
+  "testedForgeBinarySha256": "54cb8ea8c931e17843ff42da20c61deed12308d714d286713c5777abe157f27e",
+  "swordSourceCommit": "a8b93f4a753a84dbbd68365eac5258a9927617dd",
+  "consumer": {
+    "version": "0.3.0",
+    "producerCommit": "60904c02a52f6831626ebbc4475f9c25db162931",
+    "staticLockBinaryHashMatches": true,
+    "animationLockBinaryHashMatches": true,
+    "installedPacks": 17,
+    "staticPacks": 4,
+    "animationPacks": 13,
+    "importScriptsReviewed": 6,
+    "importScriptLines": 968
+  },
+  "reproductions": {
+    "rollbackOnUnsupportedGodot": {
+      "first_success": true,
+      "second_plan_exit": 0,
+      "second_plan_ok": true,
+      "second_execution_exit": 1,
+      "second_execution": {
+        "schemaVersion": "1",
+        "ok": false,
+        "error": {
+          "code": "automation_failed",
+          "message": "asset processing failed: Forge v0.2 requires Godot 4.6.x; found 4.5.0.fixture"
+        }
+      },
+      "before_count": 6,
+      "after_count": 1,
+      "unchanged": false,
+      "missing": [
+        ".forge-owned.json",
+        "forge_animated_sprite.tscn",
+        "forge_sprite_frames.tres",
+        "forge_usage.json",
+        "sprite_sheet.png.import"
+      ],
+      "added": [],
+      "changed": []
+    },
+    "nonLoopQuality": {
+      "requestLoop": false,
+      "preserveSource": true,
+      "requireGameReady": true,
+      "lifecycleState": "awaiting_review",
+      "quality": {
+        "verdict": "needs_cleanup",
+        "metrics": {
+          "bboxBottomDriftPx": 0.0,
+          "bboxCenterXDriftPx": 0.0,
+          "bboxCenterYDriftPx": 8.0,
+          "bboxWidthVariationPx": 16.0,
+          "alphaCoverageAvg": 0.15625,
+          "loopMatchScore": 0.0,
+          "frameCount": 2,
+          "frameSizeConsistent": true,
+          "cellBoundarySafe": true
+        },
+        "recommendations": [
+          "trim_loop_range"
+        ],
+        "notes": []
+      },
+      "expected": "No trim_loop_range recommendation for a non-looping action"
+    }
+  },
+  "skillMissingExamples": [
+    "extract_locked_video_source",
+    "select_locked_video_cycle",
+    "select_locked_idle_cycle",
+    "replay_locked_gait_diagnostic",
+    "replay_locked_idle_diagnostic",
+    "create_pending_animation_review"
+  ],
+  "sourceInspectionOnly": [
+    "Godot installer completion/error protocol",
+    "default target ignores explicit asset key",
+    "character versus effect quality applicability"
+  ],
+  "providerRequestsExecuted": 0,
+  "formalGameInstalls": 0,
+  "localEvidence": {
+    "rollback": "target/qa/rollback-n7m27xod",
+    "nonLoopSummaryOnly": "this file; full synthetic Job stored in system temporary directory"
+  }
+}
