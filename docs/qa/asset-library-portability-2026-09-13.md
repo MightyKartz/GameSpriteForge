@@ -71,7 +71,25 @@ remain outside the public checkout.
 
 A subsequent focused fix makes concurrent review assertions conflict explicitly
 and rejects empty purposes/duplicate parent references. Its seven-test suite passes;
-final clean build/package identity and remote results will be recorded separately.
+the complete installed macOS package sequence above was repeated successfully on
+the clean default release at `13c5518265213fca6433b7ae58eafb998205dd3e`.
+Final local binary SHA-256:
+`ab53d4e8fb19057d17ab8731b530a158017d0226f6b077663cd21bb9e36c75ad`.
+Final local archive SHA-256:
+`b6d2bfad8da43a7f31e965de2edf6f7f62e564dcbcfc902856805e48401bd06d`.
+Detailed final log: `/tmp/forge-library-package-final.log`.
+
+All seven draft PRs are open in order:
+[#34](https://github.com/MightyKartz/GameSpriteForge/pull/34),
+[#35](https://github.com/MightyKartz/GameSpriteForge/pull/35),
+[#36](https://github.com/MightyKartz/GameSpriteForge/pull/36),
+[#37](https://github.com/MightyKartz/GameSpriteForge/pull/37),
+[#38](https://github.com/MightyKartz/GameSpriteForge/pull/38),
+[#39](https://github.com/MightyKartz/GameSpriteForge/pull/39),
+[#40](https://github.com/MightyKartz/GameSpriteForge/pull/40).
+PRs #34–#39 passed their remote matrices. PR #40's latest check runs and artifact
+links are the source for remaining remote acceptance; it remains a draft until
+those results and the manual browser gate are resolved.
 
 ## Verification boundaries
 
