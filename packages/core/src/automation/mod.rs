@@ -1,6 +1,7 @@
 mod plan;
 mod repair;
 mod runner;
+mod source_lock;
 mod source_transform;
 mod static_assets;
 mod types;
@@ -11,6 +12,7 @@ pub use repair::{
     write_repair_comparison, RepairAnalysis, RepairComparison, RepairError, MAX_REPAIR_ATTEMPTS,
 };
 pub use runner::{run_operation, run_operation_with_provider, stage_plan_job, AutomationRunError};
+pub use source_lock::{local_source_files, validate_source_locks};
 pub use types::{
     automation_profile, character_workflow_catalog, AssetInput, AssetMetadata, AutomationOperation,
     AutomationPlan, AutomationProfile, BuildProjectRequestV1, CharacterAnimationRecipe,
@@ -21,5 +23,5 @@ pub use types::{
     GenerateCharacterPackRequest, GenerateStaticAssetSetRequest, GenerateTerrainSetRequest,
     GeneratedCharacterSpec, GenerationPolicy, GodotInstallRequest, MattingRecipe, PlanEstimateV1,
     PrepareAssetRequest, PrepareCharacterPackRequest, PrepareStaticItem, PrepareStaticRequest,
-    PreparedPlan, QualityPolicy, SpriteSheetSplit,
+    PreparedPlan, QualityPolicy, SourceLock, SpriteSheetSplit,
 };

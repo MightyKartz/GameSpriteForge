@@ -15,7 +15,8 @@ with `embedded_usage_guide`; installed links work with older pinned executables.
 ## Preserve intentional drawing coordinates
 
 Use `plan prepare-asset` for one action. This v1 request assumes three already
-aligned 64×64 PNG frames, saved relative to an asset-spec file:
+aligned 64×64 PNG frames, saved relative to an asset-spec file. New builds resolve
+paths relative to that file; use absolute paths with older pinned animation CLIs:
 
 ```json
 {
@@ -87,3 +88,31 @@ native `SpriteFrames` and
 `frameDurationsMs` in Pack/Godot resources and review actual playback in-engine.
 Keep original source hashes, request, source-transform evidence and receipt;
 record structural results separately from visual approval.
+
+## Effects and preview timing
+
+With `effect_quality_profile`, local animation requests can select
+`"quality":{"profile":"effect","requireGameReady":true}`. The default
+`character` profile retains its foot/center stability checks. The effect profile
+allows natural smoke, fire and magic deformation while checking actual missing
+frames and canvas consistency. It records alpha bounds, brightness and
+premultiplied RGB/alpha differences between adjacent and first/last frames, both
+after matting and after normalization. These measurements do not approve motion.
+
+For intentional disappearance at the end of a non-looping effect, explicitly add
+`"allowTransparentTail":true`. An all-empty animation or missing interior frame
+still fails, as does a tail lost during normalization. Looping effects and
+character requests cannot use that exception. Single-action non-looping requests
+do not receive a loop-trimming recommendation just because their endpoints differ.
+
+With `preview_timing_diagnostics`, each exported GIF has a `.timing.json` sidecar
+beside it. It records encoded GIF duration, nominal FPS and actual native timing.
+For example, 8 fps requests 125 ms but GIF's centisecond resolution stores 130 ms;
+eight frames preview as 1040 ms instead of 1000 ms. Nonuniform native durations
+also remain authoritative. Keep the sidecar when sharing the preview.
+
+For retained source-transform reports and immutable delivery receipts, read
+[delivery evidence](delivery.md) (`"$FORGE_BIN" guide delivery`). A source checkout
+also contains `examples/godot/forge-external-clock`, a generic SpriteFrames sampler
+that handles pause, loop completion and per-frame timing. Gameplay clock policy
+remains the consuming game's responsibility.

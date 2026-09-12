@@ -3,8 +3,10 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 FORGE_BIN="${ROOT_DIR}/target/debug/forge"
-TEST_ROOT="$(mktemp -d /tmp/forge-world-product.XXXXXX)"
-trap 'rm -rf "${TEST_ROOT}"' EXIT
+mkdir -p "${ROOT_DIR}/target/qa"
+TEST_ROOT="$(mktemp -d "${ROOT_DIR}/target/qa/forge-world-product.XXXXXX")"
+trap 'world_exit=$?; if [ "$world_exit" -eq 0 ]; then rm -rf "${TEST_ROOT}"; else printf "FAIL world contract; fixture retained at %s\n" "${TEST_ROOT}" >&2; fi' EXIT
+trap 'world_exit=$?; printf "FAIL world contract at line %s (exit %s)\n" "$LINENO" "$world_exit" >&2; exit "$world_exit"' ERR
 
 GODOT="${FORGE_GODOT_PATH:-/Applications/Godot.app/Contents/MacOS/Godot}"
 if [ ! -x "${GODOT}" ]; then
@@ -66,7 +68,17 @@ install_pack() {
 	local plan token
 	plan="$("${FORGE_BIN}" godot plan-install --pack "${pack}" --project "${TEST_ROOT}/godot" --target "${target}" --json)"
 	token="$(printf '%s' "${plan}" | /usr/bin/python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["token"])')"
-	"${FORGE_BIN}" plan execute --token "${token}" --wait --json >/dev/null
+	local result="${TEST_ROOT}/install-$(basename "${target}").json"
+	if ! "${FORGE_BIN}" plan execute --token "${token}" --wait --json >"${result}"; then
+		cat "${result}" >&2
+		for log in "${FORGE_JOB_STORE}"/*/logs/godot*.stderr.log; do
+			if [ -f "${log}" ] && [ -s "${log}" ]; then
+				printf 'Godot diagnostic: %s\n' "${log}" >&2
+				cat "${log}" >&2
+			fi
+		done
+		return 1
+	fi
 }
 
 install_pack "${TERRAIN_PACK}" "addons/forge_assets/terrain"
@@ -78,7 +90,28 @@ install_pack "${MAP_PACK}" "addons/forge_assets/world"
 	--path "${TEST_ROOT}/godot" \
 	--script "${ROOT_DIR}/scripts/godot/verify_forge_world.gd" \
 	-- \
-	"res://addons/forge_assets"
+	"res://addons/forge_assets" >"${TEST_ROOT}/world-verification.log" 2>&1
+cat "${TEST_ROOT}/world-verification.log"
+grep -F 'PASS Forge world resources load headlessly:' "${TEST_ROOT}/world-verification.log" >/dev/null
+if grep -Eq '^(ERROR:|SCRIPT ERROR:|FAIL )' "${TEST_ROOT}/world-verification.log"; then
+	echo "Godot reported an error during world verification" >&2
+	exit 1
+fi
+
+# The verifier must reject a saved TileSet that lost its terrain metadata,
+# even when all native resource files still exist and load successfully.
+TERRAIN_RESOURCE="${TEST_ROOT}/godot/addons/forge_assets/terrain/forge_terrain_set.tres"
+cp "${TERRAIN_RESOURCE}" "${TEST_ROOT}/terrain-before-negative.tres"
+sed 's/"forge_mask"/"broken_mask"/g' "${TEST_ROOT}/terrain-before-negative.tres" >"${TERRAIN_RESOURCE}"
+negative_exit=0
+"${GODOT}" --headless --path "${TEST_ROOT}/godot" \
+	--script "${ROOT_DIR}/scripts/godot/verify_forge_world.gd" -- \
+	"res://addons/forge_assets" >"${TEST_ROOT}/world-verification-negative.log" 2>&1 || negative_exit=$?
+cp "${TEST_ROOT}/terrain-before-negative.tres" "${TERRAIN_RESOURCE}"
+test "${negative_exit}" -ne 0
+grep -F 'FAIL Forge world verification: Terrain custom-data layers are missing or invalid.' "${TEST_ROOT}/world-verification-negative.log" >/dev/null
+! grep -F 'PASS Forge world' "${TEST_ROOT}/world-verification-negative.log" >/dev/null
+printf 'PASS world verifier rejects missing terrain custom data without reporting success\n'
 
 if find "${TEST_ROOT}/godot/addons/forge_assets" -type f \( -name '*.tres' -o -name '*.tscn' \) -size +1048575c | grep -q .; then
 	echo "World resource exceeds 1 MiB" >&2

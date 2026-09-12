@@ -28,6 +28,7 @@ GUIDE_RESOURCES = (
     ("static", "references/local-static.md", "text/markdown"),
     ("provider", "references/provider.md", "text/markdown"),
     ("animation", "references/animation.md", "text/markdown"),
+    ("delivery", "references/delivery.md", "text/markdown"),
     ("static-example", "examples/local-static.json", "application/json"),
     ("provider-example", "examples/provider-icons.json", "application/json"),
 )

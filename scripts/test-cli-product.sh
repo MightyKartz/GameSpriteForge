@@ -185,7 +185,7 @@ TOKEN="$(printf '%s' "${PLAN_JSON}" | jq -r '.data.token')"
 "${FORGE}" plan execute --token "${TOKEN}" --wait --json \
   | jq -e '.ok and .data.lifecycle_state == "succeeded"' >/dev/null
 
-RESOURCE="${TEST_ROOT}/godot/addons/forge_assets/fixture-ranger/forge_sprite_frames.tres"
+RESOURCE="${TEST_ROOT}/godot/addons/forge_assets/fixture_ranger/forge_sprite_frames.tres"
 test -f "${RESOURCE}"
 test "$(stat -f '%z' "${RESOURCE}")" -lt 1048576
 ! grep -q 'PackedByteArray\|sub_resource type="Image"' "${RESOURCE}"
@@ -195,7 +195,7 @@ if [ "${FORGE_VERIFY_GODOT:-0}" = "1" ]; then
   cp "${ROOT}/examples/godot/forge-import-smoke/verify_installed_frames.gd" "${TEST_ROOT}/godot/"
   godot --headless --path "${TEST_ROOT}/godot" --editor --import --quit
   godot --headless --path "${TEST_ROOT}/godot" --quit-after 120 --script res://verify_installed_frames.gd -- \
-    res://addons/forge_assets/fixture-ranger/forge_sprite_frames.tres "${PACK}/assets/manifest.json" \
+    res://addons/forge_assets/fixture_ranger/forge_sprite_frames.tres "${PACK}/assets/manifest.json" \
     > "${TEST_ROOT}/godot-verification.log" 2>&1
   cat "${TEST_ROOT}/godot-verification.log"
   grep -F 'PASS installed Godot SpriteFrames:' "${TEST_ROOT}/godot-verification.log" >/dev/null

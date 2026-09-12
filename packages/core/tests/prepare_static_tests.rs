@@ -21,6 +21,7 @@ fn request(root: &Path) -> PrepareStaticRequest {
     }
     image.save(&path).unwrap();
     PrepareStaticRequest {
+        source_locks: vec![],
         schema_version: "1".into(),
         kind: StaticAssetKind::PropSet,
         id: "jade-props".into(),

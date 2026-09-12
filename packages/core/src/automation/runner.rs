@@ -18,7 +18,7 @@ use crate::asset_project::{
     StaticAssetKind, StaticPackItem, CONSISTENCY_PROFILE, KEYFRAME_HARD_GATE_PROFILE,
 };
 use crate::catalog::{
-    link_catalog_install, register_catalog_asset, CatalogProviderRefV1, CatalogStyleRefV1,
+    link_catalog_install_unlocked, register_catalog_asset, CatalogProviderRefV1, CatalogStyleRefV1,
     CatalogSubjectRefV1, ProjectCatalogEntryV1,
 };
 use crate::export::{
@@ -42,9 +42,9 @@ use crate::provider::{
     VideoGenerationMode,
 };
 use crate::quality::{
-    compute_quality_report, compute_quality_report_for_animation, select_loop_frames,
-    LoopSelectionPolicy, LoopSelectionReport, LoopSelectionVerdict, QualityMetrics,
-    QualityRecommendationId, QualityReport, QualityVerdict, LOOP_SELECTION_PROFILE,
+    compute_quality_report_with_pixels, select_loop_frames, LoopSelectionPolicy,
+    LoopSelectionReport, LoopSelectionVerdict, QualityMetrics, QualityRecommendationId,
+    QualityReport, QualityVerdict, LOOP_SELECTION_PROFILE,
 };
 use crate::subject::{build_subject_lock, read_subject_lock};
 use crate::video::{
@@ -74,6 +74,13 @@ use super::{character_quality_snapshot, single_quality_snapshot, write_repair_co
 
 const GODOT_INSTALL_SCRIPT: &str = include_str!("../../../../scripts/godot/install_forge_pack.gd");
 const OWNERSHIP_MARKER: &str = ".forge-owned.json";
+
+#[path = "godot_install.rs"]
+mod godot_install;
+use godot_install::{
+    lock_install_catalog, lock_install_project, run_godot_process, validate_godot_output,
+    GodotInstallTransaction,
+};
 
 #[derive(Debug, Error)]
 pub enum AutomationRunError {
@@ -2156,6 +2163,7 @@ fn run_generate_keyframe_character_pack(
     }
 
     let mut prepare = PrepareCharacterPackRequest {
+        source_locks: vec![],
         rendering: None,
         schema_version: "2".into(),
         metadata: request.metadata.clone(),
@@ -3727,6 +3735,7 @@ fn generated_pack_request(
     workflow: &[(&str, f32, &str, &str)],
 ) -> PrepareCharacterPackRequest {
     PrepareCharacterPackRequest {
+        source_locks: vec![],
         rendering: None,
         schema_version: "2".into(),
         metadata: request.metadata.clone(),
@@ -4405,11 +4414,15 @@ fn run_prepare_character_pack(
             None,
         )?;
         let end = offset + processed.len();
-        let mut quality_report = compute_quality_report_for_animation(
+        let mut quality_report = compute_quality_report_with_pixels(
             &bboxes[offset..end],
             &sizes[offset..end],
+            &processed,
+            &normalized_paths[offset..end],
             animation.loop_animation,
-        );
+            request.quality.profile,
+            request.quality.allow_transparent_tail,
+        )?;
         if let Some(loop_selection) = &group.loop_selection {
             apply_loop_selection_quality(&mut quality_report, loop_selection);
         }
@@ -4772,6 +4785,7 @@ fn aggregate_character_quality(runs: &[CharacterAnimationRun]) -> QualityReport 
         );
     }
     QualityReport {
+        pixel_diagnostics: None,
         verdict,
         metrics,
         recommendations,
@@ -4855,7 +4869,15 @@ fn run_prepare_asset(
     step(store, job_id, "normalize", "succeeded", 0.6, None)?;
 
     step(store, job_id, "quality", "running", 0.65, None)?;
-    let quality_report = compute_quality_report(&bboxes, &sizes);
+    let quality_report = compute_quality_report_with_pixels(
+        &bboxes,
+        &sizes,
+        &processed_frames,
+        &normalized_paths,
+        request.metadata.loop_animation,
+        request.quality.profile,
+        request.quality.allow_transparent_tail,
+    )?;
     fs::write(
         record.job_dir.join("quality-report.json"),
         serde_json::to_vec_pretty(&quality_report)?,
@@ -5004,342 +5026,387 @@ fn run_install_godot(
     let backup = record.job_dir.join("backups/godot-target");
     step(store, job_id, "validate", "succeeded", 0.18, None)?;
 
-    if target.exists() {
-        if !target.join(OWNERSHIP_MARKER).is_file() {
-            return Err(AutomationRunError::Processing(format!(
-                "refusing to replace non-Forge-owned directory: {}",
-                target.display()
-            )));
-        }
-        if backup.exists() {
-            fs::remove_dir_all(&backup)?;
-        }
-        copy_directory(&target, &backup)?;
-        fs::remove_dir_all(&target)?;
-    }
-    fs::create_dir_all(&target)?;
-    copy_godot_pack_sources(&request.pack_path, &target, &pack_summary.asset_type)?;
-    step(store, job_id, "backup", "succeeded", 0.3, None)?;
-
+    // Resolve dependencies and prepare the tool before touching an installed target.
     let script = record.job_dir.join("tools/install_forge_pack.gd");
     fs::write(&script, GODOT_INSTALL_SCRIPT)?;
     let godot = locate_godot()
         .ok_or_else(|| AutomationRunError::Processing("Godot 4 executable was not found".into()))?;
-    require_godot_46(&godot)?;
-    let import_output = Command::new(&godot)
-        .arg("--headless")
-        .arg("--import")
-        .arg("--path")
-        .arg(&request.project_path)
-        .output()?;
-    fs::write(
-        record.job_dir.join("logs/godot.import.stdout.log"),
-        &import_output.stdout,
+    let version = run_godot_process(
+        Command::new(&godot).arg("--version"),
+        &record.job_dir,
+        "godot.version",
+        store,
+        job_id,
     )?;
-    fs::write(
-        record.job_dir.join("logs/godot.import.stderr.log"),
-        &import_output.stderr,
-    )?;
-    if !import_output.status.success() {
-        let _ = fs::remove_dir_all(&target);
-        if backup.exists() {
-            copy_directory(&backup, &target)?;
-        }
-        return Err(AutomationRunError::Processing(format!(
-            "Godot asset import failed with status {}",
-            import_output.status
-        )));
-    }
-    let output = Command::new(&godot)
-        .arg("--headless")
-        .arg("--path")
-        .arg(&request.project_path)
-        .arg("--script")
-        .arg(&script)
-        .arg("--")
-        .arg(&request.pack_path)
-        .arg(&request.target)
-        .output()?;
-    fs::write(record.job_dir.join("logs/godot.stdout.log"), &output.stdout)?;
-    fs::write(record.job_dir.join("logs/godot.stderr.log"), &output.stderr)?;
-
-    if !output.status.success() {
-        let _ = fs::remove_dir_all(&target);
-        if backup.exists() {
-            copy_directory(&backup, &target)?;
-        }
-        return Err(AutomationRunError::Processing(format!(
-            "Godot import failed with status {}",
-            output.status
-        )));
-    }
-
-    let (scene_path, frames_path) = match pack_summary.asset_type.as_str() {
-        "icon_set" => (target.join("items"), target.join("items")),
-        "prop_set" => (target.join("scenes"), target.join("items")),
-        "terrain_set" => (
-            target.join("forge_terrain_preview.tscn"),
-            target.join("forge_terrain_set.tres"),
-        ),
-        "building_kit" => (
-            target.join("scenes"),
-            target.join("forge_building_kit.tres"),
-        ),
-        "map" => (
-            target.join("forge_world.tscn"),
-            target.join("forge_terrain_set.tres"),
-        ),
-        _ => (
-            target.join("forge_animated_sprite.tscn"),
-            target.join("forge_sprite_frames.tres"),
-        ),
-    };
-    if !scene_path.exists() || !frames_path.exists() {
-        let _ = fs::remove_dir_all(&target);
-        if backup.exists() {
-            copy_directory(&backup, &target)?;
-        }
-        return Err(AutomationRunError::Processing(
-            "Godot exited successfully but required scene resources are missing".into(),
-        ));
-    }
-    verify_external_godot_resources(&target)?;
-
-    let asset_key = request
-        .asset_key
-        .clone()
-        .or_else(|| {
-            request
-                .target
-                .file_name()
-                .and_then(|value| value.to_str())
-                .map(str::to_string)
-        })
-        .ok_or_else(|| AutomationRunError::Processing("Godot target has no asset key".into()))?;
-    let (scene_relative, frames_relative) = match pack_summary.asset_type.as_str() {
-        "icon_set" => (request.target.join("items"), request.target.join("items")),
-        "prop_set" => (request.target.join("scenes"), request.target.join("items")),
-        "terrain_set" => (
-            request.target.join("forge_terrain_preview.tscn"),
-            request.target.join("forge_terrain_set.tres"),
-        ),
-        "building_kit" => (
-            request.target.join("scenes"),
-            request.target.join("forge_building_kit.tres"),
-        ),
-        "map" => (
-            request.target.join("forge_world.tscn"),
-            request.target.join("forge_terrain_set.tres"),
-        ),
-        _ => (
-            request.target.join("forge_animated_sprite.tscn"),
-            request.target.join("forge_sprite_frames.tres"),
-        ),
-    };
-    let usage_relative = request.target.join("forge_usage.json");
-    let usage_path = request.project_path.join(&usage_relative);
-    let loop_selection = fs::read(request.pack_path.join("quality/loops.json"))
-        .ok()
-        .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok());
-    let pack_provenance = fs::read(request.pack_path.join("forgepack.json"))
-        .ok()
-        .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok());
-    let provider_retry_methods = pack_provenance
+    require_godot_46(&version)?;
+    let _project_lock = lock_install_project(&request.project_path, store, job_id)?;
+    let _catalog_lock = request
+        .catalog_project_path
         .as_ref()
-        .and_then(|value| value.pointer("/source/metadata/providerRetryMethods"))
-        .cloned()
-        .unwrap_or_else(|| serde_json::json!({}));
-    let has_topdown_directions =
-        ["idle", "walk_up", "walk_right", "walk_down"]
-            .iter()
-            .all(|required| {
-                pack_summary
-                    .animations
-                    .iter()
-                    .any(|animation| animation.name == *required)
-            });
-    let mut usage = serde_json::json!({
-        "schemaVersion": "1",
-        "assetKey": &asset_key,
-        "assetId": &pack_summary.id,
-        "packSha256": &pack_sha256,
-        "kind": &pack_summary.asset_type,
-        "scenePath": format!("res://{}", scene_relative.display()),
-        "spriteFramesPath": format!("res://{}", frames_relative.display()),
-        "defaultAnimation": &pack_summary.default_animation,
-        "animations": &pack_summary.animations,
-        "items": &pack_summary.items,
-        "directionalPlayback": if has_topdown_directions {
-            Some(serde_json::json!({
-                "up": { "animation": "walk_up", "flipH": false },
-                "right": { "animation": "walk_right", "flipH": false },
-                "down": { "animation": "walk_down", "flipH": false },
-                "left": { "animation": "walk_right", "flipH": true },
-                "idle": { "animation": "idle", "flipH": false }
-            }))
-        } else {
-            None
-        },
-        "providerProvenance": &provider_refs,
-        "loopSelection": loop_selection,
-        "providerRetryMethods": provider_retry_methods,
-        "nodeType": match pack_summary.asset_type.as_str() {
-            "icon_set" => "Texture2D",
-            "prop_set" => "Sprite2D",
-            "terrain_set" => "TileSet",
-            "building_kit" => "Node2D",
-            "map" => "TileMapLayer",
-            _ => "AnimatedSprite2D",
-        },
-        "worldGeneration": pack_provenance.as_ref().and_then(|value| {
-            matches!(pack_summary.asset_type.as_str(), "terrain_set" | "building_kit" | "map")
-                .then(|| value.pointer("/source/metadata").cloned())
-                .flatten()
-        }),
-        "gameplayControllerIncluded": false,
-    });
-    if matches!(pack_summary.asset_type.as_str(), "animation" | "character") {
-        let helper: serde_json::Value = serde_json::from_slice(&fs::read(
-            request.pack_path.join("assets/godot_import.json"),
-        )?)?;
-        let spec = &helper["spriteFrames"];
-        for key in ["rendering", "anchor", "frameWidth", "frameHeight"] {
-            if let Some(value) = spec.get(key) {
-                usage[key] = value.clone();
-            }
+        .map(|project| lock_install_catalog(project, store, job_id))
+        .transpose()?;
+    // A waiting worker must not reuse a plan reviewed before another installation finished.
+    super::plan::validate_install_destination(request)?;
+    if let Some(expected) = record.input_hash.as_deref() {
+        let current = super::plan::fingerprint_operation_inputs(
+            &AutomationOperation::InstallGodot(request.clone()),
+        )?;
+        if current != expected {
+            return Err(PlanStoreError::InputChanged.into());
         }
-        if let (Some(installed), Some(animations)) = (
-            usage["animations"].as_array_mut(),
-            spec["animations"].as_array(),
-        ) {
-            for installed_animation in installed {
-                if let Some(animation) = animations
-                    .iter()
-                    .find(|animation| animation["name"] == installed_animation["name"])
-                {
-                    if let Some(durations) = animation.get("frameDurationsMs") {
-                        installed_animation["frameDurationsMs"] = durations.clone();
+    }
+    let mut transaction = GodotInstallTransaction::begin(
+        &target,
+        &backup,
+        &request.project_path,
+        request.catalog_project_path.as_deref(),
+    )?;
+    let result = (|| {
+        check_cancelled(store, job_id)?;
+        if target.exists() {
+            fs::remove_dir_all(&target)?;
+        }
+        fs::create_dir_all(&target)?;
+        copy_godot_pack_sources(&request.pack_path, &target, &pack_summary.asset_type)?;
+        transaction.capture_incoming_cache()?;
+        step(store, job_id, "backup", "succeeded", 0.3, None)?;
+
+        let import_output = run_godot_process(
+            Command::new(&godot)
+                .arg("--headless")
+                .arg("--import")
+                .arg("--path")
+                .arg(&request.project_path),
+            &record.job_dir,
+            "godot.import",
+            store,
+            job_id,
+        )?;
+        validate_godot_output(
+            &import_output,
+            None,
+            &request.target,
+            &pack_summary.asset_type,
+        )?;
+        let mut native_results = Vec::new();
+        for phase in ["install", "verify"] {
+            let mut command = Command::new(&godot);
+            command
+                .arg("--headless")
+                .arg("--path")
+                .arg(&request.project_path)
+                .arg("--script")
+                .arg(&script)
+                .arg("--")
+                .arg(&request.pack_path)
+                .arg(&request.target);
+            if phase == "verify" {
+                command.arg("--verify");
+            }
+            let output = run_godot_process(
+                &mut command,
+                &record.job_dir,
+                if phase == "install" {
+                    "godot"
+                } else {
+                    "godot.verify"
+                },
+                store,
+                job_id,
+            )?;
+            validate_godot_output(
+                &output,
+                Some(phase),
+                &request.target,
+                &pack_summary.asset_type,
+            )?;
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let result = stdout
+                .lines()
+                .find_map(|line| line.strip_prefix("FORGE_INSTALL_RESULT "))
+                .expect("validated Godot completion result");
+            native_results.push(serde_json::from_str::<serde_json::Value>(result)?);
+        }
+
+        let (scene_path, frames_path) = match pack_summary.asset_type.as_str() {
+            "icon_set" => (target.join("items"), target.join("items")),
+            "prop_set" => (target.join("scenes"), target.join("items")),
+            "terrain_set" => (
+                target.join("forge_terrain_preview.tscn"),
+                target.join("forge_terrain_set.tres"),
+            ),
+            "building_kit" => (
+                target.join("scenes"),
+                target.join("forge_building_kit.tres"),
+            ),
+            "map" => (
+                target.join("forge_world.tscn"),
+                target.join("forge_terrain_set.tres"),
+            ),
+            _ => (
+                target.join("forge_animated_sprite.tscn"),
+                target.join("forge_sprite_frames.tres"),
+            ),
+        };
+        if !scene_path.exists() || !frames_path.exists() {
+            return Err(AutomationRunError::Processing(
+                "Godot exited successfully but required scene resources are missing".into(),
+            ));
+        }
+        verify_external_godot_resources(&target)?;
+
+        let asset_key = request
+            .asset_key
+            .clone()
+            .or_else(|| {
+                request
+                    .target
+                    .file_name()
+                    .and_then(|value| value.to_str())
+                    .map(str::to_string)
+            })
+            .ok_or_else(|| {
+                AutomationRunError::Processing("Godot target has no asset key".into())
+            })?;
+        let (scene_relative, frames_relative) = match pack_summary.asset_type.as_str() {
+            "icon_set" => (request.target.join("items"), request.target.join("items")),
+            "prop_set" => (request.target.join("scenes"), request.target.join("items")),
+            "terrain_set" => (
+                request.target.join("forge_terrain_preview.tscn"),
+                request.target.join("forge_terrain_set.tres"),
+            ),
+            "building_kit" => (
+                request.target.join("scenes"),
+                request.target.join("forge_building_kit.tres"),
+            ),
+            "map" => (
+                request.target.join("forge_world.tscn"),
+                request.target.join("forge_terrain_set.tres"),
+            ),
+            _ => (
+                request.target.join("forge_animated_sprite.tscn"),
+                request.target.join("forge_sprite_frames.tres"),
+            ),
+        };
+        let usage_relative = request.target.join("forge_usage.json");
+        let usage_path = request.project_path.join(&usage_relative);
+        let loop_selection = fs::read(request.pack_path.join("quality/loops.json"))
+            .ok()
+            .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok());
+        let pack_provenance = fs::read(request.pack_path.join("forgepack.json"))
+            .ok()
+            .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok());
+        let provider_retry_methods = pack_provenance
+            .as_ref()
+            .and_then(|value| value.pointer("/source/metadata/providerRetryMethods"))
+            .cloned()
+            .unwrap_or_else(|| serde_json::json!({}));
+        let has_topdown_directions =
+            ["idle", "walk_up", "walk_right", "walk_down"]
+                .iter()
+                .all(|required| {
+                    pack_summary
+                        .animations
+                        .iter()
+                        .any(|animation| animation.name == *required)
+                });
+        let mut usage = serde_json::json!({
+            "schemaVersion": "1",
+            "assetKey": &asset_key,
+            "assetId": &pack_summary.id,
+            "packSha256": &pack_sha256,
+            "kind": &pack_summary.asset_type,
+            "scenePath": format!("res://{}", scene_relative.display()),
+            "spriteFramesPath": format!("res://{}", frames_relative.display()),
+            "defaultAnimation": &pack_summary.default_animation,
+            "animations": &pack_summary.animations,
+            "items": &pack_summary.items,
+            "directionalPlayback": if has_topdown_directions {
+                Some(serde_json::json!({
+                    "up": { "animation": "walk_up", "flipH": false },
+                    "right": { "animation": "walk_right", "flipH": false },
+                    "down": { "animation": "walk_down", "flipH": false },
+                    "left": { "animation": "walk_right", "flipH": true },
+                    "idle": { "animation": "idle", "flipH": false }
+                }))
+            } else {
+                None
+            },
+            "providerProvenance": &provider_refs,
+            "loopSelection": loop_selection,
+            "providerRetryMethods": provider_retry_methods,
+            "nodeType": match pack_summary.asset_type.as_str() {
+                "icon_set" => "Texture2D",
+                "prop_set" => "Sprite2D",
+                "terrain_set" => "TileSet",
+                "building_kit" => "Node2D",
+                "map" => "TileMapLayer",
+                _ => "AnimatedSprite2D",
+            },
+            "worldGeneration": pack_provenance.as_ref().and_then(|value| {
+                matches!(pack_summary.asset_type.as_str(), "terrain_set" | "building_kit" | "map")
+                    .then(|| value.pointer("/source/metadata").cloned())
+                    .flatten()
+            }),
+            "gameplayControllerIncluded": false,
+        });
+        if matches!(pack_summary.asset_type.as_str(), "animation" | "character") {
+            let helper: serde_json::Value = serde_json::from_slice(&fs::read(
+                request.pack_path.join("assets/godot_import.json"),
+            )?)?;
+            let spec = &helper["spriteFrames"];
+            for key in ["rendering", "anchor", "frameWidth", "frameHeight"] {
+                if let Some(value) = spec.get(key) {
+                    usage[key] = value.clone();
+                }
+            }
+            if let (Some(installed), Some(animations)) = (
+                usage["animations"].as_array_mut(),
+                spec["animations"].as_array(),
+            ) {
+                for installed_animation in installed {
+                    if let Some(animation) = animations
+                        .iter()
+                        .find(|animation| animation["name"] == installed_animation["name"])
+                    {
+                        if let Some(durations) = animation.get("frameDurationsMs") {
+                            installed_animation["frameDurationsMs"] = durations.clone();
+                        }
                     }
                 }
             }
         }
-    }
-    if matches!(pack_summary.asset_type.as_str(), "icon_set" | "prop_set") {
-        let helper: serde_json::Value = serde_json::from_slice(&fs::read(
-            request.pack_path.join("assets/godot_import.json"),
-        )?)?;
-        if let Some(rendering) = helper.get("rendering") {
-            usage["rendering"] = rendering.clone();
-            usage["anchor"] = helper["anchor"].clone();
-            usage["frameWidth"] = helper["frameWidth"].clone();
-            usage["frameHeight"] = helper["frameHeight"].clone();
-        }
-        usage["texturePaths"] = pack_summary
-            .items
-            .iter()
-            .map(|item| {
-                (
-                    item.id.clone(),
-                    serde_json::json!(format!(
-                        "res://{}",
-                        request
-                            .target
-                            .join("items")
-                            .join(format!("{}.png", item.id))
-                            .display()
-                    )),
-                )
-            })
-            .collect::<serde_json::Map<String, serde_json::Value>>()
-            .into();
-    }
-    fs::write(&usage_path, serde_json::to_vec_pretty(&usage)?)?;
-
-    let marker = serde_json::json!({
-        "schemaVersion": "1",
-        "owner": "Game Sprite Forge",
-        "jobId": job_id,
-        "packPath": request.pack_path,
-        "assetKey": &asset_key,
-        "projectManifest": PROJECT_MANIFEST_RELATIVE,
-    });
-    fs::write(
-        target.join(OWNERSHIP_MARKER),
-        serde_json::to_vec_pretty(&marker)?,
-    )?;
-    let manifest_path = match register_project_asset(RegisterProjectAsset {
-        project_path: &request.project_path,
-        asset_key: &asset_key,
-        pack_path: &request.pack_path,
-        pack_sha256: &pack_sha256,
-        godot_target: &request.target,
-        scene_path: &scene_relative,
-        sprite_frames_path: &frames_relative,
-        usage_path: &usage_relative,
-        pack: &pack_summary,
-        provider_refs: &provider_refs,
-        job_id,
-    }) {
-        Ok(path) => path,
-        Err(error) => {
-            let _ = fs::remove_dir_all(&target);
-            if backup.exists() {
-                copy_directory(&backup, &target)?;
+        if matches!(pack_summary.asset_type.as_str(), "icon_set" | "prop_set") {
+            let helper: serde_json::Value = serde_json::from_slice(&fs::read(
+                request.pack_path.join("assets/godot_import.json"),
+            )?)?;
+            if let Some(rendering) = helper.get("rendering") {
+                usage["rendering"] = rendering.clone();
+                usage["anchor"] = helper["anchor"].clone();
+                usage["frameWidth"] = helper["frameWidth"].clone();
+                usage["frameHeight"] = helper["frameHeight"].clone();
             }
-            return Err(AutomationRunError::Processing(error.to_string()));
+            usage["texturePaths"] = pack_summary
+                .items
+                .iter()
+                .map(|item| {
+                    (
+                        item.id.clone(),
+                        serde_json::json!(format!(
+                            "res://{}",
+                            request
+                                .target
+                                .join("items")
+                                .join(format!("{}.png", item.id))
+                                .display()
+                        )),
+                    )
+                })
+                .collect::<serde_json::Map<String, serde_json::Value>>()
+                .into();
         }
-    };
-    let catalog_link = if let Some(catalog_project) = &request.catalog_project_path {
-        Some(
-            link_catalog_install(
-                catalog_project,
-                &pack_summary.id,
-                request.project_path.clone(),
-                request.target.clone(),
-            )
-            .map_err(|error| AutomationRunError::Processing(error.to_string()))?,
-        )
-    } else {
-        None
-    };
-    let mut artifacts = vec![
-        JobArtifactRecord {
-            kind: "godot_scene".into(),
-            path: scene_path,
-            sha256: None,
-        },
-        JobArtifactRecord {
-            kind: "godot_usage".into(),
-            path: usage_path,
-            sha256: None,
-        },
-        JobArtifactRecord {
-            kind: "project_manifest".into(),
-            path: manifest_path,
-            sha256: None,
-        },
-    ];
-    if let Some(path) = catalog_link {
-        artifacts.push(JobArtifactRecord {
-            kind: "project_catalog".into(),
-            path,
-            sha256: None,
+        fs::write(&usage_path, serde_json::to_vec_pretty(&usage)?)?;
+
+        let marker = serde_json::json!({
+            "schemaVersion": "1",
+            "owner": "Game Sprite Forge",
+            "jobId": job_id,
+            "packPath": request.pack_path,
+            "assetKey": &asset_key,
+            "projectManifest": PROJECT_MANIFEST_RELATIVE,
         });
-    }
-    store
-        .update_record(job_id, |record| {
-            record.state = JobState::Exported;
-            record.lifecycle_state = JobLifecycleState::Succeeded;
-            record.progress = 1.0;
-            record.worker_pid = None;
-            record
-                .steps
-                .iter_mut()
-                .for_each(|step| step.state = "succeeded".into());
-            record.artifacts.extend(artifacts);
-            record.next_actions = vec!["inspect_project".into(), "job_report".into()];
+        fs::write(
+            target.join(OWNERSHIP_MARKER),
+            serde_json::to_vec_pretty(&marker)?,
+        )?;
+        let verification_path = record.job_dir.join("reports/godot-install.json");
+        fs::create_dir_all(
+            verification_path
+                .parent()
+                .expect("verification report has a parent"),
+        )?;
+        fs::write(
+            &verification_path,
+            serde_json::to_vec_pretty(&serde_json::json!({
+                "schemaVersion": "1", "assetKey": &asset_key, "packSha256": &pack_sha256,
+                "nativeLoadVerified": true, "visualApproval": false, "phases": native_results,
+            }))?,
+        )?;
+        crate::delivery::write_install_snapshot(&request.project_path, &target)?;
+        check_cancelled(store, job_id)?;
+        let manifest_path = register_project_asset(RegisterProjectAsset {
+            project_path: &request.project_path,
+            asset_key: &asset_key,
+            pack_path: &request.pack_path,
+            pack_sha256: &pack_sha256,
+            godot_target: &request.target,
+            scene_path: &scene_relative,
+            sprite_frames_path: &frames_relative,
+            usage_path: &usage_relative,
+            pack: &pack_summary,
+            provider_refs: &provider_refs,
+            job_id,
         })
-        .map_err(Into::into)
+        .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
+        let catalog_link = if let Some(catalog_project) = &request.catalog_project_path {
+            Some(
+                link_catalog_install_unlocked(
+                    catalog_project,
+                    &pack_summary.id,
+                    request.project_path.clone(),
+                    request.target.clone(),
+                )
+                .map_err(|error| AutomationRunError::Processing(error.to_string()))?,
+            )
+        } else {
+            None
+        };
+        let mut artifacts = vec![
+            JobArtifactRecord {
+                kind: "godot_install_verification".into(),
+                sha256: Some(crate::delivery::hash_file(&verification_path)?),
+                path: verification_path,
+            },
+            JobArtifactRecord {
+                kind: "godot_scene".into(),
+                path: scene_path,
+                sha256: None,
+            },
+            JobArtifactRecord {
+                kind: "godot_usage".into(),
+                path: usage_path,
+                sha256: None,
+            },
+            JobArtifactRecord {
+                kind: "project_manifest".into(),
+                path: manifest_path,
+                sha256: None,
+            },
+        ];
+        if let Some(path) = catalog_link {
+            artifacts.push(JobArtifactRecord {
+                kind: "project_catalog".into(),
+                path,
+                sha256: None,
+            });
+        }
+        check_cancelled(store, job_id)?;
+        store
+            .update_record(job_id, |record| {
+                record.state = JobState::Exported;
+                record.lifecycle_state = JobLifecycleState::Succeeded;
+                record.progress = 1.0;
+                record.worker_pid = None;
+                record
+                    .steps
+                    .iter_mut()
+                    .for_each(|step| step.state = "succeeded".into());
+                record.artifacts.extend(artifacts);
+                record.next_actions = vec!["inspect_project".into(), "job_report".into()];
+            })
+            .map_err(Into::into)
+    })();
+    transaction.finish(result)
 }
 
 fn effective_provider_refs(
@@ -6129,8 +6196,7 @@ fn locate_godot() -> Option<PathBuf> {
         .or_else(|| ["godot4", "godot"].into_iter().find_map(which))
 }
 
-fn require_godot_46(godot: &Path) -> Result<(), AutomationRunError> {
-    let output = Command::new(godot).arg("--version").output()?;
+fn require_godot_46(output: &std::process::Output) -> Result<(), AutomationRunError> {
     if !output.status.success() {
         return Err(AutomationRunError::Processing(
             "Godot version check failed".into(),
@@ -6139,7 +6205,7 @@ fn require_godot_46(godot: &Path) -> Result<(), AutomationRunError> {
     let version = String::from_utf8_lossy(&output.stdout);
     if !version.trim().starts_with("4.6.") {
         return Err(AutomationRunError::Processing(format!(
-            "Forge v0.2 requires Godot 4.6.x; found {}",
+            "Forge requires Godot 4.6.x; found {}",
             version.trim()
         )));
     }

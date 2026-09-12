@@ -333,6 +333,16 @@ pub fn link_catalog_install(
     target: PathBuf,
 ) -> Result<PathBuf, CatalogError> {
     let _lock = lock_catalog(project_root)?;
+    link_catalog_install_unlocked(project_root, asset_id, godot_project, target)
+}
+
+/// The caller must hold the catalog lock until the surrounding transaction commits.
+pub(crate) fn link_catalog_install_unlocked(
+    project_root: &Path,
+    asset_id: &str,
+    godot_project: PathBuf,
+    target: PathBuf,
+) -> Result<PathBuf, CatalogError> {
     let mut catalog = read_project_catalog(project_root)?;
     let entry = catalog
         .assets
@@ -356,6 +366,12 @@ fn catalog_schema_version(bytes: &[u8]) -> Result<String, CatalogError> {
 }
 
 fn lock_catalog(project_root: &Path) -> Result<File, CatalogError> {
+    let file = open_catalog_lock(project_root)?;
+    file.lock().map_err(CatalogError::Lock)?;
+    Ok(file)
+}
+
+pub(crate) fn open_catalog_lock(project_root: &Path) -> Result<File, CatalogError> {
     let path = project_root.join(PROJECT_CATALOG_LOCK_RELATIVE);
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
@@ -367,7 +383,6 @@ fn lock_catalog(project_root: &Path) -> Result<File, CatalogError> {
         .truncate(false)
         .open(&path)
         .map_err(CatalogError::Lock)?;
-    file.lock().map_err(CatalogError::Lock)?;
     Ok(file)
 }
 

@@ -89,6 +89,17 @@ world_contract_gate() {
   bash "${ROOT}/scripts/test-world-assets.sh"
 }
 
+sword_feedback_gate() {
+  cargo build --locked -q -p forge-cli --no-default-features --manifest-path "${ROOT}/Cargo.toml" &&
+  cargo test --manifest-path "${ROOT}/Cargo.toml" -p core \
+    --test godot_install_transaction_tests -- --ignored --nocapture &&
+  python3 "${ROOT}/scripts/test-sword-feedback-cli.py" \
+    --forge "${ROOT}/target/debug/forge" --godot "${FORGE_GODOT_PATH:-$(command -v godot)}" \
+    --output "${REPORT_DIR}/sword-feedback" &&
+  python3 "${ROOT}/scripts/test-godot-external-clock.py" \
+    --godot "${FORGE_GODOT_PATH:-$(command -v godot)}"
+}
+
 STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 run_gate "rust-quality" "release_blocking" rust_quality_gate
 run_gate "character-v2-contract" "release_blocking" character_contract_gate
@@ -97,6 +108,7 @@ run_gate "static-cli-contract" "release_blocking" static_contract_gate
 run_gate "static-five-style-matrix" "release_blocking" static_matrix_gate
 run_gate "local-static-delivery" "release_blocking" local_static_gate
 run_gate "local-animation-delivery" "release_blocking" local_animation_gate
+run_gate "sword-delivery-feedback" "release_blocking" sword_feedback_gate
 run_gate "world-assets-experimental" "experimental" world_contract_gate
 FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 

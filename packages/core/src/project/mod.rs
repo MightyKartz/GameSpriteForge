@@ -79,6 +79,8 @@ pub struct ProjectAssetEntry {
     pub revision: u32,
     #[serde(default)]
     pub pack_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub install_snapshot_sha256: Option<String>,
     pub pack: ProjectPathRef,
     pub godot_target: PathBuf,
     pub scene_path: PathBuf,
@@ -227,6 +229,29 @@ pub fn register_project_asset(
     } else {
         Utc::now()
     };
+    let snapshot_path = params
+        .project_path
+        .join(params.godot_target)
+        .join(crate::delivery::INSTALL_SNAPSHOT);
+    let install_snapshot_sha256 = match fs::symlink_metadata(&snapshot_path) {
+        Ok(metadata) => {
+            if !metadata.is_file() || metadata.file_type().is_symlink() {
+                return Err(io_error(
+                    &snapshot_path,
+                    std::io::Error::new(
+                        std::io::ErrorKind::InvalidInput,
+                        "installation snapshot must be a regular file",
+                    ),
+                ));
+            }
+            Some(
+                crate::delivery::hash_file(&snapshot_path)
+                    .map_err(|source| io_error(&snapshot_path, source))?,
+            )
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+        Err(error) => return Err(io_error(&snapshot_path, error)),
+    };
     manifest.assets.insert(
         params.asset_key.to_string(),
         ProjectAssetEntry {
@@ -235,6 +260,7 @@ pub fn register_project_asset(
             kind,
             revision,
             pack_sha256: params.pack_sha256.to_string(),
+            install_snapshot_sha256,
             pack: pack_ref,
             godot_target: params.godot_target.to_path_buf(),
             scene_path: params.scene_path.to_path_buf(),

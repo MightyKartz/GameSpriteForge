@@ -1,0 +1,8 @@
+; Standalone headless example; copy into an isolated directory for verification.
+config_version=5
+
+[application]
+config/name="Forge SpriteFrames External Clock"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"

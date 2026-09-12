@@ -67,6 +67,7 @@ use forge_providers::{
 use serde::Serialize;
 
 mod build_info;
+mod receipt;
 mod skill;
 
 const JSON_SCHEMA_VERSION: &str = "1";
@@ -85,6 +86,16 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Inspect actual PNG dimensions, alpha and optional sprite grid boundaries.
+    Source {
+        #[command(subcommand)]
+        command: SourceCommand,
+    },
+    /// Export and verify durable delivery evidence independently of the Job store.
+    Receipt {
+        #[command(subcommand)]
+        command: receipt::ReceiptCommand,
+    },
     Doctor(JsonFlag),
     /// Read the embedded usage guide or a topic without installing a skill.
     Guide(skill::GuideArgs),
@@ -188,6 +199,22 @@ enum Command {
 struct JsonFlag {
     #[arg(long)]
     json: bool,
+}
+
+#[derive(Subcommand)]
+enum SourceCommand {
+    Inspect {
+        #[arg(long)]
+        path: PathBuf,
+        #[arg(long, requires = "frame_height")]
+        frame_width: Option<u32>,
+        #[arg(long, requires = "frame_width")]
+        frame_height: Option<u32>,
+        #[arg(long)]
+        preview_dir: Option<PathBuf>,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
 }
 
 #[derive(Subcommand)]
@@ -556,6 +583,17 @@ enum MapCommand {
 
 #[derive(Subcommand)]
 enum GodotCommand {
+    /// Audit installed bytes against their baseline and original Pack without running Godot.
+    VerifyInstall {
+        #[arg(long)]
+        project: PathBuf,
+        #[arg(long)]
+        asset_key: String,
+        #[arg(long)]
+        pack: Option<PathBuf>,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
     PlanInstall {
         #[arg(long)]
         pack: PathBuf,
@@ -743,6 +781,24 @@ fn run() -> Result<(), (String, String)> {
     match cli.command {
         Command::Guide(args) => skill::run_guide(args),
         Command::Skill { command } => skill::run(command),
+        Command::Receipt { command } => success(&receipt::run(command)?),
+        Command::Source { command } => match command {
+            SourceCommand::Inspect {
+                path,
+                frame_width,
+                frame_height,
+                preview_dir,
+                ..
+            } => {
+                let report = forge_core::source_inspect::inspect_png(
+                    &path,
+                    frame_width.zip(frame_height),
+                    preview_dir.as_deref(),
+                )
+                .map_err(|message| ("invalid_source".into(), message))?;
+                success(&report)
+            }
+        },
         Command::Doctor(_) => {
             let profile = automation_profile();
             let job_store = job_store()?;
@@ -1325,6 +1381,15 @@ fn run() -> Result<(), (String, String)> {
             }
         },
         Command::Godot { command } => match command {
+            GodotCommand::VerifyInstall {
+                project,
+                asset_key,
+                pack,
+                ..
+            } => success(
+                &forge_core::delivery::verify_install(&project, &asset_key, pack.as_deref())
+                    .map_err(io_error)?,
+            ),
             GodotCommand::PlanInstall {
                 pack,
                 project,
@@ -1333,13 +1398,10 @@ fn run() -> Result<(), (String, String)> {
                 asset_key,
                 ..
             } => {
-                let target = target.unwrap_or_else(|| {
-                    let name = pack
-                        .file_stem()
-                        .and_then(|value| value.to_str())
-                        .unwrap_or("asset");
-                    PathBuf::from("addons/forge_assets").join(sanitize_cli_id(name))
-                });
+                let target = match target {
+                    Some(target) => target,
+                    None => default_godot_target(&pack, asset_key.as_deref())?,
+                };
                 let request = GodotInstallRequest {
                     schema_version: "1".into(),
                     pack_path: pack,
@@ -1462,20 +1524,15 @@ fn run() -> Result<(), (String, String)> {
         Command::Plan { command } => match command {
             PlanCommand::PrepareStatic(input) => {
                 let mut request: PrepareStaticRequest = read_request(&input)?;
-                let cwd = env::current_dir().map_err(io_error)?;
-                let root = input
-                    .request
-                    .as_ref()
-                    .and_then(|path| path.parent())
-                    .unwrap_or(&cwd);
-                let root = if root.is_absolute() {
-                    root.to_path_buf()
-                } else {
-                    cwd.join(root)
-                };
+                let root = request_root(&input)?;
                 for item in &mut request.items {
                     if item.path.is_relative() {
                         item.path = root.join(&item.path);
+                    }
+                }
+                for lock in &mut request.source_locks {
+                    if lock.path.is_relative() {
+                        lock.path = root.join(&lock.path);
                     }
                 }
                 let plan = plan_store()?
@@ -1484,14 +1541,22 @@ fn run() -> Result<(), (String, String)> {
                 success(&plan)
             }
             PlanCommand::PrepareAsset(input) => {
-                let request: PrepareAssetRequest = read_request(&input)?;
+                let mut request: PrepareAssetRequest = read_request(&input)?;
+                let root = request_root(&input)?;
+                resolve_local_input(&mut request.input, &root);
+                resolve_source_locks(&mut request.source_locks, &root);
                 let plan = plan_store()?
                     .prepare(AutomationOperation::PrepareAsset(request))
                     .map_err(display_error)?;
                 success(&plan)
             }
             PlanCommand::PrepareCharacter(input) => {
-                let request: PrepareCharacterPackRequest = read_request(&input)?;
+                let mut request: PrepareCharacterPackRequest = read_request(&input)?;
+                let root = request_root(&input)?;
+                for animation in &mut request.animations {
+                    resolve_local_input(&mut animation.input, &root);
+                }
+                resolve_source_locks(&mut request.source_locks, &root);
                 let plan = plan_store()?
                     .prepare(AutomationOperation::PrepareCharacterPack(request))
                     .map_err(display_error)?;
@@ -1857,7 +1922,9 @@ fn run_claimed_plan(
     job_id: &str,
     plan: &AutomationPlan,
 ) -> Result<JobRecord, (String, String)> {
-    if let Err(error) = verify_plan_inputs(plan) {
+    if let Err(error) =
+        verify_plan_inputs(plan).and_then(|_| receipt::capture_execution(store, job_id, plan))
+    {
         let _ = store.update_record(job_id, |record| {
             record.state = forge_core::job::JobState::Failed;
             record.lifecycle_state = forge_core::job::JobLifecycleState::Failed;
@@ -2121,7 +2188,7 @@ fn prepare_and_execute(
     let store = job_store()?;
     let record = stage_plan_job(&store, &claimed).map_err(display_error)?;
     if wait {
-        let completed = run_plan_operation(&store, &record.job_id, &claimed.operation)?;
+        let completed = run_claimed_plan(&store, &record.job_id, &claimed)?;
         success(&completed)
     } else {
         spawn_worker(&record)?;
@@ -2846,10 +2913,19 @@ fn review_job(id: &str, accept: bool, reason: &str) -> Result<(), (String, Strin
     success(&updated)
 }
 
-fn sanitize_cli_id(value: &str) -> String {
-    forge_core::asset_project::safe_id(value)
-        .trim_end_matches(".gsfpack")
-        .to_string()
+fn default_godot_target(pack: &Path, asset_key: Option<&str>) -> Result<PathBuf, (String, String)> {
+    let id = match asset_key {
+        Some(key) => key.to_string(),
+        None => forge_pack::inspect_pack(pack).map_err(display_error)?.id,
+    };
+    if id.is_empty()
+        || !id
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+    {
+        return Err(("invalid_request".into(), "default Godot target requires a stable ASCII asset key; pass --asset-key using letters, numbers, '-' or '_'".into()));
+    }
+    Ok(PathBuf::from("addons/forge_assets").join(id))
 }
 
 fn read_request<T: serde::de::DeserializeOwned>(
@@ -2869,6 +2945,43 @@ fn read_request<T: serde::de::DeserializeOwned>(
         bytes
     };
     serde_json::from_slice(&bytes).map_err(json_error)
+}
+
+fn request_root(input: &RequestInput) -> Result<PathBuf, (String, String)> {
+    let cwd = env::current_dir().map_err(io_error)?;
+    let root = input
+        .request
+        .as_ref()
+        .and_then(|path| path.parent())
+        .unwrap_or(&cwd);
+    Ok(if root.is_absolute() {
+        root.to_path_buf()
+    } else {
+        cwd.join(root)
+    })
+}
+
+fn resolve_local_input(input: &mut forge_core::automation::AssetInput, root: &Path) {
+    use forge_core::automation::AssetInput;
+    let resolve = |path: &mut PathBuf| {
+        if path.is_relative() {
+            *path = root.join(&*path);
+        }
+    };
+    match input {
+        AssetInput::PngSequence { paths } => paths.iter_mut().for_each(resolve),
+        AssetInput::SpriteSheet { path, .. }
+        | AssetInput::Gsfpack { path }
+        | AssetInput::VideoClip { path, .. } => resolve(path),
+    }
+}
+
+fn resolve_source_locks(locks: &mut [forge_core::automation::SourceLock], root: &Path) {
+    for lock in locks {
+        if lock.path.is_relative() {
+            lock.path = root.join(&lock.path);
+        }
+    }
 }
 
 fn spawn_worker(record: &JobRecord) -> Result<(), (String, String)> {

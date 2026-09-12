@@ -1015,6 +1015,7 @@ pub(crate) fn export_static_pack_with_source(
         manifest["sheet"]["images"] = serde_json::json!(sheet_images);
     }
     let quality = QualityReport {
+        pixel_diagnostics: None,
         verdict: QualityVerdict::GameReady,
         metrics: QualityMetrics {
             bbox_bottom_drift_px: 0.0,

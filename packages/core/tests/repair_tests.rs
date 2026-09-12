@@ -418,6 +418,7 @@ fn quality_report(
     recommendations: Vec<QualityRecommendationId>,
 ) -> QualityReport {
     QualityReport {
+        pixel_diagnostics: None,
         verdict,
         metrics: QualityMetrics {
             bbox_bottom_drift_px: if verdict == QualityVerdict::GameReady {

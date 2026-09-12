@@ -4,7 +4,11 @@
   "title": "Game Sprite Forge Quality Report",
   "type": "object",
   "additionalProperties": false,
-  "required": ["verdict", "metrics", "recommendations"],
+  "required": [
+    "verdict",
+    "metrics",
+    "recommendations"
+  ],
   "properties": {
     "verdict": {
       "type": "string",
@@ -86,6 +90,238 @@
           "use_shorter_clip",
           "increase_canvas_margin"
         ]
+      }
+    },
+    "pixelDiagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "profile",
+        "visualApproval",
+        "loopCheckApplicable",
+        "transparentTailAllowed",
+        "transparentTailStart",
+        "processedSource",
+        "normalized"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1"
+        },
+        "profile": {
+          "enum": [
+            "character",
+            "effect"
+          ]
+        },
+        "visualApproval": {
+          "const": "not_assessed"
+        },
+        "loopCheckApplicable": {
+          "type": "boolean"
+        },
+        "transparentTailAllowed": {
+          "type": "boolean"
+        },
+        "transparentTailStart": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "processedSource": {
+          "$ref": "#/$defs/pixelSequence"
+        },
+        "normalized": {
+          "$ref": "#/$defs/pixelSequence"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "pixelFrame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "width",
+        "height",
+        "alphaBounds",
+        "alphaMean",
+        "fullyTransparent",
+        "premultipliedBrightnessMean",
+        "nonzeroRgbUnderZeroAlphaPixels",
+        "alphaTouchesEdge"
+      ],
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "alphaBounds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "left",
+            "top",
+            "right",
+            "bottom",
+            "width",
+            "height",
+            "centerX",
+            "centerY",
+            "bottomY",
+            "alphaCoverage"
+          ],
+          "properties": {
+            "left": {
+              "type": "number",
+              "minimum": 0
+            },
+            "top": {
+              "type": "number",
+              "minimum": 0
+            },
+            "right": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bottom": {
+              "type": "number",
+              "minimum": 0
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "centerX": {
+              "type": "number",
+              "minimum": 0
+            },
+            "centerY": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bottomY": {
+              "type": "number",
+              "minimum": 0
+            },
+            "alphaCoverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        "alphaMean": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "fullyTransparent": {
+          "type": "boolean"
+        },
+        "premultipliedBrightnessMean": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "nonzeroRgbUnderZeroAlphaPixels": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "alphaTouchesEdge": {
+          "type": "boolean"
+        }
+      }
+    },
+    "pixelDifference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fromFrame",
+        "toFrame",
+        "alphaMeanAbsoluteDifference",
+        "premultipliedRgbMeanAbsoluteDifference",
+        "brightnessMeanAbsoluteDifference"
+      ],
+      "properties": {
+        "fromFrame": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "toFrame": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "alphaMeanAbsoluteDifference": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "premultipliedRgbMeanAbsoluteDifference": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "brightnessMeanAbsoluteDifference": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "pixelSequence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frames",
+        "adjacentDifferences",
+        "firstLastDifference"
+      ],
+      "properties": {
+        "frames": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/pixelFrame"
+          }
+        },
+        "adjacentDifferences": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/pixelDifference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "firstLastDifference": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/pixelDifference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
       }
     }
   }

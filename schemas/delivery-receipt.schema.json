@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://game-sprite-forge.local/schemas/delivery-receipt.schema.json",
+  "title": "Forge portable delivery receipt v1",
+  "description": "Integrity assertions and cross-document hashes are checked by forge receipt verify; an external expected SHA binds the complete receipt.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "exportedAt",
+    "exporter",
+    "prepare",
+    "pack",
+    "install",
+    "review"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1"
+    },
+    "exportedAt": {
+      "type": "string"
+    },
+    "exporter": {
+      "type": "object"
+    },
+    "prepare": {
+      "$ref": "#/$defs/jobEvidence"
+    },
+    "pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "files"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/file"
+          }
+        }
+      }
+    },
+    "install": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "job",
+            "project",
+            "assetKey",
+            "target",
+            "snapshot",
+            "registryEntry"
+          ],
+          "properties": {
+            "job": {
+              "$ref": "#/$defs/jobEvidence"
+            },
+            "project": {
+              "type": "string"
+            },
+            "assetKey": {
+              "type": "string"
+            },
+            "target": {
+              "type": "string"
+            },
+            "snapshot": {
+              "$ref": "#/$defs/document"
+            },
+            "registryEntry": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    "review": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "schemaVersion",
+            "packSha256",
+            "status",
+            "reviewer"
+          ],
+          "properties": {
+            "schemaVersion": {
+              "const": "1"
+            },
+            "packSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "status": {
+              "enum": [
+                "pending",
+                "accepted",
+                "rejected"
+              ]
+            },
+            "reviewer": {
+              "type": "string",
+              "minLength": 1
+            },
+            "notes": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "bytes",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "document": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "path",
+        "sha256",
+        "recordedProducerSha256",
+        "text"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "text": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "recordedProducerSha256": {
+          "description": "Null when no producer digest was recorded; sha256 then covers export-time report text only.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          ]
+        }
+      }
+    },
+    "jobEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "job",
+        "plan",
+        "execution",
+        "reports"
+      ],
+      "properties": {
+        "job": {
+          "type": "object"
+        },
+        "plan": {
+          "type": "object"
+        },
+        "execution": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "reports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/document"
+          }
+        }
+      }
+    }
+  }
+}

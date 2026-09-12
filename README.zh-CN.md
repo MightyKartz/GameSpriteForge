@@ -89,6 +89,7 @@ forge guide
 
 - [CLI 指南](docs/automation/forge-cli.md)：命令、素材生成与处理、Godot 交付。
 - [本地美术工作流](docs/automation/codex-local-assets.md)：将 Codex 或其他工具创作的美术处理并交付到 Godot。
+- [交付证据](.agents/skills/forge-use/references/delivery.md)：源码新版的已审核来源哈希、可独立保存的回执和安装审计；使用前核对所选二进制的 capabilities。
 - [示例规格](examples/cli)：以现有示例开始制作自己的素材。
 - [发布说明](docs/releases/v0.3.2.md)：平台支持和版本范围。
 - [展示素材](docs/media/showcase/README.md)：美术来源与 Godot 预览。

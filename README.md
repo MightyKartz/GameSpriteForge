@@ -89,6 +89,7 @@ Local icon and prop processing, Pack validation and Godot delivery are the stabl
 
 - [CLI guide](docs/automation/forge-cli.md) — commands, generation, processing, and Godot delivery.
 - [Local artwork workflow](docs/automation/codex-local-assets.md) — take artwork from Codex or other tools through processing and Godot delivery.
+- [Delivery evidence](.agents/skills/forge-use/references/delivery.md) — source-build additions for reviewed hashes, portable receipts and installed-resource audits; check the selected binary's capabilities.
 - [Example specifications](examples/cli) — starting points for your own assets.
 - [Release notes](docs/releases/v0.3.2.md) — platform support and release scope.
 - [Showcase assets](docs/media/showcase/README.md) — artwork sources and Godot previews.

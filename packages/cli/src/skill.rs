@@ -67,6 +67,14 @@ const SOURCE_FILES: &[SourceFile] = &[
     },
     SourceFile {
         resource: GuideResource {
+            topic: "delivery",
+            path: "references/delivery.md",
+            media_type: "text/markdown",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/references/delivery.md"),
+    },
+    SourceFile {
+        resource: GuideResource {
             topic: "static-example",
             path: "examples/local-static.json",
             media_type: "application/json",
@@ -915,6 +923,7 @@ mod guide_tests {
                 "examples/local-static.json",
                 "application/json",
             ),
+            ("delivery", "references/delivery.md", "text/markdown"),
             (
                 "provider-example",
                 "examples/provider-icons.json",

@@ -73,6 +73,9 @@ the pinned executable's capabilities.
   or run `"$FORGE_BIN" guide animation`. It covers preserved coordinates, timing
   and sheet preprocessing. Unrelated still
   items are not animation frames. Character animation remains experimental.
+- **Source inspection, reviewed hashes, durable receipts and installed audits:**
+  read [delivery evidence](references/delivery.md), or run
+  `"$FORGE_BIN" guide delivery`. Check each new capability against the selected binary.
 
 The references link to local request examples. Without an installed bundle, read
 them with `"$FORGE_BIN" guide static-example` or `"$FORGE_BIN" guide provider-example`.

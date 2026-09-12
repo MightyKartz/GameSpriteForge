@@ -45,6 +45,8 @@ pub enum QualityRecommendationId {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QualityReport {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pixel_diagnostics: Option<super::pixels::AnimationPixelDiagnostics>,
     pub verdict: QualityVerdict,
     pub metrics: QualityMetrics,
     pub recommendations: Vec<QualityRecommendationId>,
@@ -102,6 +104,7 @@ fn build_quality_report(bboxes: &[FrameBbox], metrics: QualityMetrics) -> Qualit
     }
 
     QualityReport {
+        pixel_diagnostics: None,
         verdict,
         metrics,
         recommendations,

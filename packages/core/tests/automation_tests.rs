@@ -100,6 +100,7 @@ fn character_pack_uses_shared_canvas_and_exports_multiple_animations() {
     fs::create_dir(&attack).unwrap();
     let profile = automation_profile();
     let request = PrepareCharacterPackRequest {
+        source_locks: vec![],
         rendering: None,
         schema_version: "2".into(),
         metadata: CharacterPackMetadata {
@@ -322,6 +323,7 @@ fn guided_character_workflow_requires_its_core_animations() {
     fs::create_dir(&walk).unwrap();
     let profile = automation_profile();
     let request = PrepareCharacterPackRequest {
+        source_locks: vec![],
         rendering: None,
         schema_version: "2".into(),
         metadata: CharacterPackMetadata {
@@ -586,6 +588,7 @@ fn assert_review_offers_cli_actions(
 fn request(paths: Vec<PathBuf>) -> PrepareAssetRequest {
     let profile = automation_profile();
     PrepareAssetRequest {
+        source_locks: vec![],
         rendering: None,
         schema_version: "1".into(),
         input: AssetInput::PngSequence { paths },

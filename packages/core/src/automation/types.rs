@@ -39,14 +39,27 @@ pub struct ProfileMatting {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct QualityPolicy {
+    #[serde(
+        default,
+        skip_serializing_if = "crate::quality::QualityProfile::is_character"
+    )]
+    pub profile: crate::quality::QualityProfile,
+    #[serde(default, skip_serializing_if = "quality_tail_disabled")]
+    pub allow_transparent_tail: bool,
     #[serde(default = "default_true")]
     pub require_game_ready: bool,
+}
+
+fn quality_tail_disabled(value: &bool) -> bool {
+    !value
 }
 
 impl Default for QualityPolicy {
     fn default() -> Self {
         Self {
             require_game_ready: true,
+            profile: crate::quality::QualityProfile::Character,
+            allow_transparent_tail: false,
         }
     }
 }
@@ -55,6 +68,8 @@ impl Default for QualityPolicy {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct PrepareAssetRequest {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub source_locks: Vec<SourceLock>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rendering: Option<AnimationRendering>,
     #[serde(default = "schema_version")]
@@ -74,6 +89,8 @@ pub struct PrepareAssetRequest {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PrepareStaticRequest {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub source_locks: Vec<SourceLock>,
     pub schema_version: String,
     pub kind: StaticAssetKind,
     pub id: String,
@@ -100,10 +117,20 @@ pub struct PrepareStaticItem {
     pub path: PathBuf,
 }
 
+/// Optional complete set of reviewed local source bytes, checked before planning.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SourceLock {
+    pub path: PathBuf,
+    pub sha256: String,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct PrepareCharacterPackRequest {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub source_locks: Vec<SourceLock>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rendering: Option<AnimationRendering>,
     #[serde(default = "character_schema_version")]

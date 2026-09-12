@@ -326,6 +326,13 @@ fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreEr
                 .map_err(PlanStoreError::InvalidRequest)?;
         }
         AutomationOperation::PrepareAsset(request) => {
+            validate_animation_quality(&request.quality, request.metadata.loop_animation)?;
+            if matches!(request.input, AssetInput::Gsfpack { .. })
+                && (request.quality.profile != crate::quality::QualityProfile::Character
+                    || request.quality.allow_transparent_tail)
+            {
+                return Err(PlanStoreError::InvalidRequest("gsfpack input is copied unchanged; quality profile overrides require PNG, sprite sheet or video input".into()));
+            }
             validate_local_animation_options(request.normalize, request.rendering.as_ref())?;
             validate_local_animation_input(
                 &request.input,
@@ -557,37 +564,7 @@ fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreEr
                     "projectPath must contain project.godot".into(),
                 ));
             }
-            let target_components = request.target.components().collect::<Vec<_>>();
-            if request.target.as_os_str().is_empty()
-                || request.target == Path::new(".")
-                || !request.target.starts_with("addons/forge_assets")
-                || request.target.is_absolute()
-                || request.target.components().any(|part| {
-                    matches!(
-                        part,
-                        Component::ParentDir | Component::RootDir | Component::Prefix(_)
-                    )
-                })
-            {
-                return Err(PlanStoreError::InvalidRequest(
-                    "target must be inside addons/forge_assets and may not contain '..'".into(),
-                ));
-            }
-            if target_components.len() < 2 {
-                return Err(PlanStoreError::InvalidRequest(
-                    "target must name a directory below addons/forge_assets".into(),
-                ));
-            }
-            let asset_key = request
-                .asset_key
-                .as_deref()
-                .or_else(|| request.target.file_name().and_then(|value| value.to_str()))
-                .unwrap_or_default();
-            if !is_engine_safe_name(asset_key) {
-                return Err(PlanStoreError::InvalidRequest(
-                    "assetKey must contain only letters, numbers, '-' or '_'".into(),
-                ));
-            }
+            validate_install_destination(request)?;
             if request.provider_refs.len() > 32
                 || request.provider_refs.iter().any(|reference| {
                     reference.provider.trim().is_empty()
@@ -625,14 +602,6 @@ fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreEr
                         "catalogProjectPath does not contain the requested Pack".into(),
                     ));
                 }
-            }
-            let target = request.project_path.join(&request.target);
-            validate_godot_target_location(&request.project_path, &target)?;
-            if target.exists() && !target.join(OWNERSHIP_MARKER).is_file() {
-                return Err(PlanStoreError::InvalidRequest(format!(
-                    "existing Godot target is not Forge-owned: {}",
-                    target.display()
-                )));
             }
         }
         AutomationOperation::BuildProject(request) => {
@@ -696,6 +665,7 @@ fn validate_png(path: &Path) -> Result<(), PlanStoreError> {
 pub fn fingerprint_operation_inputs(
     operation: &AutomationOperation,
 ) -> Result<String, PlanStoreError> {
+    super::source_lock::validate_source_locks(operation).map_err(PlanStoreError::InvalidRequest)?;
     let mut hasher = Sha256::new();
     match operation {
         AutomationOperation::PrepareStatic(request) => {
@@ -1091,6 +1061,18 @@ pub fn fingerprint_operation_inputs(
     Ok(format!("{:x}", hasher.finalize()))
 }
 
+fn validate_animation_quality(
+    quality: &super::types::QualityPolicy,
+    has_looping_animation: bool,
+) -> Result<(), PlanStoreError> {
+    if quality.allow_transparent_tail
+        && (quality.profile != crate::quality::QualityProfile::Effect || has_looping_animation)
+    {
+        return Err(PlanStoreError::InvalidRequest("quality.allowTransparentTail requires quality.profile effect and every animation to be non-looping".into()));
+    }
+    Ok(())
+}
+
 fn validate_local_animation_options(
     options: crate::frames::NormalizeOptions,
     rendering: Option<&crate::export::AnimationRendering>,
@@ -1201,6 +1183,13 @@ fn validate_preserved_canvases<'a>(
 fn validate_character_pack_request(
     request: &PrepareCharacterPackRequest,
 ) -> Result<(), PlanStoreError> {
+    validate_animation_quality(
+        &request.quality,
+        request
+            .animations
+            .iter()
+            .any(|animation| animation.loop_animation),
+    )?;
     validate_local_animation_options(request.normalize, request.rendering.as_ref())?;
     validate_preserved_canvases(
         request.normalize,
@@ -1322,6 +1311,11 @@ fn validate_character_pack_request(
 fn validate_generate_character_pack_request(
     request: &GenerateCharacterPackRequest,
 ) -> Result<(), PlanStoreError> {
+    if request.quality.profile != crate::quality::QualityProfile::Character
+        || request.quality.allow_transparent_tail
+    {
+        return Err(PlanStoreError::InvalidRequest("generated character workflows require the character quality profile without transparent tails; use local preparation for effect animations".into()));
+    }
     if request.schema_version != "3" {
         return Err(PlanStoreError::InvalidRequest(
             "generated Character Pack requests require schemaVersion \"3\"".into(),
@@ -1641,6 +1635,80 @@ fn validate_video_clip(
     Ok(())
 }
 
+/// Shared by plan creation and the runner after taking the project installation lock.
+pub(super) fn validate_install_destination(
+    request: &super::types::GodotInstallRequest,
+) -> Result<(), PlanStoreError> {
+    if request.target.components().count() < 3
+        || !request.target.starts_with("addons/forge_assets")
+        || request
+            .target
+            .components()
+            .any(|part| !matches!(part, Component::Normal(_)))
+    {
+        return Err(PlanStoreError::InvalidRequest(
+            "target must name a directory below addons/forge_assets and may not contain '..'"
+                .into(),
+        ));
+    }
+    let asset_key = request
+        .asset_key
+        .as_deref()
+        .or_else(|| request.target.file_name().and_then(|value| value.to_str()))
+        .unwrap_or_default();
+    if !is_engine_safe_name(asset_key) {
+        return Err(PlanStoreError::InvalidRequest(
+            "assetKey must contain only letters, numbers, '-' or '_'".into(),
+        ));
+    }
+    let target = request.project_path.join(&request.target);
+    validate_godot_target_location(&request.project_path, &target)?;
+    let manifest = crate::project::read_project_manifest(&request.project_path)
+        .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
+    for (registered_key, entry) in &manifest.assets {
+        if registered_key != asset_key
+            && (entry.godot_target.starts_with(&request.target)
+                || request.target.starts_with(&entry.godot_target))
+        {
+            return Err(PlanStoreError::InvalidRequest(format!(
+                "Godot target overlaps asset key {registered_key}; choose that key or a separate target")));
+        }
+    }
+    if !target.exists() {
+        return Ok(());
+    }
+    if !target.is_dir() {
+        return Err(PlanStoreError::InvalidRequest(
+            "existing Godot target must be a directory".into(),
+        ));
+    }
+    let marker_path = target.join(OWNERSHIP_MARKER);
+    let marker_metadata = fs::symlink_metadata(&marker_path).map_err(|error| {
+        PlanStoreError::InvalidRequest(format!(
+            "existing Godot target is not Forge-owned: {} ({error})",
+            target.display()
+        ))
+    })?;
+    if marker_metadata.file_type().is_symlink() || !marker_metadata.is_file() {
+        return Err(PlanStoreError::InvalidRequest(
+            "Forge ownership marker must be a regular file, not a symbolic link".into(),
+        ));
+    }
+    let marker: serde_json::Value = read_json(&marker_path)?;
+    if marker["owner"] != "Game Sprite Forge" {
+        return Err(PlanStoreError::InvalidRequest(
+            "existing Godot target is not Forge-owned: ownership marker has a different owner"
+                .into(),
+        ));
+    }
+    match marker.get("assetKey") {
+        Some(value) if value.as_str() == Some(asset_key) => Ok(()),
+        Some(_) => Err(PlanStoreError::InvalidRequest("Forge target ownership marker belongs to a different asset key".into())),
+        None if manifest.assets.get(asset_key).is_some_and(|entry| entry.godot_target == request.target) => Ok(()),
+        None => Err(PlanStoreError::InvalidRequest("legacy Forge ownership marker has no asset key and the project registry does not identify this target; refusing to guess ownership".into())),
+    }
+}
+
 fn validate_godot_target_location(project: &Path, target: &Path) -> Result<(), PlanStoreError> {
     let canonical_project = fs::canonicalize(project).map_err(|source| PlanStoreError::Io {
         path: project.to_path_buf(),
@@ -1652,16 +1720,20 @@ fn validate_godot_target_location(project: &Path, target: &Path) -> Result<(), P
     let mut cursor = project.to_path_buf();
     for component in relative.components() {
         cursor.push(component.as_os_str());
-        if cursor.exists() {
-            let metadata = fs::symlink_metadata(&cursor).map_err(|source| PlanStoreError::Io {
-                path: cursor.clone(),
-                source,
-            })?;
-            if metadata.file_type().is_symlink() {
+        match fs::symlink_metadata(&cursor) {
+            Ok(metadata) if metadata.file_type().is_symlink() => {
                 return Err(PlanStoreError::InvalidRequest(format!(
                     "Godot target may not traverse a symbolic link: {}",
                     cursor.display()
-                )));
+                )))
+            }
+            Ok(_) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(source) => {
+                return Err(PlanStoreError::Io {
+                    path: cursor.clone(),
+                    source,
+                })
             }
         }
     }

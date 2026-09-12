@@ -13,3 +13,9 @@ pub use metrics::{
     quality_recommendations, QualityMetrics, QualityRecommendationId, QualityReport,
     QualityVerdict,
 };
+
+pub mod pixels;
+pub use pixels::{
+    compute_quality_report_with_pixels, measure_pixel_sequence, AnimationPixelDiagnostics,
+    PixelDifference, PixelFrameEvidence, PixelSequenceEvidence, QualityProfile,
+};

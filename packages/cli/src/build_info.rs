@@ -38,6 +38,15 @@ pub const CAPABILITIES: &[&str] = &[
     "godot_install",
     "bundled_forge_use_skill",
     "embedded_usage_guide",
+    "reviewed_source_hashes",
+    "local_request_relative_paths",
+    "source_png_inspection",
+    "effect_quality_profile",
+    "preview_timing_diagnostics",
+    "delivery_receipts",
+    "godot_install_verification",
+    "transactional_godot_install",
+    "godot_import_cache_integrity",
 ];
 
 #[cfg(test)]

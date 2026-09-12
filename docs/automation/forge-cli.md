@@ -77,7 +77,11 @@ forge job retry --id JOB --item ITEM_OR_ANIMATION \
 forge job review --id JOB --accept --reason "visual review" --json
 
 forge pack validate --path /absolute/Pack.gsfpack --json
+forge source inspect --path /absolute/source.png --json
+forge receipt export --job JOB [--install-job INSTALL_JOB] --out receipt.json --json
+forge receipt verify --path receipt.json [--pack /absolute/retained.gsfpack] --json
 forge godot plan-install --pack /absolute/Pack.gsfpack --project /absolute/game --json
+forge godot verify-install --project /absolute/game --asset-key stable_id --json
 forge plan execute --token TOKEN [--wait] --json
 ```
 
@@ -98,6 +102,7 @@ selects `overview` (`SKILL.md`). The accepted topics and exact bundle-relative p
 | `static` | `references/local-static.md` |
 | `provider` | `references/provider.md` |
 | `animation` | `references/animation.md` |
+| `delivery` | `references/delivery.md` (new source builds) |
 | `static-example` | `examples/local-static.json` |
 | `provider-example` | `examples/provider-icons.json` |
 
@@ -143,6 +148,47 @@ and conflict rules. Installing the CLI alone does not register a Codex skill;
 
 ## Plans and jobs
 
+### Source-build delivery additions
+
+The current source build adds capabilities `reviewed_source_hashes`, `local_request_relative_paths`,
+`source_png_inspection`, `effect_quality_profile`, `preview_timing_diagnostics`,
+`delivery_receipts`, `godot_install_verification`, `transactional_godot_install`
+and `godot_import_cache_integrity`.
+These are not a claim about the existing v0.3.2 release archive. Check the actual
+binary/build hash before selecting them. Read the maintained
+[delivery guide](../../.agents/skills/forge-use/references/delivery.md) or
+`forge guide delivery` for commands, source locks, receipt relocation/trust and
+installation audit limits; [animation guidance](../../.agents/skills/forge-use/references/animation.md)
+covers opt-in effect semantics and GIF quantization.
+
+Local preparation paths and `sourceLocks` resolve relative to `--request`'s file;
+stdin paths resolve against cwd. This corrects older animation commands that
+used cwd even with a request file. Absolute paths keep their existing meaning.
+`sourceLocks` is optional and backward compatible; when nonempty it binds the
+complete local source closure before plan creation and is rechecked on execution.
+
+Receipt v1 is described by [delivery-receipt.schema.json](../../schemas/delivery-receipt.schema.json).
+Its producer evidence is captured by the executing CLI, separately from the
+exporter's identity. Legacy Jobs report absent producer evidence explicitly.
+Verifying a receipt requires the retained Pack and, when included, installation;
+it requires neither original source paths nor the Job store. It verifies source
+hash records, not the continued existence of the original source files. Record
+the receipt SHA separately and pass `--expected-sha256` to bind that evidence.
+`verified:true` confirms the evidence checks; read `visualReview` separately,
+which can still be `pending`, `rejected` or `not_recorded`.
+
+Installation now performs dependency checks before changing its target, uses a
+project lock and restores the previous target, registry and catalog link on
+execution errors or cancellation, including the target textures' imported cache
+bytes. A structured native verification report is a Job artifact. Snapshot v2 in
+`.forge-install.json` records stable installed files and separate import/cache
+evidence, hash-bound to `.forge/assets.json`. Missing recorded caches or import
+sidecars are reported as `not_materialized`; an empty cache baseline is
+`not_recorded`. Both have `materialized:false` and do not establish readiness
+for native loading. Changed existing caches are rejected. The
+read-only audit does not reload or render the resources. Serialize non-Forge
+Godot processes sharing a project's cache separately.
+
 ### Local animation contracts
 
 Use `plan prepare-asset --request ... --json` for one action and
@@ -155,6 +201,15 @@ delivery; they do not establish visual quality. Automatic repair leaves preserve
 coordinates unchanged and returns canvas/anchor issues for manual review. See the
 [local asset guide](codex-local-assets.md#preserve-intentional-animation-coordinates-experimental)
 for the request shapes and limits.
+
+With `effect_quality_profile`, local PNG, sheet or video preparation can use
+`"quality":{"profile":"effect","requireGameReady":true,"allowTransparentTail":true}`
+for intentional disappearance at the end. `allowTransparentTail` belongs inside
+`quality` and requires every animation in that request to be non-looping. Omit it
+or set it to `false` otherwise. All-empty animations, interior empty frames and
+tails made empty only by normalization remain invalid. The effect profile does
+not grant visual approval; Pack-copy inputs and generated character workflows
+do not accept this override.
 
 ### Local transparent PNG sets
 

@@ -2,6 +2,8 @@
 
 日期：2026-09-12。Forge 基线：`4a870811c43ca4aa087e8f2a4113fca699b7b838`。Sword 本地主项目：`/Users/kartz/Development/Games/Sword`，分支 `codex/pr61-run-cultivation`，提交 `a8b93f4a753a84dbbd68365eac5258a9927617dd`。
 
+后续实施与回归见 [Sword 反馈实施报告](forge-sword-feedback-implementation-2026-09-12.md)；下文保留本次分析时的原始状态。
+
 本轮分析开发记录、导入脚本、运行资源及相关个人技能，并在隔离临时目录复现两个问题；未修改 Sword、调用真实 Provider、重新生成美术、导入正式游戏或升级消费者锁。本文列出待办，不表示已实现。精简复现结果见 [findings.json](artifacts/forge-sword-feedback-20260912/findings.json)。
 
 ## 当前消费情况与已完成的回补

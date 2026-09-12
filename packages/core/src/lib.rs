@@ -3,6 +3,7 @@ pub mod automation;
 pub mod benchmark;
 pub mod catalog;
 pub mod component;
+pub mod delivery;
 pub mod export;
 pub mod frames;
 pub mod game_art;
@@ -11,7 +12,10 @@ pub mod matting;
 pub mod project;
 pub mod provider;
 pub mod quality;
+pub mod source_inspect;
 pub mod subject;
 pub mod video;
 pub mod workflow_graph;
 pub mod world;
+
+pub(crate) mod godot_cache;

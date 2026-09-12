@@ -91,6 +91,21 @@ image generation remain separate from successful file installation. Codex can
 read the guide without discovering a skill; installing only the CLI does not
 register the embedded bundle with Codex.
 
+Sword feedback additions use explicit build capabilities rather than changing a
+consumer's release pin. Keep new execution provenance separate from legacy Job
+history and current receipt exporter identity. The portable receipt embeds JSON
+report bytes and full Pack inventories; verify it after moving the Job store.
+Run `scripts/test-sword-feedback-cli.py --forge /absolute/path/to/forge --godot
+/absolute/path/to/Godot` for source locks, stable targets, receipts and read-only
+audits. `godot_install_transaction_tests` covers transaction failures and cancellation;
+`animation_pixel_quality_tests` covers character/effect semantics and GIF timing.
+Run `scripts/test-godot-external-clock.py` for the generic native timing sample.
+Godot installation success requires explicit completion evidence and saved
+resource checks, not only process status. Ordinary warnings alone are not failure.
+Serialize imports/exports sharing the same Godot cache; Forge's project install
+lock does not lock unrelated editor processes. Keep structural validation, native
+load, visual review and device testing as distinct evidence.
+
 ## Local processing and generation
 
 Codex's built-in image generation can supply source PNGs to Forge. It is a separate

@@ -9,7 +9,10 @@ use std::path::{Path, PathBuf};
 
 use crate::quality::{LoopSelectionReport, QualityReport, QualityVerdict};
 
-pub use gif::{build_preview_gif, GifBackground, PreviewGifOutput, PreviewGifParameters};
+pub use gif::{
+    build_preview_gif, build_preview_gif_with_timing, GifBackground, PreviewGifOutput,
+    PreviewGifParameters,
+};
 pub use manifest::{
     export_metadata, AnimationRendering, CharacterPackMetadataParams, EngineManifest,
     ExportMetadata, PackMetadataParams,
@@ -196,10 +199,11 @@ pub fn export_pack(params: ExportPackParams) -> Result<ExportPackOutput, ExportE
 
     let sheet_output =
         build_sprite_sheet(&sequence.frame_paths, &sequence.export_dir, params.sheet)?;
-    let preview_output = build_preview_gif(
+    let preview_output = build_preview_gif_with_timing(
         &sequence.frame_paths,
         &sequence.export_dir.join("preview.gif"),
         params.gif,
+        params.metadata.frame_durations_ms.as_deref(),
     )?;
     let metadata = export_metadata(params.metadata, &sheet_output.atlas);
 
@@ -323,7 +327,7 @@ pub fn export_character_pack(
         let end = offset + animation.frame_paths.len();
         let exported_frames = &sequence.frame_paths[offset..end];
         let preview_path = previews_dir.join(format!("{}.gif", animation.name));
-        build_preview_gif(
+        build_preview_gif_with_timing(
             exported_frames,
             &preview_path,
             PreviewGifParameters {
@@ -331,6 +335,7 @@ pub fn export_character_pack(
                 loop_animation: animation.loop_animation,
                 background: GifBackground::Transparent,
             },
+            animation.frame_durations_ms.as_deref(),
         )?;
         animation_preview_paths.insert(animation.name.clone(), preview_path);
         manifest_animations.push(manifest::ManifestAnimation {
@@ -357,6 +362,10 @@ pub fn export_character_pack(
         .ok_or_else(|| ExportError::InvalidParameter("default preview is missing".to_string()))?;
     let preview_gif_path = sequence.export_dir.join("preview.gif");
     fs::copy(default_preview, &preview_gif_path)?;
+    fs::copy(
+        default_preview.with_extension("timing.json"),
+        preview_gif_path.with_extension("timing.json"),
+    )?;
 
     let character_quality = CharacterQualityReport {
         quality_profile: animation_quality_profile(),
@@ -430,6 +439,12 @@ pub fn export_character_pack(
     )?;
     for (name, path) in &animation_preview_paths {
         fs::copy(path, pack_dir.join("previews").join(format!("{name}.gif")))?;
+        fs::copy(
+            path.with_extension("timing.json"),
+            pack_dir
+                .join("previews")
+                .join(format!("{name}.timing.json")),
+        )?;
     }
 
     Ok(ExportCharacterPackOutput {
@@ -471,6 +486,10 @@ fn write_pack_directory(
         serde_json::to_vec_pretty(forgepack)?,
     )?;
     fs::copy(preview_gif_path, pack_dir.join("previews/preview.gif"))?;
+    fs::copy(
+        preview_gif_path.with_extension("timing.json"),
+        pack_dir.join("previews/preview.timing.json"),
+    )?;
     fs::copy(atlas_path, pack_dir.join("assets/atlas.json"))?;
     fs::copy(manifest_path, pack_dir.join("assets/manifest.json"))?;
     fs::copy(godot_helper_path, pack_dir.join("assets/godot_import.json"))?;
@@ -874,6 +893,7 @@ mod tests {
 
     fn quality_report_with_verdict(frame_count: usize, verdict: QualityVerdict) -> QualityReport {
         QualityReport {
+            pixel_diagnostics: None,
             verdict,
             metrics: QualityMetrics {
                 bbox_bottom_drift_px: 0.0,

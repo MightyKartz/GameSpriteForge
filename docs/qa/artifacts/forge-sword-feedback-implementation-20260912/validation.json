@@ -1,0 +1,363 @@
+{
+  "schemaVersion": "1",
+  "date": "2026-09-12",
+  "baselineCommit": "7073ced1b37f0a618be4cc235249d222dd1e8fa9",
+  "scope": "synthetic local sources, offline fixture Provider where applicable, isolated Godot projects; no Sword changes or consumer pin upgrade",
+  "cliFocused": {
+    "passed": true,
+    "commandCount": 49,
+    "cases": [
+      "source inspection measures pixels/grid and preserves sources, stores and existing previews",
+      "approved static source hashes resolve relative to request and reject mismatched/incomplete/duplicate locks before planning",
+      "locked whole-sheet preprocessing preserves timing and non-loop semantics",
+      "multi-action source locks cover reused files once",
+      "source changes after planning fail before token consumption or Job creation",
+      "same-named Pack installs use stable Pack id or explicit asset key without target collisions",
+      "read-only installation verification rejects changed native resources and textures",
+      "Godot imported cache bytes and import routing are verified without rebuilding the cache",
+      "receipts retain execution, quality/source-transform and separate pending review evidence",
+      "legacy Jobs retain unknown producer identity without borrowing the exporter identity or modifying the Job",
+      "embedded report bytes are verified independently of the original Job files",
+      "portable receipts verify with a Pack override after the original Job store is removed",
+      "receipt verification rejects changed Pack bytes",
+      "receipt verification supports a relocated project without mutating the original",
+      "copied projects without cache explicitly require import before native loading and audit creates no cache"
+    ],
+    "binarySha256": "66857981afccf190400d8d268e751f6dcc04195d2ea7f8cd4a2470b4b1ce77ef",
+    "build": {
+      "gitCommit": "7073ced1b37f0a618be4cc235249d222dd1e8fa9",
+      "dirty": true,
+      "target": "aarch64-apple-darwin",
+      "profile": "debug",
+      "features": []
+    },
+    "capabilities": [
+      "local_static_import",
+      "local_animation_import",
+      "preserve_source_coordinates",
+      "local_animation_timing",
+      "whole_sheet_source_transform",
+      "pack_validation",
+      "godot_install",
+      "bundled_forge_use_skill",
+      "embedded_usage_guide",
+      "reviewed_source_hashes",
+      "local_request_relative_paths",
+      "source_png_inspection",
+      "effect_quality_profile",
+      "preview_timing_diagnostics",
+      "delivery_receipts",
+      "godot_install_verification",
+      "transactional_godot_install",
+      "godot_import_cache_integrity"
+    ],
+    "providerRequests": 0,
+    "godotChecksSkipped": false
+  },
+  "embeddedSkill": {
+    "passed": true,
+    "caseCount": 33,
+    "commandCount": 124,
+    "binarySha256": "9c681480b6720c828998e416e75b88088f57b1ab34107115ef98f3d19627435d",
+    "providerRequests": 0
+  },
+  "personalSkill": {
+    "behavioralTestsPassed": 10,
+    "quickValidate": "passed after final narrow path-compatibility edit",
+    "backupPath": "/Users/kartz/Development/Forge-skill-backup-20260912/forge-character-animation",
+    "changedFilesSha256": {
+      "SKILL.md": "9bd77c3d50db6b89246d34934abc7e8316fabb62b9cf6d128739841ef3cbd4c3",
+      "references/workflow.md": "66b9b212cb2e82f5b3e3136fbdf0fbd86219aa6b6ce2f34580320fda8f540138",
+      "references/godot-review.md": "6d71e46a4180b0ebf10bef304cc07f9978334cc116215b0dfcd0913040330597",
+      "references/cli-local.md": "6f7aa41511e495ccf73c67704f83148beac80664cb33a4d77c7f2300380a1d74",
+      "scripts/test_forge_character_animation.py": "1e3c89c90a2dd0e8dbdafc3c556264e1414f03849c576eb95412375fe8a42f38",
+      "scripts/forge_character_animation.py": "79e5486af3f4fa7c64a5bab421b0384d539961c267fd1a3f551ad19054f3dee1"
+    },
+    "archivedOperations": [
+      {
+        "command": "extract-native",
+        "exitCode": 1,
+        "outputCreated": false
+      },
+      {
+        "command": "select-cycle",
+        "exitCode": 1,
+        "outputCreated": false
+      },
+      {
+        "command": "select-idle-cycle",
+        "exitCode": 1,
+        "outputCreated": false
+      },
+      {
+        "command": "replay-native",
+        "exitCode": 1,
+        "outputCreated": false
+      },
+      {
+        "command": "replay-idle",
+        "exitCode": 1,
+        "outputCreated": false
+      },
+      {
+        "command": "review-pending",
+        "exitCode": 1,
+        "outputCreated": false
+      }
+    ]
+  },
+  "independentSkillForwardTest": {
+    "passed": true,
+    "binarySha256": "ec1d0724d43eca0f30f8c29ebff0eb73f0c36c0f6eb356c46a9c400548d9ceb7",
+    "binaryUnchanged": true,
+    "providerRequests": 0,
+    "frames": [
+      {
+        "index": 0,
+        "sourceSha256Unchanged": true,
+        "outputDimensions": [
+          64,
+          64
+        ],
+        "decodedRgbaIdentical": true,
+        "decodedRgbaSha256": "81cde4d9ab57042e9ad19b3b637d4740be838d633b0675b3bef8286e134c7d6d"
+      },
+      {
+        "index": 1,
+        "sourceSha256Unchanged": true,
+        "outputDimensions": [
+          64,
+          64
+        ],
+        "decodedRgbaIdentical": true,
+        "decodedRgbaSha256": "369f45ec66ba79e3b26b6c860e44e34e0264e35b0577a908ff981e3bc86e568e"
+      },
+      {
+        "index": 2,
+        "sourceSha256Unchanged": true,
+        "outputDimensions": [
+          64,
+          64
+        ],
+        "decodedRgbaIdentical": true,
+        "decodedRgbaSha256": "750cf2a114e0a31be712efa73a4cf8e1be753d6a311994b289a883a90d4dc8e9"
+      }
+    ],
+    "firstAttempt": "detected concurrent rebuild replacing the executable; retained as a failed toolchain-integrity check; second attempt used a frozen copy",
+    "retainedReports": "target/qa/sword-feedback-implementation-20260912/independent-skill-forward/",
+    "sourceManifest": "target/qa/sword-feedback-implementation-20260912/independent-skill-forward/SOURCE.json",
+    "independentRecheck": "passed: frozen binary SHA, all source/frame RGBA hashes, 11 Pack files (13598 bytes), anchor (32,52), nonloop frame timing 70/150/230 ms, and receipt producer/exporter"
+  },
+  "otherChecks": {
+    "installerContract": "pass",
+    "signingContract": "pass",
+    "directionalReuseTestsPassed": 7,
+    "actualReceiptsSchemaValidated": 3,
+    "allFeaturesClippy": "pass",
+    "finalReceiptUnitTestsPassed": 6,
+    "reviewNotesSchemaRegression": "pass: malformed optional notes rejected before receipt creation and in retained evidence verification",
+    "finalForgeUseSkillValidator": "pass",
+    "gameArtManifestContract": "pass: fixture generation/reuse, input closure drift, optional/required failures, cancellation, recovery, JSON stdout and credential scan"
+  },
+  "sword": {
+    "commit": "a8b93f4a753a84dbbd68365eac5258a9927617dd",
+    "branch": "codex/pr61-run-cultivation",
+    "workingTreeClean": true,
+    "forgeVersion": "0.3.0",
+    "forgeCommit": "60904c02a52f6831626ebbc4475f9c25db162931",
+    "binarySha256": "e3693d317bd61937f0a0e1aa66306a88a9065dd3b47b35c62e2b07064149b912",
+    "lockFilesSha256": {
+      "forge.lock.json": "c2251683a6ab6a22b7a35b75b16c2fa51480a3734e7fba62692cd3f295b90327",
+      "forge-animation.lock.json": "2887846392c287822c9e398f02d13120fe57b33a023ad0723894739cd5e1c5cc"
+    },
+    "finalRecheck": "passed: HEAD, branch, clean worktree, both locks and pinned binary hashes unchanged"
+  },
+  "fullLogs": "target/qa/sword-feedback-implementation-20260912/",
+  "rust": {
+    "passed": 318,
+    "failed": 0,
+    "ignored": 4,
+    "suiteCount": 32,
+    "fmt": "pass",
+    "workspaceClippy": "pass",
+    "consistencyAndWorldFeaturesClippy": "pass",
+    "ignoredTestsNote": "All four real-Godot tests run separately and pass in local-static-delivery (1) and sword-delivery-feedback (3)."
+  },
+  "nativeGodot": {
+    "version": "4.6.3.stable.official.7d41c59c4",
+    "realRustTestsPassed": 4,
+    "externalClock": "pass",
+    "rollbackPixelRecoveryWithoutReimport": "pass",
+    "visualApproval": "not_assessed",
+    "afterWorldFixInstallationRegression": {
+      "passed": 3,
+      "failed": 0,
+      "metadata": "target/qa/sword-feedback-implementation-20260912/gate-rechecks/godot-install-real-final.json"
+    }
+  },
+  "matrixInitialAttempt": {
+    "startedAt": "2026-09-12T06:32:54Z",
+    "finishedAt": "2026-09-12T06:44:19Z",
+    "summary": {
+      "passed": 7,
+      "failed": 2,
+      "releaseBlockingPassed": false,
+      "experimentalPassed": false
+    },
+    "gates": [
+      {
+        "id": "rust-quality",
+        "scope": "release_blocking",
+        "status": "pass",
+        "durationSeconds": 137,
+        "exitCode": 0
+      },
+      {
+        "id": "character-v2-contract",
+        "scope": "release_blocking",
+        "status": "pass",
+        "durationSeconds": 44,
+        "exitCode": 0
+      },
+      {
+        "id": "character-v2-full-matrix",
+        "scope": "release_blocking",
+        "status": "pass",
+        "durationSeconds": 227,
+        "exitCode": 0
+      },
+      {
+        "id": "static-cli-contract",
+        "scope": "release_blocking",
+        "status": "fail",
+        "durationSeconds": 54,
+        "exitCode": 1
+      },
+      {
+        "id": "static-five-style-matrix",
+        "scope": "release_blocking",
+        "status": "pass",
+        "durationSeconds": 87,
+        "exitCode": 0
+      },
+      {
+        "id": "local-static-delivery",
+        "scope": "release_blocking",
+        "status": "pass",
+        "durationSeconds": 37,
+        "exitCode": 0
+      },
+      {
+        "id": "local-animation-delivery",
+        "scope": "release_blocking",
+        "status": "pass",
+        "durationSeconds": 34,
+        "exitCode": 0
+      },
+      {
+        "id": "sword-delivery-feedback",
+        "scope": "release_blocking",
+        "status": "pass",
+        "durationSeconds": 45,
+        "exitCode": 0
+      },
+      {
+        "id": "world-assets-experimental",
+        "scope": "experimental",
+        "status": "fail",
+        "durationSeconds": 20,
+        "exitCode": 1
+      }
+    ],
+    "reportPath": "target/qa/sword-feedback-implementation-20260912/matrix-final/v0.3-test-report.json"
+  },
+  "matrixFinalResolution": {
+    "schemaVersion": "1",
+    "basis": "Initial complete matrix plus targeted reruns; not a fresh single full-matrix run. Shared installation GDScript additionally retested in real Godot.",
+    "initialReport": "target/qa/sword-feedback-implementation-20260912/matrix-final/v0.3-test-report.json",
+    "passed": 9,
+    "failed": 0,
+    "gates": [
+      {
+        "id": "rust-quality",
+        "scope": "release_blocking",
+        "status": "pass",
+        "exitCode": 0,
+        "evidence": "target/qa/sword-feedback-implementation-20260912/matrix-final/logs/rust-quality.log",
+        "basis": "initial full matrix"
+      },
+      {
+        "id": "character-v2-contract",
+        "scope": "release_blocking",
+        "status": "pass",
+        "exitCode": 0,
+        "evidence": "target/qa/sword-feedback-implementation-20260912/matrix-final/logs/character-v2-contract.log",
+        "basis": "initial full matrix"
+      },
+      {
+        "id": "character-v2-full-matrix",
+        "scope": "release_blocking",
+        "status": "pass",
+        "exitCode": 0,
+        "evidence": "target/qa/sword-feedback-implementation-20260912/matrix-final/logs/character-v2-full-matrix.log",
+        "basis": "initial full matrix"
+      },
+      {
+        "id": "static-cli-contract",
+        "scope": "release_blocking",
+        "status": "pass",
+        "exitCode": 0,
+        "evidence": "target/qa/sword-feedback-implementation-20260912/gate-rechecks/logs/static-cli-contract.log",
+        "basis": "focused rerun after fix"
+      },
+      {
+        "id": "static-five-style-matrix",
+        "scope": "release_blocking",
+        "status": "pass",
+        "exitCode": 0,
+        "evidence": "target/qa/sword-feedback-implementation-20260912/matrix-final/logs/static-five-style-matrix.log",
+        "basis": "initial full matrix"
+      },
+      {
+        "id": "local-static-delivery",
+        "scope": "release_blocking",
+        "status": "pass",
+        "exitCode": 0,
+        "evidence": "target/qa/sword-feedback-implementation-20260912/matrix-final/logs/local-static-delivery.log",
+        "basis": "initial full matrix"
+      },
+      {
+        "id": "local-animation-delivery",
+        "scope": "release_blocking",
+        "status": "pass",
+        "exitCode": 0,
+        "evidence": "target/qa/sword-feedback-implementation-20260912/matrix-final/logs/local-animation-delivery.log",
+        "basis": "initial full matrix"
+      },
+      {
+        "id": "sword-delivery-feedback",
+        "scope": "release_blocking",
+        "status": "pass",
+        "exitCode": 0,
+        "evidence": "target/qa/sword-feedback-implementation-20260912/matrix-final/logs/sword-delivery-feedback.log",
+        "basis": "initial full matrix"
+      },
+      {
+        "id": "world-assets-experimental",
+        "scope": "experimental",
+        "status": "pass",
+        "exitCode": 0,
+        "evidence": "target/qa/sword-feedback-implementation-20260912/gate-rechecks/logs/world-assets-experimental-fixed.log",
+        "basis": "focused rerun after fix"
+      }
+    ],
+    "resolvedFailures": {
+      "static-cli-contract": "Expected default path now uses explicit assetKey fixture_ranger.",
+      "world-assets-experimental": [
+        "Bind atlas source to TileSet before terrain/custom-data setup.",
+        "Attach collision/interaction parents before assigning child owner.",
+        "Verify native terrain/collision/custom data and shape ownership; reject corrupted custom-data metadata without PASS."
+      ]
+    }
+  }
+}

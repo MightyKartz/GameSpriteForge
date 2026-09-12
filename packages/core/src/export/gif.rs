@@ -35,6 +35,7 @@ impl Default for PreviewGifParameters {
 #[serde(rename_all = "camelCase")]
 pub struct PreviewGifOutput {
     pub preview_gif_path: PathBuf,
+    pub timing_report_path: PathBuf,
 }
 
 pub fn build_preview_gif(
@@ -42,10 +43,19 @@ pub fn build_preview_gif(
     output_path: &Path,
     params: PreviewGifParameters,
 ) -> Result<PreviewGifOutput, ExportError> {
+    build_preview_gif_with_timing(frame_paths, output_path, params, None)
+}
+
+pub fn build_preview_gif_with_timing(
+    frame_paths: &[PathBuf],
+    output_path: &Path,
+    params: PreviewGifParameters,
+    native_frame_durations_ms: Option<&[u32]>,
+) -> Result<PreviewGifOutput, ExportError> {
     if frame_paths.is_empty() {
         return Err(ExportError::NoFrames);
     }
-    if params.fps <= 0.0 {
+    if !params.fps.is_finite() || params.fps <= 0.0 {
         return Err(ExportError::InvalidParameter(
             "fps must be greater than zero".to_string(),
         ));
@@ -80,8 +90,37 @@ pub fn build_preview_gif(
         write_gif_frame(&mut encoder, width, height, frame, delay, params.background)?;
     }
 
+    drop(encoder);
+    let encoded_frame_duration_ms = u32::from(delay) * 10;
+    let nominal_frame_duration_ms = 1000.0 / f64::from(params.fps);
+    let encoded_total_duration_ms = u64::from(encoded_frame_duration_ms) * frame_paths.len() as u64;
+    let native_total_duration_ms = native_frame_durations_ms.map_or(
+        nominal_frame_duration_ms * frame_paths.len() as f64,
+        |durations| durations.iter().map(|duration| f64::from(*duration)).sum(),
+    );
+    let timing_report_path = output_path.with_extension("timing.json");
+    std::fs::write(
+        &timing_report_path,
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "schemaVersion": "1",
+            "previewFormat": "gif",
+            "timingAuthority": "pack_animation_metadata",
+            "frameCount": frame_paths.len(),
+            "requestedFps": params.fps,
+            "nominalFrameDurationMs": nominal_frame_duration_ms,
+            "encodedFrameDurationMs": encoded_frame_duration_ms,
+            "encodedTotalDurationMs": encoded_total_duration_ms,
+            "nativeFrameDurationsMs": native_frame_durations_ms,
+            "nativeTotalDurationMs": native_total_duration_ms,
+            "encodedMinusNativeDurationMs": encoded_total_duration_ms as f64 - native_total_duration_ms,
+            "loop": params.loop_animation,
+            "notes": ["GIF stores uniform preview delays in 10 ms units; viewers may further clamp delays.",
+                "Native animation metadata preserves requested per-frame timing; GIF is not timing authority."]
+        }))?,
+    )?;
     Ok(PreviewGifOutput {
         preview_gif_path: output_path.to_path_buf(),
+        timing_report_path,
     })
 }
 
