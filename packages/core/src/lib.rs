@@ -7,6 +7,7 @@ pub mod delivery;
 pub mod export;
 pub mod frames;
 pub mod game_art;
+pub mod image_contract;
 pub mod job;
 pub mod matting;
 pub mod project;

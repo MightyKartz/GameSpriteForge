@@ -41,6 +41,7 @@ pub const CAPABILITIES: &[&str] = &[
     "reviewed_source_hashes",
     "local_request_relative_paths",
     "source_png_inspection",
+    "project_image_contract_verification",
     "effect_quality_profile",
     "preview_timing_diagnostics",
     "delivery_receipts",

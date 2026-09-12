@@ -219,6 +219,19 @@ enum SourceCommand {
 
 #[derive(Subcommand)]
 enum AssetCommand {
+    /// Verify a PNG lock and the exact image set in selected directories without changing files.
+    VerifyImages {
+        /// Consumer repository root (image paths and relative lock paths resolve here).
+        #[arg(long)]
+        root: PathBuf,
+        #[arg(long)]
+        lock: PathBuf,
+        /// Project-relative directory to scan recursively; repeat for multiple directories.
+        #[arg(long, required = true)]
+        scan: Vec<PathBuf>,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
     List {
         #[arg(long)]
         project: Option<PathBuf>,
@@ -830,6 +843,29 @@ fn run() -> Result<(), (String, String)> {
             })
         }
         Command::Asset { command } => match command {
+            AssetCommand::VerifyImages {
+                root, lock, scan, ..
+            } => {
+                let report = forge_core::image_contract::verify_images(&root, &lock, &scan)
+                    .map_err(|message| ("invalid_image_contract".into(), message))?;
+                let envelope = Envelope {
+                    schema_version: JSON_SCHEMA_VERSION,
+                    ok: report.verified,
+                    error: (!report.verified).then(|| ErrorBody {
+                        code: "image_contract_failed".into(),
+                        message: format!(
+                            "{} image contract issue(s); inspect data.issues",
+                            report.issues.len()
+                        ),
+                    }),
+                    data: Some(&report),
+                };
+                println!("{}", serde_json::to_string(&envelope).map_err(json_error)?);
+                if !report.verified {
+                    std::process::exit(1);
+                }
+                Ok(())
+            }
             AssetCommand::List {
                 project,
                 kind,

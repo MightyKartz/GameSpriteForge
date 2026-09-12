@@ -101,6 +101,11 @@ jobs:
           cargo build --locked -p forge-cli --no-default-features
           python3 scripts/test-cli-skill.py --forge "${GITHUB_WORKSPACE}/target/debug/forge" --output "${RUNNER_TEMP}/forge-v03-quality/skill"
 
+      - name: Verify consumer image contracts
+        run: |
+          cargo test --locked -p core --test image_contract_tests
+          python3 scripts/test-image-contract-cli.py --forge "${GITHUB_WORKSPACE}/target/debug/forge"
+
       - name: Upload QA evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -109,3 +114,25 @@ jobs:
           path: ${{ runner.temp }}/forge-v03-quality
           if-no-files-found: error
           retention-days: 14
+
+  windows-cli:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: Build Windows source CLI and verify offline delivery contracts
+        shell: pwsh
+        run: |
+          cargo build --locked -p forge-cli --no-default-features
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo test --locked -p core --lib video::ffmpeg::tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo test --locked -p core --test image_contract_tests --test delivery_audit_tests --test static_delivery_tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/test-image-contract-cli.py --forge target/debug/forge.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/test-cli-skill.py --forge "$env:GITHUB_WORKSPACE/target/debug/forge.exe" --guide-only
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

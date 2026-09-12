@@ -22,6 +22,10 @@ fn write_json(path: &Path, value: &Value) {
 
 /// An offline baseline fixture; verification deliberately does not claim native Godot loading.
 fn fixture(root: &Path) -> (PathBuf, PathBuf, PathBuf) {
+    fixture_with_usage_separator(root, "/")
+}
+
+fn fixture_with_usage_separator(root: &Path, separator: &str) -> (PathBuf, PathBuf, PathBuf) {
     let png = root.join("source.png");
     let mut image = RgbaImage::new(16, 16);
     for y in 3..13 {
@@ -73,6 +77,14 @@ fn fixture(root: &Path) -> (PathBuf, PathBuf, PathBuf) {
     let mut usage = json!({"schemaVersion":"1","assetKey":"props","assetId":summary.id,"packSha256":pack_sha,"kind":"prop_set",
         "scenePath":"res://addons/forge_assets/props/scenes","spriteFramesPath":"res://addons/forge_assets/props/items",
         "defaultAnimation":summary.default_animation,"animations":summary.animations,"items":summary.items});
+    for field in ["scenePath", "spriteFramesPath"] {
+        let resource = usage[field]
+            .as_str()
+            .unwrap()
+            .strip_prefix("res://")
+            .unwrap();
+        usage[field] = json!(format!("res://{}", resource.replace('/', separator)));
+    }
     for key in ["rendering", "anchor", "frameWidth", "frameHeight"] {
         if let Some(value) = helper.get(key) {
             usage[key] = value.clone();
@@ -124,6 +136,19 @@ fn audit_is_read_only_and_detects_rewritten_native_resource_even_with_a_replaced
 }
 
 #[test]
+fn audit_accepts_legacy_windows_usage_paths_without_rewriting_them() {
+    let root = tempfile::tempdir().unwrap();
+    let (project, _, _) = fixture_with_usage_separator(root.path(), "\\");
+    let before = inventory(&project).unwrap();
+
+    let report = verify_install(&project, "props", None).unwrap();
+
+    assert_eq!(report["readOnly"], true);
+    assert_eq!(report["verifiedTextures"], 1);
+    assert_eq!(before, inventory(&project).unwrap());
+}
+
+#[test]
 fn cache_audit_rejects_stale_bytes_and_distinguishes_missing_cache_without_rebuilding() {
     let root = tempfile::tempdir().unwrap();
     let (project, target, pack) = fixture(root.path());
@@ -139,7 +164,7 @@ fn cache_audit_rejects_stale_bytes_and_distinguishes_missing_cache_without_rebui
     let sidecar = target.join("items/gem.png.import");
     fs::write(
         &sidecar,
-        format!("[remap]\npath=\"res://{}\"\n", cache_relative.display()),
+        format!("[remap]\npath=\"res://.godot/imported/{prefix}.ctex\"\n"),
     )
     .unwrap();
     write_install_snapshot(&project, &target).unwrap();

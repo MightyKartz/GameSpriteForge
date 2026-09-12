@@ -139,6 +139,10 @@ pub fn safe_relative(path: &Path) -> bool {
             .all(|part| matches!(part, Component::Normal(_)))
 }
 
+pub(crate) fn godot_resource_path(relative: &Path) -> String {
+    format!("res://{}", relative.to_string_lossy().replace('\\', "/"))
+}
+
 pub fn safe_project_target(project: &Path, relative: &Path) -> io::Result<PathBuf> {
     if !safe_relative(relative)
         || !relative.starts_with("addons/forge_assets")
@@ -211,9 +215,12 @@ pub fn verify_install(
         ("scenePath", &entry.scene_path),
         ("spriteFramesPath", &entry.sprite_frames_path),
     ] {
+        // Earlier Windows builds emitted native separators in usage JSON.
+        // Keep their recorded bytes intact while comparing the same resource URI.
+        let recorded_uri = usage[field].as_str().map(|uri| uri.replace('\\', "/"));
         if !relative.starts_with(&entry.godot_target)
             || !safe_relative(relative)
-            || usage[field] != format!("res://{}", relative.display())
+            || recorded_uri != Some(godot_resource_path(relative))
             || !project.join(relative).exists()
         {
             return Err(invalid(format!(

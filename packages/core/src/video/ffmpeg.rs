@@ -168,11 +168,13 @@ fn path_candidates(binary_name: &str, directory: &Path) -> Vec<PathBuf> {
     let candidates = vec![directory.join(binary_name)];
 
     #[cfg(windows)]
-    {
+    let candidates = {
+        let mut candidates = candidates;
         if !binary_name.ends_with(".exe") {
             candidates.push(directory.join(format!("{binary_name}.exe")));
         }
-    }
+        candidates
+    };
 
     candidates
 }
@@ -199,6 +201,19 @@ mod tests {
         let found = find_in_directories("ffmpeg", vec![temp.path().to_path_buf()]).unwrap();
 
         assert_eq!(found, binary.to_string_lossy());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn find_in_directories_resolves_windows_executable_extension() {
+        let temp = tempfile::tempdir().unwrap();
+        let binary = temp.path().join("ffmpeg.exe");
+        std::fs::write(&binary, b"").unwrap();
+
+        let found = find_in_directories("ffmpeg", vec![temp.path().to_path_buf()]).unwrap();
+
+        assert_eq!(found, binary.to_string_lossy());
+        assert_eq!(path_candidates("ffmpeg.exe", temp.path()), vec![binary]);
     }
 
     #[test]

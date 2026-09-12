@@ -219,6 +219,17 @@ fn static_pack_installs_in_real_godot_with_legacy_compatibility() {
         assert_eq!(completed.next_actions, ["inspect_project", "job_report"]);
         let usage = read_json(project.join(target).join("forge_usage.json"));
         assert_eq!(
+            usage["scenePath"],
+            format!(
+                "res://addons/forge_assets/{name}/{}",
+                if name == "icons" { "items" } else { "scenes" }
+            )
+        );
+        assert_eq!(
+            usage["spriteFramesPath"],
+            format!("res://addons/forge_assets/{name}/items")
+        );
+        assert_eq!(
             usage["texturePaths"]["stone"],
             format!("res://addons/forge_assets/{name}/items/stone.png")
         );

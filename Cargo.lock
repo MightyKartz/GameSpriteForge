@@ -493,6 +493,7 @@ dependencies = [
  "image",
  "md5",
  "pack",
+ "png",
  "serde",
  "serde_json",
  "sha2",

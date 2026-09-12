@@ -5216,8 +5216,8 @@ fn run_install_godot(
             "assetId": &pack_summary.id,
             "packSha256": &pack_sha256,
             "kind": &pack_summary.asset_type,
-            "scenePath": format!("res://{}", scene_relative.display()),
-            "spriteFramesPath": format!("res://{}", frames_relative.display()),
+            "scenePath": crate::delivery::godot_resource_path(&scene_relative),
+            "spriteFramesPath": crate::delivery::godot_resource_path(&frames_relative),
             "defaultAnimation": &pack_summary.default_animation,
             "animations": &pack_summary.animations,
             "items": &pack_summary.items,
@@ -5292,13 +5292,11 @@ fn run_install_godot(
                 .map(|item| {
                     (
                         item.id.clone(),
-                        serde_json::json!(format!(
-                            "res://{}",
-                            request
+                        serde_json::json!(crate::delivery::godot_resource_path(
+                            &request
                                 .target
                                 .join("items")
                                 .join(format!("{}.png", item.id))
-                                .display()
                         )),
                     )
                 })
