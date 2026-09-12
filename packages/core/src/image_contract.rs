@@ -143,7 +143,7 @@ pub fn verify_images(
     }
     let contract: Contract =
         serde_json::from_slice(json_bytes).map_err(|e| format!("invalid image lock: {e}"))?;
-    if contract.schema_version != Value::from(1) && contract.schema_version != Value::from("1") {
+    if contract.schema_version != 1 && contract.schema_version != "1" {
         return Err("image lock schemaVersion must be 1 or \"1\"".into());
     }
     let mut scans = BTreeSet::new();
