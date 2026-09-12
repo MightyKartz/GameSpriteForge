@@ -49,6 +49,28 @@ def main():
                           executable=args.legacy_forge.absolute(), ok=False)
             assert 'unsupported catalog schemaVersion 3' in failure.stdout
 
+        media = root / 'media'
+        media.mkdir()
+        (media / 'source.bin').write_bytes(b'local fixture')
+        scan_file = root / 'scan.json'
+        before = inventory(project)
+        scan = run('asset', 'scan', '--project', project, '--root', media, '--out', scan_file)
+        assert inventory(project) == before and len(scan['items']) == 1
+        run('asset', 'scan', '--project', project, '--root', media, '--out', scan_file, ok=False)
+        registered = run('asset', 'register', '--project', project, '--input', scan_file)
+        before = inventory(project)
+        assert run('asset', 'register', '--project', project, '--input', scan_file)[0]['outcome'] == 'existing'
+        assert inventory(project) == before
+        found = run('asset', 'search', '--project', project, '--kind', 'file', '--limit', 1)
+        assert found['total'] == 1 and found['items'][0]['status'] == 'available'
+        assert run('asset', 'history', '--project', project, '--id', registered[0]['assetId'])[0]['revision'] == registered[0]['revision']
+        assert run('asset', 'list', '--project', project) == []
+        assert inventory(project) == before
+        (media / 'source.bin').write_bytes(b'drift')
+        run('asset', 'register', '--project', project, '--input', scan_file, ok=False)
+        assert inventory(project) == before
+        assert run('asset', 'search', '--project', project, '--status', 'changed')['total'] == 1
+
         legacy = root / 'legacy'
         (legacy / '.forge').mkdir(parents=True)
         catalog = legacy / '.forge/catalog.json'
@@ -75,7 +97,7 @@ def main():
         build = run('doctor')['build']
         print(json.dumps({'passed': True, 'build': build, 'legacyBinaryChecked': bool(args.legacy_forge),
                           'checks': ['local_init', 'readonly_query', 'migration_preview', 'stale_preview',
-                                     'legacy_backup', 'unknown_evidence', 'no_jobs_or_provider_requests']}))
+                                     'legacy_backup', 'unknown_evidence', 'scan_register_search_history', 'no_jobs_or_provider_requests']}))
 
 
 if __name__ == '__main__':

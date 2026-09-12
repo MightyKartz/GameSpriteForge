@@ -132,6 +132,15 @@
           "items": {
             "$ref": "#/$defs/install"
           }
+        },
+        "additionalLocations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/location"
+            }
+          }
         }
       }
     },
