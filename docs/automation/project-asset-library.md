@@ -152,3 +152,40 @@ V3 game-art reuse searches available historical revisions in dependency order.
 Spec, workflow, style/subject locks, Provider configuration, dependency revision
 and Pack content must match. Reverting a spec may reuse an earlier coherent build
 without modifying either the latest publication or the user's selected revision.
+
+## Retain, lock and deliver a specific version
+
+```sh
+forge asset retain --project ./library --id hero --revision REVISION --json
+forge asset select --project ./library --id hero --revision REVISION --json
+forge asset lock --project ./library --id hero --revision REVISION --out ./game/.forge/resources.lock.json --json
+forge godot plan-install --library ./library --asset-id hero --asset-lock ./game/.forge/resources.lock.json --project ./game --json
+forge asset installations --project ./library --id hero --json
+```
+
+`retain` verifies source and staged copies, then makes the exact revision's
+project-local media the preferred location. Original locations remain alternatives.
+Retained bytes are under ignored `.forge/library/media/`; committing catalog JSON
+alone does not transfer them. Existing corrupt retained destinations are rejected,
+not silently overwritten. Source moves or Job-store cleanup do not affect intact
+retained versions. Retention does not regenerate, resample or approve media.
+
+`select` records the user's preferred revision independently of build reuse.
+`lock` writes a consumer lock using `schemas/resource-lock.schema.json`; repeated
+calls update only the explicitly named asset. The lock records library identity,
+revision and canonical content hash. New publications and selection changes never
+modify consumer locks. This file is separate from the Forge/Godot toolchain lock.
+
+`godot plan-install` accepts either the original `--pack` path or an explicit
+`--library`, `--asset-id` and `--revision`/`--asset-lock`. The resolved Plan includes
+the complete Pack and all members in its impact description. Execution remains
+single-use and rechecks media, resource-lock bytes, catalog state and target identity.
+Only whole-Pack installation is supported, even if several logical resources share
+that Pack. Related library revisions are disclosed; installation evidence links
+the requested logical resource and exact revision. Installation does not establish
+human approval or actual runtime references. Existing direct-Pack calls remain valid.
+
+Installations use the existing native resource verification, ownership checks,
+snapshots and transaction rollback. Library selection and consumer locks are not
+changed by installation, including A → B → A delivery. Historical installation
+associations remain inspectable through `asset installations`.

@@ -603,6 +603,8 @@ pub fn run_character_benchmark(
                         &plans,
                         &jobs,
                         AutomationOperation::InstallGodot(GodotInstallRequest {
+                            catalog_revision: None,
+                            resource_lock_path: None,
                             schema_version: "1".into(),
                             pack_path: pack.path.clone(),
                             project_path: godot_project.clone(),

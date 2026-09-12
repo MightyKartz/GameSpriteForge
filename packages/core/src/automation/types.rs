@@ -524,6 +524,10 @@ pub struct AssetMetadata {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct GodotInstallRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub catalog_revision: Option<crate::library::delivery::VersionRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resource_lock_path: Option<PathBuf>,
     #[serde(default = "schema_version")]
     pub schema_version: String,
     pub pack_path: PathBuf,

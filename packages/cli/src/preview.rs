@@ -63,6 +63,8 @@ fn run_inner(args: PreviewArgs) -> Result<serde_json::Value, String> {
     let jobs = JobStore::new(output.join("jobs")).map_err(|error| error.to_string())?;
     let prepared = plans
         .prepare(AutomationOperation::InstallGodot(GodotInstallRequest {
+            catalog_revision: None,
+            resource_lock_path: None,
             schema_version: "1".into(),
             pack_path: pack.clone(),
             project_path: project.clone(),

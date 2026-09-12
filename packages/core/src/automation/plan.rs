@@ -100,6 +100,17 @@ impl PlanStore {
         let recipe_hash = hash_serializable(&operation)?;
         let now = Utc::now();
         let mut effects = describe_effects(&operation);
+        if let AutomationOperation::InstallGodot(request) = &operation {
+            if let (Some(root), Some(reference)) =
+                (&request.catalog_project_path, &request.catalog_revision)
+            {
+                let impact = crate::library::delivery::install_impact(root, reference)
+                    .map_err(|e| PlanStoreError::InvalidRequest(e.to_string()))?;
+                effects.push(format!(
+                    "install complete Pack for exact library revision; impact: {impact}"
+                ));
+            }
+        }
         if let Some(binding) = crate::library::finalize::binding(&operation) {
             effects.push(format!(
                 "register validated output as {} in {}; retain publication request for recovery",
@@ -597,35 +608,73 @@ fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreEr
                         .into(),
                 ));
             }
-            if let Some(catalog_project) = &request.catalog_project_path {
-                if !crate::library::is_library(catalog_project)
-                    .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?
+            if request.catalog_revision.is_some() && request.catalog_project_path.is_none() {
+                return Err(PlanStoreError::InvalidRequest(
+                    "catalogRevision requires catalogProjectPath".into(),
+                ));
+            }
+            if request.resource_lock_path.is_some() && request.catalog_revision.is_none() {
+                return Err(PlanStoreError::InvalidRequest(
+                    "resourceLockPath requires catalogRevision".into(),
+                ));
+            }
+            if let (Some(root), Some(reference)) =
+                (&request.catalog_project_path, &request.catalog_revision)
+            {
+                let resolved = crate::library::delivery::resolve(root, reference)
+                    .map_err(|e| PlanStoreError::InvalidRequest(e.to_string()))?;
+                if fs::canonicalize(&request.pack_path)
+                    .map_err(|e| PlanStoreError::InvalidRequest(e.to_string()))?
+                    != fs::canonicalize(resolved.path)
+                        .map_err(|e| PlanStoreError::InvalidRequest(e.to_string()))?
                 {
-                    read_project(catalog_project)
-                        .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
-                }
-                let catalog = read_project_catalog(catalog_project)
-                    .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
-                let canonical_pack =
-                    fs::canonicalize(&request.pack_path).map_err(|source| PlanStoreError::Io {
-                        path: request.pack_path.clone(),
-                        source,
-                    })?;
-                let found = catalog.assets.values().any(|entry| {
-                    fs::canonicalize(&entry.pack_path)
-                        .ok()
-                        .is_some_and(|path| path == canonical_pack)
-                });
-                if !found {
                     return Err(PlanStoreError::InvalidRequest(
-                        "catalogProjectPath does not contain the requested Pack".into(),
+                        "Pack path does not match catalogRevision".into(),
                     ));
                 }
-                if crate::library::is_library(catalog_project)
-                    .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?
-                {
-                    crate::library::validate_current_pack(catalog_project, &request.pack_path)
+                if let Some(path) = &request.resource_lock_path {
+                    let locked =
+                        crate::library::delivery::locked_reference(root, &reference.asset_id, path)
+                            .map_err(|e| PlanStoreError::InvalidRequest(e.to_string()))?;
+                    if &locked != reference {
+                        return Err(PlanStoreError::InvalidRequest(
+                            "resource lock revision mismatch".into(),
+                        ));
+                    }
+                }
+            } else {
+                if let Some(catalog_project) = &request.catalog_project_path {
+                    if !crate::library::is_library(catalog_project)
+                        .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?
+                    {
+                        read_project(catalog_project)
+                            .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
+                    }
+                    let catalog = read_project_catalog(catalog_project)
                         .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
+                    let canonical_pack =
+                        fs::canonicalize(&request.pack_path).map_err(|source| {
+                            PlanStoreError::Io {
+                                path: request.pack_path.clone(),
+                                source,
+                            }
+                        })?;
+                    let found = catalog.assets.values().any(|entry| {
+                        fs::canonicalize(&entry.pack_path)
+                            .ok()
+                            .is_some_and(|path| path == canonical_pack)
+                    });
+                    if !found {
+                        return Err(PlanStoreError::InvalidRequest(
+                            "catalogProjectPath does not contain the requested Pack".into(),
+                        ));
+                    }
+                    if crate::library::is_library(catalog_project)
+                        .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?
+                    {
+                        crate::library::validate_current_pack(catalog_project, &request.pack_path)
+                            .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
+                    }
                 }
             }
         }
@@ -936,6 +985,12 @@ pub fn fingerprint_operation_inputs(
             }
         }
         AutomationOperation::InstallGodot(request) => {
+            if let Some(lock) = &request.resource_lock_path {
+                hash_files(&mut hasher, std::slice::from_ref(lock))?;
+            }
+            if let Some(reference) = &request.catalog_revision {
+                hasher.update(serde_json::to_vec(reference)?);
+            }
             hash_directory(&mut hasher, &request.pack_path)?;
             hash_files(&mut hasher, &[request.project_path.join("project.godot")])?;
             if let Some(catalog_project) = &request.catalog_project_path {

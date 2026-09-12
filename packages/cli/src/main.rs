@@ -252,6 +252,14 @@ enum SourceCommand {
 
 #[derive(Subcommand)]
 enum AssetCommand {
+    /// Copy exact revision bytes into durable project storage.
+    Retain(asset_library::VersionArgs),
+    /// Select a version without changing build reuse.
+    Select(asset_library::VersionArgs),
+    /// Write or update an explicit consumer resource-version lock.
+    Lock(asset_library::LockArgs),
+    /// Query known installation associations across versions.
+    Installations(asset_library::HistoryArgs),
     /// Finish a durable output publication without rerunning generation.
     Recover(asset_library::RecoverArgs),
     /// Inspect an explicitly selected root and write an editable intake plan.
@@ -665,8 +673,16 @@ enum GodotCommand {
         json: JsonFlag,
     },
     PlanInstall {
-        #[arg(long)]
-        pack: PathBuf,
+        #[arg(long, required_unless_present = "library", conflicts_with = "library")]
+        pack: Option<PathBuf>,
+        #[arg(long, requires = "asset_id", conflicts_with = "catalog_project")]
+        library: Option<PathBuf>,
+        #[arg(long, requires = "library")]
+        asset_id: Option<String>,
+        #[arg(long, requires = "library", conflicts_with = "asset_lock")]
+        revision: Option<String>,
+        #[arg(long, requires = "library", conflicts_with = "revision")]
+        asset_lock: Option<PathBuf>,
         #[arg(long)]
         project: PathBuf,
         #[arg(long)]
@@ -949,6 +965,10 @@ fn run() -> Result<(), (String, String)> {
             })
         }
         Command::Asset { command } => match command {
+            AssetCommand::Retain(args) => asset_library::retain(args),
+            AssetCommand::Select(args) => asset_library::select(args),
+            AssetCommand::Lock(args) => asset_library::lock(args),
+            AssetCommand::Installations(args) => asset_library::installations(args),
             AssetCommand::Recover(args) => asset_library::recover(args),
             AssetCommand::Scan(args) => asset_library::scan(args),
             AssetCommand::Register(args) => asset_library::register(args),
@@ -1568,17 +1588,56 @@ fn run() -> Result<(), (String, String)> {
             ),
             GodotCommand::PlanInstall {
                 pack,
+                library,
+                asset_id,
+                revision,
+                asset_lock,
                 project,
                 catalog_project,
                 target,
                 asset_key,
                 ..
             } => {
+                let asset_lock = asset_lock
+                    .map(std::fs::canonicalize)
+                    .transpose()
+                    .map_err(io_error)?;
+                let (pack, catalog_project, catalog_revision) = if let Some(root) = library {
+                    let root = std::fs::canonicalize(root).map_err(io_error)?;
+                    let id = asset_id.expect("clap requires asset ID");
+                    let reference = match (revision, asset_lock.as_ref()) {
+                        (Some(revision), None) => forge_core::library::delivery::VersionRef {
+                            asset_id: id,
+                            revision,
+                        },
+                        (None, Some(lock)) => {
+                            forge_core::library::delivery::locked_reference(&root, &id, lock)
+                                .map_err(asset_library::error)?
+                        }
+                        _ => {
+                            return Err((
+                                "invalid_arguments".into(),
+                                "library installation requires --revision or --asset-lock".into(),
+                            ))
+                        }
+                    };
+                    let resolved = forge_core::library::delivery::resolve(&root, &reference)
+                        .map_err(asset_library::error)?;
+                    (resolved.path, Some(root), Some(reference))
+                } else {
+                    (
+                        pack.expect("clap requires Pack or library"),
+                        catalog_project,
+                        None,
+                    )
+                };
                 let target = match target {
                     Some(target) => target,
                     None => default_godot_target(&pack, asset_key.as_deref())?,
                 };
                 let request = GodotInstallRequest {
+                    catalog_revision,
+                    resource_lock_path: asset_lock,
                     schema_version: "1".into(),
                     pack_path: pack,
                     project_path: project,

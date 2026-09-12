@@ -241,6 +241,8 @@ fn static_pack_installs_in_real_godot_with_legacy_compatibility() {
         }
         let target = PathBuf::from("addons/forge_assets").join(name);
         let operation = AutomationOperation::InstallGodot(GodotInstallRequest {
+            catalog_revision: None,
+            resource_lock_path: None,
             schema_version: "1".into(),
             pack_path: pack,
             project_path: project.clone(),

@@ -152,3 +152,50 @@ pub fn recover(args: RecoverArgs) -> Result<(), (String, String)> {
         &serde_json::json!({"catalogPath":library::finalize::recover(&args.input).map_err(error)?}),
     )
 }
+
+#[derive(Args)]
+pub struct VersionArgs {
+    #[arg(long)]
+    project: PathBuf,
+    #[arg(long)]
+    id: String,
+    #[arg(long)]
+    revision: String,
+    #[command(flatten)]
+    json: crate::JsonFlag,
+}
+impl VersionArgs {
+    fn reference(&self) -> library::delivery::VersionRef {
+        library::delivery::VersionRef {
+            asset_id: self.id.clone(),
+            revision: self.revision.clone(),
+        }
+    }
+}
+#[derive(Args)]
+pub struct LockArgs {
+    #[command(flatten)]
+    version: VersionArgs,
+    #[arg(long)]
+    out: PathBuf,
+}
+pub fn retain(args: VersionArgs) -> Result<(), (String, String)> {
+    crate::success(&library::delivery::retain(&args.project, &args.reference()).map_err(error)?)
+}
+pub fn select(args: VersionArgs) -> Result<(), (String, String)> {
+    crate::success(&library::delivery::select(&args.project, &args.reference()).map_err(error)?)
+}
+pub fn lock(args: LockArgs) -> Result<(), (String, String)> {
+    crate::success(
+        &library::delivery::write_lock(&args.version.project, &args.version.reference(), &args.out)
+            .map_err(error)?,
+    )
+}
+pub fn installations(args: HistoryArgs) -> Result<(), (String, String)> {
+    let catalog = library::read_catalog(&args.project).map_err(error)?;
+    crate::success(
+        &library::read_asset(&args.project, &catalog, &args.id)
+            .map_err(error)?
+            .installations,
+    )
+}

@@ -197,6 +197,8 @@ fn fixture_generates_consistent_icon_set_pack() {
     .unwrap();
     let prepared = plans
         .prepare(AutomationOperation::InstallGodot(GodotInstallRequest {
+            catalog_revision: None,
+            resource_lock_path: None,
             schema_version: "1".into(),
             pack_path: pack,
             project_path: godot_project.clone(),
@@ -267,6 +269,8 @@ fn fixture_generates_consistent_icon_set_pack() {
         .clone();
     let prepared = plans
         .prepare(AutomationOperation::InstallGodot(GodotInstallRequest {
+            catalog_revision: None,
+            resource_lock_path: None,
             schema_version: "1".into(),
             pack_path: prop_pack,
             project_path: godot_project.clone(),

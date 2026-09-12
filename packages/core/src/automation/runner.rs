@@ -5434,6 +5434,7 @@ fn run_install_godot(
             serde_json::to_vec_pretty(&serde_json::json!({
                 "schemaVersion": "1", "assetKey": &asset_key, "packSha256": &pack_sha256,
                 "nativeLoadVerified": true, "visualApproval": false, "phases": native_results,
+                "libraryRevision": request.catalog_revision,
             }))?,
         )?;
         crate::delivery::write_install_snapshot(&request.project_path, &target)?;
@@ -5453,15 +5454,44 @@ fn run_install_godot(
         })
         .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
         let catalog_link = if let Some(catalog_project) = &request.catalog_project_path {
-            Some(
+            let path = if crate::library::is_library(catalog_project)
+                .map_err(|e| AutomationRunError::Processing(e.to_string()))?
+            {
+                let reference = if let Some(reference) = &request.catalog_revision {
+                    reference.clone()
+                } else {
+                    let catalog = crate::library::read_catalog(catalog_project)
+                        .map_err(|e| AutomationRunError::Processing(e.to_string()))?;
+                    let asset =
+                        crate::library::read_asset(catalog_project, &catalog, &pack_summary.id)
+                            .map_err(|e| AutomationRunError::Processing(e.to_string()))?;
+                    crate::library::delivery::VersionRef {
+                        asset_id: asset.asset_id,
+                        revision: asset.build_revision.ok_or_else(|| {
+                            AutomationRunError::Processing(
+                                "asset has no current publication".into(),
+                            )
+                        })?,
+                    }
+                };
+                crate::library::delivery::link_revision_unlocked(
+                    catalog_project,
+                    &reference,
+                    &request.pack_path,
+                    &request.project_path,
+                    &request.target,
+                    job_id,
+                )
+            } else {
                 link_catalog_install_unlocked(
                     catalog_project,
                     &pack_summary.id,
                     request.project_path.clone(),
                     request.target.clone(),
                 )
-                .map_err(|error| AutomationRunError::Processing(error.to_string()))?,
-            )
+            }
+            .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
+            Some(path)
         } else {
             None
         };
