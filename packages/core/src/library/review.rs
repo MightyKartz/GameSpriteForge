@@ -27,6 +27,24 @@ pub struct ReviewRequest {
     pub evidence: PathBuf,
 }
 
+/// Evidence can change type after recording; a directory inventory is never
+/// equivalent to the retained regular file, even if it contains matching bytes.
+pub(super) fn verify_evidence(root: &Path, review: &ReviewRecord) -> Result<PathBuf, CatalogError> {
+    let path = storage_path(root, &review.evidence_path)?;
+    let metadata = fs::symlink_metadata(&path)?;
+    if !metadata.is_file() || is_link(&metadata) {
+        return Err(invalid("review evidence must remain a regular file"));
+    }
+    let inventory = intake::content_at(&path)?;
+    let [file] = inventory.files.as_slice() else {
+        return Err(invalid("review evidence must contain exactly one file"));
+    };
+    if file.sha256 != review.evidence_sha256 || file.bytes != review.evidence_bytes {
+        return Err(invalid("review evidence is missing or changed"));
+    }
+    Ok(path)
+}
+
 pub fn read_reviews(
     root: &Path,
     asset: &AssetRecord,

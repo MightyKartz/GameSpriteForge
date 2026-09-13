@@ -200,11 +200,14 @@ pub fn create(
             }
         }
         for review in reviews {
-            let evidence = storage_path(root, &review.evidence_path)?;
-            let intact = intake::content_at(&evidence).ok().is_some_and(|i| {
-                i.files[0].sha256 == review.evidence_sha256
-                    && i.files[0].bytes == review.evidence_bytes
-            });
+            let evidence = review::verify_evidence(root, &review);
+            if let Err(error) = &evidence {
+                report.issues.push(format!(
+                    "{}/{} review evidence: {error}",
+                    reference.asset_id, review.domain
+                ));
+            }
+            let intact = evidence.is_ok();
             html.push_str(&format!("<details><summary>{}: {} · {}</summary><p>{}</p><p>Reviewer: {} · Evidence: {} ({})</p></details>", escape(&review.domain), escape(&review.verdict), review.recorded_at, escape(&review.statement), escape(&review.reviewer), review.evidence_sha256, if intact {"retained and verified"} else {"unavailable or changed"}));
         }
         let command = format!("forge asset review --project {} --id {} --revision {} --domain {suggested_domain} --verdict needs_review --reviewer YOUR_NAME --statement YOUR_NOTES --evidence /path/to/evidence", shell_quote(&fs::canonicalize(root)?.to_string_lossy()), shell_quote(&reference.asset_id), reference.revision);

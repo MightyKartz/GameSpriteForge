@@ -186,3 +186,64 @@ fn review_evidence_is_retained_and_new_versions_have_no_inherited_approval() {
     assert!(html.contains("visual: approved") && html.contains("visual: unknown"));
     assert!(!html.contains("<script>untrusted"));
 }
+
+#[test]
+fn preview_reports_missing_changed_and_nonfile_evidence_without_panicking() {
+    for state in [
+        "missing",
+        "empty_directory",
+        "single_file_directory",
+        "changed",
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path().join("library");
+        let source = temp.path().join("source.bin");
+        fs::write(&source, "source").unwrap();
+        library::initialize(&root, "Evidence types").unwrap();
+        let batch = intake::scan(&source).unwrap().batch;
+        let item = &intake::register(&root, &batch).unwrap()[0];
+        let reference = VersionRef {
+            asset_id: item.asset_id.clone(),
+            revision: item.revision.clone(),
+        };
+        let evidence = temp.path().join("notes.txt");
+        fs::write(&evidence, "original notes").unwrap();
+        let record = review::record(
+            &root,
+            &ReviewRequest {
+                reference: reference.clone(),
+                domain: "visual".into(),
+                verdict: "unknown".into(),
+                statement: "Fixture".into(),
+                reviewer: "Fixture".into(),
+                evidence,
+            },
+        )
+        .unwrap();
+        let stored = root.join(record.evidence_path);
+        fs::remove_file(&stored).unwrap();
+        match state {
+            "missing" => (),
+            "empty_directory" => fs::create_dir(&stored).unwrap(),
+            "single_file_directory" => {
+                fs::create_dir(&stored).unwrap();
+                fs::write(stored.join("matching.bin"), "original notes").unwrap();
+            }
+            "changed" => fs::write(&stored, "changed notes").unwrap(),
+            _ => unreachable!(),
+        }
+        let head = fs::read(root.join(".forge/catalog.json")).unwrap();
+        let report =
+            library::preview::create(&root, &[reference], &temp.path().join("preview")).unwrap();
+        assert!(
+            report
+                .issues
+                .iter()
+                .any(|issue| issue.contains("review evidence")),
+            "{state}"
+        );
+        let html = fs::read_to_string(report.index_path).unwrap();
+        assert!(html.contains("unavailable or changed"), "{state}");
+        assert_eq!(fs::read(root.join(".forge/catalog.json")).unwrap(), head);
+    }
+}
