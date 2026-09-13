@@ -20,6 +20,7 @@ const IDENTITY: &str = ".forge/library/identity.json";
 const LOCAL: &str = ".forge/library/local.json";
 const MAX_METADATA_BYTES: u64 = 16 * 1024 * 1024;
 
+pub mod finalize;
 pub mod intake;
 mod types;
 pub use types::{
@@ -785,6 +786,48 @@ pub(crate) fn link_install_unlocked(
     write_json(root, LOCAL, &config)?;
     commit_head(root, &expected_head, &catalog)?;
     Ok(root.join(PROJECT_CATALOG_RELATIVE))
+}
+
+/// Available legacy execution projections across history, newest first. Missing
+/// local root bindings do not destroy metadata; they simply cannot be reused.
+pub fn publication_history(
+    root: &Path,
+    id: &str,
+) -> Result<Vec<ProjectCatalogEntryV2>, CatalogError> {
+    let catalog = read_catalog(root)?;
+    if !catalog.assets.contains_key(id) {
+        return Ok(vec![]);
+    }
+    let asset = read_asset(root, &catalog, id)?;
+    let mut entries = vec![];
+    for digest in asset.revisions.iter().rev() {
+        let revision = read_revision(root, &asset, digest)?;
+        let Some(mut entry) = revision.legacy else {
+            continue;
+        };
+        let locations = asset
+            .locations
+            .get(digest)
+            .into_iter()
+            .chain(asset.additional_locations.get(digest).into_iter().flatten());
+        for location in locations {
+            let Ok(path) = resolve_location(root, location) else {
+                continue;
+            };
+            if intake::content_at(&path).ok().as_ref() == revision.content.as_ref()
+                && revision.content.is_some()
+            {
+                entry.pack_path = path;
+                entry.spec_path = asset
+                    .spec_locations
+                    .get(digest)
+                    .and_then(|location| resolve_location(root, location).ok());
+                entries.push(entry);
+                break;
+            }
+        }
+    }
+    Ok(entries)
 }
 
 #[cfg(test)]

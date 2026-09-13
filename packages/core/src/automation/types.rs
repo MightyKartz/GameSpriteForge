@@ -70,6 +70,8 @@ impl Default for QualityPolicy {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct PrepareAssetRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_project: Option<crate::library::finalize::ProjectBinding>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub source_locks: Vec<SourceLock>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -91,6 +93,8 @@ pub struct PrepareAssetRequest {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PrepareStaticRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_project: Option<crate::library::finalize::ProjectBinding>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub source_locks: Vec<SourceLock>,
     pub schema_version: String,
@@ -134,6 +138,8 @@ pub struct SourceLock {
 #[serde(rename_all = "camelCase")]
 #[serde(deny_unknown_fields)]
 pub struct PrepareCharacterPackRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_project: Option<crate::library::finalize::ProjectBinding>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub source_locks: Vec<SourceLock>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

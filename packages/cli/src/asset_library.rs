@@ -132,3 +132,23 @@ pub fn search(args: SearchArgs) -> Result<(), (String, String)> {
 pub fn history(args: HistoryArgs) -> Result<(), (String, String)> {
     crate::success(&library::intake::history(&args.project, &args.id).map_err(error)?)
 }
+
+pub fn resolve_binding(binding: &mut Option<library::finalize::ProjectBinding>, root: &Path) {
+    if let Some(binding) = binding {
+        if binding.project_path.is_relative() {
+            binding.project_path = root.join(&binding.project_path);
+        }
+    }
+}
+#[derive(Args)]
+pub struct RecoverArgs {
+    #[arg(long)]
+    input: PathBuf,
+    #[command(flatten)]
+    json: crate::JsonFlag,
+}
+pub fn recover(args: RecoverArgs) -> Result<(), (String, String)> {
+    crate::success(
+        &serde_json::json!({"catalogPath":library::finalize::recover(&args.input).map_err(error)?}),
+    )
+}

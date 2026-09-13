@@ -113,3 +113,42 @@ and can therefore read large media; it does not create an index or write files.
 The legacy `asset list/inspect` response shape remains unchanged; raw local
 revisions are available through the new search/history commands. Pack-member
 search indexes the whole Pack revision and does not enable member-only delivery.
+
+## Register completed production outputs
+
+Local static, audio, animation and character requests accept this optional field:
+
+```json
+{"assetProject":{"projectPath":"../library","assetId":"hero-idle"}}
+```
+
+The same field is available in layered requests. CLI paths resolve relative to
+the request file. Initialize the V3 library first. The binding and project
+identity participate in local Plan fingerprints; requests without a binding
+retain their original serialized contract and behavior. Provider generation
+continues to publish through its existing project binding, including parent
+builds and retry/resume paths.
+
+Only completed, validated Packs enter the library. A Pack requiring review is
+not labeled approved. Publication requests are saved beside the Pack, outside
+its content inventory, with a name ending in `.publication-<digest>.json`. For
+local Jobs the `asset_publication_request` artifact identifies this file. If
+catalog registration fails, the complete Pack remains available and the Job
+reports `asset_registration_pending` with a recovery action:
+
+```sh
+forge asset recover --input /absolute/path/to/output.gsfpack.publication-digest.json --json
+```
+
+Recovery verifies the recorded bytes and only repeats registration. It does not
+create a Job or call a Provider. The durable request remains available for
+idempotent retries; it is not deleted after successful recovery. A failed Job
+remains historical execution evidence; the recovery response and catalog show
+successful registration separately. Local and direct-command publication records
+use actual execution IDs, while direct layered outputs carry command/build
+identity without a fabricated Job. User selection and human review are unchanged.
+
+V3 game-art reuse searches available historical revisions in dependency order.
+Spec, workflow, style/subject locks, Provider configuration, dependency revision
+and Pack content must match. Reverting a spec may reuse an earlier coherent build
+without modifying either the latest publication or the user's selected revision.

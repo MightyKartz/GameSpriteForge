@@ -47,8 +47,8 @@ use crate::automation::{
     PlanStoreError,
 };
 use crate::catalog::{
-    publish_catalog_asset, read_project_catalog, CatalogDependencyRefV1, CatalogLockRevisionsV1,
-    CatalogProviderRefV1, CatalogStyleRefV1, CatalogSubjectRefV1, ProjectCatalogEntryV2,
+    publish_catalog_asset, CatalogDependencyRefV1, CatalogLockRevisionsV1, CatalogProviderRefV1,
+    CatalogStyleRefV1, CatalogSubjectRefV1, ProjectCatalogEntryV2,
 };
 use crate::job::{JobLifecycleState, JobOperationKind, JobRecord, JobState, JobStore};
 use crate::provider::{MediaGenerationProvider, ProviderError, ProviderUsage};
@@ -368,9 +368,10 @@ pub fn run_build_project(
         resume_or_fresh_state(prior_state.as_ref(), &plan, &manifest_sha256, &plan_sha256);
     write_build_state(&state_path, &state)?;
 
-    let catalog = read_project_catalog(&project_root).map_err(|error| {
-        AutomationRunError::Processing(format!("invalid project catalog: {error}"))
-    })?;
+    let catalog =
+        super::diff::catalog_for_manifest(&project_root, &validated).map_err(|error| {
+            AutomationRunError::Processing(format!("invalid project catalog: {error}"))
+        })?;
     let mut known_publications = catalog
         .assets
         .iter()

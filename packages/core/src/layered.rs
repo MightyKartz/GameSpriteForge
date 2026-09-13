@@ -36,6 +36,8 @@ pub enum LayeredError {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PrepareLayeredRequest {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub asset_project: Option<crate::library::finalize::ProjectBinding>,
     pub schema_version: String,
     pub id: String,
     pub name: String,
@@ -176,6 +178,19 @@ pub fn prepare_layered_pack(
     request: &PrepareLayeredRequest,
     pack_dir: &Path,
 ) -> Result<LayeredPackOutput, LayeredError> {
+    prepare_layered_pack_with_producer(request, pack_dir, None)
+}
+
+pub fn prepare_layered_pack_with_producer(
+    request: &PrepareLayeredRequest,
+    pack_dir: &Path,
+    producer: Option<serde_json::Value>,
+) -> Result<LayeredPackOutput, LayeredError> {
+    if let Some(binding) = &request.asset_project {
+        binding
+            .validate()
+            .map_err(|e| LayeredError::Invalid(e.to_string()))?;
+    }
     if fs::symlink_metadata(pack_dir).is_ok() {
         return Err(LayeredError::OutputExists(pack_dir.to_path_buf()));
     }
@@ -279,6 +294,26 @@ pub fn prepare_layered_pack(
         "forgepack.json",
     ] {
         fs::rename(staged_pack.join(name), pack_dir.join(name))?;
+    }
+    if let Some(binding) = &request.asset_project {
+        let mut source = std::collections::BTreeMap::new();
+        source.insert(
+            "method".into(),
+            serde_json::json!("forge_asset_prepare_layered"),
+        );
+        source.insert(
+            "executionId".into(),
+            serde_json::json!(uuid::Uuid::new_v4().to_string()),
+        );
+        source.insert(
+            "coreVersion".into(),
+            serde_json::json!(env!("CARGO_PKG_VERSION")),
+        );
+        if let Some(producer) = producer {
+            source.insert("producerBuild".into(), producer);
+        }
+        crate::library::finalize::local_output(binding, pack_dir, source)
+            .map_err(|e| LayeredError::Invalid(e.to_string()))?;
     }
     Ok(LayeredPackOutput {
         pack_dir: pack_dir.to_path_buf(),

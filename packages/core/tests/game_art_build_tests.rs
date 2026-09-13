@@ -745,6 +745,25 @@ fn assert_build_reexecution(versioned_library: bool) {
             assert!(asset.selected_revision.is_none());
             assert_eq!(asset.revisions.len(), 1);
         }
+        write_static_spec(&root, "hud-icons", "icon_set", &["a silver coin"]);
+        let (_, changed) = run_build(&plans, &jobs, &root, &provider);
+        assert_eq!(changed.unwrap().summary.built, 2);
+        let after_change = provider.usage();
+        let head = fs::read(root.join(".forge/catalog.json")).unwrap();
+        write_static_spec(&root, "hud-icons", "icon_set", &["a gold coin"]);
+        let (_, reverted) = run_build(&plans, &jobs, &root, &provider);
+        let reverted = reverted.unwrap();
+        assert_eq!(reverted.summary.reused, 2);
+        assert_eq!(provider.usage(), after_change);
+        assert_eq!(head, fs::read(root.join(".forge/catalog.json")).unwrap());
+        for result in &reverted.results {
+            let original = first
+                .results
+                .iter()
+                .find(|r| r.asset_id == result.asset_id)
+                .unwrap();
+            assert_eq!(result.pack_path, original.pack_path);
+        }
     }
 }
 

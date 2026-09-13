@@ -252,6 +252,8 @@ enum SourceCommand {
 
 #[derive(Subcommand)]
 enum AssetCommand {
+    /// Finish a durable output publication without rerunning generation.
+    Recover(asset_library::RecoverArgs),
     /// Inspect an explicitly selected root and write an editable intake plan.
     Scan(asset_library::ScanArgs),
     /// Register a verified local batch without Provider execution.
@@ -947,6 +949,7 @@ fn run() -> Result<(), (String, String)> {
             })
         }
         Command::Asset { command } => match command {
+            AssetCommand::Recover(args) => asset_library::recover(args),
             AssetCommand::Scan(args) => asset_library::scan(args),
             AssetCommand::Register(args) => asset_library::register(args),
             AssetCommand::Search(args) => asset_library::search(args),
@@ -954,14 +957,19 @@ fn run() -> Result<(), (String, String)> {
             AssetCommand::PrepareLayered { input, output } => {
                 let mut request: forge_core::layered::PrepareLayeredRequest = read_request(&input)?;
                 let root = request_root(&input)?;
+                asset_library::resolve_binding(&mut request.asset_project, &root);
                 for layer in &mut request.layers {
                     if layer.path.is_relative() {
                         layer.path = root.join(&layer.path);
                     }
                 }
                 success(
-                    &forge_core::layered::prepare_layered_pack(&request, &output)
-                        .map_err(|message| ("invalid_layered_pack".into(), message.to_string()))?,
+                    &forge_core::layered::prepare_layered_pack_with_producer(
+                        &request,
+                        &output,
+                        Some(receipt::identity()?),
+                    )
+                    .map_err(|message| ("invalid_layered_pack".into(), message.to_string()))?,
                 )
             }
             AssetCommand::VerifyImages {
@@ -1701,6 +1709,7 @@ fn run() -> Result<(), (String, String)> {
             PlanCommand::PrepareStatic(input) => {
                 let mut request: PrepareStaticRequest = read_request(&input)?;
                 let root = request_root(&input)?;
+                asset_library::resolve_binding(&mut request.asset_project, &root);
                 for item in &mut request.items {
                     if item.path.is_relative() {
                         item.path = root.join(&item.path);
@@ -1719,6 +1728,7 @@ fn run() -> Result<(), (String, String)> {
             PlanCommand::PrepareAsset(input) => {
                 let mut request: PrepareAssetRequest = read_request(&input)?;
                 let root = request_root(&input)?;
+                asset_library::resolve_binding(&mut request.asset_project, &root);
                 resolve_local_input(&mut request.input, &root);
                 resolve_source_locks(&mut request.source_locks, &root);
                 let plan = plan_store()?
@@ -1729,6 +1739,7 @@ fn run() -> Result<(), (String, String)> {
             PlanCommand::PrepareCharacter(input) => {
                 let mut request: PrepareCharacterPackRequest = read_request(&input)?;
                 let root = request_root(&input)?;
+                asset_library::resolve_binding(&mut request.asset_project, &root);
                 for animation in &mut request.animations {
                     resolve_local_input(&mut animation.input, &root);
                 }
@@ -3142,6 +3153,7 @@ fn read_audio_request(
 ) -> Result<forge_core::audio::PrepareAudioRequest, (String, String)> {
     let mut request: forge_core::audio::PrepareAudioRequest = read_request(input)?;
     let root = request_root(input)?;
+    asset_library::resolve_binding(&mut request.asset_project, &root);
     for item in &mut request.items {
         if item.path.is_relative() {
             item.path = root.join(&item.path);

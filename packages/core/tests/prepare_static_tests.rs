@@ -21,6 +21,7 @@ fn request(root: &Path) -> PrepareStaticRequest {
     }
     image.save(&path).unwrap();
     PrepareStaticRequest {
+        asset_project: None,
         source_locks: vec![],
         schema_version: "1".into(),
         kind: StaticAssetKind::PropSet,
@@ -323,4 +324,67 @@ fn explicit_alpha_bounds_ignore_distant_residue_and_keep_padded_soft_edges() {
         hash_file(&done.job_dir.join("source/static/jade.png")).unwrap(),
         source_hash
     );
+}
+
+#[test]
+fn complete_job_pack_survives_registration_failure_and_can_be_recovered() {
+    let temp = tempfile::tempdir().unwrap();
+    let library = temp.path().join("library");
+    forge_core::library::initialize(&library, "Local").unwrap();
+    let mut request = request(temp.path());
+    request.asset_project = Some(forge_core::library::finalize::ProjectBinding {
+        project_path: library.clone(),
+        asset_id: "jade".into(),
+    });
+    let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+    let jobs = JobStore::new(temp.path().join("jobs")).unwrap();
+    let run = || {
+        let prepared = plans
+            .prepare(AutomationOperation::PrepareStatic(request.clone()))
+            .unwrap();
+        let plan = plans.claim(&prepared.token).unwrap();
+        let job = stage_plan_job(&jobs, &plan).unwrap();
+        (
+            job.job_id.clone(),
+            run_operation(&jobs, &job.job_id, &plan.operation),
+        )
+    };
+    run().1.unwrap();
+    let catalog = forge_core::library::read_catalog(&library).unwrap();
+    let object = library.join(format!(
+        ".forge/library/objects/{}.json",
+        catalog.assets["jade"]
+    ));
+    let original = fs::read(&object).unwrap();
+    fs::write(&object, b"corrupt").unwrap();
+    let (id, result) = run();
+    assert!(result.is_err());
+    let failed = jobs.read_record(&id).unwrap();
+    assert_eq!(
+        failed.error_code.as_deref(),
+        Some("asset_registration_pending")
+    );
+    assert!(failed
+        .next_actions
+        .contains(&"recover_asset_publication".into()));
+    let pack = failed
+        .artifacts
+        .iter()
+        .find(|a| a.kind == "gsfpack")
+        .unwrap();
+    forge_pack::validate_pack_layout(&pack.path).unwrap();
+    let pending = failed
+        .artifacts
+        .iter()
+        .find(|a| a.kind == "asset_publication_request")
+        .unwrap();
+    fs::write(object, original).unwrap();
+    forge_core::library::finalize::recover(&pending.path).unwrap();
+    assert_eq!(
+        forge_core::library::intake::history(&library, "jade")
+            .unwrap()
+            .len(),
+        2
+    );
+    assert_eq!(jobs.list_records().unwrap().len(), 2);
 }
