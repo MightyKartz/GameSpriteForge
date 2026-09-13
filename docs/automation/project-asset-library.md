@@ -189,3 +189,45 @@ Installations use the existing native resource verification, ownership checks,
 snapshots and transaction rollback. Library selection and consumer locks are not
 changed by installation, including A → B → A delivery. Historical installation
 associations remain inspectable through `asset installations`.
+
+## Offline preview and revision review
+
+```sh
+forge asset preview --project ./library --kind audio --out ./audio-preview --json
+forge asset preview --project ./library --id hero --revision REVISION_A --revision REVISION_B --out ./comparison --json
+forge asset review --project ./library --id hero --revision REVISION_A --domain visual --verdict needs_review --reviewer YOUR_NAME --statement "Check the silhouette" --evidence ./review-notes.txt --json
+forge asset reviews --project ./library --id hero --revision REVISION_A --json
+forge asset search --project ./library --review-domain visual --review-verdict approved --json
+forge asset annotate --project ./library --id hero --name "Main hero" --tag player --tag forest --json
+```
+
+Preview writes a new directory containing `index.html`, a small report and copies
+of supported existing media. Open `index.html` in a local browser. No server,
+external service, script, automatic browser launch or Provider is involved. PNG,
+JPEG, GIF, WebP and browser-supported WAV/MP3/OGG/FLAC/M4A/MP4/WebM use native image,
+audio or video elements; unsupported formats show an explicit message. Existing
+GIF bytes/timing and audio bytes remain unchanged. Pack previews include available
+member/animation/audio metadata and original technical reports. Layered transform
+tracks remain visible as metadata; this gallery does not synthesize a new rendered
+layered animation.
+
+With `--id`, preview includes that asset's history; repeat IDs for several assets,
+or repeat `--revision` with one ID for a comparison. Without IDs, query/kind/tag
+filters use the search ordering and `--limit`/`--offset` pagination (default 20).
+The JSON `selection` reports total matches and the selected page. One preview
+contains at most 100 revisions. Missing sources are reported, with review/source
+metadata still available. Existing output directories are never overwritten.
+
+Review domains are `technical`, `visual`, `auditory` and `license`; verdicts are
+`approved`, `rejected`, `needs_review` and `unknown`. These are explicit human
+assertions, separate from the Pack's recorded technical checks. Evidence must be
+an existing regular file and is retained with its exact SHA-256. New records append
+to that content revision's review history; the latest record in each domain is
+shown in search/preview. New revisions start without inherited conclusions, and
+reviews never change selection, consumer locks or installation status. Historical
+imported review/license assertions remain available as original source metadata.
+
+The page escapes names, statements, paths and source metadata, restricts content
+loading with CSP, and displays separate POSIX/PowerShell commands for recording
+reviews. The page itself is read-only. Browser support for a media format is
+independent of Forge's ability to register, process or install it.

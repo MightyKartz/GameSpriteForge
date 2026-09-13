@@ -252,6 +252,14 @@ enum SourceCommand {
 
 #[derive(Subcommand)]
 enum AssetCommand {
+    /// Create a read-only offline media gallery with exact revision comparisons.
+    Preview(asset_library::PreviewArgs),
+    /// Record a revision-specific human assertion and retain its evidence.
+    Review(asset_library::ReviewArgs),
+    /// Read all assertions for an exact revision.
+    Reviews(asset_library::VersionArgs),
+    /// Update a logical resource's display name and tags.
+    Annotate(asset_library::AnnotateArgs),
     /// Copy exact revision bytes into durable project storage.
     Retain(asset_library::VersionArgs),
     /// Select a version without changing build reuse.
@@ -965,6 +973,10 @@ fn run() -> Result<(), (String, String)> {
             })
         }
         Command::Asset { command } => match command {
+            AssetCommand::Preview(args) => asset_library::preview(args),
+            AssetCommand::Review(args) => asset_library::review(args),
+            AssetCommand::Reviews(args) => asset_library::reviews(args),
+            AssetCommand::Annotate(args) => asset_library::annotate(args),
             AssetCommand::Retain(args) => asset_library::retain(args),
             AssetCommand::Select(args) => asset_library::select(args),
             AssetCommand::Lock(args) => asset_library::lock(args),

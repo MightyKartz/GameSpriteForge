@@ -283,6 +283,7 @@ fn register_inner(
                 additional_locations: BTreeMap::new(),
                 spec_locations: BTreeMap::new(),
                 installations: vec![],
+                reviews: vec![],
             }
         };
         if asset.kind != item.kind && production.is_none() {
@@ -376,6 +377,8 @@ pub struct SearchFilter {
     pub kind: Option<String>,
     pub tag: Option<String>,
     pub status: Option<String>,
+    pub review_domain: Option<String>,
+    pub review_verdict: Option<String>,
     pub offset: usize,
     pub limit: usize,
 }
@@ -390,6 +393,7 @@ pub struct SearchHit {
     pub registered_at: Option<String>,
     pub status: String,
     pub selected: bool,
+    pub review_states: BTreeMap<String, String>,
     pub members: Vec<String>,
 }
 #[derive(Debug, Serialize)]
@@ -433,7 +437,12 @@ fn hit(root: &Path, asset: &AssetRecord, digest: &str) -> Result<SearchHit, Cata
             }
         }
     }
+    let mut review_states = BTreeMap::new();
+    for review in review::read_reviews(root, asset, digest)? {
+        review_states.insert(review.domain, review.verdict);
+    }
     Ok(SearchHit {
+        review_states,
         asset_id: asset.asset_id.clone(),
         name: asset.name.clone(),
         kind: asset.kind.clone(),
@@ -465,6 +474,22 @@ pub fn search(root: &Path, filter: &SearchFilter) -> Result<SearchResult, Catalo
     {
         return Err(invalid("unknown availability status"));
     }
+    if filter.review_domain.is_some() != filter.review_verdict.is_some() {
+        return Err(invalid(
+            "review domain and verdict filters must be provided together",
+        ));
+    }
+    if filter
+        .review_domain
+        .as_deref()
+        .is_some_and(|d| !matches!(d, "technical" | "visual" | "auditory" | "license"))
+        || filter
+            .review_verdict
+            .as_deref()
+            .is_some_and(|v| !matches!(v, "approved" | "rejected" | "needs_review" | "unknown"))
+    {
+        return Err(invalid("invalid review filter"));
+    }
     let catalog = read_catalog(root)?;
     let mut items = vec![];
     for id in catalog.assets.keys() {
@@ -476,6 +501,17 @@ pub fn search(root: &Path, filter: &SearchFilter) -> Result<SearchResult, Catalo
         }
         for digest in &asset.revisions {
             let hit = hit(root, &asset, digest)?;
+            if let (Some(domain), Some(verdict)) = (&filter.review_domain, &filter.review_verdict) {
+                if hit
+                    .review_states
+                    .get(domain)
+                    .map(String::as_str)
+                    .unwrap_or("unknown")
+                    != verdict
+                {
+                    continue;
+                }
+            }
             if filter.status.as_ref().is_some_and(|s| s != &hit.status) {
                 continue;
             }

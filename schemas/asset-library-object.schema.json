@@ -8,6 +8,9 @@
     },
     {
       "$ref": "#/$defs/revision"
+    },
+    {
+      "$ref": "#/$defs/review"
     }
   ],
   "$defs": {
@@ -151,6 +154,14 @@
               "$ref": "#/$defs/location"
             }
           }
+        },
+        "reviews": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
         }
       }
     },
@@ -240,6 +251,71 @@
         },
         "source": {
           "type": "object"
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recordType",
+        "revision",
+        "domain",
+        "verdict",
+        "statement",
+        "reviewer",
+        "recordedAt",
+        "evidenceSha256",
+        "evidenceBytes",
+        "evidencePath"
+      ],
+      "properties": {
+        "recordType": {
+          "const": "asset_review_v1"
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "domain": {
+          "enum": [
+            "technical",
+            "visual",
+            "auditory",
+            "license"
+          ]
+        },
+        "verdict": {
+          "enum": [
+            "approved",
+            "rejected",
+            "needs_review",
+            "unknown"
+          ]
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recordedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "evidenceSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "evidenceBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evidencePath": {
+          "type": "string",
+          "pattern": "^\\.forge/library/media/evidence/[a-f0-9]{64}\\.bin$"
         }
       }
     }
