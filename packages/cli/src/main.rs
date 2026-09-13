@@ -252,6 +252,14 @@ enum SourceCommand {
 
 #[derive(Subcommand)]
 enum AssetCommand {
+    /// Inspect an explicitly selected root and write an editable intake plan.
+    Scan(asset_library::ScanArgs),
+    /// Register a verified local batch without Provider execution.
+    Register(asset_library::RegisterArgs),
+    /// Search immutable revisions, including unavailable sources.
+    Search(asset_library::SearchArgs),
+    /// Show all known versions of a logical asset.
+    History(asset_library::HistoryArgs),
     /// Create a formal shared-canvas layered Pack from local source PNGs.
     PrepareLayered {
         #[command(flatten)]
@@ -939,6 +947,10 @@ fn run() -> Result<(), (String, String)> {
             })
         }
         Command::Asset { command } => match command {
+            AssetCommand::Scan(args) => asset_library::scan(args),
+            AssetCommand::Register(args) => asset_library::register(args),
+            AssetCommand::Search(args) => asset_library::search(args),
+            AssetCommand::History(args) => asset_library::history(args),
             AssetCommand::PrepareLayered { input, output } => {
                 let mut request: forge_core::layered::PrepareLayeredRequest = read_request(&input)?;
                 let root = request_root(&input)?;

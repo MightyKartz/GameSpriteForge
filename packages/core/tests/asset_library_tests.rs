@@ -325,3 +325,215 @@ fn library_rejects_redirected_storage_and_lock_files() {
     assert!(library::initialize(&root, "Resources").is_err());
     assert!(!outside.join("lock").exists());
 }
+
+#[test]
+fn intake_scan_registration_conflicts_and_unavailable_history() {
+    use library::intake::{self, SearchFilter};
+    let temp = tempfile::tempdir().unwrap();
+    let media = temp.path().join("media");
+    let root = temp.path().join("library");
+    fs::create_dir_all(media.join(".godot")).unwrap();
+    fs::write(media.join(".godot/ignored.bin"), b"cache").unwrap();
+    fs::write(media.join("external.bin"), b"external data").unwrap();
+    RgbaImage::from_pixel(2, 2, Rgba([1, 2, 3, 255]))
+        .save(media.join("art.png"))
+        .unwrap();
+    let mut wav = b"RIFF".to_vec();
+    wav.extend(196_u32.to_le_bytes());
+    wav.extend(b"WAVEfmt ");
+    wav.extend(16_u32.to_le_bytes());
+    wav.extend(1_u16.to_le_bytes());
+    wav.extend(1_u16.to_le_bytes());
+    wav.extend(8000_u32.to_le_bytes());
+    wav.extend(16000_u32.to_le_bytes());
+    wav.extend(2_u16.to_le_bytes());
+    wav.extend(16_u16.to_le_bytes());
+    wav.extend(b"data");
+    wav.extend(160_u32.to_le_bytes());
+    wav.extend([0_u8; 160]);
+    fs::write(media.join("sound.wav"), wav).unwrap();
+    library::initialize(&root, "Local").unwrap();
+    let before = fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap();
+    let mut scan = intake::scan(&media).unwrap();
+    assert_eq!(scan.batch.items.len(), 3);
+    assert_eq!(
+        fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap(),
+        before
+    );
+    for item in &mut scan.batch.items {
+        item.tags = vec!["battle".into()];
+    }
+    let registered = intake::register(&root, &scan.batch).unwrap();
+    assert_eq!(registered.len(), 3);
+    let head = fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap();
+    assert!(intake::register(&root, &scan.batch)
+        .unwrap()
+        .iter()
+        .all(|i| i.outcome == "existing"));
+    assert_eq!(fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap(), head);
+    let filter = SearchFilter {
+        kind: Some("audio".into()),
+        tag: Some("battle".into()),
+        limit: 20,
+        ..Default::default()
+    };
+    assert_eq!(intake::search(&root, &filter).unwrap().total, 1);
+    let original = scan
+        .batch
+        .items
+        .iter()
+        .find(|i| i.kind == "file")
+        .unwrap()
+        .clone();
+    fs::write(&original.path, b"changed").unwrap();
+    assert!(intake::register(&root, &scan.batch).is_err());
+    assert_eq!(fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap(), head);
+    let mut changed = original.clone();
+    changed.expected_content = intake::content_at(&changed.path).unwrap();
+    let mut batch = intake::IntakeBatch {
+        schema_version: "1".into(),
+        items: vec![changed],
+    };
+    assert!(intake::register(&root, &batch)
+        .unwrap_err()
+        .to_string()
+        .contains("ID conflict"));
+    batch.items[0].new_revision = true;
+    intake::register(&root, &batch).unwrap();
+    assert_eq!(intake::history(&root, &original.asset_id).unwrap().len(), 2);
+    fs::remove_file(&original.path).unwrap();
+    assert!(intake::history(&root, &original.asset_id)
+        .unwrap()
+        .iter()
+        .all(|i| i.status == "unavailable"));
+    assert!(read_project_catalog(&root).unwrap().assets.is_empty()); // legacy shape unchanged
+}
+
+#[test]
+fn intake_pack_members_duplicate_locations_and_batch_atomicity() {
+    use library::intake::{self, IntakeBatch, SearchFilter};
+    let temp = tempfile::tempdir().unwrap();
+    let produced = entry(&temp.path().join("production"));
+    let root = temp.path().join("library");
+    library::initialize(&root, "Local").unwrap();
+    let scan = intake::scan(&produced.pack_path).unwrap();
+    assert_eq!(scan.batch.items.len(), 1);
+    intake::register(&root, &scan.batch).unwrap();
+    let found = intake::search(
+        &root,
+        &SearchFilter {
+            query: Some("gem".into()),
+            limit: 1,
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(found.total, 1);
+    assert_eq!(found.items[0].members, vec!["gem"]);
+    let sources = temp.path().join("sources");
+    fs::create_dir_all(sources.join("nested")).unwrap();
+    fs::write(sources.join("same.bin"), b"same").unwrap();
+    fs::write(sources.join("nested/same.bin"), b"same").unwrap();
+    let mut duplicates = intake::scan(&sources).unwrap();
+    assert_eq!(duplicates.issues.len(), 2);
+    let id = duplicates.batch.items[0].asset_id.clone();
+    duplicates.batch.items[1].asset_id = id.clone();
+    intake::register(&root, &duplicates.batch).unwrap();
+    let catalog = library::read_catalog(&root).unwrap();
+    let asset = library::read_asset(&root, &catalog, &id).unwrap();
+    assert_eq!(asset.revisions.len(), 1);
+    assert_eq!(asset.additional_locations.values().next().unwrap().len(), 1);
+    fs::remove_file(&duplicates.batch.items[0].path).unwrap();
+    assert_eq!(intake::history(&root, &id).unwrap()[0].status, "available");
+    let head = fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap();
+    let mut valid = duplicates.batch.items[1].clone();
+    valid.asset_id = "new-id".into();
+    let missing = duplicates.batch.items[0].clone();
+    assert!(intake::register(
+        &root,
+        &IntakeBatch {
+            schema_version: "1".into(),
+            items: vec![valid, missing]
+        }
+    )
+    .is_err());
+    assert_eq!(head, fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap());
+}
+
+#[test]
+fn duplicate_intake_restores_missing_bindings_without_changing_shared_history() {
+    use forge_core::library::intake;
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("library");
+    let sources = temp.path().join("sources");
+    fs::create_dir(&sources).unwrap();
+    fs::write(sources.join("a.bin"), "A").unwrap();
+    fs::write(sources.join("b.bin"), "B").unwrap();
+    library::initialize(&root, "Bindings").unwrap();
+    let mut batch = intake::scan(&sources).unwrap().batch;
+    let registered = intake::register(&root, &batch).unwrap();
+    let head = fs::read(root.join(".forge/catalog.json")).unwrap();
+    let local_path = root.join(".forge/library/local.json");
+    fs::remove_file(&local_path).unwrap();
+    let restored = intake::register(&root, &batch).unwrap();
+    assert!(restored.iter().all(|r| r.outcome == "existing"));
+    assert_eq!(fs::read(root.join(".forge/catalog.json")).unwrap(), head);
+    for (before, after) in registered.iter().zip(&restored) {
+        assert_eq!(before.revision, after.revision);
+        assert_eq!(
+            intake::history(&root, &after.asset_id).unwrap()[0].status,
+            "available"
+        );
+    }
+    let catalog = library::read_catalog(&root).unwrap();
+    let first = library::read_asset(&root, &catalog, &registered[0].asset_id).unwrap();
+    let missing = &first.locations[&registered[0].revision].root_id;
+    let mut local: serde_json::Value =
+        serde_json::from_slice(&fs::read(&local_path).unwrap()).unwrap();
+    local["roots"].as_object_mut().unwrap().remove(missing);
+    let remaining = local["roots"].clone();
+    fs::write(&local_path, serde_json::to_vec(&local).unwrap()).unwrap();
+    batch.items.truncate(1);
+    let again = intake::register(&root, &batch).unwrap();
+    assert_eq!(again[0].revision, registered[0].revision);
+    assert_eq!(
+        intake::history(&root, &again[0].asset_id).unwrap()[0].status,
+        "available"
+    );
+    let recovered: serde_json::Value =
+        serde_json::from_slice(&fs::read(&local_path).unwrap()).unwrap();
+    for (key, value) in remaining.as_object().unwrap() {
+        assert_eq!(&recovered["roots"][key], value);
+    }
+    assert_eq!(fs::read(root.join(".forge/catalog.json")).unwrap(), head);
+}
+
+#[test]
+fn oversized_batch_metadata_does_not_publish_partial_intake() {
+    use forge_core::library::intake;
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("library");
+    let source = temp.path().join("source.bin");
+    fs::write(&source, "Original").unwrap();
+    library::initialize(&root, "Batch limits").unwrap();
+    let mut batch = intake::scan(&source).unwrap().batch;
+    let registered = intake::register(&root, &batch).unwrap();
+    let head = fs::read(root.join(".forge/catalog.json")).unwrap();
+    let local = fs::read(root.join(".forge/library/local.json")).unwrap();
+    batch.items[0].asset_id = "new-valid".into();
+    let mut oversized = batch.items[0].clone();
+    oversized.asset_id = "new-oversized".into();
+    oversized.name = "x".repeat(17 * 1024 * 1024);
+    batch.items.push(oversized);
+    assert!(intake::register(&root, &batch).is_err());
+    assert_eq!(fs::read(root.join(".forge/catalog.json")).unwrap(), head);
+    assert_eq!(
+        fs::read(root.join(".forge/library/local.json")).unwrap(),
+        local
+    );
+    assert_eq!(library::read_catalog(&root).unwrap().assets.len(), 1);
+    assert_eq!(
+        intake::history(&root, &registered[0].asset_id).unwrap()[0].status,
+        "available"
+    );
+}

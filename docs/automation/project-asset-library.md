@@ -67,3 +67,49 @@ Schemas: [catalog head](../../schemas/project-catalog-v3.schema.json),
 [immutable objects](../../schemas/asset-library-object.schema.json).
 Read-only queries validate object digests; neither structural validity nor an
 installation association certifies visual, listening or licensing approval.
+
+## Scan, register, search and history
+
+```sh
+forge asset scan --project ./assets --root ./existing-media --out scan.json --json
+forge asset register --project ./assets --input scan.json --json
+forge asset search --project ./assets --kind audio --tag battle --limit 20 --offset 0 --json
+forge asset history --project ./assets --id local-example --json
+```
+
+Scan is read-only except for the explicitly named, create-new output file. It
+visits only the selected root, skips links, `.git`, `.godot`, `.forge`, `target`,
+`build`, `dist`, `node_modules` and `__pycache__`, and stops recursion at Pack roots.
+Invalid Packs and unreadable candidates appear in `issues`; duplicate names and
+identical content are observations, not automatic merges. Raw file kinds are
+extension classifications, not decode validation or quality approval.
+
+The scan JSON is an editable batch using `schemas/asset-intake.schema.json`.
+Choose logical `assetId`, `name` and `tags` before registration; the generated ID
+is based on the path within the selected root, so separately scanned roots can
+require explicit ID disambiguation. A single item uses the same one-element
+`items` array. The caller may map an external manifest into this generic format.
+No generator, Provider, ancestry, approval or license is inferred.
+
+Registration rechecks each full content inventory under the catalog lock and
+publishes one atomic head for the entire batch. Missing files, invalid Packs,
+kind conflicts and changed bytes reject the batch; no partial records become
+visible. A different content revision under an existing ID requires
+`newRevision: true`. Identical content under that ID is idempotent and can add
+an alternate source location. Existing names/tags remain unchanged on duplicate
+registration. Registering the same bytes under different explicit IDs preserves
+both logical resources. Immutable orphan objects after an interrupted/rejected
+batch are harmless and are not automatically deleted.
+
+Search returns `{items,total,offset,limit}` with one hit per revision, sorted by
+`registeredAt` descending, then asset ID and revision digest. Migration uses the
+original execution `createdAt`; it does not invent an observation timestamp.
+History returns newest registered revisions first. Queries match ID/name/Pack
+member ID; kind and tag filters are exact. Availability filters are `available`,
+`changed` and `unavailable`, based on current content checks across known locations.
+These are file states, independent of human review. Search verifies source bytes
+and can therefore read large media; it does not create an index or write files.
+
+The legacy `asset list/inspect` response shape remains unchanged; raw local
+revisions are available through the new search/history commands. Pack-member
+search indexes the whole Pack revision and does not enable member-only delivery.

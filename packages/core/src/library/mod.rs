@@ -20,6 +20,7 @@ const IDENTITY: &str = ".forge/library/identity.json";
 const LOCAL: &str = ".forge/library/local.json";
 const MAX_METADATA_BYTES: u64 = 16 * 1024 * 1024;
 
+pub mod intake;
 mod types;
 pub use types::{
     AssetRecord, AssetRevision, InstallReference, LibraryCatalog, Location, MigrationAsset,
@@ -474,6 +475,7 @@ pub(crate) fn publish_unlocked(
             revisions: Vec::new(),
             locations: BTreeMap::new(),
             spec_locations: BTreeMap::new(),
+            additional_locations: BTreeMap::new(),
             installations: Vec::new(),
         },
     };
@@ -609,6 +611,7 @@ pub fn migrate(
             revisions: vec![digest.clone()],
             locations: BTreeMap::from([(digest.clone(), location)]),
             spec_locations: BTreeMap::new(),
+            additional_locations: BTreeMap::new(),
             installations: Vec::new(),
         };
         if let Some(location) = spec_location {

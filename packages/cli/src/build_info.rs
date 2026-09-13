@@ -30,6 +30,7 @@ pub fn current() -> BuildInfo {
 // reported separately by doctor. Add new IDs only alongside their implementation.
 pub const CAPABILITIES: &[&str] = &[
     "project_asset_catalog_v3",
+    "project_asset_intake_search",
     "project_asset_catalog_migration",
     "local_audio_import",
     "audio_pack_validation",
