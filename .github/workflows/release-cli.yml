@@ -9,10 +9,11 @@ on:
       version:
         description: "Release version to preflight (no GitHub Release is created)"
         required: true
-        default: "v0.3.2"
+        default: "v0.4.0"
         type: string
 
 permissions:
+  actions: read
   contents: write
   id-token: write
   attestations: write
@@ -153,12 +154,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "${RUNNER_TEMP}/previous-release"
-          gh release download v0.3.1 --dir "${RUNNER_TEMP}/previous-release" \
+          gh release download v0.3.2 --dir "${RUNNER_TEMP}/previous-release" \
             --pattern 'forge-aarch64-apple-darwin.zip*'
           export PATH="${RUNNER_TEMP}/godot-bin:${PATH}"
           bash scripts/test-cli-release-artifact.sh \
             "${GITHUB_WORKSPACE}" "${FORGE_RELEASE_TAG}" \
-            "${RUNNER_TEMP}/previous-release" v0.3.1
+            "${RUNNER_TEMP}/previous-release" v0.3.2
 
       - name: Generate SBOM
         env:
@@ -197,6 +198,38 @@ jobs:
           subject-path: forge-aarch64-apple-darwin.zip
           sbom-path: forge-sbom.cdx.json
 
+  release-windows:
+    uses: ./.github/workflows/windows-portable.yml
+
+  assemble-release:
+    needs: [release-macos-arm64, release-windows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FORGE_RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Collect and verify both native packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run download "${GITHUB_RUN_ID}" --name "forge-cli-${FORGE_RELEASE_TAG}-${GITHUB_RUN_ID}" --dir macos
+          gh run download "${GITHUB_RUN_ID}" --name "forge-windows-portable-${GITHUB_SHA}" --dir windows
+          python3 scripts/test-release-assets.py -v
+          python3 scripts/verify-release-assets.py \
+            --macos macos/forge-aarch64-apple-darwin.zip \
+            --windows windows/windows-dist/forge-x86_64-pc-windows-msvc.zip \
+            --version "${FORGE_RELEASE_TAG#v}" --commit "${GITHUB_SHA}" \
+            --output release-verification.json
+      - name: Retain paired release verification
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: forge-release-verification-${{ github.run_id }}
+          path: release-verification.json
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Publish GitHub Release
         if: github.event_name == 'push'
         env:
@@ -211,11 +244,16 @@ jobs:
           gh release create "${FORGE_RELEASE_TAG}" --verify-tag "${release_flags[@]}" \
             --title "Forge CLI ${FORGE_RELEASE_TAG}" \
             --notes-file "docs/releases/${FORGE_RELEASE_TAG%%-*}.md" \
-            forge-aarch64-apple-darwin.zip \
-            forge-aarch64-apple-darwin.zip.sha256 \
-            forge-installer.sh \
-            forge-sbom.cdx.json \
-            ffmpeg-8.1.2-source.tar.xz \
+            macos/forge-aarch64-apple-darwin.zip \
+            macos/forge-aarch64-apple-darwin.zip.sha256 \
+            macos/forge-installer.sh \
+            macos/forge-sbom.cdx.json \
+            macos/ffmpeg-8.1.2-source.tar.xz \
+            windows/windows-dist/forge-x86_64-pc-windows-msvc.zip \
+            windows/windows-dist/forge-x86_64-pc-windows-msvc.zip.sha256 \
+            windows/windows-dist/install-windows.ps1 \
+            windows/windows-dist/windows-package-common.ps1 \
+            release-verification.json \
             third_party/ffmpeg/BUILD.md \
             third_party/ffmpeg/PATCHES.md \
             THIRD_PARTY_NOTICES.md \

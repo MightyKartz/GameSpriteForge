@@ -4,12 +4,14 @@ The Windows package is experimental and unsigned. It contains the Rust MSVC CLI,
 separate FFmpeg/FFprobe executables, exact helper source archives, license notices,
 the source build recipe, compiled `BUILD_INFO.json`, and a complete SHA-256 file
 inventory. Windows 10/11 x64 is the intended desktop environment. This workflow
-uploads reviewable CI artifacts; it does not create a GitHub Release.
+uploads reviewable CI artifacts. From v0.4.0, the release workflow also calls this
+same Windows job and publishes its verified package with the macOS package after
+both native jobs pass.
 
 ## Use or install a verified archive
 
 Obtain the ZIP, its `.sha256`, `install-windows.ps1` and
-`windows-package-common.ps1` from the same trusted CI artifact. Compare the ZIP's
+`windows-package-common.ps1` from the same trusted GitHub Release or CI artifact. Compare the ZIP's
 hash with the checksum from that artifact before running extracted executables.
 Checksums establish byte identity; these artifacts do not have Authenticode signing.
 

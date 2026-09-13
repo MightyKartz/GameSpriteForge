@@ -63,7 +63,7 @@ Sword 是一款修仙题材的生存游戏原型，使用 Forge 完成资产处�
 
 ## 安装
 
-稳定版本为 [v0.3.2](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.2)，支持 **macOS Apple Silicon**。需要引擎交付时，另行安装 **Godot 4.6.x**。二进制文件尚未签名或公证。已有游戏应先验证升级，再调整固定的 CLI 版本。
+稳定版本为 [v0.4.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.4.0)，支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要引擎交付时，另行安装 **Godot 4.6.x**。二进制文件尚未签名或公证。已有游戏应先验证升级，再调整固定的 CLI 版本。
 
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/MightyKartz/GameSpriteForge/main/install.sh | sh
@@ -79,21 +79,27 @@ forge guide
 
 `forge guide` 读取当前 CLI 版本附带的操作指引与请求示例，离线也能使用。
 
+Windows 用户请从同一 Release 下载 ZIP、校验文件和两个安装脚本，然后参考 [Windows 安装指南](docs/releases/windows-portable.md)。Windows 包在真实 Windows CI 上构建和验证。
+
 制作第一组资产，请参考[本地美术工作流](docs/automation/codex-local-assets.md)：处理图片、检查结果、验证 Pack，再安装到 Godot。
+
+## 项目资源库
+
+登记和搜索源素材与生成结果，在离线画廊中对比版本，保留审核证据，并锁定明确的交付版本。资源可以在 macOS 与 Windows 间转移，同时保留内容身份和历史 Pack 哈希。运行 `forge guide project-assets`，或阅读[资源库指南](docs/automation/project-asset-library.md)。
 
 ## 当前能力与开发进展
 
-本地图标与道具处理、Pack 验证和 Godot 交付构成稳定能力。**角色动画仍处于测试开发阶段**，包括生成、复用和多方向工作流。Sword 展示的是具体原型素材的应用，用于游戏前仍需检查动画效果。版本范围见 [v0.3.2 发布说明](docs/releases/v0.3.2.md)。
+本地图标与道具处理、Pack 验证和 Godot 交付构成稳定能力。**角色动画仍处于测试开发阶段**，包括生成、复用和多方向工作流。Sword 展示的是具体原型素材的应用，用于游戏前仍需检查动画效果。版本范围见 [v0.4.0 发布说明](docs/releases/v0.4.0.md)。
 
-源码新版还支持将本地 WAV 音乐、音效和环境声制作成音频 Pack，交付 Godot 原生音频资源。流程保留来源哈希、按明确参数处理音频并记录技术检查；试听验收需单独完成。ACE-Step 和 Stable Audio 3 是可选外部工具，Forge 仅提供只读检测，不附带、安装或运行其模型。音频工作流不属于 v0.3.2 发布范围；请核对所选构建的 capabilities，并阅读[音频指南](.agents/skills/forge-use/references/audio.md)。
+Forge 还支持将本地 WAV 音乐、音效和环境声制作成音频 Pack，交付 Godot 原生音频资源。流程保留来源哈希、按明确参数处理音频并记录技术检查；试听验收需单独完成。ACE-Step 和 Stable Audio 3 是可选外部工具，Forge 仅提供只读检测，不附带、安装或运行其模型。请核对所选构建的 capabilities，并阅读[音频指南](.agents/skills/forge-use/references/audio.md)。
 
 ## 文档
 
 - [CLI 指南](docs/automation/forge-cli.md)：命令、素材生成与处理、Godot 交付。
 - [本地美术工作流](docs/automation/codex-local-assets.md)：将 Codex 或其他工具创作的美术处理并交付到 Godot。
-- [交付证据](.agents/skills/forge-use/references/delivery.md)：源码新版的已审核来源哈希、可独立保存的回执和安装审计；使用前核对所选二进制的 capabilities。
+- [交付证据](.agents/skills/forge-use/references/delivery.md)：已审核来源哈希、可独立保存的回执和安装审计；使用前核对所选二进制的 capabilities。
 - [示例规格](examples/cli)：以现有示例开始制作自己的素材。
-- [发布说明](docs/releases/v0.3.2.md)：平台支持和版本范围。
+- [发布说明](docs/releases/v0.4.0.md)：平台支持和版本范围。
 - [展示素材](docs/media/showcase/README.md)：美术来源与 Godot 预览。
 - [参与开发](CONTRIBUTING.md)：源码构建与开发检查。
 
