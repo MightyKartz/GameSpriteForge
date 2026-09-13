@@ -60,6 +60,9 @@ the pinned executable's capabilities.
 
 ## Choose the workflow
 
+- **Existing resources, candidates, reviews and cross-machine reuse:** read
+  [project resource library](references/project-assets.md), or run
+  `"$FORGE_BIN" guide project-assets` on a build with `project_asset_catalog_v3`.
 - **Codex image generation or existing static PNGs:** read
   [local static preparation and Godot delivery](references/local-static.md),
   or run `"$FORGE_BIN" guide static`.

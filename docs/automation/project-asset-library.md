@@ -2,9 +2,13 @@
 
 Development builds with `project_asset_catalog_v3` can initialize a local,
 provider-neutral asset library. Check the selected executable's `doctor --json`
-capabilities before use. This is PR 1 of the
-[implementation plan](../architecture/forge-project-asset-library-plan.md);
-scan/search, retention, preview and transfer commands are subsequent work.
+capabilities before use. The PR 0–6 implementation follows the
+[implementation plan](../architecture/forge-project-asset-library-plan.md).
+The complete command workflow, including transfer, root rebinding, integrity
+audit and explicit Git merge, lives in the embedded
+[project resource guide](../../.agents/skills/forge-use/references/project-assets.md)
+(`forge guide project-assets`). Remote and installed-package acceptance results
+are tracked separately from compiled capabilities.
 
 ```sh
 forge project init --path /absolute/assets --name "Local assets" --local-assets --json
@@ -84,7 +88,10 @@ Invalid Packs and unreadable candidates appear in `issues`; duplicate names and
 identical content are observations, not automatic merges. Raw file kinds are
 extension classifications, not decode validation or quality approval.
 
-The scan JSON is an editable batch using `schemas/asset-intake.schema.json`.
+The scan JSON is an editable batch using `schemas/asset-library-intake.schema.json`;
+`schemas/asset-intake.schema.json` remains a compatible reference to that same
+contract. Optional `issues` are scan observations and are ignored by registration.
+Both scan output and a batch without `issues` use the same resource item definition.
 Choose logical `assetId`, `name` and `tags` before registration; the generated ID
 is based on the path within the selected root, so separately scanned roots can
 require explicit ID disambiguation. A single item uses the same one-element

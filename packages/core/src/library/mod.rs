@@ -20,11 +20,15 @@ const IDENTITY: &str = ".forge/library/identity.json";
 const LOCAL: &str = ".forge/library/local.json";
 const MAX_METADATA_BYTES: u64 = 16 * 1024 * 1024;
 
+pub mod audit;
 pub mod delivery;
 pub mod finalize;
+pub mod index;
 pub mod intake;
+pub mod merge;
 pub mod preview;
 pub mod review;
+pub mod transfer;
 mod types;
 pub use types::{
     AssetRecord, AssetRevision, InstallReference, LibraryCatalog, Location, MigrationAsset,
@@ -215,6 +219,7 @@ pub fn read_asset(
     if asset.asset_id != id
         || id.trim().is_empty()
         || asset.revisions.is_empty()
+        || asset.purpose.as_ref().is_some_and(|p| p.trim().is_empty())
         || asset.revisions.iter().any(|v| !valid_digest(v))
         || asset
             .revisions
@@ -241,6 +246,13 @@ pub fn read_asset(
         != asset.reviews.len()
     {
         return Err(invalid("duplicate review object references"));
+    }
+    if asset.dispositions.iter().any(|(revision, state)| {
+        !asset.revisions.contains(revision)
+            || !matches!(state.as_str(), "candidate" | "discarded")
+            || (state == "discarded" && asset.selected_revision.as_ref() == Some(revision))
+    }) {
+        return Err(invalid("invalid revision disposition"));
     }
     review::read_reviews(root, &asset, "")?;
     for installed in &asset.installations {
@@ -281,6 +293,13 @@ pub fn read_revision(
     let revision: AssetRevision = read_object(root, digest)?;
     if revision.schema_version != "1"
         || revision.asset_id != asset.asset_id
+        || revision.parent_revisions.iter().any(|p| !valid_digest(p))
+        || revision
+            .parent_revisions
+            .iter()
+            .collect::<std::collections::BTreeSet<_>>()
+            .len()
+            != revision.parent_revisions.len()
         || revision
             .legacy
             .as_ref()
@@ -508,6 +527,8 @@ pub(crate) fn publish_unlocked(
             name: entry.name.clone(),
             kind: entry.kind.clone(),
             tags: Vec::new(),
+            purpose: None,
+            dispositions: BTreeMap::new(),
             selected_revision: None,
             build_revision: None,
             revisions: Vec::new(),
@@ -555,7 +576,10 @@ pub(crate) fn publish_unlocked(
         content: Some(content),
         legacy: Some(entry),
         parent_revisions: Vec::new(),
-        source: BTreeMap::new(),
+        source: BTreeMap::from([(
+            "members".into(),
+            serde_json::json!(intake::classify(&absolute_pack)?.1),
+        )]),
     };
     let digest = write_object(root, &revision)?;
     asset.locations.insert(digest.clone(), location);
@@ -645,6 +669,8 @@ pub fn migrate(
             name: entry.name,
             kind: entry.kind,
             tags: Vec::new(),
+            purpose: None,
+            dispositions: BTreeMap::new(),
             selected_revision: None,
             build_revision: Some(digest.clone()),
             revisions: vec![digest.clone()],
@@ -699,23 +725,40 @@ pub fn catalog_view(root: &Path) -> Result<ProjectCatalogV2, CatalogError> {
             .locations
             .get(digest)
             .ok_or_else(|| invalid("revision location is missing"))?;
-        entry.pack_path = resolve_location(root, location)?;
+        // Prefer any verified retained/alternate location. The old projection
+        // cannot represent an unbound root; native search/history still expose
+        // that revision and its unavailable status without inventing a path.
+        let pack = delivery::resolve(
+            root,
+            &delivery::VersionRef {
+                asset_id: id.clone(),
+                revision: digest.clone(),
+            },
+        )
+        .map(|resolved| resolved.path)
+        .ok()
+        .or_else(|| resolve_location(root, location).ok());
+        let Some(pack) = pack else {
+            continue;
+        };
+        entry.pack_path = pack;
         entry.spec_path = asset
             .spec_locations
             .get(digest)
-            .map(|p| resolve_location(root, p))
-            .transpose()?;
+            .and_then(|p| resolve_location(root, p).ok());
         if let Some(installed) = asset
             .installations
             .iter()
             .rev()
             .find(|i| &i.revision == digest)
         {
-            entry.installed = Some(CatalogInstallRefV1 {
-                godot_project: resolve_location(root, &installed.project)?,
-                target: installed.target.clone(),
-                installed_at: installed.installed_at,
-            });
+            entry.installed = resolve_location(root, &installed.project)
+                .ok()
+                .map(|project| CatalogInstallRefV1 {
+                    godot_project: project,
+                    target: installed.target.clone(),
+                    installed_at: installed.installed_at,
+                });
         }
         assets.insert(id.clone(), entry);
     }
@@ -759,20 +802,43 @@ fn verify_publication(
     let legacy = revision
         .legacy
         .ok_or_else(|| invalid("this revision has no Pack publication"))?;
-    let location = asset
-        .locations
-        .get(digest)
-        .ok_or_else(|| invalid("revision has no location"))?;
-    let pack = resolve_location(root, location)?;
-    if directory_inventory(&pack)?.sha256 != content.sha256
-        || crate::delivery::directory_sha256(&pack)? != legacy.pack_sha256
-    {
+    let pack = delivery::resolve(
+        root,
+        &delivery::VersionRef {
+            asset_id: asset.asset_id.clone(),
+            revision: digest.into(),
+        },
+    )?
+    .path;
+    if directory_inventory(&pack)? != content {
         return Err(invalid(
             "library Pack contents differ from the recorded revision",
         ));
     }
+    transfer::legacy_style(&pack, &legacy.pack_sha256)?;
     forge_pack::validate_pack_layout(&pack).map_err(|e| invalid(e.to_string()))?;
     Ok(pack)
+}
+
+/// Verify an unchanged historical v2 hash using its original path convention,
+/// additionally binding the supplied bytes to the canonical library revision.
+pub fn verify_historical_publication(
+    root: &Path,
+    id: &str,
+    job: &str,
+    recorded_hash: &str,
+    pack: &Path,
+) -> Result<(), CatalogError> {
+    let digest = revision_for_publication(root, id, job, recorded_hash)?;
+    let catalog = read_catalog(root)?;
+    let asset = read_asset(root, &catalog, id)?;
+    let revision = read_revision(root, &asset, &digest)?;
+    if revision.content.as_ref() != Some(&directory_inventory(pack)?) {
+        return Err(invalid("Pack differs from canonical historical revision"));
+    }
+    transfer::legacy_style(pack, recorded_hash)?;
+    forge_pack::validate_pack_layout(pack).map_err(|e| invalid(e.to_string()))?;
+    Ok(())
 }
 
 pub fn validate_current_pack(root: &Path, pack: &Path) -> Result<(), CatalogError> {

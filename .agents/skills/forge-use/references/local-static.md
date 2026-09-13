@@ -148,9 +148,11 @@ The local report records `styleConsistencyEvaluated:false` and
 `visualReviewRequired:true`: its `game_ready` verdict covers structural checks.
 Review framing, edges, style and readability at gameplay scale separately.
 
-Local static intake has no targeted retry or asset-project catalog registration.
-To revise a set, prepare a new request with stable IDs and keep the prior receipt.
-Install this kind of Pack without `--catalog-project`.
+Local static intake has no targeted retry. To revise a set, prepare a new request
+with stable IDs and keep the prior receipt. On a build with
+`project_asset_output_registration`, add explicit `assetProject` binding to
+register output in a local resource library; read [project resources](project-assets.md)
+or `forge guide project-assets`. Unbound requests preserve the original behavior.
 
 ## Install into Godot
 

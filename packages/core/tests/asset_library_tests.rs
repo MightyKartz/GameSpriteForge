@@ -108,6 +108,47 @@ fn migration_preserves_original_bytes_and_rejects_stale_preview() {
 }
 
 #[test]
+fn portable_legacy_projection_does_not_require_old_machine_install_or_spec_roots() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("library");
+    let mut old = entry(&root);
+    old.spec_path = Some(temp.path().join("external-spec.json"));
+    old.installed = Some(forge_core::catalog::CatalogInstallRefV1 {
+        godot_project: temp.path().join("old-game"),
+        target: "addons/forge_assets/props".into(),
+        installed_at: chrono::Utc::now(),
+    });
+    register_catalog_asset_v2(&root, old.clone()).unwrap();
+    let preview = library::migration_preview(&root).unwrap();
+    library::migrate(&root, "Portable resources", &preview.expected_sha256).unwrap();
+    let catalog = library::read_catalog(&root).unwrap();
+    let asset = library::read_asset(&root, &catalog, "props").unwrap();
+    library::delivery::retain(
+        &root,
+        &library::delivery::VersionRef {
+            asset_id: "props".into(),
+            revision: asset.revisions[0].clone(),
+        },
+    )
+    .unwrap();
+    fs::remove_dir_all(root.join("jobs")).unwrap();
+    fs::remove_file(root.join(".forge/library/local.json")).unwrap();
+    let view = library::catalog_view(&root).unwrap();
+    assert_eq!(view.assets["props"].pack_sha256, old.pack_sha256);
+    assert!(view.assets["props"].pack_path.is_dir());
+    assert!(view.assets["props"].spec_path.is_none());
+    assert!(view.assets["props"].installed.is_none());
+    let catalog = library::read_catalog(&root).unwrap();
+    let asset = library::read_asset(&root, &catalog, "props").unwrap();
+    assert_eq!(asset.installations.len(), 1);
+    assert_eq!(
+        asset.installations[0].evidence,
+        "legacy_installation_assertion"
+    );
+    assert!(asset.installations[0].snapshot_sha256.is_none());
+}
+
+#[test]
 fn migration_binds_resource_bytes_and_retains_unavailable_legacy_assertions() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path();

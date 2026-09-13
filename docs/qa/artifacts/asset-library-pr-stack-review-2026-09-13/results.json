@@ -1,0 +1,65 @@
+{
+  "build": {
+    "gitCommit": "2c63972f02a0b7bdb2c89755dc33df0be5391e9b",
+    "dirty": false,
+    "target": "aarch64-apple-darwin",
+    "profile": "release",
+    "features": []
+  },
+  "binarySha256": "9546811ac8bb0cb182d4817f91d01212eae689054b7428e631522e099096ea69",
+  "oversized_metadata": {
+    "registerExit": 0,
+    "historyExit": 1,
+    "historyError": {
+      "schemaVersion": "1",
+      "ok": false,
+      "error": {
+        "code": "invalid_catalog",
+        "message": "invalid project catalog: library metadata exceeds 16 MiB"
+      }
+    }
+  },
+  "binding_retry": {
+    "before": "unavailable",
+    "registration": [
+      {
+        "assetId": "local-4813494d137e1631bba3",
+        "revision": "0200c7fb9810d4f2b16b628dc95d51e0899ffdeca6372808022bb9524f944351",
+        "outcome": "existing"
+      }
+    ],
+    "after": "unavailable",
+    "localConfigExists": false
+  },
+  "review_merge": {
+    "before": {
+      "visual": "rejected"
+    },
+    "after": {
+      "auditory": "unknown",
+      "visual": "approved"
+    },
+    "conflicts": [],
+    "applied": true,
+    "approvedDigest": "972ff6d1173dde694b54777f81ab550e318329ac3032d7c7da0ffee0117ad2ea",
+    "rejectedDigest": "4be730ae6a8d6e0321187df66f32cc4c7b4f902c386bb718a2a51441e2b21b90"
+  },
+  "evidence_directory": {
+    "exit": 101,
+    "stdout": null,
+    "stderr": "\nthread 'main' (3820423) panicked at packages/core/src/library/preview.rs:215:24:\nindex out of bounds: the len is 0 but the index is 0\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  },
+  "intake_schema": {
+    "cliAccepted": true,
+    "registered": [
+      {
+        "assetId": "local-4813494d137e1631bba3",
+        "revision": "6464fc0660d4caeec0e152522ec580351539fd6d33a0763fdc2b436b8cd199ed",
+        "outcome": "registered"
+      }
+    ],
+    "documentedSchemaErrors": [
+      "Additional properties are not allowed ('purpose' was unexpected)"
+    ]
+  }
+}

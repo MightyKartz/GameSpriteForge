@@ -94,6 +94,11 @@ fn stage_local(
     let summary = forge_pack::inspect_pack(pack).map_err(|e| invalid(e.to_string()))?;
     let pack = fs::canonicalize(pack)?;
     let item = intake::IntakeItem {
+        origin: None,
+        purpose: None,
+        variant: None,
+        role: None,
+        parent_revisions: vec![],
         asset_id: binding.asset_id.clone(),
         name: summary.name,
         path: pack.clone(),

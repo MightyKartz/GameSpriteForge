@@ -4,6 +4,71 @@ use clap::Args;
 use forge_core::{catalog::CatalogError, library};
 
 #[derive(Args)]
+pub struct MergeArgs {
+    #[arg(long)]
+    project: PathBuf,
+    #[arg(long)]
+    base: PathBuf,
+    #[arg(long)]
+    ours: PathBuf,
+    #[arg(long)]
+    theirs: PathBuf,
+    #[arg(long, requires = "expected_sha256")]
+    apply: bool,
+    #[arg(long, requires = "apply")]
+    expected_sha256: Option<String>,
+    #[command(flatten)]
+    json: crate::JsonFlag,
+}
+pub fn merge(args: MergeArgs) -> Result<(), (String, String)> {
+    crate::success(
+        &library::merge::run(
+            &args.project,
+            &args.base,
+            &args.ours,
+            &args.theirs,
+            args.expected_sha256.as_deref(),
+        )
+        .map_err(error)?,
+    )
+}
+
+#[derive(Args)]
+pub struct AuditArgs {
+    #[arg(long)]
+    project: PathBuf,
+    #[arg(long)]
+    rebuild_index: bool,
+    #[command(flatten)]
+    json: crate::JsonFlag,
+}
+#[derive(Args)]
+pub struct BindRootArgs {
+    #[arg(long)]
+    project: PathBuf,
+    #[arg(long)]
+    root_id: String,
+    #[arg(long)]
+    path: PathBuf,
+    #[command(flatten)]
+    json: crate::JsonFlag,
+}
+pub fn audit(args: AuditArgs) -> Result<(), (String, String)> {
+    let report = library::audit::verify(&args.project).map_err(error)?;
+    let index = args
+        .rebuild_index
+        .then(|| library::index::rebuild(&args.project))
+        .transpose()
+        .map_err(error)?;
+    crate::success(&serde_json::json!({"audit": report, "index": index}))
+}
+pub fn bind_root(args: BindRootArgs) -> Result<(), (String, String)> {
+    crate::success(
+        &library::audit::bind_root(&args.project, &args.root_id, &args.path).map_err(error)?,
+    )
+}
+
+#[derive(Args)]
 pub struct MigrateArgs {
     #[arg(long)]
     project: PathBuf,
@@ -76,6 +141,10 @@ pub struct SearchArgs {
     #[arg(long)]
     tag: Option<String>,
     #[arg(long)]
+    purpose: Option<String>,
+    #[arg(long, value_parser = ["candidate", "selected", "discarded"])]
+    disposition: Option<String>,
+    #[arg(long)]
     status: Option<String>,
     #[arg(long, requires = "review_verdict")]
     review_domain: Option<String>,
@@ -128,6 +197,8 @@ pub fn search(args: SearchArgs) -> Result<(), (String, String)> {
         kind: args.kind,
         tag: args.tag,
         status: args.status,
+        purpose: args.purpose,
+        disposition: args.disposition,
         review_domain: args.review_domain,
         review_verdict: args.review_verdict,
         offset: args.offset,
@@ -253,6 +324,10 @@ pub struct AnnotateArgs {
     id: String,
     #[arg(long)]
     name: Option<String>,
+    #[arg(long, conflicts_with = "clear_purpose")]
+    purpose: Option<String>,
+    #[arg(long)]
+    clear_purpose: bool,
     #[arg(long, conflicts_with = "clear_tags")]
     tag: Vec<String>,
     #[arg(long)]
@@ -347,6 +422,119 @@ pub fn annotate(args: AnnotateArgs) -> Result<(), (String, String)> {
         None
     };
     crate::success(
-        &library::review::annotate(&args.project, &args.id, args.name, tags).map_err(error)?,
+        &library::review::annotate_metadata(
+            &args.project,
+            &args.id,
+            args.name,
+            tags,
+            if args.clear_purpose {
+                Some(None)
+            } else {
+                args.purpose.map(Some)
+            },
+        )
+        .map_err(error)?,
+    )
+}
+
+#[derive(Args)]
+pub struct ExportArgs {
+    #[arg(long)]
+    project: PathBuf,
+    #[arg(
+        long,
+        required_unless_present = "asset_lock",
+        conflicts_with = "asset_lock",
+        requires = "revision"
+    )]
+    id: Option<String>,
+    #[arg(long, requires = "id")]
+    revision: Vec<String>,
+    #[arg(long, conflicts_with = "id")]
+    asset_lock: Option<PathBuf>,
+    #[arg(long)]
+    out: PathBuf,
+    #[command(flatten)]
+    json: crate::JsonFlag,
+}
+#[derive(Args)]
+pub struct VerifyBundleArgs {
+    #[arg(long)]
+    input: PathBuf,
+    #[arg(long)]
+    expected_sha256: Option<String>,
+    #[command(flatten)]
+    json: crate::JsonFlag,
+}
+#[derive(Args)]
+pub struct ImportArgs {
+    #[arg(long)]
+    input: PathBuf,
+    #[arg(long)]
+    path: PathBuf,
+    #[arg(long)]
+    expected_sha256: String,
+    #[command(flatten)]
+    json: crate::JsonFlag,
+}
+pub fn export(args: ExportArgs) -> Result<(), (String, String)> {
+    let references = if let Some(lock) = &args.asset_lock {
+        let document: library::delivery::ResourceLock =
+            serde_json::from_slice(&std::fs::read(lock).map_err(crate::display_error)?)
+                .map_err(crate::display_error)?;
+        document
+            .assets
+            .keys()
+            .map(|id| library::delivery::locked_reference(&args.project, id, lock))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(error)?
+    } else {
+        let id = args.id.expect("clap requires selection");
+        args.revision
+            .into_iter()
+            .map(|revision| library::delivery::VersionRef {
+                asset_id: id.clone(),
+                revision,
+            })
+            .collect()
+    };
+    crate::success(
+        &library::transfer::export(
+            &args.project,
+            &references,
+            &args.out,
+            crate::receipt::identity()?,
+            args.asset_lock.as_deref(),
+        )
+        .map_err(error)?,
+    )
+}
+pub fn verify_bundle(args: VerifyBundleArgs) -> Result<(), (String, String)> {
+    crate::success(
+        &library::transfer::verify(&args.input, args.expected_sha256.as_deref()).map_err(error)?,
+    )
+}
+pub fn import(args: ImportArgs) -> Result<(), (String, String)> {
+    crate::success(
+        &library::transfer::import(&args.input, &args.path, &args.expected_sha256)
+            .map_err(error)?,
+    )
+}
+
+#[derive(Args)]
+pub struct DispositionArgs {
+    #[command(flatten)]
+    version: VersionArgs,
+    #[arg(long, value_parser = ["candidate", "discarded"])]
+    state: String,
+}
+pub fn disposition(args: DispositionArgs) -> Result<(), (String, String)> {
+    crate::success(
+        &library::review::set_disposition(
+            &args.version.project,
+            &args.version.reference(),
+            &args.state,
+        )
+        .map_err(error)?,
     )
 }

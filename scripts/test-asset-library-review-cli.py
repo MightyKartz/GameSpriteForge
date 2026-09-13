@@ -79,7 +79,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     if args.output:
         args.output.mkdir(parents=True, exist_ok=False)
-        check(args.forge.resolve(), args.output.resolve())
+        check(args.forge.absolute(), args.output.resolve())
     else:
         with tempfile.TemporaryDirectory(prefix='forge-library-review-') as temporary:
-            check(args.forge.resolve(), Path(temporary))
+            check(args.forge.absolute(), Path(temporary))

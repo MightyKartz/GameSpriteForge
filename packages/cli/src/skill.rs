@@ -35,6 +35,14 @@ struct GuideResource {
 const SOURCE_FILES: &[SourceFile] = &[
     SourceFile {
         resource: GuideResource {
+            topic: "project-assets",
+            path: "references/project-assets.md",
+            media_type: "text/markdown",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/references/project-assets.md"),
+    },
+    SourceFile {
+        resource: GuideResource {
             topic: "audio",
             path: "references/audio.md",
             media_type: "text/markdown",
@@ -937,6 +945,11 @@ mod guide_tests {
 
         let bundle = Bundle::embedded();
         let expected = [
+            (
+                "project-assets",
+                "references/project-assets.md",
+                "text/markdown",
+            ),
             ("audio", "references/audio.md", "text/markdown"),
             (
                 "audio-example",

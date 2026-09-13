@@ -24,6 +24,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   v03-quality:
@@ -44,9 +45,9 @@ jobs:
 
       - name: Verify resource content identity and publication contracts
         run: |
-          cargo test --locked -p core --test content_digest_tests --test asset_library_tests --test asset_library_review_tests
+          cargo test --locked -p core --test content_digest_tests --test asset_library_tests --test asset_library_review_tests --test asset_library_transfer_tests
           cargo test --locked -p core --lib catalog::tests
-          cargo test --locked -p core --lib library::metadata_write_tests
+          cargo test --locked -p core --lib library::
 
       - name: Install Godot 4.6.3
         shell: bash
@@ -115,6 +116,23 @@ jobs:
           cargo test --locked -p core --test image_contract_tests
           python3 scripts/test-image-contract-cli.py --forge "${GITHUB_WORKSPACE}/target/debug/forge"
 
+      - name: Produce macOS resource transfer fixture
+        run: |
+          python3 scripts/test-asset-library-portability-cli.py --forge "${GITHUB_WORKSPACE}/target/debug/forge" --mode produce --godot "$FORGE_GODOT_PATH" --output "${RUNNER_TEMP}/forge-library-exchange"
+          cp target/debug/forge "${RUNNER_TEMP}/forge-library-exchange/forge"
+
+      - name: Upload macOS transfer fixture and consumer binary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: forge-library-exchange-mac
+          include-hidden-files: true
+          path: |
+            ${{ runner.temp }}/forge-library-exchange/bundle/**
+            ${{ runner.temp }}/forge-library-exchange/exchange.json
+            ${{ runner.temp }}/forge-library-exchange/forge
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Verify native static, layered and common playback contracts
         run: |
           cargo test --locked -p core --test prepare_static_tests --test source_matte_tests --test layered_pack_tests
@@ -150,11 +168,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cargo test --locked -p core --lib video::ffmpeg::tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          cargo test --locked -p core --test content_digest_tests --test asset_library_tests --test asset_library_review_tests
+          cargo test --locked -p core --test content_digest_tests --test asset_library_tests --test asset_library_review_tests --test asset_library_transfer_tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cargo test --locked -p core --lib catalog::tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          cargo test --locked -p core --lib library::metadata_write_tests
+          cargo test --locked -p core --lib library::
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cargo test --locked -p core --test image_contract_tests --test delivery_audit_tests --test static_delivery_tests --test prepare_static_tests --test source_matte_tests --test layered_pack_tests --test audio_plan_tests --test audio_processing_tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -168,3 +186,61 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-cli-skill.py --forge "$env:GITHUB_WORKSPACE/target/debug/forge.exe" --guide-only
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Produce Windows resource transfer fixture
+        shell: pwsh
+        run: |
+          python scripts/test-asset-library-portability-cli.py --forge "$env:GITHUB_WORKSPACE/target/debug/forge.exe" --mode produce --output "$env:RUNNER_TEMP/forge-library-exchange"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item target/debug/forge.exe "$env:RUNNER_TEMP/forge-library-exchange/forge.exe"
+      - name: Upload Windows transfer fixture and consumer binary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: forge-library-exchange-windows
+          include-hidden-files: true
+          path: |
+            ${{ runner.temp }}/forge-library-exchange/bundle/**
+            ${{ runner.temp }}/forge-library-exchange/exchange.json
+            ${{ runner.temp }}/forge-library-exchange/forge.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  resource-exchange:
+    needs: [v03-quality, windows-cli]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            local: mac
+            foreign: windows
+            binary: forge
+          - os: windows-latest
+            local: windows
+            foreign: mac
+            binary: forge.exe
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: Verify actual opposite-system media and metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python -m pip install --requirement scripts/requirements-local-assets.txt
+          gh run download "${{ github.run_id }}" --name forge-library-exchange-${{ matrix.local }} --dir local-fixture
+          gh run download "${{ github.run_id }}" --name forge-library-exchange-${{ matrix.foreign }} --dir foreign-fixture
+          chmod +x local-fixture/${{ matrix.binary }}
+          python scripts/test-asset-library-portability-cli.py --forge local-fixture/${{ matrix.binary }} --mode consume --input foreign-fixture --require-foreign --output transfer-result
+      - name: Upload cross-system verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: forge-library-consumed-on-${{ matrix.local }}
+          path: transfer-result/summary.json
+          if-no-files-found: warn
+          retention-days: 14
