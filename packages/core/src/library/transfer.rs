@@ -158,13 +158,7 @@ pub fn export(
                     &storage_path(root, &format!("{OBJECTS}/{digest}.json"))?,
                     &payload.join(format!("{OBJECTS}/{digest}.json")),
                 )?;
-                let evidence = storage_path(root, &review.evidence_path)?;
-                let actual = intake::content_at(&evidence)?;
-                if actual.files[0].sha256 != review.evidence_sha256
-                    || actual.files[0].bytes != review.evidence_bytes
-                {
-                    return Err(invalid("review evidence is missing or changed"));
-                }
+                let evidence = review::verify_evidence(root, &review)?;
                 copy_file(&evidence, &payload.join(&review.evidence_path))?;
                 review_objects.push(digest.clone());
             }
@@ -377,12 +371,7 @@ pub fn verify(
         }
         for object in &asset.reviews {
             let review: review::ReviewRecord = read_object(&payload, object)?;
-            let evidence = intake::content_at(&storage_path(&payload, &review.evidence_path)?)?;
-            if evidence.files[0].sha256 != review.evidence_sha256
-                || evidence.files[0].bytes != review.evidence_bytes
-            {
-                return Err(invalid("transferred review evidence is corrupt"));
-            }
+            review::verify_evidence(&payload, &review)?;
             expected_objects.insert(object.clone());
             allowed_files.insert(format!("{OBJECTS}/{object}.json"));
             allowed_files.insert(review.evidence_path);

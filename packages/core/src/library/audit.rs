@@ -131,13 +131,7 @@ pub fn verify(root: &Path) -> Result<AssetAudit, CatalogError> {
         }
         for digest in &asset.reviews {
             let review: review::ReviewRecord = read_object(root, digest)?;
-            let valid = storage_path(root, &review.evidence_path)
-                .and_then(|path| intake::content_at(&path))
-                .is_ok_and(|content| {
-                    content.files.len() == 1
-                        && content.files[0].sha256 == review.evidence_sha256
-                        && content.files[0].bytes == review.evidence_bytes
-                });
+            let valid = review::verify_evidence(root, &review).is_ok();
             if !valid {
                 report
                     .evidence_issues

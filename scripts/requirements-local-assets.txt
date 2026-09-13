@@ -1,2 +1,5 @@
 # Used by the local animation CLI/Godot fixture checks.
 Pillow==11.3.0
+
+# Validate actual CLI intake JSON against the published schemas, offline.
+jsonschema==4.25.1

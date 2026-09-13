@@ -88,7 +88,10 @@ Invalid Packs and unreadable candidates appear in `issues`; duplicate names and
 identical content are observations, not automatic merges. Raw file kinds are
 extension classifications, not decode validation or quality approval.
 
-The scan JSON is an editable batch using `schemas/asset-intake.schema.json`.
+The scan JSON is an editable batch using `schemas/asset-library-intake.schema.json`;
+`schemas/asset-intake.schema.json` remains a compatible reference to that same
+contract. Optional `issues` are scan observations and are ignored by registration.
+Both scan output and a batch without `issues` use the same resource item definition.
 Choose logical `assetId`, `name` and `tags` before registration; the generated ID
 is based on the path within the selected root, so separately scanned roots can
 require explicit ID disambiguation. A single item uses the same one-element

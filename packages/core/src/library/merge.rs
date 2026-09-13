@@ -37,6 +37,27 @@ fn reconcile(
     path: &str,
     conflicts: &mut Vec<String>,
 ) -> Option<Value> {
+    // Preserve causal order within each input branch. Hash/JSON ordering only
+    // breaks ties between unrelated additions; it must never reverse a branch.
+    if ["/revisions", "/reviews", "/installations"]
+        .iter()
+        .any(|suffix| path.ends_with(suffix))
+    {
+        if let (Some(a), Some(b)) = (
+            ours.and_then(Value::as_array),
+            theirs.and_then(Value::as_array),
+        ) {
+            let ancestor = base
+                .and_then(Value::as_array)
+                .map(Vec::as_slice)
+                .unwrap_or_default();
+            if let Some(merged) = merge_history(ancestor, a, b) {
+                return Some(Value::Array(merged));
+            }
+            conflicts.push(path.into());
+            return ours.cloned();
+        }
+    }
     if ours == theirs {
         return ours.cloned();
     }
@@ -64,37 +85,51 @@ fn reconcile(
         }
         return Some(Value::Object(output));
     }
-    // Only append-only history arrays are unioned. Tags, selections, names,
-    // dispositions and root paths retain ordinary three-way conflict semantics.
-    if ["/revisions", "/reviews", "/installations"]
-        .iter()
-        .any(|suffix| path.ends_with(suffix))
-    {
-        if let (Some(a), Some(b)) = (
-            ours.and_then(Value::as_array),
-            theirs.and_then(Value::as_array),
-        ) {
-            let ancestor = base.and_then(Value::as_array).cloned().unwrap_or_default();
-            if ancestor
-                .iter()
-                .all(|entry| a.contains(entry) && b.contains(entry))
-            {
-                let mut additions: Vec<_> = a
-                    .iter()
-                    .chain(b)
-                    .filter(|v| !ancestor.contains(v))
-                    .cloned()
-                    .collect();
-                additions.sort_by_key(Value::to_string);
-                additions.dedup();
-                let mut output = ancestor;
-                output.extend(additions);
-                return Some(Value::Array(output));
+    conflicts.push(path.into());
+    ours.cloned()
+}
+
+/// Append-only histories retain their common prefix and both branch orderings.
+/// Incompatible order constraints are conflicts, never timestamp/hash winners.
+fn merge_history(base: &[Value], ours: &[Value], theirs: &[Value]) -> Option<Vec<Value>> {
+    if !ours.starts_with(base) || !theirs.starts_with(base) {
+        return None;
+    }
+    let mut nodes = BTreeMap::new();
+    let mut edges = BTreeMap::<String, BTreeSet<String>>::new();
+    let mut incoming = BTreeMap::<String, usize>::new();
+    for branch in [ours, theirs] {
+        let additions = &branch[base.len()..];
+        for value in additions {
+            let key = value.to_string();
+            nodes.insert(key.clone(), value.clone());
+            incoming.entry(key).or_default();
+        }
+        for pair in additions.windows(2) {
+            let from = pair[0].to_string();
+            let to = pair[1].to_string();
+            if from != to && edges.entry(from).or_default().insert(to.clone()) {
+                *incoming.entry(to).or_default() += 1;
             }
         }
     }
-    conflicts.push(path.into());
-    ours.cloned()
+    let mut ready: BTreeSet<_> = incoming
+        .iter()
+        .filter(|(_, count)| **count == 0)
+        .map(|(key, _)| key.clone())
+        .collect();
+    let mut merged = base.to_vec();
+    while let Some(key) = ready.pop_first() {
+        merged.push(nodes.remove(&key)?);
+        for next in edges.get(&key).into_iter().flatten() {
+            let count = incoming.get_mut(next)?;
+            *count -= 1;
+            if *count == 0 {
+                ready.insert(next.clone());
+            }
+        }
+    }
+    nodes.is_empty().then_some(merged)
 }
 
 fn review_conflicts(
@@ -264,4 +299,61 @@ pub fn run(
         report.applied = true;
     }
     Ok(report)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn append_histories_preserve_each_branch_order_in_both_hash_orders() {
+        for (first, last) in [("z-approved", "a-rejected"), ("a-approved", "z-rejected")] {
+            for path in [
+                "asset/id/reviews",
+                "asset/id/revisions",
+                "asset/id/installations",
+            ] {
+                let base = json!(["base"]);
+                let ordered = json!(["base", first, last]);
+                let independent = json!(["base", "m-independent"]);
+                for (ours, theirs) in [(&ordered, &independent), (&independent, &ordered)] {
+                    let mut conflicts = vec![];
+                    let value =
+                        reconcile(Some(&base), Some(ours), Some(theirs), path, &mut conflicts)
+                            .unwrap();
+                    let merged = value.as_array().unwrap();
+                    assert!(conflicts.is_empty());
+                    assert_eq!(merged.len(), 4);
+                    assert_eq!(merged[0], "base");
+                    assert!(
+                        merged.iter().position(|v| v == first).unwrap()
+                            < merged.iter().position(|v| v == last).unwrap()
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn incompatible_order_or_removal_is_a_history_conflict() {
+        for (base, ours, theirs) in [
+            (
+                json!(["base"]),
+                json!(["base", "a", "b"]),
+                json!(["base", "b", "a"]),
+            ),
+            (json!(["base", "a"]), json!(["base"]), json!(["base", "a"])),
+        ] {
+            let mut conflicts = vec![];
+            reconcile(
+                Some(&base),
+                Some(&ours),
+                Some(&theirs),
+                "asset/id/reviews",
+                &mut conflicts,
+            );
+            assert_eq!(conflicts, ["asset/id/reviews"]);
+        }
+    }
 }

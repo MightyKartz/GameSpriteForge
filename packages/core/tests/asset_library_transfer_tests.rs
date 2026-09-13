@@ -327,3 +327,147 @@ fn concurrent_review_assertions_require_explicit_resolution() {
     assert!(!result.applied);
     assert_eq!(original, fs::read(head).unwrap());
 }
+
+#[test]
+fn merging_an_independent_review_does_not_revoke_a_later_rejection() {
+    let (temp, root, _source, _batch, reference) = fixture();
+    let head = root.join(".forge/catalog.json");
+    let base = temp.path().join("base.json");
+    let ours = temp.path().join("ours.json");
+    let theirs = temp.path().join("theirs.json");
+    fs::copy(&head, &base).unwrap();
+    let evidence = temp.path().join("notes.txt");
+    fs::write(&evidence, "review evidence").unwrap();
+    let mut request = ReviewRequest {
+        reference: reference.clone(),
+        domain: "visual".into(),
+        verdict: "approved".into(),
+        statement: "Initial approval".into(),
+        reviewer: "Fixture".into(),
+        evidence,
+    };
+    review::record(&root, &request).unwrap();
+    request.verdict = "rejected".into();
+    request.statement = "Later observation revokes approval".into();
+    review::record(&root, &request).unwrap();
+    assert_eq!(
+        intake::history(&root, &reference.asset_id).unwrap()[0].review_states["visual"],
+        "rejected"
+    );
+    fs::copy(&head, &ours).unwrap();
+    fs::copy(&base, &head).unwrap();
+    request.domain = "auditory".into();
+    request.verdict = "unknown".into();
+    review::record(&root, &request).unwrap();
+    fs::copy(&head, &theirs).unwrap();
+    for (left, right) in [(&ours, &theirs), (&theirs, &ours)] {
+        let preview = library::merge::run(&root, &base, left, right, None).unwrap();
+        assert!(preview.conflicts.is_empty());
+        let applied =
+            library::merge::run(&root, &base, left, right, Some(&preview.expected_sha256)).unwrap();
+        assert!(applied.applied);
+        let hit = &intake::history(&root, &reference.asset_id).unwrap()[0];
+        assert_eq!(hit.review_states["visual"], "rejected");
+        assert_eq!(hit.review_states["auditory"], "unknown");
+        let catalog = library::read_catalog(&root).unwrap();
+        let asset = library::read_asset(&root, &catalog, &reference.asset_id).unwrap();
+        assert_eq!(
+            review::read_reviews(&root, &asset, &reference.revision)
+                .unwrap()
+                .len(),
+            3
+        );
+    }
+}
+
+#[test]
+fn evidence_type_and_content_changes_fail_export_and_bundle_validation() {
+    for state in [
+        "missing",
+        "empty_directory",
+        "single_file_directory",
+        "changed",
+    ] {
+        let (temp, root, _source, _batch, reference) = fixture();
+        let evidence = temp.path().join("notes.txt");
+        fs::write(&evidence, "original evidence").unwrap();
+        let record = review::record(
+            &root,
+            &ReviewRequest {
+                reference: reference.clone(),
+                domain: "technical".into(),
+                verdict: "unknown".into(),
+                statement: "Original statement".into(),
+                reviewer: "Fixture".into(),
+                evidence,
+            },
+        )
+        .unwrap();
+        let bundle = temp.path().join("bundle");
+        transfer::export(
+            &root,
+            std::slice::from_ref(&reference),
+            &bundle,
+            serde_json::json!({}),
+            None,
+        )
+        .unwrap();
+        for path in [
+            root.join(&record.evidence_path),
+            bundle.join("payload").join(&record.evidence_path),
+        ] {
+            fs::remove_file(&path).unwrap();
+            match state {
+                "missing" => (),
+                "empty_directory" => fs::create_dir(&path).unwrap(),
+                "single_file_directory" => {
+                    fs::create_dir(&path).unwrap();
+                    fs::write(path.join("matching.bin"), "original evidence").unwrap();
+                }
+                "changed" => fs::write(&path, "changed evidence").unwrap(),
+                _ => unreachable!(),
+            }
+        }
+        let audit = audit::verify(&root).unwrap();
+        assert!(
+            !audit.complete_media && !audit.evidence_issues.is_empty(),
+            "{state}"
+        );
+        let rejected = temp.path().join("rejected");
+        assert!(
+            transfer::export(&root, &[reference], &rejected, serde_json::json!({}), None).is_err(),
+            "{state}"
+        );
+        assert!(!rejected.exists());
+        // Even a self-consistent payload manifest cannot turn a directory or
+        // changed bytes into the regular evidence file named by its review.
+        let manifest_path = bundle.join("bundle.json");
+        let mut manifest: serde_json::Value =
+            serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+        manifest["payload"] = serde_json::to_value(
+            forge_core::content_digest::directory_inventory(&bundle.join("payload")).unwrap(),
+        )
+        .unwrap();
+        fs::write(manifest_path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+        assert!(transfer::verify(&bundle, None).is_err(), "{state}");
+    }
+}
+
+#[test]
+fn oversized_origin_rejects_a_new_revision_and_preserves_queryable_history() {
+    let (_temp, root, _source, mut batch, reference) = fixture();
+    let head = fs::read(root.join(".forge/catalog.json")).unwrap();
+    batch.items[0].new_revision = true;
+    batch.items[0].origin = Some(OriginAssertion {
+        tool: None,
+        model: None,
+        license: None,
+        notes: Some("x".repeat(17 * 1024 * 1024)),
+    });
+    assert!(intake::register(&root, &batch).is_err());
+    assert_eq!(fs::read(root.join(".forge/catalog.json")).unwrap(), head);
+    let history = intake::history(&root, &reference.asset_id).unwrap();
+    assert_eq!(history.len(), 1);
+    assert_eq!(history[0].revision, reference.revision);
+    assert_eq!(history[0].status, "available");
+}
