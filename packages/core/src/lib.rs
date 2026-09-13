@@ -13,6 +13,7 @@ pub mod godot;
 pub mod image_contract;
 pub mod job;
 pub mod layered;
+pub mod library;
 pub mod matting;
 pub mod project;
 pub mod provider;

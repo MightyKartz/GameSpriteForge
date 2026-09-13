@@ -12,6 +12,7 @@ on:
       - 'scripts/test-cli-skill.py'
       - 'scripts/test-layered*.py'
       - 'scripts/test-local-audio-cli.py'
+      - 'scripts/test-asset-library-cli.py'
       - 'scripts/test-static-native-matte-cli.py'
       - 'scripts/test-godot-unified-player.py'
       - 'scripts/test-godot-preview-ui.py'
@@ -30,6 +31,7 @@ on:
       - 'scripts/test-cli-skill.py'
       - 'scripts/test-layered*.py'
       - 'scripts/test-local-audio-cli.py'
+      - 'scripts/test-asset-library-cli.py'
       - 'scripts/test-static-native-matte-cli.py'
       - 'scripts/test-godot-unified-player.py'
       - 'scripts/test-godot-preview-ui.py'
@@ -110,6 +112,8 @@ jobs:
           $launcher = $summary.cases[0].launcher
           $godot = "$env:RUNNER_TEMP/godot/Godot_v4.6.3-stable_win64_console.exe"
           python scripts/test-local-audio-cli.py --forge "$launcher" --godot "$godot" --output target/qa/windows-audio
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/test-asset-library-cli.py --forge "$launcher"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-static-native-matte-cli.py --forge "$launcher" --output target/qa/windows-native-static
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

@@ -1,8 +1,10 @@
 # Forge CLI 项目资源库实施计划
 
-日期：2026-09-12。状态：实施中；PR 0 前置基础已实现并完成本地验证，其余阶段待实施。文中新增 CLI 命令仍是设计草案。
+日期：2026-09-12。状态：实施中；[PR 0 / #34](https://github.com/MightyKartz/GameSpriteForge/pull/34) 三项远程检查通过；PR 1 目录与迁移完成本地验证，后续阶段待实施。命令以对应实现和编译能力为准。
 
 源码基线：`1c1e7079f22ea0dba5958e4aec79cad69f7ade65`。计划获授权后按下列顺序实现并创建 PR；不自动合并，不调整消费者工具链锁。前置验证见 [PR 0 验证记录](../qa/asset-library-foundation-2026-09-12.md)。
+
+PR 1 验证见[目录与迁移记录](../qa/asset-library-catalog-2026-09-12.md)，已实现命令见[资源库用法](../automation/project-asset-library.md)。完整历史构建指纹选择在 PR 3 接入生成流程时完成，跨系统旧哈希交付适配随 PR 6 的移机验收完成；当前阶段不把这两项标为已支持。
 
 ## 1. 目标与第一版范围
 

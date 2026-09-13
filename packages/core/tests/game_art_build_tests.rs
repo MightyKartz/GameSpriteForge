@@ -637,19 +637,39 @@ fn build_project_end_to_end_registers_catalog_and_report() {
 
 #[test]
 fn build_project_reexecution_reuses_everything_without_child_jobs() {
+    assert_build_reexecution(false);
+}
+
+#[test]
+fn v3_library_build_reexecution_reuses_without_selecting_a_delivery_version() {
+    assert_build_reexecution(true);
+}
+
+fn assert_build_reexecution(versioned_library: bool) {
     let temp = tempdir().unwrap();
     let root = temp.path().join("project");
     let plans = PlanStore::new(temp.path().join("plans")).unwrap();
     let jobs = JobStore::new(temp.path().join("jobs")).unwrap();
     let provider = FixtureProvider::default();
     setup_project(&root, &plans, &jobs, &provider);
+    if versioned_library {
+        forge_core::library::initialize(&root, "Versioned resources").unwrap();
+    }
     write_static_spec(&root, "hud-icons", "icon_set", &["a gold coin"]);
     write_static_spec(&root, "forest-props", "prop_set", &["a wooden crate"]);
     write_manifest(
         &root,
         &[
             ("hud-icons", "icon_set", ""),
-            ("forest-props", "prop_set", ""),
+            (
+                "forest-props",
+                "prop_set",
+                if versioned_library {
+                    r#""dependsOn": ["hud-icons"]"#
+                } else {
+                    ""
+                },
+            ),
         ],
     );
 
@@ -686,6 +706,45 @@ fn build_project_reexecution_reuses_everything_without_child_jobs() {
         assert!(result.child_job_id.is_none());
         assert!(result.pack_path.is_some());
         assert!(result.pack_sha256.is_some());
+    }
+    if versioned_library {
+        let catalog = forge_core::library::read_catalog(&root).unwrap();
+        let forest = forge_core::library::read_asset(&root, &catalog, "forest-props").unwrap();
+        let revision = forge_core::library::read_revision(
+            &root,
+            &forest,
+            forest.build_revision.as_deref().unwrap(),
+        )
+        .unwrap();
+        let dependencies = revision.legacy.unwrap().dependencies.unwrap();
+        let dependency = dependencies.iter().find(|d| d.id == "hud-icons").unwrap();
+        let hud = forge_core::library::read_asset(&root, &catalog, "hud-icons").unwrap();
+        assert_eq!(dependency.revision, hud.build_revision);
+        let state: serde_json::Value = serde_json::from_slice(
+            &fs::read(
+                jobs.read_record(&_first_parent)
+                    .unwrap()
+                    .job_dir
+                    .join(BUILD_STATE_FILE),
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        let forest_state = state["assets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|a| a["assetId"] == "forest-props")
+            .unwrap();
+        assert_eq!(
+            forest_state["resolvedDependencies"][0]["revision"],
+            dependency.revision.clone().unwrap()
+        );
+        for id in catalog.assets.keys() {
+            let asset = forge_core::library::read_asset(&root, &catalog, id).unwrap();
+            assert!(asset.selected_revision.is_none());
+            assert_eq!(asset.revisions.len(), 1);
+        }
     }
 }
 

@@ -586,8 +586,12 @@ fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreEr
                 ));
             }
             if let Some(catalog_project) = &request.catalog_project_path {
-                read_project(catalog_project)
-                    .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
+                if !crate::library::is_library(catalog_project)
+                    .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?
+                {
+                    read_project(catalog_project)
+                        .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
+                }
                 let catalog = read_project_catalog(catalog_project)
                     .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
                 let canonical_pack =
@@ -604,6 +608,12 @@ fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreEr
                     return Err(PlanStoreError::InvalidRequest(
                         "catalogProjectPath does not contain the requested Pack".into(),
                     ));
+                }
+                if crate::library::is_library(catalog_project)
+                    .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?
+                {
+                    crate::library::validate_current_pack(catalog_project, &request.pack_path)
+                        .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;
                 }
             }
         }
@@ -910,13 +920,24 @@ pub fn fingerprint_operation_inputs(
             hash_directory(&mut hasher, &request.pack_path)?;
             hash_files(&mut hasher, &[request.project_path.join("project.godot")])?;
             if let Some(catalog_project) = &request.catalog_project_path {
-                hash_files(
-                    &mut hasher,
-                    &[
-                        catalog_project.join("forge-project.json"),
-                        catalog_project.join(PROJECT_CATALOG_RELATIVE),
-                    ],
-                )?;
+                if crate::library::is_library(catalog_project)
+                    .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?
+                {
+                    hasher.update(b"library-catalog-v3\0");
+                    hasher.update(
+                        crate::library::snapshot_sha256(catalog_project)
+                            .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?
+                            .as_bytes(),
+                    );
+                } else {
+                    hash_files(
+                        &mut hasher,
+                        &[
+                            catalog_project.join("forge-project.json"),
+                            catalog_project.join(PROJECT_CATALOG_RELATIVE),
+                        ],
+                    )?;
+                }
             }
             hash_godot_target_identity(
                 &mut hasher,
@@ -992,6 +1013,15 @@ pub fn fingerprint_operation_inputs(
             let catalog_path = canonical_project.join(PROJECT_CATALOG_RELATIVE);
             if catalog_path.is_file() {
                 hash_files(&mut hasher, std::slice::from_ref(&catalog_path))?;
+                if crate::library::is_library(&canonical_project)
+                    .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?
+                {
+                    hasher.update(
+                        crate::library::snapshot_sha256(&canonical_project)
+                            .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?
+                            .as_bytes(),
+                    );
+                }
             }
             let catalog = read_project_catalog(&canonical_project)
                 .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?;

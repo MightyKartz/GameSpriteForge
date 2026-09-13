@@ -23,7 +23,7 @@
 //!
 //! [`ProjectBuildPlanV1`]: super::ProjectBuildPlanV1
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -107,6 +107,9 @@ pub struct BuildStateAssetV1 {
     pub child_job_id: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub child_job_ids: Vec<String>,
+    /// Exact dependency publications captured before starting this child.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resolved_dependencies: Option<Vec<CatalogDependencyRefV1>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub pack_path: Option<PathBuf>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -368,6 +371,14 @@ pub fn run_build_project(
     let catalog = read_project_catalog(&project_root).map_err(|error| {
         AutomationRunError::Processing(format!("invalid project catalog: {error}"))
     })?;
+    let mut known_publications = catalog
+        .assets
+        .iter()
+        .map(|(id, entry)| {
+            publication_dependency(&project_root, id, &entry.source_job_id, &entry.pack_sha256)
+                .map(|dependency| (id.clone(), dependency))
+        })
+        .collect::<Result<BTreeMap<_, _>, _>>()?;
     let required: BTreeSet<&str> = validated
         .manifest
         .assets
@@ -433,6 +444,13 @@ pub fn run_build_project(
                 && pack_intact(entry)
             {
                 let meta = parse_spec_meta(&project_root, action)?;
+                let dependencies = entry.resolved_dependencies.clone().or_else(|| {
+                    catalog.assets.get(&action.asset_id)
+                        .filter(|old| Some(old.source_job_id.as_str()) == entry.child_job_id.as_deref())
+                        .and_then(|old| old.dependencies.clone())
+                        .map(|dependencies| dependencies.into_iter().filter(|d| !d.id.starts_with("style:") && !d.id.starts_with("subject:")).collect())
+                }).or_else(|| action.depends_on_assets.is_empty().then(Vec::new))
+                    .ok_or_else(|| AutomationRunError::Processing("legacy recovery lacks dependency evidence; rebuild this asset explicitly".into()))?;
                 register_built_asset(
                     &project_root,
                     &validated,
@@ -448,7 +466,17 @@ pub fn run_build_project(
                     parent_job_id,
                     child_quality(store, entry.child_job_id.as_deref()),
                     provider.expect("provider presence checked when builds are required"),
+                    &dependencies,
                 )?;
+                known_publications.insert(
+                    action.asset_id.clone(),
+                    publication_dependency(
+                        &project_root,
+                        &action.asset_id,
+                        entry.child_job_id.as_deref().unwrap_or(parent_job_id),
+                        entry.pack_sha256.as_deref().expect("intact Pack"),
+                    )?,
+                );
                 results.push(ProjectBuildAssetResultV1 {
                     asset_id: action.asset_id.clone(),
                     kind: action.kind,
@@ -560,6 +588,24 @@ pub fn run_build_project(
             progress,
         )?;
         build_done += 1;
+        let dependencies = action
+            .depends_on_assets
+            .iter()
+            .map(|id| {
+                known_publications.get(id).cloned().ok_or_else(|| {
+                    AutomationRunError::Processing(format!(
+                        "dependency {id} has no completed publication"
+                    ))
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        state
+            .assets
+            .iter_mut()
+            .find(|entry| entry.asset_id == action.asset_id)
+            .expect("state covers build actions")
+            .resolved_dependencies = Some(dependencies.clone());
+        write_build_state(&state_path, &state)?;
         let child_record = match execute_child(
             store,
             plans,
@@ -697,7 +743,17 @@ pub fn run_build_project(
                     parent_job_id,
                     quality,
                     provider,
+                    &dependencies,
                 )?;
+                known_publications.insert(
+                    action.asset_id.clone(),
+                    publication_dependency(
+                        &project_root,
+                        &action.asset_id,
+                        &child_record.job_id,
+                        &pack_sha256,
+                    )?,
+                );
                 results.push(ProjectBuildAssetResultV1 {
                     asset_id: action.asset_id.clone(),
                     kind: action.kind,
@@ -1297,6 +1353,29 @@ fn execute_child(
     run_operation_with_provider(store, &child.job_id, &claimed.operation, Some(provider))
 }
 
+fn publication_dependency(
+    root: &Path,
+    id: &str,
+    job: &str,
+    hash: &str,
+) -> Result<CatalogDependencyRefV1, AutomationRunError> {
+    let revision = if crate::library::is_library(root)
+        .map_err(|e| AutomationRunError::Processing(e.to_string()))?
+    {
+        Some(
+            crate::library::revision_for_publication(root, id, job, hash)
+                .map_err(|e| AutomationRunError::Processing(e.to_string()))?,
+        )
+    } else {
+        None
+    };
+    Ok(CatalogDependencyRefV1 {
+        id: id.into(),
+        revision,
+        hash: Some(hash.into()),
+    })
+}
+
 /// Register (or re-register) the catalog V2 entry for a successfully built
 /// asset, with the full stage 2 provenance: spec hash, dependencies, resolved
 /// lock refs, workflow pin, provider/profile/model, pack path + content hash,
@@ -1314,6 +1393,7 @@ fn register_built_asset(
     parent_job_id: &str,
     quality: (Option<String>, Option<String>, Option<bool>),
     provider: &dyn MediaGenerationProvider,
+    resolved_dependencies: &[CatalogDependencyRefV1],
 ) -> Result<(), AutomationRunError> {
     let manifest_asset = validated
         .manifest
@@ -1326,21 +1406,7 @@ fn register_built_asset(
                 action.asset_id
             ))
         })?;
-    let catalog = read_project_catalog(project_root).map_err(|error| {
-        AutomationRunError::Processing(format!("invalid project catalog: {error}"))
-    })?;
-    let mut dependencies: Vec<CatalogDependencyRefV1> = action
-        .depends_on_assets
-        .iter()
-        .map(|id| CatalogDependencyRefV1 {
-            id: id.clone(),
-            revision: None,
-            hash: catalog
-                .assets
-                .get(id)
-                .map(|entry| entry.pack_sha256.clone()),
-        })
-        .collect();
+    let mut dependencies = resolved_dependencies.to_vec();
     dependencies.extend(
         action
             .lock_refs
@@ -1634,6 +1700,7 @@ fn resume_or_fresh_state(
                 status: entry.status,
                 child_job_id: entry.child_job_id.clone(),
                 child_job_ids: entry.child_job_ids.clone(),
+                resolved_dependencies: entry.resolved_dependencies.clone(),
                 pack_path: entry.pack_path.clone(),
                 pack_sha256: entry.pack_sha256.clone(),
                 error: entry.error.clone(),
@@ -1645,6 +1712,7 @@ fn resume_or_fresh_state(
                 status: BuildAssetStatusV1::Pending,
                 child_job_id: None,
                 child_job_ids: Vec::new(),
+                resolved_dependencies: None,
                 pack_path: None,
                 pack_sha256: None,
                 error: None,
