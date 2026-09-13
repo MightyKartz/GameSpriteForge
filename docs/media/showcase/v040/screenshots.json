@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "forgeRelease": "v0.4.0",
+  "forgeCommit": "62787fd244b7673b9c558ef34bf7113a180d6eae",
+  "captureTool": "Playwright CLI 0.1.19 / Chrome",
+  "viewport": {
+    "width": 1400,
+    "height": 1100
+  },
+  "pageContentModified": false,
+  "humanReviewAssertionsWritten": 0,
+  "screenshots": {
+    "resource-library.png": {
+      "sha256": "91ab9768aaff4f7e45f0aefcbae2089ec7453075d2704468151258574c0e5907",
+      "bytes": 299259,
+      "dimensions": [
+        1400,
+        1289
+      ],
+      "capture": "full-page",
+      "htmlSha256": "89928d5d80a468d20a87db981356ced53b750e3ba4dce0cee6d45e09e8334c4f"
+    },
+    "resource-comparison.png": {
+      "sha256": "c8d4fa5ddf1b480091f0c41424fa1c01d8f3bf70cfe97746f84e38530d292f58",
+      "bytes": 391429,
+      "dimensions": [
+        1400,
+        1100
+      ],
+      "capture": "viewport",
+      "htmlSha256": "c1228a90883f93f24f87fb375015a98863b441abceea3b525e64a425208f746e"
+    }
+  },
+  "selection": {
+    "library": [
+      "source-potion",
+      "source-historical-spells",
+      "source-synthetic-chime"
+    ],
+    "comparison": {
+      "assetId": "forest_props",
+      "revisions": [
+        "167be8e24689ba845cbcac8b8ee8ad35b844509d7115684483e5d4d781e3534c",
+        "4da7f2a05c7aaf824e5ad56d43b0262394af85ea912118b643ecced7ef8fd39e"
+      ]
+    }
+  }
+}

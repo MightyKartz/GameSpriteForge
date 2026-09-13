@@ -2,74 +2,27 @@
 
 English | [简体中文](./README.zh-CN.md)
 
-**A 2D game asset pipeline for AI-assisted development.**
+**Organize, process, review and deliver 2D game art and audio to Godot.**
 
-Forge connects artwork creation to native Godot delivery. It combines batch asset processing, quality checks, traceable asset Packs and engine integration in a Rust CLI that Codex, Claude and your own scripts can drive.
+Forge is a Rust CLI for AI-assisted game development. Bring artwork and WAV audio from your preferred tools, keep sources and generated outputs in a project resource library, and turn selected versions into verifiable Packs and native Godot resources. Codex, Claude and your own scripts can drive the workflow through embedded guidance and JSON results.
 
-Build icon and prop libraries from an art brief, bring in artwork from your preferred tools, or explore existing animation frames in a game prototype. Forge carries the work through processing, review and delivery while preserving the source artwork.
+[Latest release](https://github.com/MightyKartz/GameSpriteForge/releases/latest) · [Install](#install) · [Resource library](#keep-your-projects-resources-together) · [CLI guide](docs/automation/forge-cli.md) · [Examples](examples/cli)
 
-[Latest release](https://github.com/MightyKartz/GameSpriteForge/releases/latest) ·
-[Get started](#install) ·
-[CLI guide](docs/automation/forge-cli.md) ·
-[Examples](examples/cli)
+![Forge's generated offline resource gallery showing registered media and exact versions](docs/media/showcase/v040/resource-library.png)
 
-## Build assets with Codex
-
-After [installing the CLI](#install), open your game project in Codex and ask:
-
-> Use Forge and an available image tool to build forest-themed inventory icons and scene props for this Godot game. Run `forge guide` first, keep the source artwork, check the results, and deliver the assets into the project.
-
-Codex creates the source art with its image tool; Forge handles asset processing, validation and Godot delivery. The CLI includes workflow guidance, request examples and structured JSON results, so coding agents can plan work, inspect progress and check the outcome.
-
-## Build asset sets around your art direction
-
-Start with AI-generated artwork, hand-drawn sprites or an existing library. Batch-process transparent PNGs into icon and prop sets for inventories, pickups and game scenes. Local processing runs on your machine without a Forge Provider account.
-
-For generation through Forge, use a fixed style reference to guide an online provider. Consistency reports help you inspect palette, scale and other deviations; retry selected icons or props as you refine the set. Provider generation uses your own account and may incur charges.
-
-![Illustrative forest icon and prop set](docs/media/showcase/gallery.png)
-
-*A forest-themed icon and prop collection. Source art generated separately with Codex; sprites processed locally with Forge.*
-
-Start with the [local artwork workflow](docs/automation/codex-local-assets.md), or explore [provider generation examples](examples/cli).
-
-## Control how your sprites appear in game
-
-Split sprite sheets, clean up keyed backgrounds and normalize sprite canvases. Use centered origins for icons and ground anchors for props, with crisp pixel sampling or smooth filtering to suit the artwork. Preview the results and inspect quality reports before delivery.
-
-For existing animation frames, the experimental workflow can preserve drawing coordinates and individual frame durations through export. Source originals and processing records remain available for later revisions.
-
-![Existing media prepared as transparent sprite frames](docs/media/showcase/processing.png)
-
-*From a keyed source sheet to a transparent sprite: Forge's local background-removal workflow.*
-
-## Validate assets and deliver native Godot resources
-
-Forge packages textures and asset metadata into verifiable Packs, then installs them into your Godot project. Icon sets deliver PNG textures; prop sets add reusable scenes with anchor and rendering settings. Animation Packs provide native `SpriteFrames` resources and `AnimatedSprite2D` scenes. Updates replace Forge-managed assets and restore the previous installation if delivery fails.
-
-Input hashes, processing settings and job reports let you trace an asset back to its source and inspect what changed between iterations. Pack validation checks the delivery's structure and integrity; visual review determines whether the art suits your game.
-
-### In use: Sword
-
-Sword is a cultivation-themed survival game prototype using Forge for asset processing and delivery. Its spell effects and enemy animations started as Codex-generated artwork, were processed and delivered by Forge, and are replayed below in a dedicated Godot asset showcase.
-
-![Sword prototype spells: fire, frost and lightning](docs/media/showcase/sword-spells.gif)
-
-*Fire, frost and lightning — existing spell frames delivered to Godot.*
-
-![Sword prototype enemies: Wisp, Stone Golem, Vine Spirit and a Guardian slam attack](docs/media/showcase/sword-enemies.gif)
-
-*Wisp, Stone Golem, Vine Spirit and a Guardian slam — prototype enemy animations.*
+*A real offline page generated by `forge asset preview`. The library keeps source media, revisions and review records together. This is a read-only browser preview produced by the CLI.*
 
 ## Install
 
-Stable version: [v0.4.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.4.0) for **macOS Apple Silicon**, with an **experimental Windows x64 portable package**. Install **Godot 4.6.x** separately for engine delivery. The binaries are unsigned and not notarized. For an existing game, retain its pinned CLI until you have verified an upgrade.
+[v0.4.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.4.0) is available for **macOS Apple Silicon**, with an **experimental Windows x64 portable package**. Godot **4.6.x** is required only for native engine delivery and preview. The packages are unsigned; the macOS package is not notarized.
+
+On macOS:
 
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/MightyKartz/GameSpriteForge/main/install.sh | sh
 ```
 
-Open a new terminal, then check the installation:
+Open a new terminal, then run:
 
 ```bash
 forge --version
@@ -77,30 +30,106 @@ forge doctor --json
 forge guide
 ```
 
-`forge guide` provides the workflow instructions and request examples bundled with your CLI version, even offline.
+On Windows, download the ZIP, checksum and two PowerShell scripts from the same release and follow the [Windows installation guide](docs/releases/windows-portable.md). The installer needs no administrator rights; use its `forge.cmd` launcher. Packages are built and tested on native Windows CI.
 
-Windows users: download the ZIP, checksum and two installer scripts from the same release, then follow the [Windows installation guide](docs/releases/windows-portable.md). Windows packages are built and tested on Windows CI.
+For an existing game, verify the upgrade before changing its pinned CLI. Upgrading Forge does not automatically update a separately installed skill or a game's toolchain lock.
 
-For your first set, follow the [local artwork workflow](docs/automation/codex-local-assets.md): prepare your images, review the results, validate the Pack and install it into Godot.
+## Start with your existing assets
 
-## Project resource libraries
+Create a local library, scan a selected source folder, and register the files you want to keep:
 
-Register and search source media and generated outputs, compare revisions in an offline gallery, retain review evidence, and lock exact delivery versions. Transfer selected resources between macOS and Windows while preserving content identities and historical Pack hashes. Start with `forge guide project-assets` or the [resource library guide](docs/automation/project-asset-library.md).
+```bash
+forge project init --path ./library --name "Game resources" --local-assets --json
+forge asset scan --project ./library --root ./source-media --out intake.json --json
+# Inspect intake.json; adjust asset IDs, names, tags and the selected items.
+forge asset register --project ./library --input intake.json --json
+forge asset search --project ./library --json
+forge asset preview --project ./library --out ./preview --json
+```
+
+Use your own `source-media` folder and a new output path for each scan or preview. Open `preview/index.html` in a local browser. These operations do not call a generation provider. Registration records existing bytes; creating a deliverable Pack is a separate processing step.
+
+With Codex, open your game project and ask:
+
+> Use Forge to organize this game's images, animations and WAV audio. Run `forge guide` first, keep the sources, prepare the assets, and show me the results for review before delivering selected versions to Godot.
+
+`forge guide` is bundled with the executable and works offline. Topics include `project-assets`, `static`, `animation`, `audio` and `delivery`. Optional `forge skill install` enables Codex skill discovery on macOS/Linux; installing a skill is not required to read the guide.
+
+## Keep your project's resources together
+
+- **Find and reuse:** register sources and completed outputs, search names, tags and Pack members, and inspect an asset's history.
+- **Compare and review:** preview images, GIFs and browser-supported audio/video; compare exact revisions and retain separate technical, visual, auditory and license review assertions.
+- **Retain and choose:** copy exact media into project storage, select a preferred revision, and lock a game's explicitly chosen delivery versions.
+- **Move between computers:** transfer selected resources between macOS and Windows, rebind local roots, verify content and reconcile parallel catalog histories.
+
+New output does not automatically replace a game's locked resources. Catalog metadata and media are separate: committing the catalog alone does not back up or transfer files. The offline gallery displays resources and review records; review and selection changes are made through the CLI.
+
+Read the [resource library guide](docs/automation/project-asset-library.md), or run `forge guide project-assets`.
+
+<details>
+<summary>See two revisions of the same prop Pack</summary>
+
+![Two actual prop Pack revisions in Forge's offline comparison page](docs/media/showcase/v040/resource-comparison.png)
+
+*The same six sources prepared on 128 px and 256 px canvases. Each revision keeps its own identity and installation history; human review remains unknown in this example.*
+
+</details>
+
+## Prepare artwork, animation and audio
+
+| Input | What Forge does | Delivery |
+| --- | --- | --- |
+| Local PNG icons and props | Batch preparation, alpha bounds or explicit chroma matting, canvas settings, centered or ground origins, and pixel/smooth sampling | Static Pack, textures and reusable prop scenes |
+| Existing animation frames or sprite sheets | Frame extraction, background cleanup, canvas normalization, optional source-coordinate and frame-duration preservation | Animation Pack, `SpriteFrames` and `AnimatedSprite2D` scenes |
+| Aligned PNG layers | Shared-canvas packaging with declared transform and opacity tracks | Layered Pack and native playback scene |
+| WAV music, sound effects and ambience | Trimming, explicit gain, fades, loop crossfades, sample-rate and channel conversion | Audio Pack and native Godot audio streams |
+
+![A source potion before and after Forge's local background processing](docs/media/showcase/processing.png)
+
+*An earlier local processing example. The [showcase notes](docs/media/showcase/README.md) distinguish these intermediate PNGs from completed Pack delivery.*
+
+You can also use a fixed style reference and your own xAI account to generate icon and prop sets through Forge, inspect consistency reports and retry selected assets. Provider requests may incur charges. Artwork created with Codex's image tool is a separate generation step before local Forge processing.
+
+For music and sound-effect generation, use your chosen external application and export WAV. ACE-Step and Stable Audio 3 are optional tools with **read-only source-directory detection**; Forge does not bundle, install or run their models. Audio processing does not establish listening approval or a seamless loop.
+
+Start with `forge guide static`, `forge guide animation`, `forge guide audio`, or the [layered Pack guide](docs/automation/layered-packs.md).
+
+## Deliver selected versions to Godot
+
+Forge validates a Pack's structure and hashes before installing native resources. Installation records ownership and a content baseline, checks for drift, and restores the previous installation if delivery fails. Source hashes, processing settings, Job reports and portable receipts preserve the evidence behind each delivery.
+
+![Native Godot scene replaying props and a synthetic audio cue delivered by Forge v0.4.0](docs/media/showcase/v040/native-delivery.gif)
+
+*A dedicated example scene using fresh v0.4.0 static and audio imports. This GIF is silent. [Watch the capture with the synthetic chime](docs/media/showcase/v040/native-delivery.mp4), or read the [reproduction and provenance notes](docs/media/showcase/v040/README.md). The scene layout belongs to the demonstration.*
+
+Use `forge godot plan-install` followed by `forge plan execute`, or install an exact resource-library revision through a consumer resource lock. Run `forge godot verify-install` to audit installed bytes. Game playback logic remains in your project.
+
+Pack validity and native resource loading are technical checks. Review artwork, listen to audio and test the result in your game separately. See `forge guide delivery` and the [CLI delivery protocol](docs/automation/forge-cli.md).
+
+## In use: Sword
+
+Sword is a cultivation-themed survival game prototype using Forge for asset processing and Godot delivery. These existing spell and enemy resources started as Codex-generated artwork and were imported with earlier Forge builds.
+
+![Sword prototype spells: fire, frost and lightning](docs/media/showcase/sword-spells.gif)
+
+![Sword prototype enemies: Wisp, Stone Golem, Vine Spirit and a Guardian slam attack](docs/media/showcase/sword-enemies.gif)
+
+*Historical resources replayed in a separate Godot asset showcase, with their original frame order and timing. These are prototype asset demonstrations; [source and capture details](docs/media/showcase/README.md) describe their scope.*
 
 ## Current scope
 
-Local icon and prop processing, Pack validation and Godot delivery are the stable foundation. **Character animation remains in development and testing**, including generation, reuse and directional workflows. The Sword previews demonstrate specific prototype assets; review animation results before using them in your game. See the [v0.4.0 release notes](docs/releases/v0.4.0.md) for the release scope.
+Local static processing, resource libraries, WAV processing, Pack validation and Godot delivery are included in the default v0.4.0 release. **Character animation remains experimental**, including generation and directional workflows. Advanced character and world-asset commands remain optional source-build features. Windows distribution is experimental.
 
-Forge also imports local WAV music, sound effects and ambience into audio Packs and native Godot streams. This workflow retains source hashes, applies explicit audio processing and records technical checks; listening review remains separate. ACE-Step and Stable Audio 3 are optional external tools, with read-only discovery only. Forge does not bundle, install or run their models. Check the selected build's capabilities and read the [audio guide](.agents/skills/forge-use/references/audio.md).
+Forge records revision-specific review assertions; it does not determine third-party license rights or automatically approve later revisions. Check `forge doctor --json` for your executable's exact build and capabilities. The [release notes](docs/releases/v0.4.0.md) describe platform support and verification.
 
 ## Documentation
 
-- [CLI guide](docs/automation/forge-cli.md) — commands, generation, processing, and Godot delivery.
-- [Local artwork workflow](docs/automation/codex-local-assets.md) — take artwork from Codex or other tools through processing and Godot delivery.
-- [Delivery evidence](.agents/skills/forge-use/references/delivery.md) — reviewed hashes, portable receipts and installed-resource audits; check the selected binary's capabilities.
-- [Example specifications](examples/cli) — starting points for your own assets.
-- [Release notes](docs/releases/v0.4.0.md) — platform support and release scope.
-- [Showcase assets](docs/media/showcase/README.md) — artwork sources and Godot previews.
+- [CLI guide](docs/automation/forge-cli.md) — command and automation contracts.
+- [Resource library](docs/automation/project-asset-library.md) — intake, revisions, review, retention and delivery.
+- [Local artwork workflow](docs/automation/codex-local-assets.md) — source images through processing to Godot.
+- [Audio workflow](.agents/skills/forge-use/references/audio.md) — local WAV processing and native delivery.
+- [Example specifications](examples/cli) — starting points for asset requests.
+- [Showcase sources](docs/media/showcase/README.md) — media provenance and reproduction.
 - [Contributing](CONTRIBUTING.md) — source builds and development checks.
 
 ## License
