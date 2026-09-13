@@ -18,7 +18,7 @@ use crate::asset_project::{
     StaticAssetKind, StaticPackItem, CONSISTENCY_PROFILE, KEYFRAME_HARD_GATE_PROFILE,
 };
 use crate::catalog::{
-    link_catalog_install_unlocked, register_catalog_asset, CatalogProviderRefV1, CatalogStyleRefV1,
+    link_catalog_install_unlocked, publish_catalog_asset, CatalogProviderRefV1, CatalogStyleRefV1,
     CatalogSubjectRefV1, ProjectCatalogEntryV1,
 };
 use crate::export::{
@@ -1340,7 +1340,10 @@ fn run_generate_static_asset_set(
         ]);
         record.next_actions = vec!["inspect_asset".into(), "plan_install_godot".into()];
     })?;
-    let catalog_path = register_catalog_asset(
+    if parent_publishes_catalog(store, &record)? {
+        return store.read_record(job_id).map_err(Into::into);
+    }
+    let catalog_path = publish_catalog_asset(
         &request.project_path,
         ProjectCatalogEntryV1 {
             asset_id: request.asset.id.clone(),
@@ -1362,7 +1365,8 @@ fn run_generate_static_asset_set(
             }),
             installed: None,
             created_at: Utc::now(),
-        },
+        }
+        .into(),
     )
     .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
     let catalog_sha256 = hash_file(&catalog_path)?;
@@ -2255,13 +2259,13 @@ fn run_generate_keyframe_character_pack(
                 sha256: Some(graph_sha256.clone()),
             });
         })?;
-        if !consistency_review_required {
+        if !consistency_review_required && !parent_publishes_catalog(store, &record)? {
             if let (Some(project_root), Some(asset_id), Some(pack_sha256)) = (
                 request.project_path.as_ref(),
                 request.asset_id.as_ref(),
                 pack.sha256.as_ref(),
             ) {
-                let catalog_path = register_catalog_asset(
+                let catalog_path = publish_catalog_asset(
                     project_root,
                     ProjectCatalogEntryV1 {
                         asset_id: asset_id.clone(),
@@ -2286,7 +2290,8 @@ fn run_generate_keyframe_character_pack(
                         }),
                         installed: None,
                         created_at: Utc::now(),
-                    },
+                    }
+                    .into(),
                 )
                 .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
                 let catalog_sha256 = hash_file(&catalog_path)?;
@@ -3210,6 +3215,23 @@ fn run_generate_character_pack(
     finalize_video_character_result(store, request, &completed, style.as_ref())
 }
 
+/// A project build owns publication of its children's richer provenance.
+/// Ordinary retries have an asset Job as parent and still publish themselves.
+fn parent_publishes_catalog(
+    store: &JobStore,
+    record: &JobRecord,
+) -> Result<bool, AutomationRunError> {
+    let Some(parent) = &record.parent_job_id else {
+        return Ok(false);
+    };
+    match store.read_record(parent) {
+        Ok(parent) => Ok(parent.operation_kind == JobOperationKind::BuildProject),
+        // An old standalone retry may retain a parent ID after history cleanup.
+        Err(JobStoreError::JobNotFound(_)) => Ok(false),
+        Err(error) => Err(error.into()),
+    }
+}
+
 fn finalize_video_character_result(
     store: &JobStore,
     request: &GenerateCharacterPackRequest,
@@ -3218,6 +3240,9 @@ fn finalize_video_character_result(
 ) -> Result<JobRecord, AutomationRunError> {
     let attached = attach_character_consistency(record, style)?;
     if attached.lifecycle_state != JobLifecycleState::Succeeded {
+        return Ok(attached);
+    }
+    if parent_publishes_catalog(store, &attached)? {
         return Ok(attached);
     }
     let (Some(project_root), Some(asset_id)) =
@@ -3236,7 +3261,7 @@ fn finalize_video_character_result(
         .sha256
         .clone()
         .unwrap_or_else(|| hash_directory(&pack.path).unwrap_or_default());
-    let catalog_path = register_catalog_asset(
+    let catalog_path = publish_catalog_asset(
         project_root,
         ProjectCatalogEntryV1 {
             asset_id: asset_id.clone(),
@@ -3258,7 +3283,8 @@ fn finalize_video_character_result(
             }),
             installed: None,
             created_at: Utc::now(),
-        },
+        }
+        .into(),
     )
     .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
     let sha256 = hash_file(&catalog_path)?;

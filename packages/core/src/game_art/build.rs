@@ -47,9 +47,8 @@ use crate::automation::{
     PlanStoreError,
 };
 use crate::catalog::{
-    read_project_catalog, register_catalog_asset_v2, CatalogDependencyRefV1,
-    CatalogLockRevisionsV1, CatalogProviderRefV1, CatalogStyleRefV1, CatalogSubjectRefV1,
-    ProjectCatalogEntryV2,
+    publish_catalog_asset, read_project_catalog, CatalogDependencyRefV1, CatalogLockRevisionsV1,
+    CatalogProviderRefV1, CatalogStyleRefV1, CatalogSubjectRefV1, ProjectCatalogEntryV2,
 };
 use crate::job::{JobLifecycleState, JobOperationKind, JobRecord, JobState, JobStore};
 use crate::provider::{MediaGenerationProvider, ProviderError, ProviderUsage};
@@ -1410,7 +1409,7 @@ fn register_built_asset(
             action.workflow
         )),
     };
-    register_catalog_asset_v2(project_root, entry)
+    publish_catalog_asset(project_root, entry)
         .map_err(|error| AutomationRunError::Processing(error.to_string()))?;
     Ok(())
 }

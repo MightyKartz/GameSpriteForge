@@ -550,6 +550,13 @@ fn build_project_end_to_end_registers_catalog_and_report() {
     for child in &children {
         assert_eq!(child.parent_job_id.as_deref(), Some(parent_id.as_str()));
         assert_eq!(child.lifecycle_state, JobLifecycleState::Succeeded);
+        assert!(
+            child
+                .artifacts
+                .iter()
+                .all(|artifact| artifact.kind != "project_catalog"),
+            "the parent must publish complete provenance once, without a preliminary child entry"
+        );
     }
     let kinds = children
         .iter()
