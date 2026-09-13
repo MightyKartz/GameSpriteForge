@@ -20,6 +20,7 @@ const IDENTITY: &str = ".forge/library/identity.json";
 const LOCAL: &str = ".forge/library/local.json";
 const MAX_METADATA_BYTES: u64 = 16 * 1024 * 1024;
 
+pub mod delivery;
 pub mod finalize;
 pub mod intake;
 mod types;
@@ -230,6 +231,30 @@ pub fn read_asset(
             return Err(invalid("asset reference is absent from history"));
         }
     }
+    for installed in &asset.installations {
+        if !asset.revisions.contains(&installed.revision) {
+            return Err(invalid("installation refers to an unknown revision"));
+        }
+        match (&installed.snapshot_text, &installed.snapshot_sha256) {
+            (Some(text), Some(digest)) => {
+                if sha(text.as_bytes()) != *digest
+                    || installed
+                        .install_job_id
+                        .as_ref()
+                        .is_none_or(|id| id.is_empty())
+                {
+                    return Err(invalid("installation snapshot identity is inconsistent"));
+                }
+                let _: crate::delivery::InstallSnapshot = serde_json::from_str(text)?;
+            }
+            (None, None) => (),
+            _ => {
+                return Err(invalid(
+                    "installation snapshot text and digest must be recorded together",
+                ))
+            }
+        }
+    }
     Ok(asset)
 }
 
@@ -329,7 +354,7 @@ pub fn resolve_location(root: &Path, location: &Location) -> Result<PathBuf, Cat
         return Ok(base);
     }
     validate_relative(&location.path)?;
-    Ok(base.join(&location.path))
+    storage_path(&base, &location.path)
 }
 
 fn identity_for(
@@ -620,6 +645,9 @@ pub fn migrate(
         }
         if let Some(installed) = installed {
             asset.installations.push(InstallReference {
+                install_job_id: None,
+                snapshot_text: None,
+                snapshot_sha256: None,
                 revision: digest,
                 project: locate(root, &installed.godot_project, &mut config)?,
                 target: installed.target,
@@ -773,11 +801,14 @@ pub(crate) fn link_install_unlocked(
     verify_publication(root, &asset, &revision)?;
     let mut config = local_config(root)?;
     asset.installations.push(InstallReference {
+        install_job_id: None,
+        snapshot_text: None,
+        snapshot_sha256: None,
         revision,
         project: locate(root, &game, &mut config)?,
         target,
         installed_at: Utc::now(),
-        evidence: "installation_transaction".into(),
+        evidence: "legacy_installation_assertion".into(),
     });
     catalog
         .assets

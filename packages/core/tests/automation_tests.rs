@@ -268,6 +268,8 @@ fn godot_plan_rejects_targets_outside_forge_namespace() {
 
     let error = plans
         .prepare(AutomationOperation::InstallGodot(GodotInstallRequest {
+            catalog_revision: None,
+            resource_lock_path: None,
             schema_version: "1".into(),
             pack_path: pack.path.clone(),
             project_path: project.clone(),
@@ -285,6 +287,8 @@ fn godot_plan_rejects_targets_outside_forge_namespace() {
     fs::write(unowned.join("user-file.txt"), "keep me").unwrap();
     let error = plans
         .prepare(AutomationOperation::InstallGodot(GodotInstallRequest {
+            catalog_revision: None,
+            resource_lock_path: None,
             schema_version: "1".into(),
             pack_path: pack.path.clone(),
             project_path: project.clone(),
@@ -311,6 +315,8 @@ fn godot_plan_rejects_targets_outside_forge_namespace() {
 
         let error = plans
             .prepare(AutomationOperation::InstallGodot(GodotInstallRequest {
+                catalog_revision: None,
+                resource_lock_path: None,
                 schema_version: "1".into(),
                 pack_path: pack.path.clone(),
                 project_path: project,

@@ -314,6 +314,8 @@ fn fixture_provider_generates_a_game_ready_topdown_pack() {
     )
     .unwrap();
     let install = AutomationOperation::InstallGodot(GodotInstallRequest {
+        catalog_revision: None,
+        resource_lock_path: None,
         schema_version: "1".into(),
         pack_path: pack.path.clone(),
         project_path: project.clone(),

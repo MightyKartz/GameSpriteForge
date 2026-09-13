@@ -534,6 +534,94 @@ fn bound_local_job_publishes_once_and_pending_output_recovers_without_execution(
 }
 
 #[test]
+fn retained_versions_survive_sources_and_consumer_locks_do_not_follow_new_revisions() {
+    use library::delivery::{self, VersionRef};
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("library");
+    library::initialize(&root, "Local").unwrap();
+    let source = temp.path().join("media");
+    fs::create_dir(&source).unwrap();
+    fs::write(source.join("tone.wav"), b"synthetic external bytes").unwrap();
+    let mut scan = library::intake::scan(&source).unwrap();
+    let registered = library::intake::register(&root, &scan.batch).unwrap();
+    let reference = VersionRef {
+        asset_id: registered[0].asset_id.clone(),
+        revision: registered[0].revision.clone(),
+    };
+    let retained = delivery::retain(&root, &reference).unwrap();
+    assert!(retained.retained);
+    let head = fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap();
+    delivery::retain(&root, &reference).unwrap();
+    assert_eq!(head, fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap());
+    delivery::select(&root, &reference).unwrap();
+    let lock = temp.path().join("consumer/.forge/resources.lock.json");
+    delivery::write_lock(&root, &reference, &lock).unwrap();
+    let locked_bytes = fs::read(&lock).unwrap();
+    fs::write(source.join("tone.wav"), b"new revision").unwrap();
+    scan.batch.items[0].expected_content =
+        library::intake::content_at(&source.join("tone.wav")).unwrap();
+    scan.batch.items[0].new_revision = true;
+    library::intake::register(&root, &scan.batch).unwrap();
+    fs::remove_dir_all(&source).unwrap();
+    assert_eq!(
+        delivery::locked_reference(&root, &reference.asset_id, &lock).unwrap(),
+        reference
+    );
+    assert_eq!(fs::read(&lock).unwrap(), locked_bytes);
+    let asset = library::read_asset(
+        &root,
+        &library::read_catalog(&root).unwrap(),
+        &reference.asset_id,
+    )
+    .unwrap();
+    assert_eq!(asset.selected_revision.as_ref(), Some(&reference.revision));
+    assert_eq!(asset.revisions.len(), 2);
+    assert_eq!(
+        delivery::resolve(&root, &reference).unwrap().path,
+        retained.path
+    );
+    fs::write(&retained.path, b"tampered").unwrap();
+    assert!(delivery::resolve(&root, &reference).is_err());
+    assert!(delivery::locked_reference(&root, &reference.asset_id, &lock).is_err());
+}
+
+#[test]
+fn exact_install_plan_binds_consumer_lock_and_discloses_pack_members() {
+    use library::delivery::{self, VersionRef};
+    let temp = tempfile::tempdir().unwrap();
+    let produced = entry(&temp.path().join("producer"));
+    let root = temp.path().join("library");
+    library::initialize(&root, "Delivery").unwrap();
+    let mut scan = library::intake::scan(&produced.pack_path).unwrap();
+    scan.batch.items[0].asset_id = "alias".into();
+    let registered = library::intake::register(&root, &scan.batch).unwrap();
+    let reference = VersionRef {
+        asset_id: "alias".into(),
+        revision: registered[0].revision.clone(),
+    };
+    let retained = delivery::retain(&root, &reference).unwrap();
+    let game = temp.path().join("game");
+    fs::create_dir(&game).unwrap();
+    fs::write(game.join("project.godot"), "config_version=5\n").unwrap();
+    let lock = game.join(".forge/resources.lock.json");
+    delivery::write_lock(&root, &reference, &lock).unwrap();
+    let operation: AutomationOperation = AutomationOperation::InstallGodot(serde_json::from_value(json!({
+        "packPath":retained.path,"projectPath":game,"catalogProjectPath":root,"catalogRevision":reference,
+        "resourceLockPath":lock,"target":"addons/forge_assets/alias","assetKey":"alias"
+    })).unwrap());
+    let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+    let prepared = plans.prepare(operation).unwrap();
+    let rendered = serde_json::to_string(&prepared).unwrap();
+    assert!(rendered.contains("whole_pack") && rendered.contains("gem"));
+    fs::write(&lock, b"changed").unwrap();
+    assert!(plans
+        .claim(&prepared.token)
+        .unwrap_err()
+        .to_string()
+        .contains("input changed"));
+}
+
+#[test]
 fn duplicate_intake_restores_missing_bindings_without_changing_shared_history() {
     use forge_core::library::intake;
     let temp = tempfile::tempdir().unwrap();

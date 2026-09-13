@@ -881,6 +881,8 @@ mod tests {
         fs::write(project.join("project.godot"), "config_version=5\n").unwrap();
         let target = PathBuf::from("addons/forge_assets/fixture");
         let request = forge_core::automation::GodotInstallRequest {
+            catalog_revision: None,
+            resource_lock_path: None,
             schema_version: "1".into(),
             pack_path: receipt.pack.path.clone(),
             project_path: project.clone(),

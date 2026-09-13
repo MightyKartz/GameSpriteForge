@@ -30,6 +30,12 @@ pub struct InstallReference {
     pub target: PathBuf,
     pub installed_at: DateTime<Utc>,
     pub evidence: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub install_job_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub snapshot_text: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub snapshot_sha256: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

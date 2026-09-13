@@ -72,10 +72,18 @@ def check(forge, root, godot):
         assert metadata["source"]["kind"] == "import_frames"
         assert metadata["items"][0]["provenance"]["sha256"] == hashlib.sha256((sources / "jade.png").read_bytes()).hexdigest()
         assert metadata["source"]["metadata"]["providerRequestCount"] == 0
+        revision = history[0]["revision"]
+        retained = run(forge, root, ["asset", "retain", "--project", str(library), "--id", name, "--revision", revision])
+        assert retained["retained"]
+        asset_lock = game / ".forge/resources.lock.json"
+        run(forge, root, ["asset", "lock", "--project", str(library), "--id", name, "--revision", revision, "--out", str(asset_lock)])
         if godot:
-            plan = run(forge, root, ["godot", "plan-install", "--pack", str(pack), "--project", str(game), "--asset-key", name])
+            plan = run(forge, root, ["godot", "plan-install", "--library", str(library), "--asset-id", name, "--asset-lock", str(asset_lock), "--project", str(game), "--asset-key", name])
+            assert "whole_pack" in json.dumps(plan) and "jade_blade" in json.dumps(plan) and "stone" in json.dumps(plan)
             installed = run(forge, root, ["plan", "execute", "--token", plan["token"], "--wait"])
             assert installed["lifecycle_state"] == "succeeded"
+            associations = run(forge, root, ["asset", "installations", "--project", str(library), "--id", name])
+            assert associations[-1]["revision"] == revision
             usage = json.loads((game / "addons/forge_assets" / name / "forge_usage.json").read_text())
             assert usage["rendering"]["textureFilter"] == sampling
             assert usage["anchor"] == {"type": "feet" if kind == "prop_set" else "center", "x": 32, "y": 60 if kind == "prop_set" else 32}

@@ -53,6 +53,8 @@ fn fixture(root: &Path) -> (JobStore, PlanStore, PathBuf, PathBuf) {
 
 fn install_operation(pack: &Path, project: &Path) -> AutomationOperation {
     AutomationOperation::InstallGodot(GodotInstallRequest {
+        catalog_revision: None,
+        resource_lock_path: None,
         schema_version: "1".into(),
         pack_path: pack.into(),
         project_path: project.into(),
@@ -688,4 +690,109 @@ sys.exit(subprocess.call([{godot:?}, *sys.argv[1:]]))
     );
     // A fresh runtime load must use red cache bytes immediately, without an editor import.
     assert_eq!(native_image(), before_native);
+}
+
+#[test]
+#[ignore = "requires real Godot 4.6.x; exact retained A/B/A delivery and rollback"]
+fn retained_alias_revisions_install_and_roll_back_without_production_jobs() {
+    use forge_core::library::{
+        self,
+        delivery::{self, VersionRef},
+    };
+    let root = tempfile::tempdir().unwrap();
+    let (_, _, first_pack, game) = fixture(&root.path().join("producer-a"));
+    let (_, _, second_pack, _) = fixture(&root.path().join("producer-b"));
+    let library = root.path().join("library");
+    library::initialize(&library, "Delivery").unwrap();
+    let mut revisions = vec![];
+    for pack in [&first_pack, &second_pack] {
+        let mut scan = library::intake::scan(pack).unwrap();
+        scan.batch.items[0].asset_id = "logical-stone".into(); // deliberately differs from Pack ID
+        scan.batch.items[0].new_revision = true;
+        let registered = library::intake::register(&library, &scan.batch).unwrap();
+        let reference = VersionRef {
+            asset_id: "logical-stone".into(),
+            revision: registered[0].revision.clone(),
+        };
+        delivery::retain(&library, &reference).unwrap();
+        revisions.push(reference);
+    }
+    assert_ne!(revisions[0], revisions[1]);
+    fs::rename(
+        root.path().join("producer-a/jobs"),
+        root.path().join("old-jobs-a"),
+    )
+    .unwrap();
+    fs::rename(
+        root.path().join("producer-b/jobs"),
+        root.path().join("old-jobs-b"),
+    )
+    .unwrap();
+    let jobs = JobStore::new(root.path().join("delivery-jobs")).unwrap();
+    let plans = PlanStore::new(root.path().join("delivery-plans")).unwrap();
+    let executable = std::env::var_os("FORGE_GODOT_PATH")
+        .unwrap_or_else(|| "/Applications/Godot.app/Contents/MacOS/Godot".into());
+    let run = |reference: &VersionRef| {
+        let resource = delivery::resolve(&library, reference).unwrap();
+        let mut operation = install_operation(&resource.path, &game);
+        if let AutomationOperation::InstallGodot(request) = &mut operation {
+            request.catalog_project_path = Some(library.clone());
+            request.catalog_revision = Some(reference.clone());
+        }
+        let prepared = plans.prepare(operation).unwrap();
+        let plan = plans.claim(&prepared.token).unwrap();
+        let job = stage_plan_job(&jobs, &plan).unwrap();
+        run_operation(&jobs, &job.job_id, &plan.operation)
+    };
+    temp_env::with_var("FORGE_GODOT_PATH", Some(executable), || {
+        for reference in [&revisions[0], &revisions[1], &revisions[0]] {
+            assert_eq!(
+                run(reference).unwrap().lifecycle_state,
+                JobLifecycleState::Succeeded
+            );
+            forge_core::delivery::verify_install(&game, "fixture", None).unwrap();
+        }
+        let head = fs::read(library.join(".forge/catalog.json")).unwrap();
+        let native = directory_sha256(&game.join("addons/forge_assets/fixture")).unwrap();
+        let broken = root.path().join("failed-godot");
+        fs::write(&broken, "#!/bin/sh\nexit 1\n").unwrap();
+        fs::set_permissions(&broken, fs::Permissions::from_mode(0o755)).unwrap();
+        temp_env::with_var("FORGE_GODOT_PATH", Some(&broken), || {
+            assert!(run(&revisions[1]).is_err());
+        });
+        assert_eq!(head, fs::read(library.join(".forge/catalog.json")).unwrap());
+        assert_eq!(
+            native,
+            directory_sha256(&game.join("addons/forge_assets/fixture")).unwrap()
+        );
+    });
+    let asset = library::read_asset(
+        &library,
+        &library::read_catalog(&library).unwrap(),
+        "logical-stone",
+    )
+    .unwrap();
+    assert_eq!(
+        asset
+            .installations
+            .iter()
+            .map(|i| i.revision.clone())
+            .collect::<Vec<_>>(),
+        vec![
+            revisions[0].revision.clone(),
+            revisions[1].revision.clone(),
+            revisions[0].revision.clone()
+        ]
+    );
+    assert!(asset.selected_revision.is_none());
+    for installed in &asset.installations {
+        assert!(installed.install_job_id.is_some());
+        let text = installed.snapshot_text.as_ref().unwrap();
+        let _: forge_core::delivery::InstallSnapshot = serde_json::from_str(text).unwrap();
+        use sha2::{Digest, Sha256};
+        assert_eq!(
+            installed.snapshot_sha256.as_deref(),
+            Some(format!("{:x}", Sha256::digest(text.as_bytes())).as_str())
+        );
+    }
 }
