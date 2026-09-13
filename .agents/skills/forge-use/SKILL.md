@@ -1,23 +1,24 @@
 ---
 name: forge-use
-description: Use Forge CLI to prepare local game art or WAV audio, generate icon or prop sets with a Forge Provider, inspect asset jobs, and deliver Packs to Godot. Audio requires a verified source build.
+description: Use Forge CLI to prepare local game art or WAV audio, generate icon or prop sets with a Forge Provider, manage project resource libraries, inspect asset jobs, and deliver Packs to Godot.
 ---
 
 # Use Forge for game assets
 
 Start from the game's asset specs, toolchain lock and import receipts. This skill
 is self-contained: its required references and examples travel with the bundle.
-Forge v0.3.2 exposes this same bundle through `guide`, so reading and using it
-requires no skill installation or source checkout. An optional skill installation
-lets Codex discover it by name. Neither route installs or upgrades Forge, enables
+Since v0.3.2, Forge exposes its matching bundle through `guide`, so reading and
+using it requires no skill installation or source checkout. An optional skill
+installation lets Codex discover it by name. Neither route installs or upgrades Forge, enables
 Codex image tools, or replaces a project's pinned executable. Forge source
 development is a separate task.
 
 ## Select the actual toolchain
 
-The asset-processing baseline is the default Forge v0.3.0 CLI. Use the game's
-verified absolute executable path, including its installed launcher when
-applicable. If no executable is pinned, locate the local installation and verify
+The default Forge v0.4.0 CLI includes local WAV audio, project resource libraries
+and delivery evidence alongside the local art workflows. Use the game's verified
+absolute executable path, including its installed launcher when applicable. If
+no executable is pinned, locate the local installation and verify
 it before selecting it. Do not substitute a convenient `forge` on PATH for an
 existing lock. Record the selected path and binary SHA-256:
 
@@ -43,8 +44,9 @@ old receipts and source history; actual re-imports create new receipts.
 
 ## Read the matching guide
 
-On v0.3.2 or a verified build with `embedded_usage_guide`, `"$FORGE_BIN" guide`
-reads this entrypoint and the commands below read its bundled resources offline.
+On v0.3.2 and later, or a verified build with `embedded_usage_guide`,
+`"$FORGE_BIN" guide` reads this entrypoint and the commands below read its bundled
+resources offline.
 They are read-only and use no Provider, Job store or Codex configuration. Keep
 using that same executable for the workflow. A CLI upgrade carries its matching
 guide; it does not update any separately installed skill files.

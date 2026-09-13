@@ -1,8 +1,9 @@
 # Project asset library
 
-Development builds with `project_asset_catalog_v3` can initialize a local,
-provider-neutral asset library. Check the selected executable's `doctor --json`
-capabilities before use. The PR 0–6 implementation follows the
+The default v0.4.0 release includes a local, provider-neutral asset library
+through `project_asset_catalog_v3`, with transfer and merge through
+`project_asset_portability`. Check the selected executable's `doctor --json`
+capabilities before use. The completed implementation follows the
 [implementation plan](../architecture/forge-project-asset-library-plan.md).
 The complete command workflow, including transfer, root rebinding, integrity
 audit and explicit Git merge, lives in the embedded
@@ -34,7 +35,8 @@ original JSON. Apply rejects a stale preview and retains the original bytes in
 historical assertions with unknown verified content; migration never fabricates
 missing Jobs, images, reviews or installation snapshots. A foreign-platform path
 that cannot be located remains unconfigured, with its original spelling retained
-in the backup. This phase does not yet provide root rebinding or transfer.
+in the backup. Use explicit root rebinding or transfer from the project resource
+guide when moving a library between machines.
 
 Stop old writers and pin the upgraded executable before migration. Tested old
 CLI versions reject V3 reads; direct external writes cannot be prevented by a
@@ -63,9 +65,10 @@ retain them in `resolvedDependencies` in build-state; completed upstream results
 are used instead of rereading an unrelated concurrent build's current entry.
 
 V3 catalog roots also work with the existing `godot plan-install
---catalog-project` contract without requiring generation configuration. This phase
-retains its current-build, whole-Pack semantics. Explicit historical-version
-installation and member impact reporting arrive with the version-consumption PR.
+--catalog-project` contract without requiring generation configuration. That
+interface retains its current-build, whole-Pack semantics. Use the explicit
+version interface below for historical-version installation and member impact
+reporting.
 
 Schemas: [catalog head](../../schemas/project-catalog-v3.schema.json),
 [immutable objects](../../schemas/asset-library-object.schema.json).

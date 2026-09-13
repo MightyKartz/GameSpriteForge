@@ -2,9 +2,9 @@
 
 Use the selected executable's `doctor --json` and command help. These commands
 require `project_asset_catalog_v3`; transfer and merge also require
-`project_asset_portability`. They are included in the default development build.
-An older release with the same version string may lack them. Do not change an
-existing game's toolchain pin just to use this guide.
+`project_asset_portability`. They are included in the default v0.4.0 release.
+Earlier release pins may lack them. Do not change an existing game's toolchain
+pin just to use this guide.
 
 ## Register existing resources
 

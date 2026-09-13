@@ -1,8 +1,9 @@
 # Inspect sources and retain delivery evidence
 
-These additions require the selected binary's `reviewed_source_hashes`,
-`source_png_inspection`, `delivery_receipts`, `godot_install_verification` and
-`transactional_godot_install` capabilities as applicable; cache baseline checks
+These workflows are included in the default v0.4.0 release. Require the selected
+binary's `reviewed_source_hashes`, `source_png_inspection`, `delivery_receipts`,
+`godot_install_verification` and `transactional_godot_install` capabilities as
+applicable; cache baseline checks
 also require `godot_import_cache_integrity`. Older release pins do
 not acquire them by reading this guide. Keep the consumer's tested executable.
 

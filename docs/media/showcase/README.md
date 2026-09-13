@@ -1,13 +1,19 @@
 # Product showcase assets
 
-These images support the English and Chinese product READMEs. They illustrate
-icons and props, local background removal, and existing Sword animation assets
-prepared with Forge and replayed in Godot. The animation previews are prototype
-examples; character animation remains in development.
+These media support the English and Chinese product READMEs. The
+[v0.4.0 showcase](v040/README.md) demonstrates a real resource library and fresh
+static/audio Packs delivered to Godot using the published CLI. Earlier images
+illustrate local background removal and historical Sword animation resources.
+The animation previews are prototype examples; character animation remains in
+development.
 
 | Image | What it shows |
 | --- | --- |
-| [gallery.png](gallery.png) | Eight illustrative objects, displayed using actual Forge-matted PNGs. |
+| [v040/resource-library.png](v040/resource-library.png) | The CLI's real offline gallery with PNG, GIF and synthetic WAV resources. |
+| [v040/resource-comparison.png](v040/resource-comparison.png) | Two exact revisions of a freshly prepared prop Pack. |
+| [v040/native-delivery.gif](v040/native-delivery.gif) | Silent preview of a dedicated Godot scene using fresh v0.4.0 static and audio delivery. |
+| [v040/native-delivery.mp4](v040/native-delivery.mp4) | The same native capture with Godot's recorded synthetic chime playback. |
+| [gallery.png](gallery.png) | Eight illustrative objects, displayed using actual Forge-matted PNGs; retained as an earlier example. |
 | [processing.png](processing.png) | The same potion before and after Forge background removal. |
 | [godot.png](godot.png) | An earlier authored Godot scene using those PNGs, retained here but no longer embedded in the main READMEs. |
 | [sword-spells.gif](sword-spells.gif) | Sword's existing fire, frost and lightning frames replayed in a dedicated Godot showcase. |

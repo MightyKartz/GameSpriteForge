@@ -2,9 +2,9 @@
 
 Use this route for music, sound effects and ambience already exported by the
 user's chosen tools. Follow the [toolchain checks](../SKILL.md) (`forge guide
-overview` in the embedded bundle). These commands are source-build additions,
-outside the published v0.3.2 release. Require `local_audio_import`,
-`audio_pack_validation` and `audio_godot_delivery` for import and engine delivery;
+overview` in the embedded bundle). These commands are included in the default
+v0.4.0 release. Require `local_audio_import`, `audio_pack_validation` and
+`audio_godot_delivery` for import and engine delivery;
 `optional_audio_tool_discovery` exposes the external-tool catalog. Check the
 actual executable and preserve existing consumer pins until an upgrade is verified.
 

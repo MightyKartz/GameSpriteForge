@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Fresh v0.4.0 static and audio native delivery showcase",
+  "forge": {
+    "version": "0.4.0",
+    "build": {
+      "gitCommit": "62787fd244b7673b9c558ef34bf7113a180d6eae",
+      "dirty": false,
+      "target": "aarch64-apple-darwin",
+      "profile": "release",
+      "features": []
+    },
+    "launcherSha256": "697984ce84579528cbcaa924ff9608d460773d5c0d76afe97f60702afce416ad",
+    "payloadBinarySha256": "697984ce84579528cbcaa924ff9608d460773d5c0d76afe97f60702afce416ad",
+    "ffmpegSha256": "7d04d3864a12d0d78502e4e3c9d9b0a57bd97a92c19eed6a399cbabeb684bf5f",
+    "ffprobeSha256": "ef13a06511dfd232b153fc29f4a0f1df46df85f401b9f88875ee478b48ccd5aa"
+  },
+  "godot": {
+    "version": "4.6.3.stable.official.7d41c59c4",
+    "binarySha256": "40fb1c588438ed98efbdd4aeb71b90aec6e269b1abb5f18419755340ef8e1514"
+  },
+  "sources": {
+    "../sprites/potion.png": "7bf1df866e1bf3909f1d35ab40cce5d0bdd77229552bc4565dfcf78186a6e09d",
+    "../sprites/crystal.png": "db48209218c64e39e70977e6228d003c8507c70380be02b5dd69faf6ec7d7dd5",
+    "../sprites/key.png": "20c82f96c6d8f885ef24cc420cd723f7463fc31fa780608e4e22e8985661dd0e",
+    "../sprites/crate.png": "c6d844e3d7b1d479184750e4851b7056152ce1a445cd508c75fb8f6acdef65fa",
+    "../sprites/barrel.png": "d1b3a68c8dfeb201b4779174a47cfcee2500eedb1749fb10bdccc2a6104c68f0",
+    "../sprites/campfire.png": "f0e1d790660e13b6ec09be9c665de01c58323d5e7108a98ae3bc1dce17bfdd21",
+    "generated/synthetic-chime.wav": "eed50324acb3ddee8a3825dd0c255ca90e2d607dcaf5de19a39ca15ccfacdfc3",
+    "../sword-spells.gif": "372e68c22d2954dd26ae741d87084acb5490c6dee3584cac1f10e893dbfa3417"
+  },
+  "imports": [
+    {
+      "label": "props-128",
+      "assetId": "forest_props",
+      "jobId": "21b7dc4a-5c44-4d7c-a522-281a92d69c67",
+      "revision": "4da7f2a05c7aaf824e5ad56d43b0262394af85ea912118b643ecced7ef8fd39e",
+      "packValid": true,
+      "assetType": "prop_set",
+      "providerRequestCount": 0
+    },
+    {
+      "label": "props-256",
+      "assetId": "forest_props",
+      "jobId": "39788229-f999-45bc-943a-5a2ac3aa9657",
+      "revision": "167be8e24689ba845cbcac8b8ee8ad35b844509d7115684483e5d4d781e3534c",
+      "packValid": true,
+      "assetType": "prop_set",
+      "providerRequestCount": 0,
+      "installJobId": "ff588b88-ca9b-4360-aa99-f313cad6c925",
+      "nativeInstallVerified": true,
+      "receiptSha256": "5f260aec3d8bf8b9c74e8bf451a5a9469225cc7c6a9bbaef008674b64d046c46",
+      "portableReceiptVerified": true,
+      "reviewVerification": {
+        "visualReview": "not_recorded",
+        "listeningReview": "not_assessed"
+      },
+      "packSha256": "90afd33f368c8d8ba79e5ee75cf9d07129f420e829f8ac57da7ba2abaf0b8131",
+      "installedFilesVerified": 14
+    },
+    {
+      "label": "synthetic-audio",
+      "assetId": "synthetic_audio",
+      "jobId": "0cf0782c-6309-42e4-bd3f-15594c73acc0",
+      "revision": "70b8cdfb339e9e2c59c65d397829a32a4bb97288ea7df90140458bdc4a30bac1",
+      "packValid": true,
+      "assetType": "audio_set",
+      "providerRequestCount": 0,
+      "installJobId": "f0f2b46a-027e-4d80-b7b6-9eda92a2a5e2",
+      "nativeInstallVerified": true,
+      "receiptSha256": "e502609740e649a4c0b10cfd7d7cbedd9ef7a5066812b32036d7120b14c7fb04",
+      "portableReceiptVerified": true,
+      "reviewVerification": {
+        "visualReview": "not_recorded",
+        "listeningReview": "not_assessed"
+      },
+      "packSha256": "91921544c49f5bf41d22825811c9d85ed07b6ef5806650331ca51278243c06c1",
+      "installedFilesVerified": 4
+    }
+  ],
+  "outputs": {
+    "native-delivery.mp4": {
+      "sha256": "1b63fec0cc3ddc8b955e19ff50b48ba50da9c7e90d76cb741aee894a03a9971d",
+      "bytes": 1675725
+    },
+    "native-delivery.gif": {
+      "sha256": "39a383f37e512867e328f39147bc12a423a918ff51d98d62f80410e1d51eabd8",
+      "bytes": 1057107
+    },
+    "native-delivery.png": {
+      "sha256": "d7978112615ac122a8cf0298e618d337f4d3bbad6381226855fe535709f8e613",
+      "bytes": 290701
+    }
+  },
+  "capture": {
+    "width": 1200,
+    "height": 700,
+    "fps": 30,
+    "frames": 216,
+    "durationSeconds": 7.2,
+    "audio": "Godot Movie Maker captured the installed AudioStreamWAV played three times; AAC encode",
+    "presentation": "Authored native Godot asset demonstration, not Forge UI or gameplay; static prop scenes remain static",
+    "gif": "Silent 15 FPS palette-quantized preview"
+  },
+  "review": {
+    "humanVisualReviewPerformed": false,
+    "humanListeningReviewPerformed": false,
+    "licenseVerified": false,
+    "notes": "Structural validation, native load, receipt verification and signal checks do not establish human approval."
+  },
+  "gallery": {
+    "registeredHistoricalGif": true,
+    "freshAnimationImport": false,
+    "propRevisions": 2,
+    "reviewAssertionsWritten": 0
+  },
+  "sourceBytesUnchanged": true,
+  "networkOrProviderRequests": 0,
+  "mediaChecks": {
+    "videoCodec": "h264",
+    "audioCodec": "aac",
+    "sampleRate": 48000,
+    "channels": 2,
+    "cueWindows": [
+      {
+        "startSeconds": 0.65,
+        "durationSeconds": 1.8,
+        "samples": 172800,
+        "peakDb": -15.0,
+        "meanDb": -30.6,
+        "nonSilent": true
+      },
+      {
+        "startSeconds": 2.85,
+        "durationSeconds": 1.8,
+        "samples": 172800,
+        "peakDb": -15.0,
+        "meanDb": -30.6,
+        "nonSilent": true
+      },
+      {
+        "startSeconds": 5.05,
+        "durationSeconds": 1.8,
+        "samples": 172800,
+        "peakDb": -15.0,
+        "meanDb": -30.7,
+        "nonSilent": true
+      }
+    ],
+    "gifHasAudio": false,
+    "gifDurationSeconds": 7.2
+  },
+  "recipeSha256": {
+    "render.py": "ea6d63895567705dabfb44b4cd26f8793f85e46defbdf2342e4e2f435d54f3d7",
+    "render.gd": "7928ae6f9d2a2a14b6a122cbfa0d6703fa9e61afc6817cb2394fcd9d49d77467"
+  }
+}

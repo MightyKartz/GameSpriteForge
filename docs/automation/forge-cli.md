@@ -10,6 +10,11 @@ stable local PNG → static Pack → Godot workflow. Character animation remains
 in development and testing. Codex's built-in image generation is an external
 source workflow, not a Forge Provider.
 
+The default v0.4.0 release also includes local WAV audio, project resource
+libraries, source locks, portable receipts and installed-resource audits. Read
+the [release notes](../releases/v0.4.0.md) for the released scope and platform
+packages.
+
 For direct Codex use, v0.3.2 adds `guide`: agents can read the bundled workflow
 and examples without installing a skill or checking out Forge. Select the game's
 verified absolute executable as `FORGE_BIN` and use it for guide reads and asset
@@ -101,19 +106,20 @@ worker continues the job.
 v0.3.2 adds the compiled capability `embedded_usage_guide`. `guide [RESOURCE]`
 reads one resource from the same self-contained bundle used by `skill show` and
 `skill install`; there is one maintained content source. Omitting `RESOURCE`
-selects `overview` (`SKILL.md`). The accepted topics and exact bundle-relative paths are:
+selects `overview` (`SKILL.md`). The v0.4.0 topics and exact bundle-relative paths are:
 
 | Topic | Path |
 | --- | --- |
 | `overview` | `SKILL.md` |
+| `project-assets` | `references/project-assets.md` |
 | `static` | `references/local-static.md` |
 | `provider` | `references/provider.md` |
 | `animation` | `references/animation.md` |
-| `delivery` | `references/delivery.md` (new source builds) |
-| `audio` | `references/audio.md` (new source builds) |
+| `delivery` | `references/delivery.md` |
+| `audio` | `references/audio.md` |
 | `static-example` | `examples/local-static.json` |
 | `provider-example` | `examples/provider-icons.json` |
-| `audio-example` | `examples/local-audio.json` (new source builds) |
+| `audio-example` | `examples/local-audio.json` |
 
 Plain output is the selected file's exact UTF-8 content without a heading or
 wrapper. `--json` returns the standard envelope with these `data` fields:
@@ -157,12 +163,12 @@ and conflict rules. Installing the CLI alone does not register a Codex skill;
 
 ## Plans and jobs
 
-### Source-build audio workflow
+### Local audio workflow
 
-New source builds expose `local_audio_import`, `audio_pack_validation`,
-`audio_godot_delivery` and `optional_audio_tool_discovery`. The published v0.3.2
-archive does not include these additions. Check the selected executable's build
-identity and capabilities; keep existing consumer locks until an upgrade is verified.
+The default v0.4.0 release includes `local_audio_import`, `audio_pack_validation`,
+`audio_godot_delivery` and `optional_audio_tool_discovery`. Check the selected
+executable's build identity and capabilities; keep existing consumer locks until
+an upgrade is verified.
 
 ```text
 forge audio tools list --json
@@ -194,14 +200,15 @@ Their `technical_pass` report and receipt verification do not approve audible
 quality or a seamless loop. Receipt verification reports `listeningReview` as
 `not_assessed`; retain actual listening decisions separately.
 
-### Source-build delivery additions
+### Source inspection and delivery evidence
 
-The current source build adds capabilities `reviewed_source_hashes`, `local_request_relative_paths`,
-`source_png_inspection`, `effect_quality_profile`, `preview_timing_diagnostics`,
-`delivery_receipts`, `godot_install_verification`, `transactional_godot_install`,
+The default v0.4.0 release includes `reviewed_source_hashes`,
+`local_request_relative_paths`, `source_png_inspection`, `effect_quality_profile`,
+`preview_timing_diagnostics`, `delivery_receipts`, `godot_install_verification`,
+`transactional_godot_install`,
 `godot_import_cache_integrity` and `project_image_contract_verification`.
-These are not a claim about the existing v0.3.2 release archive. Check the actual
-binary/build hash before selecting them. Read the maintained
+Check the actual binary/build hash before selecting them; older release pins
+may lack these capabilities. Read the maintained
 [delivery guide](../../.agents/skills/forge-use/references/delivery.md) or
 `forge guide delivery` for commands, source locks, receipt relocation/trust and
 installation audit limits; [animation guidance](../../.agents/skills/forge-use/references/animation.md)
