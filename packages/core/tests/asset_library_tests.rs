@@ -661,3 +661,81 @@ fn exact_install_plan_binds_consumer_lock_and_discloses_pack_members() {
         .to_string()
         .contains("input changed"));
 }
+
+#[test]
+fn duplicate_intake_restores_missing_bindings_without_changing_shared_history() {
+    use forge_core::library::intake;
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("library");
+    let sources = temp.path().join("sources");
+    fs::create_dir(&sources).unwrap();
+    fs::write(sources.join("a.bin"), "A").unwrap();
+    fs::write(sources.join("b.bin"), "B").unwrap();
+    library::initialize(&root, "Bindings").unwrap();
+    let mut batch = intake::scan(&sources).unwrap().batch;
+    let registered = intake::register(&root, &batch).unwrap();
+    let head = fs::read(root.join(".forge/catalog.json")).unwrap();
+    let local_path = root.join(".forge/library/local.json");
+    fs::remove_file(&local_path).unwrap();
+    let restored = intake::register(&root, &batch).unwrap();
+    assert!(restored.iter().all(|r| r.outcome == "existing"));
+    assert_eq!(fs::read(root.join(".forge/catalog.json")).unwrap(), head);
+    for (before, after) in registered.iter().zip(&restored) {
+        assert_eq!(before.revision, after.revision);
+        assert_eq!(
+            intake::history(&root, &after.asset_id).unwrap()[0].status,
+            "available"
+        );
+    }
+    let catalog = library::read_catalog(&root).unwrap();
+    let first = library::read_asset(&root, &catalog, &registered[0].asset_id).unwrap();
+    let missing = &first.locations[&registered[0].revision].root_id;
+    let mut local: serde_json::Value =
+        serde_json::from_slice(&fs::read(&local_path).unwrap()).unwrap();
+    local["roots"].as_object_mut().unwrap().remove(missing);
+    let remaining = local["roots"].clone();
+    fs::write(&local_path, serde_json::to_vec(&local).unwrap()).unwrap();
+    batch.items.truncate(1);
+    let again = intake::register(&root, &batch).unwrap();
+    assert_eq!(again[0].revision, registered[0].revision);
+    assert_eq!(
+        intake::history(&root, &again[0].asset_id).unwrap()[0].status,
+        "available"
+    );
+    let recovered: serde_json::Value =
+        serde_json::from_slice(&fs::read(&local_path).unwrap()).unwrap();
+    for (key, value) in remaining.as_object().unwrap() {
+        assert_eq!(&recovered["roots"][key], value);
+    }
+    assert_eq!(fs::read(root.join(".forge/catalog.json")).unwrap(), head);
+}
+
+#[test]
+fn oversized_batch_metadata_does_not_publish_partial_intake() {
+    use forge_core::library::intake;
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("library");
+    let source = temp.path().join("source.bin");
+    fs::write(&source, "Original").unwrap();
+    library::initialize(&root, "Batch limits").unwrap();
+    let mut batch = intake::scan(&source).unwrap().batch;
+    let registered = intake::register(&root, &batch).unwrap();
+    let head = fs::read(root.join(".forge/catalog.json")).unwrap();
+    let local = fs::read(root.join(".forge/library/local.json")).unwrap();
+    batch.items[0].asset_id = "new-valid".into();
+    let mut oversized = batch.items[0].clone();
+    oversized.asset_id = "new-oversized".into();
+    oversized.name = "x".repeat(17 * 1024 * 1024);
+    batch.items.push(oversized);
+    assert!(intake::register(&root, &batch).is_err());
+    assert_eq!(fs::read(root.join(".forge/catalog.json")).unwrap(), head);
+    assert_eq!(
+        fs::read(root.join(".forge/library/local.json")).unwrap(),
+        local
+    );
+    assert_eq!(library::read_catalog(&root).unwrap().assets.len(), 1);
+    assert_eq!(
+        intake::history(&root, &registered[0].asset_id).unwrap()[0].status,
+        "available"
+    );
+}

@@ -47,6 +47,7 @@ jobs:
         run: |
           cargo test --locked -p core --test content_digest_tests --test asset_library_tests --test asset_library_review_tests --test asset_library_transfer_tests
           cargo test --locked -p core --lib catalog::tests
+          cargo test --locked -p core --lib library::metadata_write_tests
 
       - name: Install Godot 4.6.3
         shell: bash
@@ -170,6 +171,8 @@ jobs:
           cargo test --locked -p core --test content_digest_tests --test asset_library_tests --test asset_library_review_tests --test asset_library_transfer_tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cargo test --locked -p core --lib catalog::tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo test --locked -p core --lib library::metadata_write_tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           cargo test --locked -p core --test image_contract_tests --test delivery_audit_tests --test static_delivery_tests --test prepare_static_tests --test source_matte_tests --test layered_pack_tests --test audio_plan_tests --test audio_processing_tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

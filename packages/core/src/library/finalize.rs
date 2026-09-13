@@ -36,6 +36,7 @@ pub enum PendingPublication {
 
 fn write_pending(pack: &Path, pending: &PendingPublication) -> Result<PathBuf, CatalogError> {
     let bytes = serde_json::to_vec(pending)?;
+    check_metadata_size(&bytes)?;
     let parent = pack.parent().ok_or_else(|| invalid("Pack has no parent"))?;
     let path = parent.join(format!("pack.publication-{}.json", sha(&bytes)));
     if path.exists() {
