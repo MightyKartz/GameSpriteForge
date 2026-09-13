@@ -63,7 +63,7 @@ Sword is a cultivation-themed survival game prototype using Forge for asset proc
 
 ## Install
 
-Stable version: [v0.3.2](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.3.2) for **macOS Apple Silicon**. Install **Godot 4.6.x** separately for engine delivery. The binaries are unsigned and not notarized. For an existing game, retain its pinned CLI until you have verified an upgrade.
+Stable version: [v0.4.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.4.0) for **macOS Apple Silicon**, with an **experimental Windows x64 portable package**. Install **Godot 4.6.x** separately for engine delivery. The binaries are unsigned and not notarized. For an existing game, retain its pinned CLI until you have verified an upgrade.
 
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://raw.githubusercontent.com/MightyKartz/GameSpriteForge/main/install.sh | sh
@@ -79,21 +79,27 @@ forge guide
 
 `forge guide` provides the workflow instructions and request examples bundled with your CLI version, even offline.
 
+Windows users: download the ZIP, checksum and two installer scripts from the same release, then follow the [Windows installation guide](docs/releases/windows-portable.md). Windows packages are built and tested on Windows CI.
+
 For your first set, follow the [local artwork workflow](docs/automation/codex-local-assets.md): prepare your images, review the results, validate the Pack and install it into Godot.
+
+## Project resource libraries
+
+Register and search source media and generated outputs, compare revisions in an offline gallery, retain review evidence, and lock exact delivery versions. Transfer selected resources between macOS and Windows while preserving content identities and historical Pack hashes. Start with `forge guide project-assets` or the [resource library guide](docs/automation/project-asset-library.md).
 
 ## Current scope
 
-Local icon and prop processing, Pack validation and Godot delivery are the stable foundation. **Character animation remains in development and testing**, including generation, reuse and directional workflows. The Sword previews demonstrate specific prototype assets; review animation results before using them in your game. See the [v0.3.2 release notes](docs/releases/v0.3.2.md) for the release scope.
+Local icon and prop processing, Pack validation and Godot delivery are the stable foundation. **Character animation remains in development and testing**, including generation, reuse and directional workflows. The Sword previews demonstrate specific prototype assets; review animation results before using them in your game. See the [v0.4.0 release notes](docs/releases/v0.4.0.md) for the release scope.
 
-New source builds also import local WAV music, sound effects and ambience into audio Packs and native Godot streams. This workflow retains source hashes, applies explicit audio processing and records technical checks; listening review remains separate. ACE-Step and Stable Audio 3 are optional external tools, with read-only discovery only. Forge does not bundle, install or run their models. This audio workflow is outside the v0.3.2 release; check the selected build's capabilities and read the [audio guide](.agents/skills/forge-use/references/audio.md).
+Forge also imports local WAV music, sound effects and ambience into audio Packs and native Godot streams. This workflow retains source hashes, applies explicit audio processing and records technical checks; listening review remains separate. ACE-Step and Stable Audio 3 are optional external tools, with read-only discovery only. Forge does not bundle, install or run their models. Check the selected build's capabilities and read the [audio guide](.agents/skills/forge-use/references/audio.md).
 
 ## Documentation
 
 - [CLI guide](docs/automation/forge-cli.md) — commands, generation, processing, and Godot delivery.
 - [Local artwork workflow](docs/automation/codex-local-assets.md) — take artwork from Codex or other tools through processing and Godot delivery.
-- [Delivery evidence](.agents/skills/forge-use/references/delivery.md) — source-build additions for reviewed hashes, portable receipts and installed-resource audits; check the selected binary's capabilities.
+- [Delivery evidence](.agents/skills/forge-use/references/delivery.md) — reviewed hashes, portable receipts and installed-resource audits; check the selected binary's capabilities.
 - [Example specifications](examples/cli) — starting points for your own assets.
-- [Release notes](docs/releases/v0.3.2.md) — platform support and release scope.
+- [Release notes](docs/releases/v0.4.0.md) — platform support and release scope.
 - [Showcase assets](docs/media/showcase/README.md) — artwork sources and Godot previews.
 - [Contributing](CONTRIBUTING.md) — source builds and development checks.
 
