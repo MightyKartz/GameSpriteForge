@@ -9,8 +9,8 @@ development.
 
 | Image | What it shows |
 | --- | --- |
-| [v040/resource-library.png](v040/resource-library.png) | The CLI's real offline gallery with PNG, GIF and synthetic WAV resources. |
-| [v040/resource-comparison.png](v040/resource-comparison.png) | Two exact revisions of a freshly prepared prop Pack. |
+| [v040/resource-library.png](v040/resource-library.png) | Technical reference: the CLI's offline gallery with PNG, GIF and synthetic WAV resources. |
+| [v040/resource-comparison.png](v040/resource-comparison.png) | Technical reference: two exact revisions of a freshly prepared prop Pack. |
 | [v040/native-delivery.gif](v040/native-delivery.gif) | Silent preview of a dedicated Godot scene using fresh v0.4.0 static and audio delivery. |
 | [v040/native-delivery.mp4](v040/native-delivery.mp4) | The same native capture with Godot's recorded synthetic chime playback. |
 | [gallery.png](gallery.png) | Eight illustrative objects, displayed using actual Forge-matted PNGs; retained as an earlier example. |

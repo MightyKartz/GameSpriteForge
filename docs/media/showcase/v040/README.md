@@ -59,11 +59,11 @@ media hashes or revision IDs.
 
 ## Offline library screenshots
 
-The product README also shows Forge's generated offline media gallery and the
-two exact prop revisions. These are captures of the read-only HTML that
+These technical reference screenshots capture Forge's generated offline media
+gallery and two exact prop revisions. They preserve the read-only HTML that
 `asset preview` creates from the prepared library.
 
-After the reproduction above, generate the three-source view used in the README:
+After the reproduction above, generate the archived three-source view:
 
 ```bash
 forge asset preview --project /absolute/new/showcase-work/library \
