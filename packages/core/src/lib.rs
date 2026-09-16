@@ -10,6 +10,7 @@ pub mod export;
 pub mod frames;
 pub mod game_art;
 pub mod godot;
+pub mod godot_environment;
 pub mod image_contract;
 pub mod job;
 pub mod layered;

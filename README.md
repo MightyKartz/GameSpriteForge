@@ -87,3 +87,13 @@ Technical validation does not replace visual review, listening or license checks
 ## License
 
 [MIT](LICENSE). Bundled FFmpeg tools have separate LGPL notices and source distributions; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+### Godot setup and acceptance (source additions)
+
+Builds with `godot_environment_setup` provide `forge setup godot --path PATH`
+(or `--download` for the pinned official engine), persistent machine configuration,
+`forge godot lock/check`, and isolated `forge godot verify/export` commands.
+Read `forge guide godot-workflow` for examples, screenshots, explicit template
+installation and native exported-program checks. These commands are newer than the
+v0.4.0 release; check capabilities. Runtime/screenshot evidence does not establish
+visual or gameplay approval. [Workflow guide](.agents/skills/forge-use/references/godot-workflow.md).

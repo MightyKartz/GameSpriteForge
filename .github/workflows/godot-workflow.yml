@@ -1,0 +1,60 @@
+name: Godot agent workflow
+on:
+  pull_request:
+    paths:
+      - 'packages/**'
+      - 'Cargo.*'
+      - 'scripts/test-godot-workflow.py'
+      - 'scripts/godot/forge_project_acceptance.gd'
+      - '.agents/skills/forge-use/**'
+      - '.github/workflows/godot-workflow.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    env:
+      FORGE_CONFIG_DIR: ${{ github.workspace }}/target/workflow-config
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Build and check the CLI
+        run: |
+          rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+          rustup override set 1.98.1
+          cargo fmt --all -- --check
+          cargo clippy --locked --workspace --all-targets -- -D warnings
+          cargo test --locked -p core --lib godot
+          cargo build --locked -p forge-cli --no-default-features
+      - name: Verify official managed download and templates
+        run: |
+          target/debug/forge setup godot --download --templates --json > target/setup.json
+          target/debug/forge setup godot --download --templates --json > target/setup-repeat.json
+      - name: Verify native import, failures, and exported program
+        run: |
+          godot_path="$(python -c 'import json; print(json.load(open("target/setup.json"))["data"]["engine"]["path"])')"
+          python scripts/test-godot-workflow.py --forge target/debug/forge --godot "$godot_path" --output target/workflow-acceptance --export
+      - name: Retain setup and acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: godot-agent-workflow-${{ matrix.os }}
+          path: |
+            target/setup*.json
+            target/workflow-acceptance/summary.json
+            target/workflow-acceptance/**/report.json
+            target/workflow-acceptance/**/*.log
+          if-no-files-found: warn
+          retention-days: 14

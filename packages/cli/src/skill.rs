@@ -35,6 +35,14 @@ struct GuideResource {
 const SOURCE_FILES: &[SourceFile] = &[
     SourceFile {
         resource: GuideResource {
+            topic: "godot-workflow",
+            path: "references/godot-workflow.md",
+            media_type: "text/markdown",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/references/godot-workflow.md"),
+    },
+    SourceFile {
+        resource: GuideResource {
             topic: "project-assets",
             path: "references/project-assets.md",
             media_type: "text/markdown",

@@ -1,0 +1,111 @@
+# Godot setup and project acceptance
+
+These commands require `godot_environment_setup`, `godot_project_toolchain_lock`,
+`godot_project_acceptance` and `godot_desktop_export_verification` in `forge doctor`.
+They are source additions after v0.4.0; do not assume the v0.4.0 release has them.
+
+## Set up once per machine
+
+```sh
+forge setup godot --path /absolute/path/to/Godot --json
+forge doctor --json
+```
+
+Windows accepts the official versioned `_console.exe` filename; macOS accepts
+`Godot.app` or its executable. No environment variable or shell restart is needed.
+Omit `--path` to discover an existing compatible engine in PATH, standard application
+directories or the top-level Downloads directory. Discovery does not scan whole disks.
+An explicit invalid selection fails instead of silently selecting another engine.
+
+Alternatively, explicitly download the pinned official standard engine:
+
+```sh
+forge setup godot --download --json
+forge setup godot --download --templates --json
+```
+
+Managed downloads currently support Windows x64 and macOS Apple Silicon and install
+Godot **4.6.3**, not an unverified latest version. They require curl (Windows uses
+curl.exe) and native ZIP extraction. SHA-512 is checked before extraction or execution.
+The optional templates archive is large and is downloaded only with `--templates`.
+It goes in Godot's standard user export-template directory. Existing unrecognized
+installations are preserved. macOS signing/notarization of Godot remains upstream's.
+
+Forge saves engine location, version and executable hashes in its local `godot.json`.
+Use `FORGE_CONFIG_DIR` to isolate this configuration and managed engine directory.
+Selection order: command-specific `--godot`/setup `--path`, `FORGE_GODOT_PATH`, saved
+configuration, compatible discovered engine. A broken or modified saved engine is
+an error; rerun setup to select a replacement explicitly. An old environment override
+still takes priority over saved configuration and should be removed when no longer wanted.
+The Windows console launcher and its sibling engine are both fingerprinted.
+
+## Lock project requirements
+
+```sh
+forge godot lock --project /absolute/game --json
+forge godot check --project /absolute/game --json
+```
+
+Commit `.forge/toolchain.lock.json` with the game. It pins Forge's package version
+and Godot's full version string, including the engine build identifier and edition;
+it contains no machine paths. Different platforms resolve their own executables.
+This v1 lock does not pin the Forge Git commit or enable optional Cargo features;
+acceptance reports separately record actual Forge build identity. Use clean releases
+for team pins. Existing consumer locks and receipts are not migrated automatically.
+Changing an existing lock requires `--update` after verification with the new tools.
+Asset installation also checks this lock, and reviewed install plans fingerprint it.
+Projects without the new lock retain their existing behavior.
+
+## Verify without writing to the source project
+
+Create the output's parent first; the output directory must not already exist and
+must be outside the game. Snapshotting excludes `.git` and `.godot`, rejects symlinks
+and checks source/file hashes before and after copying. This is working-copy
+isolation, **not a sandbox**: only run trusted game code and editor plugins.
+
+```sh
+forge godot verify --project /absolute/game --output /absolute/qa/run-1 --json
+forge godot verify --project /absolute/game --output /absolute/qa/view-1 --screenshot --frames 60 --json
+```
+
+The first runs a headless import and loads the main scene for a bounded number of
+frames. The second uses actual rendering and captures `screenshot.png`; a GPU/display
+is required. The project must have a configured main scene. A test that exits early
+without the completion marker fails. `--timeout` bounds each engine phase (default
+120 seconds). `--cancel-file PATH` aborts if that file appears; timeout/cancellation
+terminate the process tree/group. Child output is retained in phase-specific logs,
+with a 16 MiB per-stream limit while running. No Provider requests are made.
+
+For game-specific interaction assertions, supply `--acceptance-script tests/game.gd`.
+It must be a project-relative `SceneTree` script, exit successfully and print exactly
+`FORGE_ACCEPTANCE_OK` on its own line after its assertions. It runs headlessly in the
+same snapshot. Missing interaction tests are reported as `not_run`, never a pass.
+
+Check both exit status and the JSON envelope. Read `report.json` and phase logs on
+failure; logs are also available while running. The report separates import, runtime,
+interaction checks and screenshot capture. `visualReview` remains `not_assessed`;
+agents/users must inspect screenshots, play and listen before recording artistic or
+gameplay acceptance. A smoke test is not proof of complete game correctness.
+
+## Export and test the result
+
+```sh
+forge godot export --project /absolute/game --preset "Desktop" --output /absolute/qa/build-1 --run --json
+```
+
+The preset must already exist in `export_presets.cfg` and target the host desktop
+platform. Godot resolves preset settings and matching standard/custom release templates;
+missing templates fail with retained engine logs. `check` reports the managed template
+location separately from actual export success. Custom template hashes are recorded
+and rechecked. `--timeout` defaults to 300 seconds per phase.
+
+Export runs in a fresh snapshot. `--run` launches the exported native program for a
+bounded 30-frame headless startup check; without it, exported runtime is `not_run`.
+The program/archive hash is recorded. On macOS the ZIP is extracted before running
+the app. This checks native startup, not exported graphics, distribution signing,
+notarization, notarization credentials, or cross-platform/device behavior. Configure
+those in the game's own delivery workflow. Use Godot directly for cross-target export.
+
+Codex, Claude and other terminal-capable agents can use the same CLI and matching
+embedded guide. Keep engine execution in the official Godot CLI; no agent-specific
+MCP server or duplicated asset implementation is required for this workflow.

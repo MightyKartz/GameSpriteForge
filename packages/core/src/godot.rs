@@ -1,30 +1,15 @@
-//! Shared native Godot discovery for the CLI doctor and delivery Jobs.
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
+//! Shared native Godot discovery.
+#[cfg(test)]
+use std::path::Path;
+use std::path::PathBuf;
 
 pub fn locate_godot() -> Option<PathBuf> {
-    if let Some(path) = env::var_os("FORGE_GODOT_PATH")
-        .map(PathBuf::from)
-        .filter(|path| path.is_file())
-    {
-        return Some(path);
-    }
-    #[cfg(target_os = "macos")]
-    for path in [
-        "/Applications/Godot.app/Contents/MacOS/Godot",
-        "/Applications/Godot_mono.app/Contents/MacOS/Godot",
-    ] {
-        if Path::new(path).is_file() {
-            return Some(path.into());
-        }
-    }
-    env::var_os("PATH").and_then(|paths| {
-        env::split_paths(&paths).find_map(|directory| find_in_directory(&directory))
-    })
+    crate::godot_environment::resolve(None, None)
+        .ok()
+        .map(|engine| engine.path)
 }
 
+#[cfg(test)]
 fn find_in_directory(directory: &Path) -> Option<PathBuf> {
     #[cfg(windows)]
     let names = ["godot4.exe", "godot.exe", "godot_console.exe"];

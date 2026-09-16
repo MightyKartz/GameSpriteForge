@@ -87,3 +87,13 @@ Sword 是一款修仙题材的生存游戏原型。源图由 Codex 创作，Forg
 ## 许可证
 
 [MIT](LICENSE)。附带 FFmpeg 工具有独立 LGPL 声明和对应源码分发，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+### Godot 配置与验收（源码新增能力）
+
+具有 `godot_environment_setup` 能力的构建支持 `forge setup godot --path PATH`
+（或用 `--download` 下载固定版本的官方引擎）、持久化本机配置、
+`forge godot lock/check` 项目版本要求，以及在独立副本中执行的
+`forge godot verify/export`。通过 `forge guide godot-workflow` 阅读截图、
+显式安装导出模板和启动导出程序的示例。这些命令晚于 v0.4.0 发布版，
+使用前请检查 capabilities。运行通过或生成截图不代表已经完成视觉与玩法验收。
+[工作流指南](.agents/skills/forge-use/references/godot-workflow.md)。

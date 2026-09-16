@@ -60,6 +60,13 @@ v0.3.1 can expose the complete bundle through `"$FORGE_BIN" skill show --json`.
 Installed skill files can also be read directly; check their instructions against
 the pinned executable's capabilities.
 
+## Optional Godot environment and project acceptance
+
+On a build with `godot_environment_setup`, read `forge guide godot-workflow`
+([Godot workflow](references/godot-workflow.md)) for machine-local setup, portable
+project requirements, isolated runtime/screenshot checks and native desktop export.
+These source additions are newer than v0.4.0. Inspect capabilities first.
+
 ## Choose the workflow
 
 - **Existing resources, candidates, reviews and cross-machine reuse:** read
