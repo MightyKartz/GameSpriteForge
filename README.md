@@ -8,9 +8,9 @@ Bring assets from your preferred creative tools, manage them in a project librar
 
 [Latest release](https://github.com/MightyKartz/GameSpriteForge/releases/latest) · [Install](#install) · [Features](#what-you-can-do) · [CLI guide](docs/automation/forge-cli.md)
 
-![Props and a synthetic sound cue delivered by Forge v0.4.0 and played in Godot](docs/media/showcase/v040/native-delivery.gif)
+![Thunder spirits and lightning playing in Godot](docs/media/showcase/thunder/godot-demo.gif)
 
-*Real v0.4.0 output in a dedicated Godot demonstration scene. [Watch with sound](docs/media/showcase/v040/native-delivery.mp4) · [Sources and reproduction](docs/media/showcase/v040/README.md).*
+*Created with Codex, prepared and managed with Forge, delivered to Godot. [Watch the replay](docs/media/showcase/thunder/godot-demo.mp4) · [Source sheets and production notes](docs/media/showcase/thunder/README.md).*
 
 ## Install
 

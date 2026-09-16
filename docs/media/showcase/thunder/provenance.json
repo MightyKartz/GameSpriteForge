@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "generation": "Codex built-in image generation",
+  "forge": {
+    "version": "0.4.0",
+    "binarySha256": "697984ce84579528cbcaa924ff9608d460773d5c0d76afe97f60702afce416ad"
+  },
+  "godotVersion": "4.6.3.stable.official.7d41c59c4",
+  "capture": {
+    "sourceSha256": "012939ebcefd8c49627296c6588a594fa72433a9102af320199afeec1040348c",
+    "sourceDurationSeconds": 18,
+    "startSeconds": 1,
+    "durationSeconds": 6.6,
+    "width": 960,
+    "height": 540,
+    "mp4Fps": 30,
+    "gifFps": 15,
+    "audio": false,
+    "source": "Existing Godot Movie Maker recording; generation and installation were not rerun for this README update."
+  },
+  "assets": [
+    {
+      "name": "character",
+      "jobId": "2489cdd3-f090-453c-a650-c33bf86846a7",
+      "lifecycleState": "succeeded",
+      "verdict": "prototype_usable",
+      "providerRequestCount": 0,
+      "packValid": true,
+      "packSha256": "8c8d7cc9ad1b753a05d77e7e04a0eb22ebe0ff2e73648deae4dca34940da11d2",
+      "installJobId": "a79ae5a1-18a5-4383-8743-30df83232a11",
+      "installLifecycleState": "succeeded",
+      "visualApproval": "not_assessed"
+    },
+    {
+      "name": "lightning",
+      "jobId": "ba7bdbe0-c8c7-4fca-99f9-2a35bc1a5c4a",
+      "lifecycleState": "succeeded",
+      "verdict": "game_ready",
+      "providerRequestCount": 0,
+      "packValid": true,
+      "packSha256": "d414fc5efa5d5bad0e2ae60a8feed81f1fe8fc1bbdd6c44d5d1c81c77ff5c475",
+      "installJobId": "d4d5ea2a-70d8-4b89-b083-24a1c5ed1b0f",
+      "installLifecycleState": "succeeded",
+      "visualApproval": "not_assessed"
+    }
+  ],
+  "files": [
+    {
+      "path": "godot-demo.gif",
+      "sha256": "bdd79636907c92f46db52e33ef26ae1541ddf570565965d3712afb91ab258533",
+      "bytes": 3667936,
+      "width": 960,
+      "height": 540,
+      "frames": 99,
+      "durationMs": 6600,
+      "distinctFrames": 99,
+      "loop": 0
+    },
+    {
+      "path": "godot-demo.mp4",
+      "sha256": "a89b2bd73689839afa038387be73e8bde046602d0713fcf33c437f0c8debe9c6",
+      "bytes": 734959
+    },
+    {
+      "path": "sources/idle-prompt.txt",
+      "sha256": "68ac162cae4f00569fd499363cefd7ba96b44e03c0fa6bee31f41ae82bb5c076",
+      "bytes": 1118
+    },
+    {
+      "path": "sources/lightning-clean.png",
+      "sha256": "0770296bd4595aa8e23af1ce529ff2d38fde54531df5be11916011f93b8bf0b1",
+      "bytes": 439819,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "path": "sources/lightning-prompt-v2.txt",
+      "sha256": "33435c88be95278e94740208eded124c4887e86b93b9cd7e6b646b29e600024d",
+      "bytes": 922
+    },
+    {
+      "path": "sources/lightning.png",
+      "sha256": "9342f3dcda7c38e4c0820d1929e31f19690b8658ecc462f9bae4c2059a7bc4f1",
+      "bytes": 419489,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "path": "sources/move-prompt.txt",
+      "sha256": "1b546b17c422e8fb71798a55f3807ce14da1d34b84a7973adad36ba8c5d6538b",
+      "bytes": 892
+    },
+    {
+      "path": "sources/thunder-idle.png",
+      "sha256": "8ac96952fccac991dee828bb7a197b900e89266a06f17c1d5a5ebe4ae0f3f8bb",
+      "bytes": 1380686,
+      "width": 1254,
+      "height": 1254
+    },
+    {
+      "path": "sources/thunder-move.png",
+      "sha256": "1c8de0e6a5950a389dd74871da553030335c3420dfbe837b35859b13b14e23a4",
+      "bytes": 1481731,
+      "width": 1254,
+      "height": 1254
+    }
+  ]
+}

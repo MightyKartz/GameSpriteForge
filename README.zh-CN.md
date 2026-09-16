@@ -8,9 +8,9 @@
 
 [最新发布](https://github.com/MightyKartz/GameSpriteForge/releases/latest) · [安装](#安装) · [主要功能](#主要功能) · [CLI 指南](docs/automation/forge-cli.md)
 
-![Forge v0.4.0 交付的道具和合成提示音在 Godot 中回放](docs/media/showcase/v040/native-delivery.gif)
+![雷灵与雷击在 Godot 中的实际回放](docs/media/showcase/thunder/godot-demo.gif)
 
-*v0.4.0 实际产物在独立 Godot 演示场景中回放。[观看有声视频](docs/media/showcase/v040/native-delivery.mp4) · [素材来源与复现](docs/media/showcase/v040/README.md)。*
+*Codex 创作素材，Forge 加工、管理并交付到 Godot。[观看回放](docs/media/showcase/thunder/godot-demo.mp4) · [原始图集与制作说明](docs/media/showcase/thunder/README.zh-CN.md)。*
 
 ## 安装
 
