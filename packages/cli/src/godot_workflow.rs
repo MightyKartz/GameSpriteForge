@@ -526,9 +526,39 @@ fn snapshot(
     Ok((output, copied, files))
 }
 
-fn engine_command(engine: &Engine, project: &Path) -> Command {
+// Scope these variables to child processes. Project settings and exported PCKs
+// remain unchanged, so acceptance paths cannot leak into delivered games.
+struct RunProfile {
+    root: PathBuf,
+}
+
+impl RunProfile {
+    fn new(output: &Path) -> Result<Self> {
+        let root = PathBuf::from(godot_path(&output.join("user-profile"))?);
+        for directory in ["home", "data", "config", "cache", "temp"] {
+            fs::create_dir_all(root.join(directory)).map_err(|e| e.to_string())?;
+        }
+        Ok(Self { root })
+    }
+
+    fn apply<'a>(&self, command: &'a mut Command) -> &'a mut Command {
+        command
+            .env("HOME", self.root.join("home"))
+            .env("APPDATA", self.root.join("data"))
+            .env("LOCALAPPDATA", self.root.join("cache"))
+            .env("XDG_DATA_HOME", self.root.join("data"))
+            .env("XDG_CONFIG_HOME", self.root.join("config"))
+            .env("XDG_CACHE_HOME", self.root.join("cache"))
+            .env("TMPDIR", self.root.join("temp"))
+            .env("TMP", self.root.join("temp"))
+            .env("TEMP", self.root.join("temp"))
+    }
+}
+
+fn engine_command(engine: &Engine, project: &Path, profile: &RunProfile) -> Command {
     let mut command = Command::new(&engine.path);
     command.arg("--path").arg(project);
+    profile.apply(&mut command);
     command
 }
 
@@ -574,9 +604,11 @@ pub fn verify(args: VerifyArgs) -> Result<Value> {
     let (output, copied, before) = snapshot(&project, &args.output)?;
     let mut report = json!({"schemaVersion":"1","operation":"verify","sourceProject":project,"snapshot":copied,"engine":engine,"forgeVersion":env!("CARGO_PKG_VERSION"),"forgeBuild":crate::build_info::current(),"visualReview":"not_assessed","interactionTests":{"status":"not_run"},"import":{"status":"not_run"},"runtime":{"status":"not_run"},"screenshot":{"status":"not_requested"}});
     let result = (|| {
+        let profile = RunProfile::new(&output)?;
+        report["userData"] = json!({"isolation":"per_run_profile","root":profile.root});
         report["import"] = json!({"status":"running"});
         report["import"] = run_process(
-            engine_command(&engine, &copied).args(["--headless", "--import"]),
+            engine_command(&engine, &copied, &profile).args(["--headless", "--import"]),
             &output,
             "import",
             args.timeout,
@@ -589,7 +621,7 @@ pub fn verify(args: VerifyArgs) -> Result<Value> {
             include_str!("../../../scripts/godot/forge_project_acceptance.gd"),
         )
         .map_err(|e| e.to_string())?;
-        let mut command = engine_command(&engine, &copied);
+        let mut command = engine_command(&engine, &copied, &profile);
         if !args.screenshot {
             command.arg("--headless");
         }
@@ -637,7 +669,7 @@ pub fn verify(args: VerifyArgs) -> Result<Value> {
             let script = copied.join(relative);
             report["interactionTests"] = json!({"status":"running"});
             report["interactionTests"] = run_process(
-                engine_command(&engine, &copied)
+                engine_command(&engine, &copied, &profile)
                     .args(["--headless", "--script"])
                     .arg(&script),
                 &output,
@@ -663,7 +695,13 @@ pub fn verify(args: VerifyArgs) -> Result<Value> {
     finish(&output, &report, result)
 }
 
-fn native_preset(project: &Path, name: &str) -> Result<Option<PathBuf>> {
+struct NativePreset {
+    options_section: String,
+    custom_template: Option<PathBuf>,
+    architecture: String,
+}
+
+fn native_preset(project: &Path, name: &str) -> Result<NativePreset> {
     let text = fs::read_to_string(project.join("export_presets.cfg")).map_err(|e| e.to_string())?;
     let mut sections: BTreeMap<String, BTreeMap<String, String>> = BTreeMap::new();
     let mut section = String::new();
@@ -699,11 +737,16 @@ fn native_preset(project: &Path, name: &str) -> Result<Option<PathBuf>> {
     if values.get("platform").is_none_or(|value| value != expected) {
         return Err(format!("This acceptance command exports the host platform ({expected}); use Godot directly for cross-target export"));
     }
-    let custom = sections
-        .get(&format!("{section}.options"))
+    let options_section = format!("{section}.options");
+    let options = sections.get(&options_section);
+    let architecture = options
+        .and_then(|v| v.get("binary_format/architecture"))
+        .cloned()
+        .unwrap_or_else(|| "x86_64".into());
+    let custom = options
         .and_then(|v| v.get("custom_template/release"))
         .filter(|v| !v.is_empty());
-    custom
+    let custom_template = custom
         .map(|path| {
             let path = if let Some(relative) = path.strip_prefix("res://") {
                 project.join(relative)
@@ -718,7 +761,106 @@ fn native_preset(project: &Path, name: &str) -> Result<Option<PathBuf>> {
             path.canonicalize()
                 .map_err(|e| format!("Custom export template is unavailable: {e}"))
         })
-        .transpose()
+        .transpose()?;
+    Ok(NativePreset {
+        options_section,
+        custom_template,
+        architecture,
+    })
+}
+
+// Resolve before changing the child's profile, where standard templates are no
+// longer visible. Match Godot's versioned desktop template names and self-contained
+// editor layout; keep companion libraries beside the original template.
+fn standard_release_template(engine: &Engine, architecture: &str) -> Result<PathBuf> {
+    if !["x86_64", "x86_32", "arm64", "arm32", "universal"].contains(&architecture) {
+        return Err("Unsupported desktop export architecture".into());
+    }
+    let mut version = engine
+        .version
+        .split('.')
+        .take(4)
+        .collect::<Vec<_>>()
+        .join(".");
+    if engine.version.split('.').any(|part| part == "mono") {
+        version.push_str(".mono");
+    }
+    let mut editor_dir = engine
+        .path
+        .parent()
+        .ok_or("Invalid engine path")?
+        .to_path_buf();
+    if cfg!(target_os = "macos") && editor_dir.ends_with("Contents/MacOS") {
+        editor_dir = editor_dir.join("../../..");
+    }
+    let root = if ["._sc_", "_sc_"]
+        .iter()
+        .any(|name| editor_dir.join(name).is_file())
+    {
+        editor_dir.join("editor_data/export_templates")
+    } else {
+        dirs_path()?.join(if cfg!(any(windows, target_os = "macos")) {
+            "Godot/export_templates"
+        } else {
+            "godot/export_templates"
+        })
+    };
+    let filename = if cfg!(windows) {
+        format!("windows_release_{architecture}.exe")
+    } else if cfg!(target_os = "macos") {
+        "macos.zip".into()
+    } else {
+        format!("linux_release.{architecture}")
+    };
+    let path = root.join(version).join(filename);
+    path.canonicalize().map_err(|e| format!("Release export template unavailable at {}: {e}; install matching templates or set custom_template/release", path.display()))
+}
+
+fn godot_path(path: &Path) -> Result<String> {
+    // Godot's virtual filesystem does not consistently accept Windows verbatim
+    // prefixes (notably in APPDATA), although Rust canonicalize returns them.
+    let path = path.to_str().ok_or("Godot path is not UTF-8")?;
+    Ok(path
+        .strip_prefix(r"\\?\UNC\")
+        .map(|p| format!("//{p}"))
+        .unwrap_or_else(|| path.strip_prefix(r"\\?\").unwrap_or(path).to_owned())
+        .replace('\\', "/"))
+}
+
+fn bind_release_template(project: &Path, section: &str, template: &Path) -> Result<()> {
+    let path = project.join("export_presets.cfg");
+    let source = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let template = godot_path(template)?;
+    let binding = format!(
+        "custom_template/release={}\n",
+        serde_json::to_string(&template).map_err(|e| e.to_string())?
+    );
+    let mut output = String::new();
+    let mut selected = false;
+    let mut found = false;
+    for line in source.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') && trimmed.ends_with(']') {
+            selected = &trimmed[1..trimmed.len() - 1] == section;
+            output.push_str(line);
+            output.push('\n');
+            if selected {
+                output.push_str(&binding);
+                found = true;
+            }
+        } else if !(selected
+            && trimmed
+                .split_once('=')
+                .is_some_and(|(key, _)| key.trim() == "custom_template/release"))
+        {
+            output.push_str(line);
+            output.push('\n');
+        }
+    }
+    if !found {
+        output.push_str(&format!("\n[{section}]\n{binding}"));
+    }
+    fs::write(path, output).map_err(|e| e.to_string())
 }
 
 pub fn export(args: ExportArgs) -> Result<Value> {
@@ -729,15 +871,24 @@ pub fn export(args: ExportArgs) -> Result<Value> {
             "Missing export_presets.cfg; create a desktop export preset in Godot first".into(),
         );
     }
-    let custom_template = native_preset(&project, &args.preset)?;
-    let template_hash = custom_template
-        .as_deref()
-        .map(environment::digest)
-        .transpose()?;
+    let preset = native_preset(&project, &args.preset)?;
     let (output, copied, before) = snapshot(&project, &args.output)?;
     let mut report = json!({"schemaVersion":"1","operation":"export","sourceProject":project,"snapshot":copied,"engine":engine,"forgeVersion":env!("CARGO_PKG_VERSION"),"forgeBuild":crate::build_info::current(),"preset":args.preset,"templates":template_status(),"export":{"status":"not_run"},"exportedRuntime":{"status":"not_run"},"visualReview":"not_assessed"});
     let result = (|| {
-        report["customTemplate"] = json!({"path":custom_template,"sha256":template_hash});
+        let profile = RunProfile::new(&output)?;
+        report["userData"] = json!({"isolation":"per_run_profile","root":profile.root});
+        let template = match &preset.custom_template {
+            Some(path) => path.clone(),
+            None => standard_release_template(&engine, &preset.architecture)?,
+        };
+        let template_hash = environment::digest(&template)?;
+        bind_release_template(&copied, &preset.options_section, &template)?;
+        report["releaseTemplate"] = json!({"path":template,"sha256":template_hash,"source":if preset.custom_template.is_some() { "custom" } else { "standard" }});
+        report["customTemplate"] = if preset.custom_template.is_some() {
+            json!({"path":template,"sha256":template_hash})
+        } else {
+            json!({"path":null,"sha256":null})
+        };
         let artifacts = output.join("artifacts");
         fs::create_dir(&artifacts).map_err(|e| e.to_string())?;
         let target = artifacts.join(if cfg!(windows) {
@@ -749,7 +900,7 @@ pub fn export(args: ExportArgs) -> Result<Value> {
         });
         report["export"] = json!({"status":"running"});
         report["export"] = run_process(
-            engine_command(&engine, &copied)
+            engine_command(&engine, &copied, &profile)
                 .args(["--headless", "--export-release"])
                 .arg(&args.preset)
                 .arg(&target),
@@ -789,11 +940,11 @@ pub fn export(args: ExportArgs) -> Result<Value> {
             };
             report["exportedRuntime"] = json!({"status":"running"});
             report["exportedRuntime"] = run_process(
-                Command::new(binary).current_dir(&artifacts).args([
+                profile.apply(Command::new(binary).current_dir(&artifacts).args([
                     "--headless",
                     "--quit-after",
                     "30",
-                ]),
+                ])),
                 &output,
                 "exported-runtime",
                 args.timeout,
@@ -805,15 +956,122 @@ pub fn export(args: ExportArgs) -> Result<Value> {
         if before != inventory(&project)? {
             return Err("Source changed during export; evidence is stale".into());
         }
-        if custom_template
-            .as_deref()
-            .map(environment::digest)
-            .transpose()?
-            != template_hash
-        {
-            return Err("Custom export template changed during export; evidence is stale".into());
+        if environment::digest(&template)? != template_hash {
+            return Err("Release export template changed during export; evidence is stale".into());
         }
         Ok(())
     })();
     finish(&output, &report, result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn standard_template_uses_selected_engine_version_and_self_contained_root() {
+        let temp = tempfile::tempdir().unwrap();
+        fs::write(temp.path().join("._sc_"), "").unwrap();
+        let templates = temp
+            .path()
+            .join("editor_data/export_templates/4.6.9.stable");
+        fs::create_dir_all(&templates).unwrap();
+        let filename = if cfg!(windows) {
+            "windows_release_x86_64.exe"
+        } else if cfg!(target_os = "macos") {
+            "macos.zip"
+        } else {
+            "linux_release.x86_64"
+        };
+        let template = templates.join(filename);
+        fs::write(&template, "fixture").unwrap();
+        let engine = Engine {
+            path: temp.path().join("godot"),
+            version: "4.6.9.stable.official.fixture".into(),
+            sha256: String::new(),
+            companion_sha256: None,
+        };
+        assert_eq!(
+            standard_release_template(&engine, "x86_64").unwrap(),
+            template.canonicalize().unwrap()
+        );
+        assert!(standard_release_template(&engine, "../../escape").is_err());
+    }
+
+    #[test]
+    fn template_binding_preserves_other_presets_and_resolves_relative_paths() {
+        let temp = tempfile::tempdir().unwrap();
+        let project = temp.path().join("game");
+        fs::create_dir(&project).unwrap();
+        let template = temp.path().join("release template 模板.zip");
+        fs::write(&template, "fixture").unwrap();
+        let platform = if cfg!(windows) {
+            "Windows Desktop"
+        } else if cfg!(target_os = "macos") {
+            "macOS"
+        } else {
+            "Linux"
+        };
+        let path = project.join("export_presets.cfg");
+        let other = "[preset.9.options]\ncustom_template/release=\"untouched\"\n";
+        fs::write(&path, format!("[preset.2]\nname=\"Desktop\"\nplatform=\"{platform}\"\n[preset.2.options]\ncustom_template/release=\"../release template 模板.zip\"\napplication/bundle_identifier=\"test.preserved\"\n{other}")).unwrap();
+        let preset = native_preset(&project, "Desktop").unwrap();
+        assert_eq!(
+            preset.custom_template,
+            Some(template.canonicalize().unwrap())
+        );
+        bind_release_template(
+            &project,
+            &preset.options_section,
+            preset.custom_template.as_ref().unwrap(),
+        )
+        .unwrap();
+        let rebound = native_preset(&project, "Desktop").unwrap();
+        assert_eq!(rebound.custom_template, preset.custom_template);
+        let text = fs::read_to_string(&path).unwrap();
+        assert_eq!(text.matches("custom_template/release=").count(), 2);
+        assert!(text.contains(other));
+        assert!(text.contains("application/bundle_identifier=\"test.preserved\""));
+    }
+
+    #[test]
+    fn template_binding_creates_missing_options_and_accepts_res_paths() {
+        let temp = tempfile::tempdir().unwrap();
+        let project = temp.path();
+        let template = project.join("template.zip");
+        fs::write(&template, "fixture").unwrap();
+        let platform = if cfg!(windows) {
+            "Windows Desktop"
+        } else if cfg!(target_os = "macos") {
+            "macOS"
+        } else {
+            "Linux"
+        };
+        let path = project.join("export_presets.cfg");
+        let base = format!("[preset.0]\nname=\"Desktop\"\nplatform=\"{platform}\"\n");
+        fs::write(&path, &base).unwrap();
+        assert!(native_preset(project, "Desktop")
+            .unwrap()
+            .custom_template
+            .is_none());
+        bind_release_template(
+            project,
+            "preset.0.options",
+            &template.canonicalize().unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            native_preset(project, "Desktop").unwrap().custom_template,
+            Some(template.canonicalize().unwrap())
+        );
+        fs::write(
+            &path,
+            format!("{base}[preset.0.options]\ncustom_template/release=\"res://template.zip\"\n"),
+        )
+        .unwrap();
+        assert_eq!(
+            native_preset(project, "Desktop").unwrap().custom_template,
+            Some(template.canonicalize().unwrap())
+        );
+    }
 }

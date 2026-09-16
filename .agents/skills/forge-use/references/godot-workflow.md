@@ -62,6 +62,14 @@ Create the output's parent first; the output directory must not already exist an
 must be outside the game. Snapshotting excludes `.git` and `.godot`, rejects symlinks
 and checks source/file hashes before and after copying. This is working-copy
 isolation, **not a sandbox**: only run trusted game code and editor plugins.
+Each command also creates `user-profile/` inside its evidence directory and redirects
+the Godot child processes' profile/data/cache/temp environment there. Import, runtime,
+interaction tests and exported startup share that run's fresh profile; another run
+gets a new one. This isolates normal `user://` saves, including custom user-directory
+settings. `report.json.userData.root` records the profile root. Original saves are not
+loaded or updated. Absolute file access and external services are not sandboxed.
+Project settings and exported game data retain their original user-directory settings;
+the acceptance profile applies only to processes launched by Forge.
 
 ```sh
 forge godot verify --project /absolute/game --output /absolute/qa/run-1 --json
@@ -94,10 +102,15 @@ forge godot export --project /absolute/game --preset "Desktop" --output /absolut
 ```
 
 The preset must already exist in `export_presets.cfg` and target the host desktop
-platform. Godot resolves preset settings and matching standard/custom release templates;
-missing templates fail with retained engine logs. `check` reports the managed template
-location separately from actual export success. Custom template hashes are recorded
-and rechecked. `--timeout` defaults to 300 seconds per phase.
+platform. Forge resolves the release template before isolating the child environment
+and binds its absolute path only in the copied preset. Relative paths (including `..`
+and `res://`) are resolved against the original project. Standard templates are selected
+from the engine's versioned user or self-contained template directory. Missing templates
+fail with a report; engine failures also retain logs. `check` reports the managed template
+location separately from actual export success. `releaseTemplate` records the actual
+path, source (`standard` or `custom`) and hash, rechecked after export. The existing
+`customTemplate` field remains populated only for custom presets. `--timeout` defaults
+to 300 seconds per phase.
 
 Export runs in a fresh snapshot. `--run` launches the exported native program for a
 bounded 30-frame headless startup check; without it, exported runtime is `not_run`.

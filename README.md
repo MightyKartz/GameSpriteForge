@@ -93,6 +93,8 @@ Technical validation does not replace visual review, listening or license checks
 Builds with `godot_environment_setup` provide `forge setup godot --path PATH`
 (or `--download` for the pinned official engine), persistent machine configuration,
 `forge godot lock/check`, and isolated `forge godot verify/export` commands.
+Acceptance uses a fresh per-run `user://` profile and resolves relative custom
+export templates against the original project without changing its preset.
 Read `forge guide godot-workflow` for examples, screenshots, explicit template
 installation and native exported-program checks. These commands are newer than the
 v0.4.0 release; check capabilities. Runtime/screenshot evidence does not establish

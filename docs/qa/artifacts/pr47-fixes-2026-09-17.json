@@ -1,0 +1,118 @@
+{
+  "pr": 47,
+  "localBuild": {
+    "dirty": true,
+    "features": [],
+    "gitCommit": "f9b4398e7e506f45afc01589675498de2b3f6f9f",
+    "profile": "debug",
+    "target": "x86_64-pc-windows-msvc"
+  },
+  "binarySha256": "468b23b0ea7e97b3dbffe9c305ebd2593173125ffa3cd59d5155fd01de1eae2e",
+  "engine": {
+    "companionSha256": "ef90e929ba1a6a4322860285d97f40f4aa349c90329a91b0e8b55b8df0f4cb00",
+    "path": "\\\\?\\C:\\AI\\Games\\Mahjong\\.tools\\godot\\Godot_v4.6.3-stable_win64_console.exe",
+    "sha256": "63b3b2208819714c9677fbfdd8217c5b7dee8ecf5f383502e826bc9e2227ff5a",
+    "version": "4.6.3.stable.official.7d41c59c4"
+  },
+  "nativeCases": 20,
+  "nativePassed": true,
+  "screenshotChecked": true,
+  "cliUnitTestsPassed": 19,
+  "clippyPassed": true,
+  "guideOnlyPassed": true,
+  "originalSaves": {
+    "original-profile\\data\\Godot\\app_userdata\\Forge workflow acceptance\\launch-count.txt": "1",
+    "original-profile\\data\\Forge test\\custom saves\\launch-count.txt": "1"
+  },
+  "checks": [
+    {
+      "run": "verified",
+      "phase": "runtime",
+      "status": "passed",
+      "userData": {
+        "isolation": "per_run_profile",
+        "root": "C:/AI/Forge/GameSpriteForge/target/qa/pr47-fix-native-final/verified/user-profile"
+      },
+      "markers": [
+        "FORGE_TEST_USERDIR=C:/AI/Forge/GameSpriteForge/target/qa/pr47-fix-native-final/verified/user-profile/data/Godot/app_userdata/Forge workflow acceptance",
+        "FORGE_TEST_COUNT=1"
+      ]
+    },
+    {
+      "run": "verified",
+      "phase": "interactionTests",
+      "status": "passed",
+      "userData": {
+        "isolation": "per_run_profile",
+        "root": "C:/AI/Forge/GameSpriteForge/target/qa/pr47-fix-native-final/verified/user-profile"
+      },
+      "markers": [
+        "FORGE_TEST_USERDIR=C:/AI/Forge/GameSpriteForge/target/qa/pr47-fix-native-final/verified/user-profile/data/Godot/app_userdata/Forge workflow acceptance"
+      ]
+    },
+    {
+      "run": "custom-save-1",
+      "phase": "runtime",
+      "status": "passed",
+      "userData": {
+        "isolation": "per_run_profile",
+        "root": "C:/AI/Forge/GameSpriteForge/target/qa/pr47-fix-native-final/custom-save-1/user-profile"
+      },
+      "markers": [
+        "FORGE_TEST_USERDIR=C:/AI/Forge/GameSpriteForge/target/qa/pr47-fix-native-final/custom-save-1/user-profile/data/Forge test/custom saves",
+        "FORGE_TEST_COUNT=1"
+      ]
+    },
+    {
+      "run": "custom-save-2",
+      "phase": "runtime",
+      "status": "passed",
+      "userData": {
+        "isolation": "per_run_profile",
+        "root": "C:/AI/Forge/GameSpriteForge/target/qa/pr47-fix-native-final/custom-save-2/user-profile"
+      },
+      "markers": [
+        "FORGE_TEST_USERDIR=C:/AI/Forge/GameSpriteForge/target/qa/pr47-fix-native-final/custom-save-2/user-profile/data/Forge test/custom saves",
+        "FORGE_TEST_COUNT=1"
+      ]
+    },
+    {
+      "run": "exported",
+      "phase": "exportedRuntime",
+      "status": "passed",
+      "userData": {
+        "isolation": "per_run_profile",
+        "root": "C:/AI/Forge/GameSpriteForge/target/qa/pr47-fix-native-final/exported/user-profile"
+      },
+      "markers": [
+        "FORGE_TEST_USERDIR=C:/AI/Forge/GameSpriteForge/target/qa/pr47-fix-native-final/exported/user-profile/data/Godot/app_userdata/Forge workflow acceptance",
+        "FORGE_TEST_COUNT=1"
+      ]
+    },
+    {
+      "run": "relative-template",
+      "phase": "exportedRuntime",
+      "status": "passed",
+      "userData": {
+        "isolation": "per_run_profile",
+        "root": "C:/AI/Forge/GameSpriteForge/target/qa/pr47-fix-native-final/relative-template/user-profile"
+      },
+      "markers": [
+        "FORGE_TEST_USERDIR=C:/AI/Forge/GameSpriteForge/target/qa/pr47-fix-native-final/relative-template/user-profile/data/Forge test/custom saves",
+        "FORGE_TEST_COUNT=1"
+      ]
+    }
+  ],
+  "releaseTemplates": {
+    "exported": {
+      "path": "\\\\?\\C:\\AI\\Forge\\GameSpriteForge\\target\\qa\\pr47-fix-standard-profile\\Godot\\export_templates\\4.6.3.stable\\windows_release_x86_64.exe",
+      "sha256": "91724f15024a3a545e28ccd83134403d31ce2323a38e51c95e4dfa282f732ab6",
+      "source": "standard"
+    },
+    "relative-template": {
+      "path": "\\\\?\\C:\\AI\\Forge\\GameSpriteForge\\target\\qa\\pr47-fix-native-final\\templates outside project\\release template 模板.exe",
+      "sha256": "91724f15024a3a545e28ccd83134403d31ce2323a38e51c95e4dfa282f732ab6",
+      "source": "custom"
+    }
+  }
+}
