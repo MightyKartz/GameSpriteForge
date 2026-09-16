@@ -42,6 +42,14 @@ Windows 用户请按[便携包安装指南](docs/releases/windows-portable.md)�
 | **音频** | 导入 WAV 音乐、音效和环境声，进行裁剪、增益调整、淡入淡出和循环处理。 |
 | **Godot 交付** | 验证 Pack，安装原生纹理、场景、动画和音频资源；锁定选定版本、保留交付回执，并在更新失败时回滚。 |
 
+### 音频交付
+
+Forge 将本地 WAV 加工并交付为 Godot 原生音频资源。这个示例在 Godot 演示场景中播放一段合成的三音提示音。
+
+![Forge 交付的合成提示音在 Godot 中回放](docs/media/showcase/v040/native-delivery.gif)
+
+*GIF 本身无声。[观看有声演示](docs/media/showcase/v040/native-delivery.mp4) · [素材来源与复现](docs/media/showcase/v040/README.md)。*
+
 ## 配合 Codex 使用
 
 在 Codex 中打开游戏项目并提出需求：
