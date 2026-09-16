@@ -28,13 +28,16 @@ The public game source remains unchanged and has no generated `.godot` cache.
 - First and second native passes: 16 CLI cases each, including a real GPU screenshot
   and exported Windows executable startup. Godot version:
   `4.6.3.stable.official.7d41c59c4`.
+- The failure-report regression pass has 17 CLI cases, including a main scene that
+  exits with code zero before completion; its runtime phase must still fail.
 - Official Windows managed engine download, SHA-512 verification, persistent setup
   and repeat installation passed. Windows PowerShell extraction uses a process-only
   execution-policy override and retains diagnostics on failure.
 - Embedded-guide checks: nine cases, 86 CLI calls; the new `godot-workflow` topic
   matches its embedded source and works without installing a personal skill.
 - Core Godot unit checks: nine passed. Static-delivery checks additionally cover
-  project toolchain lock drift between planning and execution.
+  project toolchain lock drift between planning and execution. All five static
+  delivery tests passed, including the real Godot installation check.
 - Local development builds report `dirty:true`, default features and their source
   commit. They are verification binaries, not clean release artifacts.
 

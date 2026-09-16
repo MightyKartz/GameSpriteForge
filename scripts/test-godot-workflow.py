@@ -61,6 +61,7 @@ window/size/viewport_width=160
 window/size/viewport_height=120
 [rendering]
 renderer/rendering_method="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
 environment/defaults/default_clear_color=Color(0.04, 0.06, 0.12, 1)
 ''')
     (project/'main.tscn').write_text('''[gd_scene load_steps=2 format=3]
@@ -108,6 +109,9 @@ func _initialize() -> void:
     (project/'main.gd').write_text('extends Node2D\nfunc broken(:\n')
     run('godot', 'verify', '--project', project, '--output', root/'broken', fail=True)
     assert json.loads((root/'broken/report.json').read_text())['status'] == 'failed'
+    (project/'main.gd').write_text('extends Node2D\nfunc _ready() -> void:\n\tget_tree().quit(0)\n')
+    run('godot', 'verify', '--project', project, '--output', root/'early-exit', fail=True)
+    assert json.loads((root/'early-exit/report.json').read_text())['runtime']['status'] == 'failed'
     (project/'main.gd').write_text('extends Node2D\nvar score := 0\nfunc hit() -> void:\n\tscore += 1\n')
     (project/'timeout.gd').write_text('extends SceneTree\nfunc _initialize() -> void:\n\tpass\n')
     run('godot', 'verify', '--project', project, '--output', root/'timeout',

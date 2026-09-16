@@ -572,7 +572,7 @@ pub fn verify(args: VerifyArgs) -> Result<Value> {
     let project = project_root(&args.project)?;
     let engine = environment::resolve(args.godot.as_deref(), Some(&project))?;
     let (output, copied, before) = snapshot(&project, &args.output)?;
-    let mut report = json!({"schemaVersion":"1","operation":"verify","sourceProject":project,"snapshot":copied,"engine":engine,"forgeVersion":env!("CARGO_PKG_VERSION"),"forgeBuild":crate::build_info::current(),"visualReview":"not_assessed","interactionTests":"not_run","import":{"status":"not_run"},"runtime":{"status":"not_run"},"screenshot":{"status":"not_requested"}});
+    let mut report = json!({"schemaVersion":"1","operation":"verify","sourceProject":project,"snapshot":copied,"engine":engine,"forgeVersion":env!("CARGO_PKG_VERSION"),"forgeBuild":crate::build_info::current(),"visualReview":"not_assessed","interactionTests":{"status":"not_run"},"import":{"status":"not_run"},"runtime":{"status":"not_run"},"screenshot":{"status":"not_requested"}});
     let result = (|| {
         report["import"] = json!({"status":"running"});
         report["import"] = run_process(
@@ -616,6 +616,7 @@ pub fn verify(args: VerifyArgs) -> Result<Value> {
             .lines()
             .any(|l| l == "FORGE_PROJECT_READY")
         {
+            report["runtime"]["status"] = json!("failed");
             return Err("Runtime exited without completion marker".into());
         }
         if args.screenshot {
@@ -650,6 +651,7 @@ pub fn verify(args: VerifyArgs) -> Result<Value> {
                 .lines()
                 .any(|l| l == "FORGE_ACCEPTANCE_OK")
             {
+                report["interactionTests"]["status"] = json!("failed");
                 return Err("Interaction test did not print FORGE_ACCEPTANCE_OK".into());
             }
         }
