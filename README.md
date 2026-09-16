@@ -42,6 +42,14 @@ On Windows, follow the [portable installation guide](docs/releases/windows-porta
 | **Audio** | Import WAV music, sound effects and ambience; trim, adjust gain, add fades and prepare loops. |
 | **Godot delivery** | Validate Packs and install native textures, scenes, animations and audio streams. Lock chosen versions, retain delivery receipts and roll back failed updates. |
 
+### Audio delivery
+
+Forge prepares local WAV files and delivers native audio resources to Godot. This example plays a synthesized three-note chime in a Godot demonstration scene.
+
+![Godot playback of a synthetic sound cue delivered by Forge](docs/media/showcase/v040/native-delivery.gif)
+
+*The GIF is silent. [Watch with sound](docs/media/showcase/v040/native-delivery.mp4) · [Sources and reproduction](docs/media/showcase/v040/README.md).*
+
 ## Use with Codex
 
 Open your game project in Codex and ask:
