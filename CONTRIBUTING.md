@@ -2,9 +2,11 @@
 
 Forge is a Rust CLI workspace. Its four packages are `cli`, `core`, `pack`, and
 `providers`; source builds and releases use Cargo. Node.js, npm, and Tauri are
-not required. The retired desktop application is available in Git history.
+not required for the CLI. Video projects have separate toolchains and local
+instructions. The retired desktop application is available in Git history.
 
-Use the repo's [forge-dev skill](.agents/skills/forge-dev/SKILL.md) for source work
+Start with [AGENTS.md](AGENTS.md) for repository boundaries and cross-machine
+coordination. Use the repo's [forge-dev skill](.agents/skills/forge-dev/SKILL.md) for source work
 and [forge-use skill](.agents/skills/forge-use/SKILL.md) for asset production.
 The [Codex artwork workflow](docs/automation/codex-local-assets.md) records which
 local development implementations are required by existing game consumers.
@@ -12,8 +14,7 @@ local development implementations are required by existing game consumers.
 ## Development build
 
 ```bash
-cargo build -p forge-cli
-cargo test
+cargo build --locked -p forge-cli --no-default-features
 ```
 
 Windows source development requires Rust's MSVC toolchain and Visual Studio C++
@@ -25,9 +26,13 @@ cargo test --locked -p core --test image_contract_tests --test delivery_audit_te
 python scripts/test-image-contract-cli.py --forge target/debug/forge.exe
 ```
 
-The Windows CI job checks source compilation and offline delivery contracts. It
-does not create an official Windows release or change `doctor.platformSupported`.
-Its embedded-guide check uses `test-cli-skill.py --guide-only`: Windows can read
+The Windows source CI job checks compilation and offline delivery contracts.
+The separate native [portable-package workflow](.github/workflows/windows-portable.yml)
+tests Windows packages and supplies the Windows artifact to the paired
+[release workflow](.github/workflows/release-cli.yml). See the
+[Windows portable guide](docs/releases/windows-portable.md) for release scope.
+Source compilation alone does not establish package acceptance.
+The embedded-guide check uses `test-cli-skill.py --guide-only`: Windows can read
 `guide` and `skill show`, but the CLI's safe `skill install` implementation still
 supports macOS/Linux only. Full skill installation/update tests remain in macOS CI.
 Use `FORGE_GODOT_PATH` and `GODOT_BIN` for a separately verified native Godot
@@ -43,7 +48,7 @@ Keychain can therefore ask again before returning an xAI credential. After build
 sign the CLI with the team's persistent Apple identity and fixed identifier:
 
 ```bash
-export FORGE_DEV_CODESIGN_IDENTITY="Apple Development: Your Name (J6P96F432P)"
+export FORGE_DEV_CODESIGN_IDENTITY="Apple Development: Your Name (TEAM_ID)"
 scripts/sign-dev-cli.sh
 ```
 
@@ -75,7 +80,7 @@ consumer artwork or Provider credentials.
 
 ## Embedded guide and optional Codex skill
 
-The single maintained skill source is `.agents/skills/forge-use/`. Keep every
+The single maintained user-guide source is `.agents/skills/forge-use/`. Keep every
 runtime reference and example inside that directory; the CLI embeds its explicit
 file list at compile time. `forge guide` serves that same content directly, and
 optional skill installation writes it into a Codex discovery directory. Maintain
@@ -84,33 +89,25 @@ reading embedded references/examples without installation. Do not add a second
 guide content tree.
 
 When adding a bundled file, update the list in `packages/cli/src/skill.rs`, expose
-it in the guide resource list, and verify guide reads and the complete installed
-bundle:
+it in the guide resource list, and follow the
+[embedded-guide checks](.agents/skills/forge-dev/references/verification.md#embedded-guide-versus-developer-documentation).
+Edits to `forge-use` must run CI because they change the embedded payload;
+`forge-dev` and root `AGENTS.md` are documentation only.
+Guide reads remain offline and read-only. Updating a CLI does not register or
+update separately installed Codex skills or change a game's toolchain lock.
 
-```bash
-cargo build --locked -p forge-cli --no-default-features
-python3 scripts/test-cli-skill.py --forge "$PWD/target/debug/forge"
-```
+## Before submitting changes
 
-This check exercises offline guide reads from a standalone binary and isolated
-project/user installations, including exact resource content, update backups and
-preservation of modified content. Release checks
-also run it through the installer's public launcher. Skill-only changes must run
-CI because they change the binary's embedded payload. Guide reads must remain
-read-only with no credential or Job-store access. Updating a CLI changes the
-guide that executable returns; installed skill copies retain explicit update and
-user-modification protection. CLI installation does not register a Codex skill.
+Select checks from the [developer verification guide](.agents/skills/forge-dev/references/verification.md)
+according to the changed behavior. It covers resource libraries, static art,
+animation/layers, audio, native Godot delivery and release installation.
+Run Rust formatting and relevant tests for code changes; documentation-only edits
+need link/example review and a clean diff. Embedded user-guide edits also require
+the rebuilt CLI checks above. Optional feature suites apply when those features
+change; release candidates follow the complete release workflow.
 
-Before submitting changes:
-
-```bash
-cargo fmt --all -- --check
-cargo test
-# The post-v0.2 Environment/Terrain/Building/Map commands are source-gated.
-cargo test -p forge-cli --features world-assets
-bash scripts/test-world-assets.sh
-bash scripts/test-cli-signing-contract.sh
-```
+Describe what was verified, on which platform and with which binary. Separate
+structural validation, native loading, visual/listening review and device testing.
 
 Do not commit credentials, Provider authorization headers, generated OAuth
 state, or private model outputs.

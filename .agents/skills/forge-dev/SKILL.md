@@ -27,7 +27,7 @@ Build the selected checkout, use its absolute binary path, and record the source
 commit, build features, and binary SHA-256 alongside QA evidence. `--version` alone
 does not distinguish a development binary from a released binary with the same version.
 
-v0.3.0's doctor output carries compiled build identity and stable capability IDs.
+The doctor output carries compiled build identity and stable capability IDs.
 When adding a local contract, update capabilities alongside its implementation.
 Release verification uses `scripts/verify-cli-build.py` to match commit, version,
 default features and packaged `BUILD_INFO.json`; source archives report unknown
@@ -49,30 +49,17 @@ Resolve the actual target directory if `CARGO_TARGET_DIR` is configured. Use def
 features when assessing release behavior; enable optional features only for the
 requested development workflow. `packages/cli/Cargo.toml` declares `default = []`.
 
-Capability checkpoint, checked 2026-09-08; recheck Git and command help when using it:
-
-- v0.3.0's default CLI includes local static PNG intake, static rendering/ground
-  anchors, and alpha-bound controls. This is the stable PNG → static Pack → Godot
-  path; no optional source feature is required.
-- The earlier v0.2.1 supports existing animation preparation and Godot delivery,
-  but predates `plan prepare-static` and the new local animation request fields.
-  Do not infer development-build availability from the version string or silently
-  change another project's pinned CLI. Verify consumer contracts before updating
-  its lock for future imports; preserve existing asset receipts and source history.
-  Actual re-imports produce new receipts.
-- v0.3.0 also includes local `preserve_source`, rendering/timing and
-  whole-sheet preprocessing, with repair preserving the requested coordinates.
-  Use `scripts/test-local-animation-delivery.py` with Pillow and Godot for the
-  synthetic CLI/Pack/native-resource contract. Animation remains experimental.
-- Subject/Character V2, world assets, and game-art manifest commands are optional
-  source-build capabilities. Read feature gates and the selected command's help.
+Use `doctor --json` capabilities and command help from the selected executable
+instead of inferring support from a historical version checkpoint. Subject/Character
+V2, world assets and game-art manifest commands require optional source features.
+Preserve consumer pins and receipts unless the task includes a verified upgrade.
 
 ## Embedded guide and optional product skill
 
-From v0.3.1 the default CLI embeds `.agents/skills/forge-use/`. Maintain this as
+The default CLI embeds `.agents/skills/forge-use/`. Maintain this as
 one self-contained source, with runtime links inside the bundle. The explicit
 file list lives in `packages/cli/src/skill.rs`; update it when adding resources.
-From v0.3.2 `guide [RESOURCE] [--json]` reads that same content without skill
+`guide [RESOURCE] [--json]` reads that same content without skill
 installation. Keep relative links usable in an installed bundle and provide
 `guide` commands for references/examples read from an executable. Do not create
 a second guide source. Plain output must preserve the original resource bytes;
@@ -82,7 +69,8 @@ Guide reads are offline and read-only, without Provider credentials, Plans,
 Jobs or Codex configuration. A CLI upgrade changes its embedded guide but does
 not update separately installed skill files or a consumer's toolchain lock.
 
-The build watches the skill directory, and skill-only edits must trigger CI.
+The build watches `forge-use`, and edits to that bundle must trigger CI.
+`forge-dev` is developer documentation and is not embedded in the executable.
 Run `scripts/test-cli-skill.py --forge /absolute/path/to/forge` for isolated
 guide reads, installation, content identity, update backups and modification/symlink protection.
 Use the public launcher for packaged checks. Never install into a real consumer
@@ -91,15 +79,22 @@ image generation remain separate from successful file installation. Codex can
 read the guide without discovering a skill; installing only the CLI does not
 register the embedded bundle with Codex.
 
-Sword feedback additions use explicit build capabilities rather than changing a
-consumer's release pin. Keep new execution provenance separate from legacy Job
-history and current receipt exporter identity. The portable receipt embeds JSON
-report bytes and full Pack inventories; verify it after moving the Job store.
-Run `scripts/test-sword-feedback-cli.py --forge /absolute/path/to/forge --godot
-/absolute/path/to/Godot` for source locks, stable targets, receipts and read-only
-audits. `godot_install_transaction_tests` covers transaction failures and cancellation;
-`animation_pixel_quality_tests` covers character/effect semantics and GIF timing.
-Run `scripts/test-godot-external-clock.py` for the generic native timing sample.
+## Delivery and catalog contracts
+
+Keep new execution provenance separate from legacy Job history and the current
+receipt exporter identity. Portable receipts embed JSON report bytes and full
+Pack inventories; verify them after relocating the Job store. Never fabricate
+historical evidence when importing or migrating existing assets.
+
+Read the [asset library contract](../../../docs/automation/project-asset-library.md)
+when changing catalog behavior. Preserve immutable content-addressed objects,
+atomic head replacement and inventory rechecks under the catalog lock. Migration
+requires an explicit preview/apply with the expected digest; reads do not migrate.
+New output does not automatically select itself for delivery or update consumer
+locks. Keep machine-local roots separate from portable metadata, and remember
+that metadata alone does not back up media. Versioned delivery retains the
+whole-Pack installation and rollback boundary.
+
 Godot installation success requires explicit completion evidence and saved
 resource checks, not only process status. Ordinary warnings alone are not failure.
 Serialize imports/exports sharing the same Godot cache; Forge's project install
@@ -127,6 +122,11 @@ source and normalized output. Props use a ground
 origin and icons a center origin. Godot UI consumers of icon textures must apply the
 rendering contract themselves; the installed prop scenes carry it directly.
 
+For existing animation frames, preserve the requested shared coordinates, anchors
+and timing through whole-sheet preprocessing and repair when using
+`preserve_source`. Animation preparation remains experimental; fixture delivery
+checks do not establish production animation quality.
+
 `generate`, `style create`, and generation-stage retries can make Provider requests.
 Use the fixture Provider for offline tests, and real Providers only within the
 requested scope. Read plan estimates and `job report` usage evidence rather than
@@ -134,76 +134,21 @@ inferring cost from the command's name. `doctor` and `provider list` deliberatel
 avoid credential reads; `provider doctor` performs an explicit authentication check.
 A local-path pass does not establish real-Provider generation quality.
 
-## Focused verification
+## Audio boundaries
 
-Local audio uses `audio import` / `plan prepare-audio`, a v4 audio Pack, and the
-existing Godot install transaction. Keep external generation optional: `audio
-tools` only observes explicitly selected source directories and must not start
-Python, load models, download weights or read credentials. Maintain the audio
-guide and example inside the embedded `forge-use` bundle. Audio metadata describes
-technical validation and user-asserted origin; it does not establish listening or
-license approval. Native delivery uses binary `AudioStreamWAV` resources and
-tracks WAV `.sample` caches alongside image caches. Run
-`cargo test -p core --test audio_plan_tests --test audio_processing_tests`,
-`scripts/test-godot-audio-delivery.py`, and `scripts/test-local-audio-cli.py` with
-the selected absolute CLI/Godot executables. The CLI test covers relocated
-receipts, input drift, native-resource drift and cache tampering using synthetic
-WAVs. Preserve another project's existing audio and toolchain pins.
+Local audio uses `audio import` / `plan prepare-audio`, a v4 audio Pack and the
+existing Godot install transaction. `audio tools` only observes explicitly
+selected source directories; it must not start Python, load models, download
+weights or read credentials. Maintain its guide and example in `forge-use`.
+Audio metadata describes technical validation and user-asserted origin; it does
+not establish listening or license approval. Native delivery uses binary
+`AudioStreamWAV` resources and tracks WAV `.sample` caches alongside image caches.
+Preserve another project's existing audio and toolchain pins.
 
-Select checks for the changed behavior. Use isolated `FORGE_JOB_STORE` and
-`FORGE_PLAN_STORE` directories for manual
-fixtures so QA does not use the normal asset history.
+## Verification and release
 
-```bash
-cargo fmt --all -- --check
-cargo test -p core --test <relevant_integration_test>
-cargo test -p pack
-```
-
-For a checkout containing local static delivery changes:
-
-```bash
-cargo test -p core --test prepare_static_tests --test static_delivery_tests
-cargo test -p core --test static_delivery_tests -- --ignored --nocapture
-python3 scripts/test-local-static-cli.py --forge /absolute/path/to/forge --godot /absolute/path/to/Godot
-```
-
-The ignored test loads saved resources in real Godot 4.6.x, including legacy static
-Packs. For a nonstandard Godot location, set both `FORGE_GODOT_PATH` (Forge installer)
-and `GODOT_BIN` (the Rust test's final scene check). The Python script's `--godot`
-selects both its install Jobs and final scene check.
-Keep evidence clear about fixture resource validation versus reviewed artwork.
-
-For broader CLI integration, use `FORGE_BINARY=/absolute/path/to/forge bash
-scripts/test-cli-product.sh`; for a release, follow `.github/workflows/release-cli.yml`
-and the existing packaging/verification scripts. v0.3.0 retains unsigned,
-unnotarized distribution. Local development signing does not change release status.
-
-## Verify installed release artifacts
-
-Exercise fresh installation, same-version reinstall and old-to-new upgrade with
-the actual release archives and installer. Use the installer's public
-`<bin-dir>/forge` symlink for CLI calls, including `scripts/verify-cli-build.py`.
-Pass an absolute path without resolving that symlink before execution. Do not
-prepend the payload's `bin` directory to `PATH`: either shortcut can hide a
-launcher or bundled-helper discovery bug.
-
-Disable external FFmpeg/FFprobe discovery during installed-package checks. Point
-the search override at an empty temporary directory and disable macOS default
-tool directories; keep Godot available separately:
-
-```bash
-forge_empty_tool_dir="$(mktemp -d)"
-GAME_SPRITE_FORGE_FFMPEG_SEARCH_DIRS="$forge_empty_tool_dir" \
-GAME_SPRITE_FORGE_DISABLE_MACOS_DEFAULT_TOOL_DIRS=1 \
-  bash scripts/test-cli-release-artifact.sh \
-    /absolute/current-release TAG /absolute/previous-release PREVIOUS_TAG
-```
-
-Compare compiled version/commit with the expected tag using the identity
-verifier's `--version`, `--commit` and `--release` options. Supply `--build-info`
-from that installation's payload and check that reported `ffmpegPath` and
-`ffprobePath` point into the same payload. Resolving returned helper paths for
-comparison is appropriate; resolving the public launcher before calling it is
-not. Retain installation and identity results as release evidence; source-build
-or fixture-only passes do not replace checks of the packaged binaries.
+Read [references/verification.md](references/verification.md) for the checks that
+match the changed behavior: catalog/review/transfer, static art, animation/layers,
+audio, Godot delivery, embedded guides or installed release artifacts. It also
+links the native Windows and paired-release workflows. Do not run every suite
+for an unrelated documentation edit or claim native coverage from fixture tests.

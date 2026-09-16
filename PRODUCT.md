@@ -2,8 +2,8 @@
 
 **A 2D game asset pipeline for AI-assisted development.**
 
-Forge helps independent developers and small teams turn artwork into reusable
-game resources. Its public product is a Rust CLI that people, coding agents and
+Forge helps independent developers and small teams turn images, animation and
+audio into reusable game resources. Its public product is a Rust CLI that people, coding agents and
 scripts can use throughout asset production, from local preparation and quality
 checks to traceable Packs and native Godot delivery.
 
@@ -27,6 +27,13 @@ was produced. Forge connects that creative work to the game project.
 - Reuse existing animation frames through experimental local preparation that
   can preserve shared drawing coordinates, anchors and frame timing through
   Pack and Godot SpriteFrames delivery.
+- Prepare layered effects and their playback resources for Godot.
+- Import local WAV music and sound effects, validate audio Packs and deliver
+  native Godot audio resources. External music and sound-generation tools remain
+  optional; Forge does not run their models or download their weights.
+- Catalog source media and processed Packs in a project asset library, with
+  previews, review records, retained versions, consumer locks and portable
+  transfer. Selecting a version and installing it into a game are explicit steps.
 
 ## Artwork and generation
 
@@ -49,9 +56,15 @@ with source history and delivery evidence available for later revisions and reus
 
 ## Current release scope
 
-[v0.3.2](docs/releases/v0.3.2.md) supports macOS Apple Silicon. The stable route
-is local transparent PNG preparation, static Packs and Godot delivery. Install
-Godot 4.6.x separately. Current CLI binaries are unsigned and not notarized.
+See the [release overview](README.md#install) for the current version and downloads.
+Distribution includes macOS Apple Silicon and an experimental Windows x64 portable
+build. Install Godot 4.6.x separately. CLI binaries are unsigned; the macOS build
+is not notarized. The [Windows guide](docs/releases/windows-portable.md) describes
+native validation and portable installation.
+
+Forge is free and open source under the [MIT license](LICENSE). Bundled tools have
+their own [third-party notices](THIRD_PARTY_NOTICES.md). External model services
+may charge separately, and source assets retain their own license conditions.
 
 Character animation remains in development and testing. Existing animation
 processing and reviewed project examples do not establish that automatic animation
