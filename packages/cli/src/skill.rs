@@ -975,6 +975,11 @@ mod guide_tests {
             ),
             ("delivery", "references/delivery.md", "text/markdown"),
             (
+                "godot-workflow",
+                "references/godot-workflow.md",
+                "text/markdown",
+            ),
+            (
                 "provider-example",
                 "examples/provider-icons.json",
                 "application/json",

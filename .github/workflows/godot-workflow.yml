@@ -37,6 +37,7 @@ jobs:
           cargo fmt --all -- --check
           cargo clippy --locked --workspace --all-targets -- -D warnings
           cargo test --locked -p core --lib godot
+          cargo test --locked -p forge-cli --bin forge
           cargo build --locked -p forge-cli --no-default-features
       - name: Verify official managed download and templates
         run: |
