@@ -2,9 +2,9 @@
 
 [English](./README.md) | 简体中文
 
-**面向 2D 游戏美术与音频的 CLI 工具。**
+**让 AI 智能体更顺畅地开发 Godot 游戏。**
 
-接入你喜欢的创作工具生成的素材，在项目资源库中统一管理，再交付到 Godot。Forge 使用 Rust 构建，支持 Codex、Claude、终端命令和脚本驱动。
+Forge 是**免费、MIT 开源的 CLI 工具**，连接 Codex 等智能体、素材创作工具与 Godot。将生成或已有的 2D 图片、动画和音频加工为可复用的游戏资源，统一管理并交付到项目，再协助完成运行检查、截图和本机桌面导出。
 
 [最新发布](https://github.com/MightyKartz/GameSpriteForge/releases/latest) · [安装](#安装) · [主要功能](#主要功能) · [CLI 指南](docs/automation/forge-cli.md)
 
@@ -14,7 +14,7 @@
 
 ## 安装
 
-[v0.5.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.5.0) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要原生交付和预览时，另行安装 **Godot 4.6.x**。安装包尚未签名，macOS 包尚未公证。
+[v0.5.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.5.0) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。使用 Godot 工作流时，可以选择已有的 **Godot 4.6.x**，或按下方说明通过 Forge 下载固定版本的官方引擎。安装包尚未签名，macOS 包尚未公证。
 
 macOS 安装：
 
@@ -32,6 +32,14 @@ forge guide
 
 Windows 用户请按[便携包安装指南](docs/releases/windows-portable.md)操作。已有游戏应先验证升级，再修改固定的 CLI 版本。
 
+已有 Godot 时，运行 `forge setup godot --path PATH`，将 `PATH` 替换为引擎路径。尚未安装时，可下载并配置固定的官方 Godot 4.6.3：
+
+```bash
+forge setup godot --download
+```
+
+需要导出模板时再加上 `--templates`，模板会单独下载。配置与导出示例见 `forge guide godot-workflow`。
+
 ## 主要功能
 
 | 工作流 | 可以完成的事情 |
@@ -41,6 +49,7 @@ Windows 用户请按[便携包安装指南](docs/releases/windows-portable.md)�
 | **动画与分层** | 加工已有动画帧或精灵图集，保留源坐标和时长，将已配准图层及变换、透明度轨道封装成 Pack。 |
 | **音频** | 导入 WAV 音乐、音效和环境声，进行裁剪、增益调整、淡入淡出和循环处理。 |
 | **Godot 交付** | 验证 Pack，安装原生纹理、场景、动画和音频资源；锁定选定版本、保留交付回执，并在更新失败时回滚。 |
+| **Godot 开发协作** | 配置引擎、锁定项目工具版本、检查游戏启动、截图，并导出和检查当前电脑平台的桌面游戏。 |
 
 ### 音频交付
 
@@ -50,22 +59,17 @@ Forge 将本地 WAV 加工并交付为 Godot 原生音频资源。这个示例�
 
 *GIF 本身无声。[观看有声演示](docs/media/showcase/v040/native-delivery.mp4) · [素材来源与复现](docs/media/showcase/v040/README.md)。*
 
-### Godot 配置与验收
+### 检查并导出 Godot 游戏
 
-具有 `godot_environment_setup` 能力的构建支持 `forge setup godot --path PATH`
-（或用 `--download` 下载固定版本的官方引擎）、持久化本机配置、
-`forge godot lock/check` 项目版本要求，以及在独立副本中执行的
-`forge godot verify/export`。每次验收使用独立的 `user://` 存档环境；自定义导出模板的
-相对路径按原项目解析，原预设保持不变。通过 `forge guide godot-workflow` 阅读截图、
-显式安装导出模板和启动导出程序的示例。这些命令已包含在 v0.5.0 中，
-使用前请检查当前 CLI 的 capabilities。运行通过或生成截图不代表已经完成视觉与玩法验收。
-[工作流指南](.agents/skills/forge-use/references/godot-workflow.md)。
+交付素材后，可以让智能体在独立项目副本中检查游戏运行、截图供你查看，并在出现问题时读取日志。项目工具链锁可以帮助不同电脑保持一致的 Forge 和 Godot 版本。
+
+Forge 还能使用已有导出预设，构建当前电脑平台的桌面游戏，并检查导出的程序能否启动。画面、声音和玩法仍由你实际验收。命令与详细检查机制见 [Godot 工作流指南](.agents/skills/forge-use/references/godot-workflow.md)。
 
 ## 配合 Codex 使用
 
 在 Codex 中打开游戏项目并提出需求：
 
-> 请用 Forge 处理这个游戏的源图、动画帧和 WAV 音频。先运行 `forge guide`，保留原始素材，向我展示加工结果供审核，再安装到 Godot。
+> 请用 Forge 加工和管理这个游戏的源图、动画帧和 WAV 音频。先运行 `forge guide`，保留原始素材并登记到项目资源库，向我展示加工结果供审核，再安装到 Godot。然后用 Forge 检查游戏启动并截图，告诉我发现的问题，以及还需要我实际验收的内容。
 
 内置指南支持离线读取。通过 `forge guide project-assets`、`forge guide static`、`forge guide animation`、`forge guide audio` 或 `forge guide delivery` 查看对应主题。macOS/Linux 还可选择[安装 Codex skill](docs/automation/forge-cli.md#optional-bundled-codex-skill)，让 Codex 发现它。
 
@@ -91,6 +95,7 @@ Sword 是一款修仙题材的生存游戏原型。源图由 Codex 创作，Forg
 
 - [CLI 指南](docs/automation/forge-cli.md)：命令与自动化。
 - [项目资源库](docs/automation/project-asset-library.md)：登记、版本、审核与复用。
+- [Godot 工作流](.agents/skills/forge-use/references/godot-workflow.md)：引擎配置、工具链锁定、游戏检查与桌面导出。
 - [本地美术](docs/automation/codex-local-assets.md)、[音频](.agents/skills/forge-use/references/audio.md)和[分层 Pack](docs/automation/layered-packs.md)：素材加工流程。
 - [示例规格](examples/cli)：素材请求的起点。
 - [参与开发](CONTRIBUTING.md)：源码构建与开发检查。
