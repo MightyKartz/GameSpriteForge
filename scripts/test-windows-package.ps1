@@ -25,6 +25,10 @@ function Install-Package([string]$File,[string]$Digest,[string]$Directory) {
     $options=@{Archive=$File;Sha256=$Digest;InstallDirectory=$Directory;AllowDevelopmentBuild=$AllowDevelopmentBuild}
     return (& $installer @options | ConvertFrom-Json)
 }
+function Install-UserPackage([string]$Installer,[string]$Directory) {
+    $options=@{InstallDirectory=$Directory;AllowDevelopmentBuild=$AllowDevelopmentBuild}
+    return (& $Installer @options | ConvertFrom-Json)
+}
 function Check-Installed($Installed) {
     $info=Assert-Payload $Installed.payload
     $data=Invoke-WindowsForgeJson $Installed.launcher
@@ -50,6 +54,29 @@ try {
     if ($fresh.action -ne 'installed') { throw 'Fresh install did not report installed' }
     $doctor=Check-Installed $fresh
     $cases.Add(@{name='fresh_install_and_bundled_discovery';passed=$true;launcher=$fresh.launcher})
+    # The public single-download bundle carries its nested archive, checksum and
+    # installer together. Extract it, then let the installer discover both files.
+    $bundle=Join-Path $root 'forge-windows-bundle.zip'
+    $bundleStage=Join-Path $root 'bundle-staging'
+    New-Item -ItemType Directory -Path $bundleStage,(Join-Path $bundleStage 'forge-windows') -Force | Out-Null
+    $bundleContent=Join-Path $bundleStage 'forge-windows'
+    Copy-Item -LiteralPath $package -Destination (Join-Path $bundleContent 'forge-x86_64-pc-windows-msvc.zip')
+    Copy-Item -LiteralPath ($package+'.sha256') -Destination (Join-Path $bundleContent 'forge-x86_64-pc-windows-msvc.zip.sha256')
+    Copy-Item -LiteralPath $installer -Destination (Join-Path $bundleContent 'install-windows.ps1')
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'windows-package-common.ps1') -Destination (Join-Path $bundleContent 'windows-package-common.ps1')
+    Compress-WindowsPackage $bundleContent $bundle
+    $bundleSha=Get-Sha256 $bundle
+    Write-Utf8File ($bundle+'.sha256') ($bundleSha+'  '+[IO.Path]::GetFileName($bundle)+"`n")
+    $download=Join-Path $root 'single download'
+    Expand-VerifiedZip $bundle $download
+    $singleInstaller=Join-Path $download 'install-windows.ps1'
+    $singleInstall=Join-Path $root 'single-file installation'
+    $single=Install-UserPackage $singleInstaller $singleInstall
+    if ($single.action -ne 'installed') { throw 'Single-download install did not report installed' }
+    $null=Check-Installed $single
+    $singleAgain=Install-UserPackage $singleInstaller $singleInstall
+    if ($singleAgain.action -ne 'unchanged') { throw 'Single-download reinstall was not unchanged' }
+    $cases.Add(@{name='single_download_bundle_installs_verified_package';passed=$true;bundle=$bundle;bundleSha256=$bundleSha;installer=$singleInstaller;launcher=$single.launcher})
     $beforeHash=Get-Sha256 $fresh.launcher
     $beforeTime=(Get-Item -LiteralPath $fresh.launcher).LastWriteTimeUtc.Ticks
     $again=Install-Package $spacedPackage $hash $installation

@@ -56,6 +56,23 @@ def verify_package(archive, target, version, commit):
             for script in ['install-windows.ps1', 'windows-package-common.ps1']:
                 if (archive.parent / script).read_bytes() != package.read(prefix + script):
                     raise ValueError('published installer differs from tested package')
+            bundle_path = archive.parent / 'forge-windows-installer.zip'
+            bundle_checksum = Path(str(bundle_path) + '.sha256').read_text().split()
+            if len(bundle_checksum) != 2 or bundle_checksum[1] != bundle_path.name or bundle_checksum[0] != sha256(bundle_path.read_bytes()):
+                raise ValueError('forge-windows-installer.zip checksum mismatch')
+            with zipfile.ZipFile(bundle_path) as bundle:
+                bundle_names = {entry.filename for entry in bundle.infolist() if not entry.is_dir()}
+                expected = {'forge-x86_64-pc-windows-msvc.zip', 'forge-x86_64-pc-windows-msvc.zip.sha256',
+                            'install-windows.ps1', 'windows-package-common.ps1'}
+                if bundle_names != expected:
+                    raise ValueError('single-download bundle inventory mismatch')
+                if bundle.read('forge-x86_64-pc-windows-msvc.zip') != archive.read_bytes():
+                    raise ValueError('single-download bundle contains a different payload archive')
+                if bundle.read('forge-x86_64-pc-windows-msvc.zip.sha256') != Path(str(archive) + '.sha256').read_bytes():
+                    raise ValueError('single-download bundle checksum differs from payload checksum')
+                for script in ['install-windows.ps1', 'windows-package-common.ps1']:
+                    if bundle.read(script) != package.read(prefix + script):
+                        raise ValueError('single-download installer differs from tested package')
         return {'target': target, 'version': version, 'commit': commit,
                 'archive': archive.name, 'archiveSha256': checksum[0],
                 'binarySha256': inventory[binary], 'payloadFiles': len(inventory)}

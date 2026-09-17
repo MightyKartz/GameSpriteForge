@@ -251,8 +251,8 @@ jobs:
             macos/ffmpeg-8.1.2-source.tar.xz \
             windows/windows-dist/forge-x86_64-pc-windows-msvc.zip \
             windows/windows-dist/forge-x86_64-pc-windows-msvc.zip.sha256 \
-            windows/windows-dist/install-windows.ps1 \
-            windows/windows-dist/windows-package-common.ps1 \
+            windows/windows-dist/forge-windows-installer.zip \
+            windows/windows-dist/forge-windows-installer.zip.sha256 \
             release-verification.json \
             third_party/ffmpeg/BUILD.md \
             third_party/ffmpeg/PATCHES.md \

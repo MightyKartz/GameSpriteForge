@@ -3,15 +3,38 @@
     Previous payloads and launcher backups are retained. PATH is never modified. #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true)][string]$Archive,
-    [Parameter(Mandatory=$true)][ValidatePattern('^[A-Fa-f0-9]{64}$')][string]$Sha256,
+    [string]$Archive,
+    [ValidatePattern('^[A-Fa-f0-9]{64}$')][string]$Sha256,
     [string]$InstallDirectory = (Join-Path $env:LOCALAPPDATA 'GameSpriteForge'),
     [switch]$AllowDevelopmentBuild
 )
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
-. (Join-Path $PSScriptRoot 'windows-package-common.ps1')
-$archivePath = (Resolve-Path -LiteralPath $Archive).Path
+$scriptRoot = $PSScriptRoot
+if (!$scriptRoot) { $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path }
+$packageCommon = Join-Path $scriptRoot 'windows-package-common.ps1'
+if (!(Test-Path -LiteralPath $packageCommon -PathType Leaf)) {
+    $candidate = Get-ChildItem -LiteralPath $scriptRoot -Directory | Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'windows-package-common.ps1') -PathType Leaf } | Select-Object -First 1
+    if ($candidate) { $scriptRoot = $candidate.FullName }
+}
+. (Join-Path $scriptRoot 'windows-package-common.ps1')
+$archivePath = $null
+if ($Archive) {
+    $archivePath = (Resolve-Path -LiteralPath $Archive).Path
+} else {
+    $selected = Get-ChildItem -LiteralPath $scriptRoot -Filter 'forge-x86_64-pc-windows-msvc.zip' -File | Select-Object -First 1
+    if (!$selected) {
+        $selected = Get-ChildItem -LiteralPath $scriptRoot -Directory | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Filter 'forge-x86_64-pc-windows-msvc.zip' -File -ErrorAction SilentlyContinue } | Select-Object -First 1
+    }
+    if (!$selected) { throw 'No archive supplied; place the verified forge-x86_64-pc-windows-msvc.zip beside the installer' }
+    $archivePath = $selected.FullName
+}
+if (!$Sha256) {
+    $checksumPath = $archivePath + '.sha256'
+    if (!(Test-Path -LiteralPath $checksumPath -PathType Leaf)) { throw "Missing archive checksum: $checksumPath" }
+    $Sha256 = ([IO.File]::ReadAllText($checksumPath).Trim() -split '\s+')[0]
+    if ($Sha256 -notmatch '^[A-Fa-f0-9]{64}$') { throw "Malformed archive checksum: $checksumPath" }
+}
 if ((Get-Sha256 $archivePath) -ne $Sha256.ToLowerInvariant()) { throw 'Archive SHA-256 mismatch; installation was not changed' }
 $root = [IO.Path]::GetFullPath($InstallDirectory)
 Assert-RegularDirectory $root

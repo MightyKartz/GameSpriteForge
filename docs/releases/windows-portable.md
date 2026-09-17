@@ -10,21 +10,22 @@ both native jobs pass.
 
 ## Use or install a verified archive
 
-Obtain the ZIP, its `.sha256`, `install-windows.ps1` and
-`windows-package-common.ps1` from the same trusted GitHub Release or CI artifact. Compare the ZIP's
-hash with the checksum from that artifact before running extracted executables.
+Download the single `forge-windows-installer.zip` from the same trusted GitHub
+Release or CI artifact. It contains the verified package, its `.sha256`, the
+installer and the shared installer support script. Extract it, then run the
+included installer; it discovers and checks the bundled archive automatically.
 Checksums establish byte identity; these artifacts do not have Authenticode signing.
 
 ```powershell
-$archive = 'C:\Downloads\forge-x86_64-pc-windows-msvc.zip'
-$expected = (Get-Content -LiteralPath "$archive.sha256").Split(' ')[0]
-& .\install-windows.ps1 -Archive $archive -Sha256 $expected
+Expand-Archive .\forge-windows-installer.zip .\forge-windows
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\forge-windows\install-windows.ps1
 & "$env:LOCALAPPDATA\GameSpriteForge\bin\forge.cmd" doctor --json
 ```
 
 The installer supports Windows PowerShell 5.1 and PowerShell 7. It needs no admin
 rights or symbolic-link privileges and does not change the system or user PATH.
-Use `-InstallDirectory 'C:\Tools\Forge with spaces'` for another location. The
+Use `-InstallDirectory 'C:\Tools\Forge with spaces'` for another location. To install
+from the audit package directly, pass `-Archive` and `-Sha256` explicitly. The
 public entry point is `bin\forge.cmd`; keep it intact and call this path during
 acceptance checks. A ZIP can also be extracted and its root `forge.cmd` used
 directly, with the complete adjacent `bin` directory retained.
@@ -54,12 +55,14 @@ executable, including when called through `bin\forge.cmd`. No external FFmpeg
 installation is needed. Windows canonical paths reported by `doctor` may start
 with `\\?\`; this is a normal Windows absolute-path representation.
 
-Godot is not bundled. Point Forge at a verified Godot 4.6 console executable:
+Godot is not bundled. Point Forge at a verified Godot 4.6.x or 4.7.x console executable.
+The managed downloader defaults to Godot 4.7.2; select 4.6.3 explicitly when an
+existing project requires it. Keep new Godot versions in separate directories,
+run `doctor` with the new path, and validate a preview before updating a game's
+own toolchain pin.
 
-Use the official [Godot 4.6.3 Windows archive](https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_win64.exe.zip).
-The CI workflow records its SHA512 pin and verifies it before extraction. Keep
-new Godot versions in separate directories, run `doctor` with the new path, and
-validate a preview before updating a game's own toolchain pin.
+Use the official [Godot 4.6.3 Windows archive](https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_win64.exe.zip)
+for a project locked to that version, or run `forge setup godot --download --version 4.6.3 --templates --json`.
 
 ```powershell
 $env:FORGE_GODOT_PATH = 'C:\Tools\Godot\Godot_v4.6.3-stable_win64_console.exe'
