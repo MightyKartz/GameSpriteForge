@@ -59,3 +59,7 @@ Initial export correctly reported missing isolated-profile template configuratio
 The PR behavior is locally accepted for this macOS real-asset path: installed PR binary, real generated image sources, local matting/normalization/effect-quality evidence, library revisions/locks, transactional Godot 4.7.2 delivery, native resource loading/playback/interaction, and a native macOS export with startup.
 
 Remaining boundaries: Windows native verification still belongs on the Windows machine/CI; animation quality remains experimental and requires art review; the final art's source rights were not assessed.
+
+## Follow-up commit
+
+`6b445ce` adds this record. The PR page carries the same acceptance summary and links this file.
