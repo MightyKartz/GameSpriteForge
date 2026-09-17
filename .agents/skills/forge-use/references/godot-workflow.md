@@ -4,9 +4,9 @@ These commands require `godot_environment_setup`, `godot_project_toolchain_lock`
 `godot_project_acceptance` and `godot_desktop_export_verification` in `forge doctor`.
 They are included from v0.5.0; the v0.4.0 release does not have them.
 Godot 4.7 support and `setup godot --version` require `godot_version_selection`.
-That capability is a source addition after v0.5.0; the published v0.5.0 binary
-accepts only Godot 4.6.x and downloads only 4.6.3. Always read the selected
-executable's own guide before using these options.
+That capability is included from v0.6.0; the published v0.5.0 binary accepts only
+Godot 4.6.x and downloads only 4.6.3. Always read the selected executable's own
+guide before using these options.
 
 ## Set up once per machine
 

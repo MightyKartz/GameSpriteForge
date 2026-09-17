@@ -60,11 +60,11 @@ with source history and delivery evidence available for later revisions and reus
 ## Current release scope
 
 See the [release overview](README.md#install) for the current version and downloads.
-Source builds with `godot_version_selection` support Godot 4.6.x and 4.7.x,
-with pinned downloads of 4.6.3 or 4.7.2 (default); published v0.5.0 supports
-4.6.x only. Existing game locks are never upgraded implicitly.
+Builds with `godot_version_selection` support Godot 4.6.x and 4.7.x,
+with pinned downloads of 4.6.3 or 4.7.2 (default); v0.6.0 includes this
+capability. Existing game locks are never upgraded implicitly.
 Distribution includes macOS Apple Silicon and an experimental Windows x64 portable
-build. Install Godot 4.6.x separately. CLI binaries are unsigned; the macOS build
+build. Install Godot 4.6.x or 4.7.x separately. CLI binaries are unsigned; the macOS build
 is not notarized. The [Windows guide](docs/releases/windows-portable.md) describes
 native validation and portable installation.
 

@@ -508,7 +508,7 @@ Read the embedded `forge guide godot-workflow` or
 selection order, portable lock format, versioned Godot downloads, per-phase
 timeout/cancellation, output isolation, and platform/export scope.
 
-### Godot 4.7 compatibility (source addition after v0.5.0)
+### Godot 4.7 compatibility (v0.6.0)
 
 Builds reporting `godot_version_selection` accept existing Godot 4.6.x and 4.7.x
 engines. `forge setup godot --download` defaults to the checksum-pinned official
@@ -519,5 +519,6 @@ existing engine and cannot be combined with the download version option.
 Engine directories coexist; project locks still compare the full engine version
 and require an explicit verified update. Template status, preview and delivery
 use the selected engine's version. The published v0.5.0 CLI remains limited to
-4.6.x with a pinned 4.6.3 download. Read `forge guide godot-workflow` from the
-executable being used rather than assuming the source guide matches a release.
+4.6.x with a pinned 4.6.3 download; v0.6.0 adds 4.7.x. Read `forge guide
+godot-workflow` from the executable being used rather than assuming the source
+guide matches a release.
