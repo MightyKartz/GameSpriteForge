@@ -50,7 +50,7 @@ jobs:
         run: |
           python - <<'PY'
           import hashlib, os, subprocess, zipfile
-          from pathlib import Path
+          from pathlib import Path, PurePosixPath
           archive = 'forge-x86_64-pc-windows-msvc.zip' if os.name == 'nt' else 'forge-aarch64-apple-darwin.zip'
           root = Path(os.environ['RUNNER_TEMP'])/'media-package'
           subprocess.run(['gh', 'release', 'download', 'v0.5.0', '--dir', str(root), '--pattern', archive+'*'], check=True)
@@ -58,7 +58,7 @@ jobs:
           assert hashlib.sha256(data).hexdigest() == (root/(archive+'.sha256')).read_text().split()[0]
           tools = root/'tools'; tools.mkdir()
           with zipfile.ZipFile(root/archive) as package:
-              manifest = next(n for n in package.namelist() if n.endswith('/MANIFEST.sha256'))
+              manifest = next(n for n in package.namelist() if PurePosixPath(n).name == 'MANIFEST.sha256')
               prefix = manifest.removesuffix('MANIFEST.sha256')
               hashes = dict(line.split('  ', 1)[::-1] for line in package.read(manifest).decode().splitlines())
               for name in ['ffmpeg', 'ffprobe']:
