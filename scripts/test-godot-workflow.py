@@ -70,6 +70,9 @@ def main():
 
     project = root/'game'
     project.mkdir()
+    # This fixture tests rendering and process behavior, not listening. Windows
+    # hosted runners have no output device; explicitly disable fixture audio
+    # instead of ignoring real engine errors or changing consumer settings.
     (project/'project.godot').write_text('''config_version=5
 [application]
 config/name="Forge workflow acceptance"
@@ -77,6 +80,8 @@ run/main_scene="res://main.tscn"
 [display]
 window/size/viewport_width=160
 window/size/viewport_height=120
+[audio]
+driver/driver="Dummy"
 [rendering]
 renderer/rendering_method="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true

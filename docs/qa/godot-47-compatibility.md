@@ -49,6 +49,10 @@ Each job runs the following checks serially:
 - Native static, animation and audio delivery, install/update rollback,
   layered previews and the shared playback controller.
 
+The synthetic screenshot fixture selects Godot's Dummy audio driver because
+Windows hosted runners have no audio output device. Engine errors still fail
+verification; this fixture does not assess listening or change user projects.
+
 CI retains the selected engine identity, Forge build identity and binary
 SHA-256 in its workflow summary, together with reports, logs and screenshots.
 Consult the PR's completed checks and native artifacts for the tested commit;
