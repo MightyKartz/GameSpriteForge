@@ -35,6 +35,9 @@ was produced. Forge connects that creative work to the game project.
   previews, review records, retained versions, consumer locks and portable
   transfer. Selecting a version and installing it into a game are explicit steps.
 
+- Configure a local Godot engine, lock project toolchain requirements, verify a
+  project in an isolated copy and export/test its host-desktop build.
+
 ## Artwork and generation
 
 The primary route starts with artwork created in Codex or another image tool,

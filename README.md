@@ -14,7 +14,7 @@ Bring assets from your preferred creative tools, manage them in a project librar
 
 ## Install
 
-[v0.4.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.4.0) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
+[v0.5.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.5.0) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
 
 On macOS:
 
@@ -50,6 +50,18 @@ Forge prepares local WAV files and delivers native audio resources to Godot. Thi
 
 *The GIF is silent. [Watch with sound](docs/media/showcase/v040/native-delivery.mp4) · [Sources and reproduction](docs/media/showcase/v040/README.md).*
 
+### Godot setup and acceptance
+
+Builds with `godot_environment_setup` provide `forge setup godot --path PATH`
+(or `--download` for the pinned official engine), persistent machine configuration,
+`forge godot lock/check`, and isolated `forge godot verify/export` commands.
+Acceptance uses a fresh per-run `user://` profile and resolves relative custom
+export templates against the original project without changing its preset.
+Read `forge guide godot-workflow` for examples, screenshots, explicit template
+installation and native exported-program checks. These commands are included in
+v0.5.0; check the selected executable's capabilities. Runtime/screenshot evidence does not establish
+visual or gameplay approval. [Workflow guide](.agents/skills/forge-use/references/godot-workflow.md).
+
 ## Use with Codex
 
 Open your game project in Codex and ask:
@@ -74,7 +86,7 @@ Character animation remains experimental; advanced character and world-asset com
 
 Music and sound effects are generated in external applications. ACE-Step and Stable Audio 3 have optional read-only source-directory detection; Forge does not install or run their models. Online xAI requests use your own account and may incur charges.
 
-Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.4.0 release notes](docs/releases/v0.4.0.md) for the verified release scope.
+Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.5.0 release notes](docs/releases/v0.5.0.md) for the verified release scope.
 
 ## Documentation
 
@@ -87,15 +99,3 @@ Technical validation does not replace visual review, listening or license checks
 ## License
 
 [MIT](LICENSE). Bundled FFmpeg tools have separate LGPL notices and source distributions; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-
-### Godot setup and acceptance (source additions)
-
-Builds with `godot_environment_setup` provide `forge setup godot --path PATH`
-(or `--download` for the pinned official engine), persistent machine configuration,
-`forge godot lock/check`, and isolated `forge godot verify/export` commands.
-Acceptance uses a fresh per-run `user://` profile and resolves relative custom
-export templates against the original project without changing its preset.
-Read `forge guide godot-workflow` for examples, screenshots, explicit template
-installation and native exported-program checks. These commands are newer than the
-v0.4.0 release; check capabilities. Runtime/screenshot evidence does not establish
-visual or gameplay approval. [Workflow guide](.agents/skills/forge-use/references/godot-workflow.md).

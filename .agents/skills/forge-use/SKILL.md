@@ -15,7 +15,7 @@ development is a separate task.
 
 ## Select the actual toolchain
 
-The default Forge v0.4.0 CLI includes local WAV audio, project resource libraries
+The default Forge CLI includes local WAV audio, project resource libraries
 and delivery evidence alongside the local art workflows. Use the game's verified
 absolute executable path, including its installed launcher when applicable. If
 no executable is pinned, locate the local installation and verify
@@ -65,7 +65,7 @@ the pinned executable's capabilities.
 On a build with `godot_environment_setup`, read `forge guide godot-workflow`
 ([Godot workflow](references/godot-workflow.md)) for machine-local setup, portable
 project requirements, isolated runtime/screenshot checks and native desktop export.
-These source additions are newer than v0.4.0. Inspect capabilities first.
+These commands are included from v0.5.0. Inspect capabilities first.
 
 ## Choose the workflow
 

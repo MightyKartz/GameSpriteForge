@@ -14,7 +14,7 @@
 
 ## 安装
 
-[v0.4.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.4.0) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要原生交付和预览时，另行安装 **Godot 4.6.x**。安装包尚未签名，macOS 包尚未公证。
+[v0.5.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.5.0) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要原生交付和预览时，另行安装 **Godot 4.6.x**。安装包尚未签名，macOS 包尚未公证。
 
 macOS 安装：
 
@@ -50,6 +50,17 @@ Forge 将本地 WAV 加工并交付为 Godot 原生音频资源。这个示例�
 
 *GIF 本身无声。[观看有声演示](docs/media/showcase/v040/native-delivery.mp4) · [素材来源与复现](docs/media/showcase/v040/README.md)。*
 
+### Godot 配置与验收
+
+具有 `godot_environment_setup` 能力的构建支持 `forge setup godot --path PATH`
+（或用 `--download` 下载固定版本的官方引擎）、持久化本机配置、
+`forge godot lock/check` 项目版本要求，以及在独立副本中执行的
+`forge godot verify/export`。每次验收使用独立的 `user://` 存档环境；自定义导出模板的
+相对路径按原项目解析，原预设保持不变。通过 `forge guide godot-workflow` 阅读截图、
+显式安装导出模板和启动导出程序的示例。这些命令已包含在 v0.5.0 中，
+使用前请检查当前 CLI 的 capabilities。运行通过或生成截图不代表已经完成视觉与玩法验收。
+[工作流指南](.agents/skills/forge-use/references/godot-workflow.md)。
+
 ## 配合 Codex 使用
 
 在 Codex 中打开游戏项目并提出需求：
@@ -74,7 +85,7 @@ Sword 是一款修仙题材的生存游戏原型。源图由 Codex 创作，Forg
 
 音乐和音效由外部应用生成。ACE-Step 和 Stable Audio 3 提供可选的源代码目录只读检测，Forge 不安装或运行其模型。在线 xAI 请求使用你的账号，可能产生费用。
 
-技术检查不能代替美术审查、试听或许可核对，使用前请在游戏中验收。已验证的版本范围见 [v0.4.0 发布说明](docs/releases/v0.4.0.md)。
+技术检查不能代替美术审查、试听或许可核对，使用前请在游戏中验收。已验证的版本范围见 [v0.5.0 发布说明](docs/releases/v0.5.0.md)。
 
 ## 文档
 
@@ -87,14 +98,3 @@ Sword 是一款修仙题材的生存游戏原型。源图由 Codex 创作，Forg
 ## 许可证
 
 [MIT](LICENSE)。附带 FFmpeg 工具有独立 LGPL 声明和对应源码分发，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-
-### Godot 配置与验收（源码新增能力）
-
-具有 `godot_environment_setup` 能力的构建支持 `forge setup godot --path PATH`
-（或用 `--download` 下载固定版本的官方引擎）、持久化本机配置、
-`forge godot lock/check` 项目版本要求，以及在独立副本中执行的
-`forge godot verify/export`。每次验收使用独立的 `user://` 存档环境；自定义导出模板的
-相对路径按原项目解析，原预设保持不变。通过 `forge guide godot-workflow` 阅读截图、
-显式安装导出模板和启动导出程序的示例。这些命令晚于 v0.4.0 发布版，
-使用前请检查 capabilities。运行通过或生成截图不代表已经完成视觉与玩法验收。
-[工作流指南](.agents/skills/forge-use/references/godot-workflow.md)。
