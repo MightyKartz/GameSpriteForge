@@ -25,10 +25,13 @@ pub struct SetupArgs {
     /// Explicit executable or macOS .app. Save to Forge's machine-local configuration.
     #[arg(long, conflicts_with = "download")]
     path: Option<PathBuf>,
-    /// Download the checksum-pinned official Godot 4.6.3 standard editor.
+    /// Download a checksum-pinned official standard editor (default: 4.7.2).
     #[arg(long)]
     download: bool,
-    /// Also download the official 4.6.3 export templates (large download).
+    /// Select a pinned engine version; only used with --download.
+    #[arg(long, requires = "download", value_parser = ["4.6.3", "4.7.2"])]
+    version: Option<String>,
+    /// Also download the matching official export templates (large download).
     #[arg(long)]
     templates: bool,
     #[arg(long)]
@@ -143,12 +146,38 @@ pub fn check(args: CheckArgs) -> Result<Value> {
     let project = project_root(&args.project)?;
     let engine = environment::resolve(args.godot.as_deref(), Some(&project))?;
     Ok(
-        json!({"engine":engine,"lock":environment::read_lock(&project)?,"templates":template_status(),"exportPresetsPresent":project.join("export_presets.cfg").is_file(),"runtime":"not_run","visualReview":"not_assessed"}),
+        json!({"engine":engine,"lock":environment::read_lock(&project)?,"templates":template_status(&engine),"exportPresetsPresent":project.join("export_presets.cfg").is_file(),"runtime":"not_run","visualReview":"not_assessed"}),
     )
 }
 
-fn templates_root() -> Result<PathBuf> {
-    dirs_path().map(|p| p.join("Godot/export_templates/4.6.3.stable"))
+fn templates_root(version: &str) -> Result<PathBuf> {
+    dirs_path().map(|p| {
+        p.join(if cfg!(any(windows, target_os = "macos")) {
+            "Godot/export_templates"
+        } else {
+            "godot/export_templates"
+        })
+        .join(version)
+    })
+}
+
+fn template_version(engine: &Engine) -> String {
+    let parts: Vec<_> = engine.version.split('.').collect();
+    let count = if parts.get(2).is_some_and(|p| p.parse::<u32>().is_ok()) {
+        4
+    } else {
+        3
+    };
+    let mut version = parts
+        .iter()
+        .take(count)
+        .copied()
+        .collect::<Vec<_>>()
+        .join(".");
+    if parts.contains(&"mono") {
+        version.push_str(".mono");
+    }
+    version
 }
 
 fn dirs_path() -> Result<PathBuf> {
@@ -174,10 +203,11 @@ fn dirs_path() -> Result<PathBuf> {
     }
 }
 
-fn template_status() -> Value {
-    match templates_root() {
+fn template_status(engine: &Engine) -> Value {
+    let version = template_version(engine);
+    match templates_root(&version) {
         Ok(root) => {
-            json!({"version":"4.6.3.stable","directory":root,"windowsRelease":root.join("windows_release_x86_64.exe").is_file(),"macos":root.join("macos.zip").is_file(),"note":"Actual export resolves preset/custom templates; this checks the managed 4.6.3 location only"})
+            json!({"version":version,"directory":root,"windowsRelease":root.join("windows_release_x86_64.exe").is_file(),"macos":root.join("macos.zip").is_file(),"note":"Per-user templates for the selected engine; export resolves self-contained and custom templates separately"})
         }
         Err(error) => json!({"error":error}),
     }
@@ -185,29 +215,78 @@ fn template_status() -> Value {
 
 pub fn setup(args: SetupArgs) -> Result<Value> {
     let engine = if args.download {
-        install_engine()?
+        install_engine(managed_release(
+            args.version.as_deref().unwrap_or(DEFAULT_GODOT_VERSION),
+        )?)?
     } else {
         environment::resolve(args.path.as_deref(), None)?
     };
     if args.templates {
-        if !engine.version.starts_with("4.6.3.stable.") || engine.version.contains("mono") {
-            return Err("Managed templates require the standard Godot 4.6.3 build".into());
-        }
-        install_templates()?;
+        let release = MANAGED_RELEASES.iter().find(|r| r.matches(&engine)).ok_or(
+            "Managed templates require a standard Godot 4.6.3 or 4.7.2 build; install matching templates separately for other engines"
+        )?;
+        install_templates(release)?;
     }
     let config = environment::save(&engine)?;
     Ok(
-        json!({"engine":engine,"configPath":config,"templates":template_status(),"environmentModified":false,"next":"forge godot check --project PATH --json"}),
+        json!({"engine":engine,"configPath":config,"templates":template_status(&engine),"environmentModified":false,"next":"forge godot check --project PATH --json"}),
     )
 }
 
-const BASE: &str = "https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable";
+const DEFAULT_GODOT_VERSION: &str = "4.7.2";
 
-fn download_extract(name: &str, checksum: &str, parent: &Path) -> Result<tempfile::TempDir> {
+struct ManagedRelease {
+    version: &'static str,
+    windows_sha512: &'static str,
+    macos_sha512: &'static str,
+    templates_sha512: &'static str,
+}
+
+impl ManagedRelease {
+    fn matches(&self, engine: &Engine) -> bool {
+        engine
+            .version
+            .starts_with(&format!("{}.stable.", self.version))
+            && !engine.version.split('.').any(|part| part == "mono")
+    }
+}
+
+// SHA512-SUMS.txt from the corresponding official godot-builds release.
+const MANAGED_RELEASES: &[ManagedRelease] = &[
+    ManagedRelease {
+        version: "4.6.3",
+        windows_sha512: "d44ea7ef5bab754cacd49d581b6062836b2eea12a82e1d183aebfad9cd8c7db2bd82513337bd657d6d2d5c04d46239c0570b029faf1343e81e8a2fa7b85dd83b",
+        macos_sha512: "0155bbc8dcf179edab4ef08e3dbbd4480d7434ab1990cb3fb25517d453b1b65787c7fe6dfc8824b15ff25e1fdcec59e8584f765054106894fee00311868c3964",
+        templates_sha512: "da606b61c10157844f8300172df374472665f95015495cb1a7cd132c40ede404faa96cc1016a4b9662db9909ddea69632c4948b2cd11163438dad4808881fb68",
+    },
+    ManagedRelease {
+        version: "4.7.2",
+        windows_sha512: "83decd58fdf67b9d657958a1ae6bf1929c20785315a81effe245874cdc57acb709bf868e00778a96984338c1b29dafdb453c6847747694621c6ecf5da2259993",
+        macos_sha512: "38aa16e5bba2083941fc5b3e54be0089bd4cc35e32415f5b9fd9a8a6a7b9818255d44532ea8ef94b5aef56c4b407c2d634fa4f657e4ebe681ebbf59b7bac69ca",
+        templates_sha512: "ca4d71c4d7b81dfc15d1a98baa07534aa95b03fdda78a0075b06672e1648d2e5f40980c9adc28d23e1b92e732ee7bf3461997aa804af74ec2fcd7a93ccb84079",
+    },
+];
+
+fn managed_release(version: &str) -> Result<&'static ManagedRelease> {
+    MANAGED_RELEASES
+        .iter()
+        .find(|r| r.version == version)
+        .ok_or_else(|| format!("No pinned Godot download for {version}; choose 4.6.3 or 4.7.2"))
+}
+
+fn download_extract(
+    release: &ManagedRelease,
+    name: &str,
+    checksum: &str,
+    parent: &Path,
+) -> Result<tempfile::TempDir> {
     fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     let temp = tempfile::tempdir_in(parent).map_err(|e| e.to_string())?;
     let archive = temp.path().join("download.zip");
-    let url = format!("{BASE}/{name}");
+    let url = format!(
+        "https://github.com/godotengine/godot-builds/releases/download/{}-stable/{name}",
+        release.version
+    );
     let mut command = Command::new(if cfg!(windows) { "curl.exe" } else { "curl" });
     command
         .args([
@@ -276,11 +355,20 @@ fn extract(archive: &Path, output: &Path, logs: &Path) -> Result<()> {
     Ok(())
 }
 
-fn install_engine() -> Result<Engine> {
+fn install_engine(release: &ManagedRelease) -> Result<Engine> {
+    let version = release.version;
     let (archive, checksum, relative) = if cfg!(all(windows, target_arch = "x86_64")) {
-        ("Godot_v4.6.3-stable_win64.exe.zip", "d44ea7ef5bab754cacd49d581b6062836b2eea12a82e1d183aebfad9cd8c7db2bd82513337bd657d6d2d5c04d46239c0570b029faf1343e81e8a2fa7b85dd83b", "Godot_v4.6.3-stable_win64_console.exe")
+        (
+            format!("Godot_v{version}-stable_win64.exe.zip"),
+            release.windows_sha512,
+            format!("Godot_v{version}-stable_win64_console.exe"),
+        )
     } else if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
-        ("Godot_v4.6.3-stable_macos.universal.zip", "0155bbc8dcf179edab4ef08e3dbbd4480d7434ab1990cb3fb25517d453b1b65787c7fe6dfc8824b15ff25e1fdcec59e8584f765054106894fee00311868c3964", "Godot.app/Contents/MacOS/Godot")
+        (
+            format!("Godot_v{version}-stable_macos.universal.zip"),
+            release.macos_sha512,
+            "Godot.app/Contents/MacOS/Godot".into(),
+        )
     } else {
         return Err(
             "Managed Godot download supports Windows x64 and macOS Apple Silicon; use --path"
@@ -288,30 +376,38 @@ fn install_engine() -> Result<Engine> {
         );
     };
     let root = environment::config_root()?.join("tools");
-    let target = root.join("godot-4.6.3-standard");
+    let target = root.join(format!("godot-{version}-standard"));
     if target.exists() {
-        let engine = environment::probe(&target.join(relative))?;
+        let engine = environment::probe(&target.join(&relative))?;
         let saved: Engine = serde_json::from_slice(
             &fs::read(target.join("forge-engine.json")).map_err(|e| e.to_string())?,
         )
         .map_err(|e| e.to_string())?;
-        if saved.sha256 != engine.sha256 || saved.companion_sha256 != engine.companion_sha256 {
+        if saved.sha256 != engine.sha256
+            || saved.companion_sha256 != engine.companion_sha256
+            || saved.version != engine.version
+            || !release.matches(&engine)
+        {
             return Err(
                 "Managed engine was modified; select another installation explicitly".into(),
             );
         }
         return Ok(engine);
     }
-    let temp = download_extract(archive, checksum, &root)?;
-    environment::probe(&temp.path().join("unpacked").join(relative))?;
+    let temp = download_extract(release, &archive, checksum, &root)?;
+    let unpacked = environment::probe(&temp.path().join("unpacked").join(&relative))?;
+    if !release.matches(&unpacked) {
+        return Err("Downloaded engine does not match the selected release".into());
+    }
     fs::rename(temp.path().join("unpacked"), &target).map_err(|e| e.to_string())?;
-    let engine = environment::probe(&target.join(relative))?;
+    let engine = environment::probe(&target.join(&relative))?;
     environment::write_json(&target.join("forge-engine.json"), &engine, false)?;
     Ok(engine)
 }
 
-fn install_templates() -> Result<()> {
-    let target = templates_root()?;
+fn install_templates(release: &ManagedRelease) -> Result<()> {
+    let version = format!("{}.stable", release.version);
+    let target = templates_root(&version)?;
     if target.exists() {
         if [
             "windows_release_x86_64.exe",
@@ -324,7 +420,7 @@ fn install_templates() -> Result<()> {
             && fs::read_to_string(target.join("version.txt"))
                 .map_err(|e| e.to_string())?
                 .trim()
-                == "4.6.3.stable"
+                == version
         {
             return Ok(());
         }
@@ -332,12 +428,18 @@ fn install_templates() -> Result<()> {
             "Existing template directory is incomplete or unrecognized; it was preserved".into(),
         );
     }
-    let temp = download_extract("Godot_v4.6.3-stable_export_templates.tpz", "da606b61c10157844f8300172df374472665f95015495cb1a7cd132c40ede404faa96cc1016a4b9662db9909ddea69632c4948b2cd11163438dad4808881fb68", target.parent().ok_or("Invalid templates path")?)?;
+    let archive = format!("Godot_v{}-stable_export_templates.tpz", release.version);
+    let temp = download_extract(
+        release,
+        &archive,
+        release.templates_sha512,
+        target.parent().ok_or("Invalid templates path")?,
+    )?;
     let source = temp.path().join("unpacked/templates");
     if fs::read_to_string(source.join("version.txt"))
         .map_err(|e| e.to_string())?
         .trim()
-        != "4.6.3.stable"
+        != version
     {
         return Err("Unexpected export template version".into());
     }
@@ -776,15 +878,7 @@ fn standard_release_template(engine: &Engine, architecture: &str) -> Result<Path
     if !["x86_64", "x86_32", "arm64", "arm32", "universal"].contains(&architecture) {
         return Err("Unsupported desktop export architecture".into());
     }
-    let mut version = engine
-        .version
-        .split('.')
-        .take(4)
-        .collect::<Vec<_>>()
-        .join(".");
-    if engine.version.split('.').any(|part| part == "mono") {
-        version.push_str(".mono");
-    }
+    let version = template_version(engine);
     let mut editor_dir = engine
         .path
         .parent()
@@ -873,7 +967,7 @@ pub fn export(args: ExportArgs) -> Result<Value> {
     }
     let preset = native_preset(&project, &args.preset)?;
     let (output, copied, before) = snapshot(&project, &args.output)?;
-    let mut report = json!({"schemaVersion":"1","operation":"export","sourceProject":project,"snapshot":copied,"engine":engine,"forgeVersion":env!("CARGO_PKG_VERSION"),"forgeBuild":crate::build_info::current(),"preset":args.preset,"templates":template_status(),"export":{"status":"not_run"},"exportedRuntime":{"status":"not_run"},"visualReview":"not_assessed"});
+    let mut report = json!({"schemaVersion":"1","operation":"export","sourceProject":project,"snapshot":copied,"engine":engine,"forgeVersion":env!("CARGO_PKG_VERSION"),"forgeBuild":crate::build_info::current(),"preset":args.preset,"templates":template_status(&engine),"export":{"status":"not_run"},"exportedRuntime":{"status":"not_run"},"visualReview":"not_assessed"});
     let result = (|| {
         let profile = RunProfile::new(&output)?;
         report["userData"] = json!({"isolation":"per_run_profile","root":profile.root});
@@ -967,6 +1061,69 @@ pub fn export(args: ExportArgs) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn download_version_requires_explicit_download_and_known_pin() {
+        use clap::Parser;
+        for args in [
+            vec!["forge", "setup", "godot", "--version", "4.7.2"],
+            vec!["forge", "setup", "godot", "--download", "--version", "4.8"],
+            vec!["forge", "setup", "godot", "--path", "godot", "--download"],
+        ] {
+            assert!(crate::Cli::try_parse_from(args).is_err());
+        }
+        for version in ["4.6.3", "4.7.2"] {
+            assert!(crate::Cli::try_parse_from([
+                "forge",
+                "setup",
+                "godot",
+                "--download",
+                "--version",
+                version,
+                "--templates"
+            ])
+            .is_ok());
+        }
+    }
+
+    #[test]
+    fn template_reporting_and_downloads_follow_selected_engine() {
+        for (version, templates, pin) in [
+            (
+                "4.6.3.stable.official.fixture",
+                "4.6.3.stable",
+                Some("4.6.3"),
+            ),
+            (
+                "4.7.2.stable.official.fixture",
+                "4.7.2.stable",
+                Some("4.7.2"),
+            ),
+            ("4.7.stable.official.fixture", "4.7.stable", None),
+            (
+                "4.7.2.stable.mono.official.fixture",
+                "4.7.2.stable.mono",
+                None,
+            ),
+            ("4.7.2.rc1.official.fixture", "4.7.2.rc1", None),
+        ] {
+            let engine = Engine {
+                path: "godot".into(),
+                version: version.into(),
+                sha256: String::new(),
+                companion_sha256: None,
+            };
+            assert_eq!(template_version(&engine), templates);
+            assert_eq!(template_status(&engine)["version"], templates);
+            assert_eq!(
+                MANAGED_RELEASES
+                    .iter()
+                    .find(|r| r.matches(&engine))
+                    .map(|r| r.version),
+                pin
+            );
+        }
+    }
 
     #[test]
     fn standard_template_uses_selected_engine_version_and_self_contained_root() {

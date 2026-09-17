@@ -4,7 +4,8 @@ on:
     paths:
       - 'packages/**'
       - 'Cargo.*'
-      - 'scripts/test-godot-workflow.py'
+      - 'scripts/test-*.py'
+      - 'scripts/requirements-local-assets.txt'
       - 'scripts/godot/forge_project_acceptance.gd'
       - '.agents/skills/forge-use/**'
       - '.github/workflows/godot-workflow.yml'
@@ -17,6 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2025, macos-15]
+        godot: ['4.6.3', '4.7.2']
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     defaults:
@@ -25,11 +27,16 @@ jobs:
     env:
       FORGE_CONFIG_DIR: ${{ github.workspace }}/target/workflow-config
       PYTHONUTF8: '1'
+      GODOT_VERSION: ${{ matrix.godot }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: '3.12'
+      - name: Install media test dependencies
+        run: |
+          python -m pip install --requirement scripts/requirements-local-assets.txt
+          python scripts/test-native-godot-gate.py
       - name: Build and check the CLI
         run: |
           rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
@@ -39,23 +46,81 @@ jobs:
           cargo test --locked -p core --lib godot
           cargo test --locked -p forge-cli --bin forge
           cargo build --locked -p forge-cli --no-default-features
+          python - <<'PYTHON'
+          import os
+          from pathlib import Path
+          binary = Path('target/debug') / ('forge.exe' if os.name == 'nt' else 'forge')
+          assert binary.is_file(), binary
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              output.write('FORGE_BIN=' + str(binary.resolve()) + '\n')
+          PYTHON
+      - name: Load verified media helpers from the published package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import hashlib, os, subprocess, zipfile
+          from pathlib import Path, PurePosixPath
+          archive = 'forge-x86_64-pc-windows-msvc.zip' if os.name == 'nt' else 'forge-aarch64-apple-darwin.zip'
+          root = Path(os.environ['RUNNER_TEMP'])/'media-package'
+          subprocess.run(['gh', 'release', 'download', 'v0.5.0', '--dir', str(root), '--pattern', archive+'*'], check=True)
+          data = (root/archive).read_bytes()
+          assert hashlib.sha256(data).hexdigest() == (root/(archive+'.sha256')).read_text().split()[0]
+          tools = root/'tools'; tools.mkdir()
+          with zipfile.ZipFile(root/archive) as package:
+              manifest = next(n for n in package.namelist() if PurePosixPath(n).name == 'MANIFEST.sha256')
+              prefix = manifest.removesuffix('MANIFEST.sha256')
+              hashes = dict(line.split('  ', 1)[::-1] for line in package.read(manifest).decode().splitlines())
+              for name in ['ffmpeg', 'ffprobe']:
+                  filename = name + ('.exe' if os.name == 'nt' else '')
+                  payload = package.read(prefix+'bin/'+filename)
+                  assert hashlib.sha256(payload).hexdigest() == hashes['bin/'+filename]
+                  path = tools/filename; path.write_bytes(payload); path.chmod(0o755)
+          with open(os.environ['GITHUB_PATH'], 'a') as output: output.write(str(tools)+'\n')
+          PY
       - name: Verify official managed download and templates
         run: |
-          target/debug/forge setup godot --download --templates --json > target/setup.json
-          target/debug/forge setup godot --download --templates --json > target/setup-repeat.json
-      - name: Verify native import, failures, and exported program
+          "$FORGE_BIN" setup godot --download --version "$GODOT_VERSION" --templates --json > target/setup.json
+          "$FORGE_BIN" setup godot --download --version "$GODOT_VERSION" --templates --json > target/setup-repeat.json
+          if [ "$GODOT_VERSION" = '4.7.2' ]; then
+            "$FORGE_BIN" setup godot --download --json > target/setup-default.json
+            python -c 'import json; a=json.load(open("target/setup.json"))["data"]; b=json.load(open("target/setup-default.json"))["data"]; assert a["engine"] == b["engine"]'
+            other_version=4.6.3
+          else
+            other_version=4.7.2
+          fi
+          "$FORGE_BIN" setup godot --download --version "$other_version" --json > target/setup-other.json
+          python -c 'import json; a=json.load(open("target/setup.json"))["data"]; b=json.load(open("target/setup-repeat.json"))["data"]; assert a["engine"] == b["engine"]'
+      - name: Verify native import, failures, screenshot and exported program
         run: |
           godot_path="$(python -c 'import json; print(json.load(open("target/setup.json"))["data"]["engine"]["path"])')"
-          python scripts/test-godot-workflow.py --forge target/debug/forge --godot "$godot_path" --output target/workflow-acceptance --export
+          other_path="$(python -c 'import json; print(json.load(open("target/setup-other.json"))["data"]["engine"]["path"])')"
+          python scripts/test-godot-workflow.py --forge "$FORGE_BIN" --godot "$godot_path" --other-godot "$other_path" --expected-version "$GODOT_VERSION" --output target/workflow-acceptance --export --screenshot
+      - name: Verify native image, animation, audio and layered delivery
+        run: |
+          godot_path="$(python -c 'import json; print(json.load(open("target/setup.json"))["data"]["engine"]["path"])')"
+          export FORGE_GODOT_PATH="$godot_path"
+          export GODOT_BIN="$godot_path"
+          cargo test --locked -p core --test static_delivery_tests -- --ignored --nocapture
+          python scripts/test-native-godot-transactions.py --godot "$godot_path" --output target/media-acceptance/transactions
+          python scripts/test-local-static-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/static
+          python scripts/test-local-animation-delivery.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/animation
+          python scripts/test-local-audio-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/audio
+          python scripts/test-layered-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/layered
+          python scripts/test-godot-preview-ui.py --project target/media-acceptance/layered/preview/project --godot "$godot_path" --output target/media-acceptance/preview
+          python scripts/test-godot-unified-player.py --godot "$godot_path" --controller scripts/godot/runtime/layered-player-v1.gd
       - name: Retain setup and acceptance evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: godot-agent-workflow-${{ matrix.os }}
+          name: godot-agent-workflow-${{ matrix.os }}-${{ matrix.godot }}
           path: |
             target/setup*.json
             target/workflow-acceptance/summary.json
             target/workflow-acceptance/**/report.json
             target/workflow-acceptance/**/*.log
+            target/workflow-acceptance/**/screenshot.png
+            target/media-acceptance/**/summary.json
+            target/media-acceptance/**/*.log
           if-no-files-found: warn
           retention-days: 14

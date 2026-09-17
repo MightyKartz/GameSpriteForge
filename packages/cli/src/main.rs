@@ -982,7 +982,7 @@ fn run() -> Result<(), (String, String)> {
                 godot_path,
                 godot_supported: godot_version
                     .as_deref()
-                    .is_some_and(|version| version.starts_with("4.6.")),
+                    .is_some_and(forge_core::godot_environment::is_supported_version),
                 godot_version,
                 ffmpeg_path: ffmpeg.as_ref().map(|paths| paths.ffmpeg_path.clone()),
                 ffprobe_path: ffmpeg.as_ref().map(|paths| paths.ffprobe_path.clone()),
@@ -998,7 +998,7 @@ fn run() -> Result<(), (String, String)> {
                 tool_checks: serde_json::json!({
                     "godot": {
                         "requiredFor": ["godot_install", "godot_preview"],
-                        "supportedVersion": "4.6.x",
+                        "supportedVersion": forge_core::godot_environment::SUPPORTED_VERSIONS,
                         "configure": "Run forge setup godot --path PATH or forge setup godot --download.",
                         "diagnostic": godot_resolution.err()
                     },

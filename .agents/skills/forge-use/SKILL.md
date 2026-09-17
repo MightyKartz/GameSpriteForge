@@ -35,7 +35,7 @@ and `doctor.data.capabilities`. A development executable can share a release
 version while accepting different fields. Unknown Git identity is `null`; it is
 not a clean-build claim. Check command help and successfully plan the actual
 request instead of dropping unsupported fields. Runtime Godot/FFmpeg availability
-is separate from compiled capabilities. Godot 4.6.x is installed separately.
+is separate from compiled capabilities. Godot is a separate engine; builds with `godot_version_selection` accept 4.6.x or 4.7.x. The v0.5.0 release accepts only 4.6.x.
 
 The stable local PNG → static Pack → Godot route requires `local_static_import`,
 `pack_validation` and `godot_install`; v0.2.1 predates local static intake. Verify

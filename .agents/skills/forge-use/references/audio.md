@@ -127,7 +127,7 @@ Revise with a new request and Job while preserving earlier evidence.
 
 ## Deliver and retain evidence
 
-Use the verified Godot 4.6.x executable and the intended project. Supply stable
+Use the verified Godot 4.6.x or 4.7.x executable and the intended project. Supply stable
 asset-key and target values so later imports update the same Forge-owned location:
 
 ```bash

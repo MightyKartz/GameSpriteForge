@@ -81,6 +81,8 @@ Sword 是一款修仙题材的生存游戏原型。源图由 Codex 创作，Forg
 
 ## 能力范围
 
+**v0.5.0 之后的开发中功能：**具有 `godot_version_selection` 能力的构建同时支持 Godot 4.6.x 与 4.7.x，可选择下载 4.6.3 或 4.7.2 及对应导出模板。新的默认下载版本为 4.7.2，已有项目的工具链锁保持不变。已发布的 v0.5.0 安装包仍仅支持 4.6.x，详见 [Godot 工作流指南](.agents/skills/forge-use/references/godot-workflow.md)。
+
 角色动画仍属实验性功能；高级角色及世界资产命令需要启用可选的源码构建功能。使用 `forge doctor --json` 核对当前 CLI 的能力。
 
 音乐和音效由外部应用生成。ACE-Step 和 Stable Audio 3 提供可选的源代码目录只读检测，Forge 不安装或运行其模型。在线 xAI 请求使用你的账号，可能产生费用。

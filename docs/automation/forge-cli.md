@@ -429,7 +429,9 @@ signing can use the fixed identifier `dev.gamespriteforge.cli`; that configurati
 does not establish release signing. See [the release notes](../releases/v0.3.0.md)
 and [development signing instructions](../../CONTRIBUTING.md).
 
-## Godot 4.6.x delivery
+<a id="godot-46x-delivery"></a>
+
+## Godot delivery
 
 Godot installation is a separate single-use plan. Forge copies PNG textures first,
 runs a headless import, and then creates resources with `ResourceLoader`. It rejects
@@ -503,5 +505,19 @@ exported-program startup. No visual review is inferred.
 
 Read the embedded `forge guide godot-workflow` or
 [its source](../../.agents/skills/forge-use/references/godot-workflow.md) for the
-selection order, portable lock format, managed Godot 4.6.3 downloads, per-phase
+selection order, portable lock format, versioned Godot downloads, per-phase
 timeout/cancellation, output isolation, and platform/export scope.
+
+### Godot 4.7 compatibility (source addition after v0.5.0)
+
+Builds reporting `godot_version_selection` accept existing Godot 4.6.x and 4.7.x
+engines. `forge setup godot --download` defaults to the checksum-pinned official
+4.7.2 standard engine; add `--version 4.6.3` or `--version 4.7.2` to select explicitly.
+`--templates` installs templates for that selected release. `--path` selects an
+existing engine and cannot be combined with the download version option.
+
+Engine directories coexist; project locks still compare the full engine version
+and require an explicit verified update. Template status, preview and delivery
+use the selected engine's version. The published v0.5.0 CLI remains limited to
+4.6.x with a pinned 4.6.3 download. Read `forge guide godot-workflow` from the
+executable being used rather than assuming the source guide matches a release.

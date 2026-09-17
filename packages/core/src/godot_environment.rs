@@ -11,7 +11,24 @@ use std::{
 };
 
 pub const LOCK_FILE: &str = ".forge/toolchain.lock.json";
+pub const SUPPORTED_VERSIONS: &str = "4.6.x or 4.7.x";
 pub type Result<T> = std::result::Result<T, String>;
+
+/// Godot omits the patch component for initial minor releases (4.7.stable...).
+/// Keep all entry points on the same minor-version policy; locks still compare
+/// the complete version string, including the build and edition.
+pub fn is_supported_version(version: &str) -> bool {
+    let parts: Vec<_> = version.split('.').collect();
+    parts.len() >= 3
+        && parts[0] == "4"
+        && matches!(parts[1], "6" | "7")
+        && parts.iter().all(|part| {
+            !part.is_empty()
+                && part
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+        })
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -96,9 +113,9 @@ pub fn probe(path: &Path) -> Result<Engine> {
         .read_to_string(&mut version)
         .map_err(|e| e.to_string())?;
     let version = version.trim().to_string();
-    if !status.success() || !version.starts_with("4.6.") || version.contains('\n') {
+    if !status.success() || !is_supported_version(&version) {
         return Err(format!(
-            "Unsupported Godot version {version:?}; select Godot 4.6.x"
+            "Unsupported Godot version {version:?}; select Godot {SUPPORTED_VERSIONS}"
         ));
     }
     let companion_sha256 = path
@@ -254,6 +271,62 @@ pub fn validate_lock(project: &Path, engine: &Engine) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn supported_minor_versions_include_patchless_releases() {
+        for version in [
+            "4.6.stable.official.build",
+            "4.6.3.stable.official.build",
+            "4.7.stable.official.build",
+            "4.7.2.stable.mono.official.build",
+        ] {
+            assert!(is_supported_version(version), "{version}");
+        }
+        for version in [
+            "4.5.2.stable",
+            "4.8.dev1",
+            "4.70.stable",
+            "4.7",
+            "4.7.",
+            "4.7..stable",
+            "4.7.stable\n4.6.stable",
+            "4.7.stable/../../",
+        ] {
+            assert!(!is_supported_version(version), "{version}");
+        }
+    }
+
+    #[test]
+    fn accepting_a_new_minor_does_not_upgrade_existing_project_locks() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(LOCK_FILE);
+        let old = "4.6.3.stable.official.old";
+        let new = "4.7.2.stable.official.new";
+        for (required, selected) in [(old, new), (new, old)] {
+            write_json(
+                &path,
+                &ToolchainLock {
+                    schema_version: 1,
+                    forge_version: env!("CARGO_PKG_VERSION").into(),
+                    godot_version: required.into(),
+                },
+                true,
+            )
+            .unwrap();
+            let before = fs::read(&path).unwrap();
+            let mut engine = Engine {
+                path: "other-machine/godot".into(),
+                version: selected.into(),
+                sha256: "a".repeat(64),
+                companion_sha256: None,
+            };
+            assert!(validate_lock(dir.path(), &engine)
+                .unwrap_err()
+                .contains("toolchain_mismatch"));
+            assert_eq!(before, fs::read(&path).unwrap());
+            engine.version = required.into();
+            validate_lock(dir.path(), &engine).unwrap();
+        }
+    }
     #[test]
     fn portable_lock_has_no_machine_path_and_refuses_implicit_update() {
         let dir = tempfile::tempdir().unwrap();

@@ -1,5 +1,3 @@
-#![cfg(unix)]
-
 use forge_core::{
     automation::{
         run_operation, stage_plan_job, AutomationOperation, GodotInstallRequest, PlanStore,
@@ -11,11 +9,41 @@ use image::{Rgba, RgbaImage};
 use serde_json::json;
 use std::{
     fs,
-    os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
+};
+
+#[cfg(unix)]
+use std::{
+    os::unix::fs::PermissionsExt,
     thread,
     time::{Duration, Instant},
 };
+
+// Failure injection must be an executable on Windows as well as Unix. Keep it
+// test-local: no shell associations, Python launchers or product test hooks.
+fn rust_executable(root: &Path, name: &str, source: &str) -> PathBuf {
+    let path = root.join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
+    let input = root.join(format!("{name}.rs"));
+    fs::write(&input, source).unwrap();
+    let output = std::process::Command::new("rustc")
+        .args(["--edition=2021", "--crate-name", "forge_test_fixture"])
+        .arg(&input)
+        .arg("-o")
+        .arg(&path)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "fixture compilation failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    path
+}
+
+fn real_godot() -> std::ffi::OsString {
+    std::env::var_os("FORGE_GODOT_PATH")
+        .expect("set FORGE_GODOT_PATH to the real Godot executable for native tests")
+}
 
 fn fixture(root: &Path) -> (JobStore, PlanStore, PathBuf, PathBuf) {
     let jobs = JobStore::new(root.join("jobs")).unwrap();
@@ -65,6 +93,7 @@ fn install_operation(pack: &Path, project: &Path) -> AutomationOperation {
     })
 }
 
+#[cfg(unix)]
 fn stub(path: &Path, mode: &str) {
     let python = format!(
         r#"#!/usr/bin/env python3
@@ -99,6 +128,7 @@ print('FORGE_INSTALL_RESULT ' + json.dumps(dict(schemaVersion='1',status='succee
     fs::set_permissions(path, fs::Permissions::from_mode(0o755)).unwrap();
 }
 
+#[cfg(unix)]
 #[test]
 fn all_install_failures_preserve_target_and_registry() {
     for mode in [
@@ -189,6 +219,7 @@ fn all_install_failures_preserve_target_and_registry() {
     }
 }
 
+#[cfg(unix)]
 #[test]
 fn install_project_lock_serializes_and_waiting_job_can_cancel() {
     let root = tempfile::tempdir().unwrap();
@@ -226,12 +257,11 @@ fn install_project_lock_serializes_and_waiting_job_can_cancel() {
 }
 
 #[test]
-#[ignore = "requires real Godot 4.6.x; validates native install, update and failed update rollback"]
+#[ignore = "requires real Godot 4.6.x or 4.7.x; validates native install, update and failed update rollback"]
 fn real_godot_install_and_failed_update_preserve_approved_resources() {
     let root = tempfile::tempdir().unwrap();
     let (jobs, plans, pack, project) = fixture(root.path());
-    let executable = std::env::var_os("FORGE_GODOT_PATH")
-        .unwrap_or_else(|| "/Applications/Godot.app/Contents/MacOS/Godot".into());
+    let executable = real_godot();
     temp_env::with_var("FORGE_GODOT_PATH", Some(&executable), || {
         for _ in 0..2 {
             let prepared = plans.prepare(install_operation(&pack, &project)).unwrap();
@@ -270,8 +300,13 @@ fn real_godot_install_and_failed_update_preserve_approved_resources() {
     let target = project.join("addons/forge_assets/fixture");
     let before = directory_sha256(&target).unwrap();
     let manifest = fs::read(project.join(".forge/assets.json")).unwrap();
-    let broken_godot = root.path().join("unsupported.py");
-    stub(&broken_godot, "version");
+    let broken_godot = rust_executable(
+        root.path(),
+        "unsupported",
+        r#"fn main() {
+        println!("4.5.0.fixture");
+    }"#,
+    );
     let prepared = plans.prepare(install_operation(&pack, &project)).unwrap();
     let plan = plans.claim(&prepared.token).unwrap();
     let job = stage_plan_job(&jobs, &plan).unwrap();
@@ -286,7 +321,7 @@ fn real_godot_install_and_failed_update_preserve_approved_resources() {
 }
 
 #[test]
-#[ignore = "requires real Godot 4.6.x; validates provider-neutral V3 catalog installation"]
+#[ignore = "requires real Godot 4.6.x or 4.7.x; validates provider-neutral V3 catalog installation"]
 fn real_godot_install_with_v3_catalog() {
     let root = tempfile::tempdir().unwrap();
     let (jobs, plans, pack, project) = fixture(root.path());
@@ -304,8 +339,7 @@ fn real_godot_install_with_v3_catalog() {
     if let AutomationOperation::InstallGodot(request) = &mut operation {
         request.catalog_project_path = Some(library.clone());
     }
-    let executable = std::env::var_os("FORGE_GODOT_PATH")
-        .unwrap_or_else(|| "/Applications/Godot.app/Contents/MacOS/Godot".into());
+    let executable = real_godot();
     temp_env::with_var("FORGE_GODOT_PATH", Some(executable), || {
         let plan = plans.prepare(operation).unwrap();
         let plan = plans.claim(&plan.token).unwrap();
@@ -322,7 +356,7 @@ fn real_godot_install_with_v3_catalog() {
 }
 
 #[test]
-#[ignore = "requires real Godot 4.6.x; checks native animation timing and explicit failure propagation"]
+#[ignore = "requires real Godot 4.6.x or 4.7.x; checks native animation timing and explicit failure propagation"]
 fn real_godot_animation_verification_and_script_failure_protocol() {
     let root = tempfile::tempdir().unwrap();
     let (jobs, plans, _, project) = fixture(root.path());
@@ -348,8 +382,7 @@ fn real_godot_animation_verification_and_script_failure_protocol() {
         .unwrap()
         .path
         .clone();
-    let executable = std::env::var_os("FORGE_GODOT_PATH")
-        .unwrap_or_else(|| "/Applications/Godot.app/Contents/MacOS/Godot".into());
+    let executable = real_godot();
     temp_env::with_var("FORGE_GODOT_PATH", Some(&executable), || {
         let prepared = plans.prepare(install_operation(&pack, &project)).unwrap();
         let plan = plans.claim(&prepared.token).unwrap();
@@ -522,6 +555,7 @@ fn legacy_marker_needs_registry_identity_and_other_keys_cannot_reuse_or_overlap_
         .contains("overlaps asset key fixture"));
 }
 
+#[cfg(unix)]
 #[test]
 fn waiting_installer_rejects_a_plan_invalidated_by_the_previous_install() {
     let root = tempfile::tempdir().unwrap();
@@ -569,7 +603,7 @@ fn waiting_installer_rejects_a_plan_invalidated_by_the_previous_install() {
 }
 
 #[test]
-#[ignore = "requires real Godot 4.6.x; protects imported cache pixels across a failed texture update"]
+#[ignore = "requires real Godot 4.6.x or 4.7.x; protects imported cache pixels across a failed texture update"]
 fn real_godot_failed_blue_update_restores_red_native_texture_without_reimport() {
     use forge_core::delivery::{hash_file, inventory};
     let root = tempfile::tempdir().unwrap();
@@ -603,8 +637,7 @@ fn real_godot_failed_blue_update_restores_red_native_texture_without_reimport() 
     };
     let red = make_pack("Red", [240, 40, 20, 255]);
     let blue = make_pack("Blue", [20, 40, 240, 255]);
-    let godot = std::env::var_os("FORGE_GODOT_PATH")
-        .unwrap_or_else(|| "/Applications/Godot.app/Contents/MacOS/Godot".into());
+    let godot = real_godot();
     temp_env::with_var("FORGE_GODOT_PATH", Some(&godot), || {
         let prepared = plans.prepare(install_operation(&red, &project)).unwrap();
         let plan = plans.claim(&prepared.token).unwrap();
@@ -656,22 +689,22 @@ func _initialize() -> void:
     let before_target = inventory(&target).unwrap();
     let before_registry = hash_file(&project.join(".forge/assets.json")).unwrap();
     let before_cache = inventory(&project.join(".godot/imported")).unwrap();
-    let wrapper = root.path().join("fail-verify-after-real-import.py");
-    fs::write(
-        &wrapper,
-        format!(
-            r#"#!/usr/bin/env python3
-import subprocess, sys
-if '--verify' in sys.argv:
-    print('ERROR: injected failure after real import and resource creation', file=sys.stderr)
-    sys.exit(7)
-sys.exit(subprocess.call([{godot:?}, *sys.argv[1:]]))
-"#,
+    let wrapper = rust_executable(
+        root.path(),
+        "fail-verify-after-real-import",
+        &format!(
+            r#"fn main() {{
+    let args: Vec<_> = std::env::args_os().skip(1).collect();
+    if args.iter().any(|arg| arg == "--verify") {{
+        eprintln!("ERROR: injected failure after real import and resource creation");
+        std::process::exit(7);
+    }}
+    let status = std::process::Command::new({godot:?}).args(args).status().unwrap();
+    std::process::exit(status.code().unwrap_or(1));
+}}"#,
             godot = godot.to_string_lossy()
         ),
-    )
-    .unwrap();
-    fs::set_permissions(&wrapper, fs::Permissions::from_mode(0o755)).unwrap();
+    );
     let prepared = plans.prepare(install_operation(&blue, &project)).unwrap();
     let plan = plans.claim(&prepared.token).unwrap();
     let job = stage_plan_job(&jobs, &plan).unwrap();
@@ -679,6 +712,12 @@ sys.exit(subprocess.call([{godot:?}, *sys.argv[1:]]))
         let error = run_operation(&jobs, &job.job_id, &plan.operation).unwrap_err();
         assert!(error.to_string().contains("Godot verify failed"), "{error}");
     });
+    assert!(
+        fs::read_to_string(job.job_dir.join("logs/godot.stdout.log"))
+            .unwrap()
+            .contains("FORGE_INSTALL_RESULT"),
+        "failure must follow actual native resource creation"
+    );
     assert_eq!(inventory(&target).unwrap(), before_target);
     assert_eq!(
         hash_file(&project.join(".forge/assets.json")).unwrap(),
@@ -693,7 +732,7 @@ sys.exit(subprocess.call([{godot:?}, *sys.argv[1:]]))
 }
 
 #[test]
-#[ignore = "requires real Godot 4.6.x; exact retained A/B/A delivery and rollback"]
+#[ignore = "requires real Godot 4.6.x or 4.7.x; exact retained A/B/A delivery and rollback"]
 fn retained_alias_revisions_install_and_roll_back_without_production_jobs() {
     use forge_core::library::{
         self,
@@ -730,8 +769,7 @@ fn retained_alias_revisions_install_and_roll_back_without_production_jobs() {
     .unwrap();
     let jobs = JobStore::new(root.path().join("delivery-jobs")).unwrap();
     let plans = PlanStore::new(root.path().join("delivery-plans")).unwrap();
-    let executable = std::env::var_os("FORGE_GODOT_PATH")
-        .unwrap_or_else(|| "/Applications/Godot.app/Contents/MacOS/Godot".into());
+    let executable = real_godot();
     let run = |reference: &VersionRef| {
         let resource = delivery::resolve(&library, reference).unwrap();
         let mut operation = install_operation(&resource.path, &game);
@@ -754,9 +792,11 @@ fn retained_alias_revisions_install_and_roll_back_without_production_jobs() {
         }
         let head = fs::read(library.join(".forge/catalog.json")).unwrap();
         let native = directory_sha256(&game.join("addons/forge_assets/fixture")).unwrap();
-        let broken = root.path().join("failed-godot");
-        fs::write(&broken, "#!/bin/sh\nexit 1\n").unwrap();
-        fs::set_permissions(&broken, fs::Permissions::from_mode(0o755)).unwrap();
+        let broken = rust_executable(
+            root.path(),
+            "failed-godot",
+            "fn main() { std::process::exit(1); }",
+        );
         temp_env::with_var("FORGE_GODOT_PATH", Some(&broken), || {
             assert!(run(&revisions[1]).is_err());
         });
