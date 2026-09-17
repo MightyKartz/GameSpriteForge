@@ -190,6 +190,55 @@ fn legacy_static_pack_remains_valid() {
 }
 
 #[test]
+fn adding_or_changing_toolchain_lock_invalidates_install_plan() {
+    let temp = tempfile::tempdir().unwrap();
+    let project = temp.path().join("game");
+    fs::create_dir(&project).unwrap();
+    fs::write(project.join("project.godot"), "config_version=5\n").unwrap();
+    let pack = fixture_pack(
+        &temp.path().join("pack"),
+        StaticAssetKind::PropSet,
+        SamplingMode::Nearest,
+    );
+    let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+    let request = AutomationOperation::InstallGodot(GodotInstallRequest {
+        catalog_revision: None,
+        resource_lock_path: None,
+        schema_version: "1".into(),
+        pack_path: pack,
+        project_path: project.clone(),
+        catalog_project_path: None,
+        target: "addons/forge_assets/test".into(),
+        asset_key: Some("test".into()),
+        provider_refs: vec![],
+    });
+    let prepared = plans.prepare(request.clone()).unwrap();
+    fs::create_dir(project.join(".forge")).unwrap();
+    let lock = project.join(forge_core::godot_environment::LOCK_FILE);
+    fs::write(
+        &lock,
+        r#"{"schemaVersion":1,"forgeVersion":"0.4.0","godotVersion":"4.6.3"}"#,
+    )
+    .unwrap();
+    assert!(plans
+        .claim(&prepared.token)
+        .unwrap_err()
+        .to_string()
+        .contains("input changed"));
+    let prepared = plans.prepare(request).unwrap();
+    fs::write(
+        &lock,
+        r#"{"schemaVersion":1,"forgeVersion":"0.4.0","godotVersion":"4.6.2"}"#,
+    )
+    .unwrap();
+    assert!(plans
+        .claim(&prepared.token)
+        .unwrap_err()
+        .to_string()
+        .contains("input changed"));
+}
+
+#[test]
 #[ignore = "requires a real Godot 4.6.x executable; run explicitly for delivery changes"]
 fn static_pack_installs_in_real_godot_with_legacy_compatibility() {
     let temp = tempfile::tempdir().unwrap();

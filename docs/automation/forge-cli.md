@@ -492,3 +492,16 @@ asset type and enforce the corresponding version and document contracts; the
 version alone does not identify audio. Unknown type/version combinations are
 rejected. Godot resource URIs use forward slashes on both macOS and Windows,
 including `audioPaths`.
+
+## Optional Godot environment and project acceptance
+
+Source builds with `godot_environment_setup` expose `setup godot`, `godot lock`,
+`godot check`, `godot verify`, and `godot export`. Each accepts `--json` and uses
+this CLI's envelope; nonzero exit/`ok:false` must be treated as failure. Execution
+reports distinguish import, runtime, interaction tests, screenshot capture and
+exported-program startup. No visual review is inferred.
+
+Read the embedded `forge guide godot-workflow` or
+[its source](../../.agents/skills/forge-use/references/godot-workflow.md) for the
+selection order, portable lock format, managed Godot 4.6.3 downloads, per-phase
+timeout/cancellation, output isolation, and platform/export scope.

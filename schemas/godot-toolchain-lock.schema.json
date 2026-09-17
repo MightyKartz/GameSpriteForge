@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Forge Godot project toolchain requirements",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "forgeVersion", "godotVersion"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "forgeVersion": {"type": "string", "minLength": 1},
+    "godotVersion": {"type": "string", "pattern": "^4\\.6\\.[^\\r\\n]+$"}
+  }
+}

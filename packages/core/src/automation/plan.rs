@@ -993,6 +993,14 @@ pub fn fingerprint_operation_inputs(
             }
             hash_directory(&mut hasher, &request.pack_path)?;
             hash_files(&mut hasher, &[request.project_path.join("project.godot")])?;
+            let toolchain = request
+                .project_path
+                .join(crate::godot_environment::LOCK_FILE);
+            hasher.update(b"godot-toolchain-lock-v1\0");
+            if toolchain.exists() {
+                hash_files(&mut hasher, &[toolchain])?;
+            }
+
             if let Some(catalog_project) = &request.catalog_project_path {
                 if crate::library::is_library(catalog_project)
                     .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))?

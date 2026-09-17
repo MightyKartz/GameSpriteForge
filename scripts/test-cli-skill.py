@@ -25,6 +25,7 @@ import zlib
 MANIFEST = ".forge-skill-manifest.json"
 SKILL = "forge-use"
 GUIDE_RESOURCES = (
+    ("godot-workflow", "references/godot-workflow.md", "text/markdown"),
     ("project-assets", "references/project-assets.md", "text/markdown"),
     ("audio", "references/audio.md", "text/markdown"),
     ("audio-example", "examples/local-audio.json", "application/json"),

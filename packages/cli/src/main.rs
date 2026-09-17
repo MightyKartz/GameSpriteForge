@@ -69,6 +69,7 @@ use serde::Serialize;
 mod asset_library;
 mod audio_tools;
 mod build_info;
+mod godot_workflow;
 mod preview;
 mod receipt;
 mod skill;
@@ -105,6 +106,11 @@ enum Command {
         command: receipt::ReceiptCommand,
     },
     Doctor(JsonFlag),
+    /// Configure optional native tools without changing shell environment variables.
+    Setup {
+        #[command(subcommand)]
+        command: godot_workflow::SetupCommand,
+    },
     /// Read the embedded usage guide or a topic without installing a skill.
     Guide(skill::GuideArgs),
     /// Inspect the bundled forge-use skill or optionally install it for Codex.
@@ -681,6 +687,14 @@ enum MapCommand {
 
 #[derive(Subcommand)]
 enum GodotCommand {
+    /// Record portable Forge/Godot version requirements for a project.
+    Lock(godot_workflow::LockArgs),
+    /// Check project requirements, selected engine and export template availability.
+    Check(godot_workflow::CheckArgs),
+    /// Import and run an isolated project copy, optionally capturing its viewport.
+    Verify(godot_workflow::VerifyArgs),
+    /// Export an isolated project copy and optionally run the exported program.
+    Export(godot_workflow::ExportArgs),
     /// Create an isolated native preview project; optionally launch its playback controls.
     Preview(preview::PreviewArgs),
     /// Audit installed bytes against their baseline and original Pack without running Godot.
@@ -890,6 +904,9 @@ fn main() {
 fn run() -> Result<(), (String, String)> {
     let cli = Cli::parse();
     match cli.command {
+        Command::Setup {
+            command: godot_workflow::SetupCommand::Godot(args),
+        } => success(&godot_workflow::setup(args).map_err(godot_workflow::error)?),
         Command::Audio { command } => match command {
             AudioCommand::Tools { command } => success(&audio_tools::run(command)?),
             AudioCommand::Inspect { path, .. } => success(
@@ -940,8 +957,15 @@ fn run() -> Result<(), (String, String)> {
             let profile = automation_profile();
             let job_store = job_store()?;
             let plan_store = plan_store()?;
-            let godot_path = locate_godot();
-            let godot_version = godot_path.as_deref().and_then(godot_version);
+            let godot_resolution = forge_core::godot_environment::resolve(None, None);
+            let godot_path = godot_resolution
+                .as_ref()
+                .ok()
+                .map(|engine| engine.path.clone());
+            let godot_version = godot_resolution
+                .as_ref()
+                .ok()
+                .map(|engine| engine.version.clone());
             let ffmpeg = forge_core::video::resolve_ffmpeg_paths(
                 &forge_core::video::FfmpegSearch::default(),
             )
@@ -975,7 +999,8 @@ fn run() -> Result<(), (String, String)> {
                     "godot": {
                         "requiredFor": ["godot_install", "godot_preview"],
                         "supportedVersion": "4.6.x",
-                        "configure": "Set FORGE_GODOT_PATH to a Godot 4.6 console executable or put godot on PATH."
+                        "configure": "Run forge setup godot --path PATH or forge setup godot --download.",
+                        "diagnostic": godot_resolution.err()
                     },
                     "ffmpeg": {
                         "available": ffmpeg.is_some(),
@@ -1609,6 +1634,18 @@ fn run() -> Result<(), (String, String)> {
             }
         },
         Command::Godot { command } => match command {
+            GodotCommand::Lock(args) => {
+                success(&godot_workflow::lock(args).map_err(godot_workflow::error)?)
+            }
+            GodotCommand::Check(args) => {
+                success(&godot_workflow::check(args).map_err(godot_workflow::error)?)
+            }
+            GodotCommand::Verify(args) => {
+                success(&godot_workflow::verify(args).map_err(godot_workflow::error)?)
+            }
+            GodotCommand::Export(args) => {
+                success(&godot_workflow::export(args).map_err(godot_workflow::error)?)
+            }
             GodotCommand::Preview(args) => success(&preview::run(args)?),
             GodotCommand::VerifyInstall {
                 project,
@@ -3367,11 +3404,9 @@ fn locate_godot() -> Option<PathBuf> {
 }
 
 fn godot_version(path: &Path) -> Option<String> {
-    let output = ProcessCommand::new(path).arg("--version").output().ok()?;
-    output
-        .status
-        .success()
-        .then(|| String::from_utf8_lossy(&output.stdout).trim().to_string())
+    forge_core::godot_environment::probe(path)
+        .ok()
+        .map(|engine| engine.version)
 }
 
 fn display_error(error: impl std::fmt::Display) -> (String, String) {

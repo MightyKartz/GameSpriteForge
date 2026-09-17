@@ -5083,8 +5083,9 @@ fn run_install_godot(
     // Resolve dependencies and prepare the tool before touching an installed target.
     let script = record.job_dir.join("tools/install_forge_pack.gd");
     fs::write(&script, GODOT_INSTALL_SCRIPT)?;
-    let godot = locate_godot()
-        .ok_or_else(|| AutomationRunError::Processing("Godot 4 executable was not found".into()))?;
+    let godot = crate::godot_environment::resolve(None, Some(&request.project_path))
+        .map_err(AutomationRunError::Processing)?
+        .path;
     let version = run_godot_process(
         Command::new(&godot).arg("--version"),
         &record.job_dir,
@@ -6362,10 +6363,6 @@ fn steps_for_operation(operation: &AutomationOperation) -> Vec<JobStepRecord> {
             message: None,
         })
         .collect()
-}
-
-fn locate_godot() -> Option<PathBuf> {
-    crate::godot::locate_godot()
 }
 
 fn require_godot_46(output: &std::process::Output) -> Result<(), AutomationRunError> {
