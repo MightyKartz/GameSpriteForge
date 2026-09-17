@@ -5093,7 +5093,7 @@ fn run_install_godot(
         store,
         job_id,
     )?;
-    require_godot_46(&version)?;
+    require_supported_godot(&version)?;
     let _project_lock = lock_install_project(&request.project_path, store, job_id)?;
     let _catalog_lock = request
         .catalog_project_path
@@ -6365,16 +6365,17 @@ fn steps_for_operation(operation: &AutomationOperation) -> Vec<JobStepRecord> {
         .collect()
 }
 
-fn require_godot_46(output: &std::process::Output) -> Result<(), AutomationRunError> {
+fn require_supported_godot(output: &std::process::Output) -> Result<(), AutomationRunError> {
     if !output.status.success() {
         return Err(AutomationRunError::Processing(
             "Godot version check failed".into(),
         ));
     }
     let version = String::from_utf8_lossy(&output.stdout);
-    if !version.trim().starts_with("4.6.") {
+    if !crate::godot_environment::is_supported_version(version.trim()) {
         return Err(AutomationRunError::Processing(format!(
-            "Forge requires Godot 4.6.x; found {}",
+            "Forge requires Godot {}; found {}",
+            crate::godot_environment::SUPPORTED_VERSIONS,
             version.trim()
         )));
     }

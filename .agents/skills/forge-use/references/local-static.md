@@ -156,7 +156,7 @@ or `forge guide project-assets`. Unbound requests preserve the original behavior
 
 ## Install into Godot
 
-Use the intended Godot 4.6.x project. If discovery chooses the wrong engine, set
+Use the intended Godot 4.6.x or 4.7.x project. If discovery chooses the wrong engine, set
 `FORGE_GODOT_PATH` to the verified Godot executable. Forge prepares resources in an
 existing project; it does not bundle Godot or package the game for a platform.
 

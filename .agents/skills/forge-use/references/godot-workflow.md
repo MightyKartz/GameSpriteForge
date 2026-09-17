@@ -3,6 +3,10 @@
 These commands require `godot_environment_setup`, `godot_project_toolchain_lock`,
 `godot_project_acceptance` and `godot_desktop_export_verification` in `forge doctor`.
 They are included from v0.5.0; the v0.4.0 release does not have them.
+Godot 4.7 support and `setup godot --version` require `godot_version_selection`.
+That capability is a source addition after v0.5.0; the published v0.5.0 binary
+accepts only Godot 4.6.x and downloads only 4.6.3. Always read the selected
+executable's own guide before using these options.
 
 ## Set up once per machine
 
@@ -21,15 +25,23 @@ Alternatively, explicitly download the pinned official standard engine:
 
 ```sh
 forge setup godot --download --json
-forge setup godot --download --templates --json
+forge setup godot --download --version 4.7.2 --templates --json
+forge setup godot --download --version 4.6.3 --json
 ```
 
 Managed downloads currently support Windows x64 and macOS Apple Silicon and install
-Godot **4.6.3**, not an unverified latest version. They require curl (Windows uses
-curl.exe) and native ZIP extraction. SHA-512 is checked before extraction or execution.
+Godot **4.7.2** by default on builds with `godot_version_selection`. Use
+`--version 4.6.3` to retain the previous supported download; only these two
+checksum-pinned versions are accepted. `--version` requires `--download` and
+cannot be used with `--path`. Each managed engine has a separate versioned
+directory, so downloading one does not replace the other's files. Setup selects
+the machine's engine but never changes a game's lock. Downloads require curl
+(Windows uses curl.exe) and native ZIP extraction. SHA-512 is checked before extraction or execution.
 The optional templates archive is large and is downloaded only with `--templates`.
-It goes in Godot's standard user export-template directory. Existing unrecognized
-installations are preserved. macOS signing/notarization of Godot remains upstream's.
+It goes in Godot's standard user export-template directory for the selected version.
+With `--path PATH --templates`, Forge selects the matching pinned template archive for
+a standard 4.6.3 or 4.7.2 engine. Other builds/editions need their own templates.
+Existing unrecognized installations are preserved. macOS signing/notarization of Godot remains upstream's.
 
 Forge saves engine location, version and executable hashes in its local `godot.json`.
 Use `FORGE_CONFIG_DIR` to isolate this configuration and managed engine directory.
@@ -53,6 +65,9 @@ This v1 lock does not pin the Forge Git commit or enable optional Cargo features
 acceptance reports separately record actual Forge build identity. Use clean releases
 for team pins. Existing consumer locks and receipts are not migrated automatically.
 Changing an existing lock requires `--update` after verification with the new tools.
+A 4.6.3 project remains locked to its complete engine version when 4.7.2 is selected;
+`check`, installation, verification and export fail on the mismatch without rewriting
+the lock. Select the original engine explicitly until you choose to migrate.
 Asset installation also checks this lock, and reviewed install plans fingerprint it.
 Projects without the new lock retain their existing behavior.
 

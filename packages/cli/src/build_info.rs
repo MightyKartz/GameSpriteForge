@@ -30,6 +30,7 @@ pub fn current() -> BuildInfo {
 // reported separately by doctor. Add new IDs only alongside their implementation.
 pub const CAPABILITIES: &[&str] = &[
     "godot_environment_setup",
+    "godot_version_selection",
     "godot_project_toolchain_lock",
     "godot_project_acceptance",
     "godot_desktop_export_verification",

@@ -82,6 +82,8 @@ Sword is a cultivation-themed survival game prototype. Codex created its source 
 
 ## Scope
 
+**In development after v0.5.0:** builds with `godot_version_selection` add Godot 4.7.x alongside 4.6.x, with selectable 4.7.2 and 4.6.3 downloads and matching export templates. The new default download is 4.7.2; existing project locks remain unchanged. The published v0.5.0 package still supports only 4.6.x. See the [Godot workflow guide](.agents/skills/forge-use/references/godot-workflow.md).
+
 Character animation remains experimental; advanced character and world-asset commands require optional source-build features. Check `forge doctor --json` for your executable's capabilities.
 
 Music and sound effects are generated in external applications. ACE-Step and Stable Audio 3 have optional read-only source-directory detection; Forge does not install or run their models. Online xAI requests use your own account and may incur charges.

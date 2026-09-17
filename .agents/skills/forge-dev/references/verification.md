@@ -4,7 +4,7 @@ Run commands from the repository root. Select checks for the behavior changed;
 the rows below are entrypoints, not a requirement to run every suite.
 Use an absolute path to the freshly built CLI (account for `CARGO_TARGET_DIR`),
 and isolated `FORGE_JOB_STORE` / `FORGE_PLAN_STORE` directories for manual fixtures.
-Native checks use a separately installed Godot 4.6.x executable. Install Python
+Native checks use a separately installed Godot 4.6.x or 4.7.x executable. Install Python
 dependencies from `scripts/requirements-local-assets.txt` in a virtual environment;
 CI uses Python 3.12 and synthetic media without Provider credentials.
 

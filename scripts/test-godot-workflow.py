@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Native Godot setup, source isolation, failure reporting and export contracts."""
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -16,7 +17,13 @@ def main():
     parser.add_argument('--screenshot', action='store_true')
     parser.add_argument('--template', type=Path)
     parser.add_argument('--export', action='store_true')
+    parser.add_argument('--expected-version', choices=['4.6.3', '4.7.2'])
+    parser.add_argument('--other-godot', type=Path, help='Other supported minor for exact-lock regression')
     args = parser.parse_args()
+    args.forge = args.forge.absolute()
+    if os.name == 'nt' and not args.forge.is_file():
+        args.forge = args.forge.with_suffix('.exe')
+    forge_sha256 = hashlib.sha256(args.forge.read_bytes()).hexdigest()
     root = args.output.absolute()
     root.mkdir(parents=True, exist_ok=False)
     env = dict(os.environ, FORGE_CONFIG_DIR=str(root / 'config'),
@@ -47,7 +54,10 @@ def main():
 
     run('setup', 'godot', '--path', args.godot.absolute())
     doctor = run('doctor')
-    assert doctor['godotSupported'] and doctor['godotVersion'].startswith('4.6.')
+    assert doctor['godotSupported']
+    if args.expected_version:
+        assert doctor['godotVersion'].startswith(args.expected_version + '.stable.')
+    assert doctor['toolChecks']['godot']['supportedVersion'] == '4.6.x or 4.7.x'
     # Explicit broken selection must never fall back to the valid saved engine.
     assert not run('doctor', overrides={'FORGE_GODOT_PATH': str(root/'missing.exe')})['godotSupported']
     config = root/'config/godot.json'
@@ -121,6 +131,19 @@ func _initialize() -> void:
     run('godot', 'check', '--project', project, fail=True)
     lock.write_text(original_lock)
     checked = run('godot', 'check', '--project', project)
+    if args.expected_version:
+        assert checked['templates']['version'] == args.expected_version + '.stable'
+        assert Path(checked['templates']['directory']).name == args.expected_version + '.stable'
+    if args.other_godot:
+        other = run('setup', 'godot', '--path', args.other_godot.absolute())
+        assert other['engine']['version'].split('.')[1] != doctor['godotVersion'].split('.')[1]
+        mismatch = run('godot', 'check', '--project', project, fail=True)
+        assert mismatch['code'] == 'toolchain_mismatch', mismatch
+        assert lock.read_text() == original_lock
+        run('setup', 'godot', '--path', args.godot.absolute())
+        run('godot', 'check', '--project', project)
+        assert lock.read_text() == original_lock
+
 
     def seed_save():
         native = subprocess.run([str(args.godot.absolute()), '--headless', '--path', str(project),
@@ -235,6 +258,8 @@ application/bundle_identifier="dev.forge.acceptance"
         assert preset.read_bytes() == saved_preset
         assert (project/'project.godot').read_bytes() == custom_config
     (root/'summary.json').write_text(json.dumps({'passed': True, 'cases': results,
+        'forgeSha256': forge_sha256, 'forgeBuild': doctor['build'],
+        'godotVersion': doctor['godotVersion'], 'crossMinorLockChecked': bool(args.other_godot),
         'screenshotChecked': args.screenshot, 'exportChecked': bool(args.export or args.template),
         'regressions': {'defaultUserDataIsolated': True,
             'customUserDataAndRepeatedRunsIsolated': bool(args.export or args.template),

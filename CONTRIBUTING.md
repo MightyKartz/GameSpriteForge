@@ -68,7 +68,7 @@ forge provider login --provider xai --method oauth --credential-store file
 The non-secret auth profile records only the selected method and storage backend.
 Production releases default to Keychain.
 
-Godot integration tests use Godot 4.6.x when it is available at
+Godot integration tests use Godot 4.6.x or 4.7.x when it is available at
 `/Applications/Godot.app` or on `PATH`. Video tests require the pinned FFmpeg
 toolchain described in `third_party/ffmpeg/BUILD.md` or compatible local
 development binaries.

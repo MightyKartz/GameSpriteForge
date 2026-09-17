@@ -41,9 +41,14 @@ fn run_inner(args: PreviewArgs) -> Result<serde_json::Value, String> {
     let godot = args
         .godot
         .or_else(super::locate_godot)
-        .ok_or("Godot 4.6 executable was not found; set FORGE_GODOT_PATH or pass --godot")?;
-    if !super::godot_version(&godot).is_some_and(|version| version.starts_with("4.6.")) {
-        return Err("Godot preview requires 4.6.x".into());
+        .ok_or("Godot executable was not found; set FORGE_GODOT_PATH or pass --godot")?;
+    if !super::godot_version(&godot)
+        .is_some_and(|version| forge_core::godot_environment::is_supported_version(&version))
+    {
+        return Err(format!(
+            "Godot preview requires {}",
+            forge_core::godot_environment::SUPPORTED_VERSIONS
+        ));
     }
     let godot = fs::canonicalize(godot).map_err(|error| error.to_string())?;
     // create_dir refuses an existing project, including symlinks; previews never reinstall a consumer.
