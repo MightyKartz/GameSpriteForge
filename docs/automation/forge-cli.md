@@ -495,7 +495,7 @@ including `audioPaths`.
 
 ## Optional Godot environment and project acceptance
 
-Source builds with `godot_environment_setup` expose `setup godot`, `godot lock`,
+From v0.5.0, builds with `godot_environment_setup` expose `setup godot`, `godot lock`,
 `godot check`, `godot verify`, and `godot export`. Each accepts `--json` and uses
 this CLI's envelope; nonzero exit/`ok:false` must be treated as failure. Execution
 reports distinguish import, runtime, interaction tests, screenshot capture and

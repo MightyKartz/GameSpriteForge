@@ -9,7 +9,7 @@ on:
       version:
         description: "Release version to preflight (no GitHub Release is created)"
         required: true
-        default: "v0.4.0"
+        default: "v0.5.0"
         type: string
 
 permissions:
@@ -35,10 +35,10 @@ jobs:
         run: python3 -m pip install --requirement scripts/requirements-local-assets.txt
 
       - name: Install release Rust toolchain
-        run: rustup toolchain install 1.98.0 --profile minimal --component rustfmt --component clippy
+        run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
 
       - name: Select release Rust toolchain
-        run: rustup override set 1.98.0
+        run: rustup override set 1.98.1
 
       - name: Verify tag and source
         shell: bash

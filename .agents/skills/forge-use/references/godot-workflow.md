@@ -2,7 +2,7 @@
 
 These commands require `godot_environment_setup`, `godot_project_toolchain_lock`,
 `godot_project_acceptance` and `godot_desktop_export_verification` in `forge doctor`.
-They are source additions after v0.4.0; do not assume the v0.4.0 release has them.
+They are included from v0.5.0; the v0.4.0 release does not have them.
 
 ## Set up once per machine
 
