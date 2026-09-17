@@ -53,6 +53,17 @@ The synthetic screenshot fixture selects Godot's Dummy audio driver because
 Windows hosted runners have no audio output device. Engine errors still fail
 verification; this fixture does not assess listening or change user projects.
 
+The first PR review found that the transaction test file's file-wide Unix gate
+made Windows report success with zero tests. The five real-Godot tests now run
+on both platforms; only three separate Unix script-stub tests remain gated.
+Native failure injection uses small executables compiled with `rustc`, including
+a failure after real import/resource creation. The rollback check compares the
+target, registry and imported caches, then loads the restored pixels without
+reimporting. The CI transaction runner requires discovery and named success for
+all five tests and records both logs plus `transactions/summary.json`; zero or
+skipped tests fail the gate. Earlier green Windows jobs without this evidence
+do not establish native transaction/rollback coverage.
+
 CI retains the selected engine identity, Forge build identity and binary
 SHA-256 in its workflow summary, together with reports, logs and screenshots.
 Consult the PR's completed checks and native artifacts for the tested commit;

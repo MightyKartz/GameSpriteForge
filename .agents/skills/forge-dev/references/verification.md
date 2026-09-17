@@ -57,6 +57,7 @@ for additional modes. On Windows use `python` and native executable paths.
 | Layered delivery | `test-layered-cli.py --forge FORGE --godot GODOT --output OUTPUT` |
 | Layered preview UI | `test-godot-preview-ui.py --project PREVIEW_PROJECT --godot GODOT --output OUTPUT` |
 | Unified layered playback | `test-godot-unified-player.py --godot GODOT --controller scripts/godot/runtime/layered-player-v1.gd` |
+| Native install/update/rollback (both platforms) | `test-native-godot-transactions.py --godot GODOT --output OUTPUT` |
 | External animation clock | `test-godot-external-clock.py --godot GODOT` |
 | Audio processing, receipts and caches | `test-local-audio-cli.py --forge FORGE --godot GODOT` |
 | Native audio resources | `test-godot-audio-delivery.py --godot GODOT` |
@@ -68,6 +69,14 @@ also include `cargo test --locked -p core --test static_delivery_tests -- --igno
 --nocapture`. For a nonstandard Godot location, set both `FORGE_GODOT_PATH` (Forge
 installer) and `GODOT_BIN` (the Rust test's final scene check). The local-static
 Python script's `--godot` selects both its install Jobs and final scene check.
+
+The native transaction runner requires all five named real-Godot tests to be
+discovered and pass, and retains discovery/execution logs and a JSON summary.
+It supplies `FORGE_GODOT_PATH` explicitly and runs the tests serially. Its
+failure-injection executables are compiled by the active `rustc` on both macOS
+and Windows. Only the three separate tests using Unix Python/shebang stubs
+remain Unix-only. A successful Cargo exit with zero tests is not acceptance;
+run `python3 scripts/test-native-godot-gate.py` to check the gate's rejection cases.
 
 A local transfer roundtrip does not establish cross-platform portability. Follow
 [the quality matrix](../../../../.github/workflows/v03-quality.yml): produce

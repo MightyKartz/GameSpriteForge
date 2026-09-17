@@ -34,7 +34,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install media test dependencies
-        run: python -m pip install --requirement scripts/requirements-local-assets.txt
+        run: |
+          python -m pip install --requirement scripts/requirements-local-assets.txt
+          python scripts/test-native-godot-gate.py
       - name: Build and check the CLI
         run: |
           rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
@@ -100,7 +102,7 @@ jobs:
           export FORGE_GODOT_PATH="$godot_path"
           export GODOT_BIN="$godot_path"
           cargo test --locked -p core --test static_delivery_tests -- --ignored --nocapture
-          cargo test --locked -p core --test godot_install_transaction_tests -- --ignored --nocapture
+          python scripts/test-native-godot-transactions.py --godot "$godot_path" --output target/media-acceptance/transactions
           python scripts/test-local-static-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/static
           python scripts/test-local-animation-delivery.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/animation
           python scripts/test-local-audio-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/audio
