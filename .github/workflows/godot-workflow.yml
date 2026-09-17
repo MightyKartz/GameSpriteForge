@@ -44,6 +44,14 @@ jobs:
           cargo test --locked -p core --lib godot
           cargo test --locked -p forge-cli --bin forge
           cargo build --locked -p forge-cli --no-default-features
+          python - <<'PYTHON'
+          import os
+          from pathlib import Path
+          binary = Path('target/debug') / ('forge.exe' if os.name == 'nt' else 'forge')
+          assert binary.is_file(), binary
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              output.write('FORGE_BIN=' + str(binary.resolve()) + '\n')
+          PYTHON
       - name: Load verified media helpers from the published package
         env:
           GH_TOKEN: ${{ github.token }}
@@ -70,22 +78,22 @@ jobs:
           PY
       - name: Verify official managed download and templates
         run: |
-          target/debug/forge setup godot --download --version "$GODOT_VERSION" --templates --json > target/setup.json
-          target/debug/forge setup godot --download --version "$GODOT_VERSION" --templates --json > target/setup-repeat.json
+          "$FORGE_BIN" setup godot --download --version "$GODOT_VERSION" --templates --json > target/setup.json
+          "$FORGE_BIN" setup godot --download --version "$GODOT_VERSION" --templates --json > target/setup-repeat.json
           if [ "$GODOT_VERSION" = '4.7.2' ]; then
-            target/debug/forge setup godot --download --json > target/setup-default.json
+            "$FORGE_BIN" setup godot --download --json > target/setup-default.json
             python -c 'import json; a=json.load(open("target/setup.json"))["data"]; b=json.load(open("target/setup-default.json"))["data"]; assert a["engine"] == b["engine"]'
             other_version=4.6.3
           else
             other_version=4.7.2
           fi
-          target/debug/forge setup godot --download --version "$other_version" --json > target/setup-other.json
+          "$FORGE_BIN" setup godot --download --version "$other_version" --json > target/setup-other.json
           python -c 'import json; a=json.load(open("target/setup.json"))["data"]; b=json.load(open("target/setup-repeat.json"))["data"]; assert a["engine"] == b["engine"]'
       - name: Verify native import, failures, screenshot and exported program
         run: |
           godot_path="$(python -c 'import json; print(json.load(open("target/setup.json"))["data"]["engine"]["path"])')"
           other_path="$(python -c 'import json; print(json.load(open("target/setup-other.json"))["data"]["engine"]["path"])')"
-          python scripts/test-godot-workflow.py --forge target/debug/forge --godot "$godot_path" --other-godot "$other_path" --expected-version "$GODOT_VERSION" --output target/workflow-acceptance --export --screenshot
+          python scripts/test-godot-workflow.py --forge "$FORGE_BIN" --godot "$godot_path" --other-godot "$other_path" --expected-version "$GODOT_VERSION" --output target/workflow-acceptance --export --screenshot
       - name: Verify native image, animation, audio and layered delivery
         run: |
           godot_path="$(python -c 'import json; print(json.load(open("target/setup.json"))["data"]["engine"]["path"])')"
@@ -93,10 +101,10 @@ jobs:
           export GODOT_BIN="$godot_path"
           cargo test --locked -p core --test static_delivery_tests -- --ignored --nocapture
           cargo test --locked -p core --test godot_install_transaction_tests -- --ignored --nocapture
-          python scripts/test-local-static-cli.py --forge target/debug/forge --godot "$godot_path" --output target/media-acceptance/static
-          python scripts/test-local-animation-delivery.py --forge target/debug/forge --godot "$godot_path" --output target/media-acceptance/animation
-          python scripts/test-local-audio-cli.py --forge target/debug/forge --godot "$godot_path" --output target/media-acceptance/audio
-          python scripts/test-layered-cli.py --forge target/debug/forge --godot "$godot_path" --output target/media-acceptance/layered
+          python scripts/test-local-static-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/static
+          python scripts/test-local-animation-delivery.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/animation
+          python scripts/test-local-audio-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/audio
+          python scripts/test-layered-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/layered
           python scripts/test-godot-preview-ui.py --project target/media-acceptance/layered/preview/project --godot "$godot_path" --output target/media-acceptance/preview
           python scripts/test-godot-unified-player.py --godot "$godot_path" --controller scripts/godot/runtime/layered-player-v1.gd
       - name: Retain setup and acceptance evidence
