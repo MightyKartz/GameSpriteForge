@@ -58,7 +58,9 @@ or convert static assets into a rigged/layered scene.
 ## Remove a flat background from one PNG
 
 `source matte` runs the existing local chroma algorithm on one still PNG and
-writes a new RGBA PNG. Save a request such as:
+writes a new RGBA PNG. Prefer a clean transparent source when available; matting
+is a fallback for flat color-key backgrounds, not a substitute for preserving
+reviewed alpha. Save a request such as:
 
 ```json
 {
@@ -71,7 +73,9 @@ writes a new RGBA PNG. Save a request such as:
     "threshold": 24,
     "softness": 32,
     "despillStrength": 0.0,
-    "haloPixels": 0
+    "haloPixels": 0,
+    "backgroundScope": "border_connected",
+    "edgeColorRecovery": true
   }
 }
 ```
@@ -97,9 +101,14 @@ resemble the key; a matching foreground color can also be removed.
 Omitting `parameters` selects the existing defaults: `auto_corners`, threshold
 48, softness 18, despill strength 0.5, and no halo erosion. `auto_corners` averages
 the four corner RGB values and applies border-connected chroma cleanup. Manual
-mode uses `#RRGGBB`. Threshold and softness are integers from 0–255, despill
-strength must be finite from 0–2, and halo pixels from 0–4. Halo erosion can remove
-thin strokes; use it only after reviewing the un-eroded result.
+mode uses `#RRGGBB`. Optional `backgroundScope:"border_connected"` limits manual
+removal to the key-colored region connected to the image border, so enclosed
+foreground details that match the key survive. Optional `edgeColorRecovery:true`
+estimates original RGB on partial-alpha edges from the key color; use it only for
+reviewed color-key composites, since noisy or non-composited input can amplify
+artifacts. Threshold and softness are integers from 0–255, despill strength must
+be finite from 0–2, and halo pixels from 0–4. Halo erosion can remove thin
+strokes; use it only after reviewing the un-eroded result.
 
 The JSON report includes input/output SHA-256, dimensions, exact parameters,
 resolved key color, alpha statistics, foreground bounds, zero Provider count,

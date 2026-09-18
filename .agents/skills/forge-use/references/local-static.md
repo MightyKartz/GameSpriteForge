@@ -12,15 +12,17 @@ SHA-256, source/tool identity and rights information. Do not invent a model name
 Forge Provider or Style Lock in provenance. Image generation may consume Codex
 usage; local Forge preparation should report **zero Forge Provider requests**.
 
-Prefer one transparent PNG per item. Use `icon_set` for centered UI items and
-`prop_set` for objects with a ground anchor; a still character can be a prop.
+Prefer one clean transparent PNG per item. Use `icon_set` for centered UI items
+and `prop_set` for objects with a ground anchor; a still character can be a prop.
 For an existing collection sheet, preserve the sheet and record how each separate
 item source was derived. Do not treat unrelated props as consecutive frames.
-Inspect actual transparency, subject edges and framing before import. Forge
-normalizes alpha-bearing PNGs; it does not remove an opaque background or apply
-chroma-key matting in the default static workflow. Source builds can explicitly
-remove a flat background with `source matte`, or retain a reviewed rectangular
-RGB/RGBA canvas with `canvasPolicy:"preserve_source"`, as described below.
+Inspect actual transparency, subject edges and framing before import. Keep faint
+glow inside the intended canvas; move or expand a source rather than deleting
+soft pixels just to pass inspection. Forge normalizes alpha-bearing PNGs; it
+does not remove an opaque background or apply chroma-key matting in the default
+static workflow. Source builds can explicitly remove a flat background with
+`source matte` as a fallback, or retain a reviewed rectangular RGB/RGBA canvas
+with `canvasPolicy:"preserve_source"`, as described below.
 
 ## Prepare a request
 
@@ -125,7 +127,8 @@ Run `"$FORGE_BIN" source matte --request /absolute/matte.json --json` with:
   "output":"derived/portrait-matte.png",
   "parameters":{
     "keyMode":"manual", "manualKeyColor":"#FFFFFF",
-    "threshold":24, "softness":32, "despillStrength":0.0, "haloPixels":0
+    "threshold":24, "softness":32, "despillStrength":0.0, "haloPixels":0,
+    "backgroundScope":"border_connected", "edgeColorRecovery":true
   }
 }
 ```
@@ -136,7 +139,13 @@ dimensions and coordinates, applies the local chroma algorithm, and clears RGB
 where alpha becomes zero. Inputs are single still 8-bit RGB/RGBA PNGs (up to
 128 MiB and 33,554,432 pixels). Threshold/softness are 0–255, despill strength
 0–2, and halo erosion 0–4 pixels. Omitted parameters select `auto_corners` with
-threshold 48, softness 18, despill 0.5, and halo 0.
+threshold 48, softness 18, despill 0.5, and halo 0. Optional
+`backgroundScope:"border_connected"` removes only the key-colored region connected
+to the image border, protecting enclosed foreground details that match the key.
+`edgeColorRecovery:true` estimates the original RGB of soft edge pixels from the
+key color instead of only reducing the key's dominant channel. Use recovery for
+reviewed flat-background edges; it does not understand artwork and can amplify
+noise when the input is not a clean color-key composite.
 
 Matting has no Provider calls or Job store. Retain its report with input/output
 hashes, dimensions, parameters, resolved key color, alpha statistics, and
