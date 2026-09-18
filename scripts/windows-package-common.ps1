@@ -75,6 +75,21 @@ function Assert-Payload([string]$Root) {
     if ($info.binarySha256 -ne $expected['bin/forge.exe']) { throw 'BUILD_INFO binary hash mismatch' }
     return $info
 }
+function Compress-WindowsPackage([string]$Root, [string]$Archive) {
+    $rootPath = [IO.Path]::GetFullPath($Root).TrimEnd('\','/')
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    if (Test-Path -LiteralPath $Archive) { throw "Archive output already exists: $Archive" }
+    $zip = [IO.Compression.ZipFile]::Open($Archive,[IO.Compression.ZipArchiveMode]::Create)
+    try {
+        foreach ($file in Get-PayloadFiles $rootPath | Sort-Object Relative) {
+            $entry = $zip.CreateEntry($file.Relative)
+            $source = [IO.File]::OpenRead($file.Absolute)
+            $destination = $entry.Open()
+            try { $source.CopyTo($destination) } finally { $source.Dispose(); $destination.Dispose() }
+        }
+    } finally { $zip.Dispose() }
+}
 function Invoke-WindowsForgeJson([string]$Launcher, [string[]]$Arguments = @('doctor','--json')) {
     $result = & $Launcher @Arguments
     if ($LASTEXITCODE -ne 0) { throw "Forge failed through public launcher: $Launcher" }

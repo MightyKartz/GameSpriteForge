@@ -85,12 +85,16 @@ jobs:
           ./scripts/package-windows.ps1 -Forge target/release/forge.exe -Helpers "$env:RUNNER_TEMP/forge-ffmpeg/helpers" -Output target/windows-dist/forge-x86_64-pc-windows-msvc.zip
           Copy-Item scripts/install-windows.ps1,scripts/windows-package-common.ps1 target/windows-dist/
           ./scripts/test-windows-package.ps1 -Archive target/windows-dist/forge-x86_64-pc-windows-msvc.zip -Output target/qa/windows-portable -Godot "$env:RUNNER_TEMP/godot/Godot_v4.6.3-stable_win64_console.exe"
+          $packageSummary = Get-Content -LiteralPath target/qa/windows-portable/summary.json -Raw | ConvertFrom-Json
+          $bundleCase = @($packageSummary.cases | Where-Object name -EQ 'single_download_bundle_installs_verified_package')[0]
+          if (!$bundleCase) { throw 'Single-download bundle was not tested' }
+          Copy-Item -LiteralPath $bundleCase.bundle -Destination target/windows-dist/forge-windows-installer.zip
+          Copy-Item -LiteralPath ($bundleCase.bundle + '.sha256') -Destination target/windows-dist/forge-windows-installer.zip.sha256
           python scripts/test-cli-skill.py --forge "$env:GITHUB_WORKSPACE/target/release/forge.exe" --guide-only --output "$env:GITHUB_WORKSPACE/target/qa/windows-guide"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $packageReport = Get-Content -LiteralPath target/qa/windows-portable/summary.json -Raw | ConvertFrom-Json
           foreach ($command in @('guide','skill show')) {
             $cliArgs = @($command.Split(' ')) + @('--json')
-            $launcher = $packageReport.cases[0].launcher
+            $launcher = $packageSummary.cases[0].launcher
             $result = & $launcher @cliArgs
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             if (!(($result | ConvertFrom-Json).ok)) { throw "Installed launcher failed $command" }
@@ -116,14 +120,15 @@ jobs:
       - name: Verify Windows PowerShell 5.1 installer compatibility
         run: |
           $archive = (Resolve-Path -LiteralPath target/windows-dist/forge-x86_64-pc-windows-msvc.zip).Path
-          $checksum = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
           $installation = "$env:RUNNER_TEMP/forge powershell51"
-          $installer = "$env:GITHUB_WORKSPACE/scripts/install-windows.ps1"
-          $result = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$installer" -Archive "$archive" -Sha256 "$checksum" -InstallDirectory "$installation"
+          $bundle = "$env:RUNNER_TEMP/forge single download"
+          Expand-Archive -LiteralPath (Resolve-Path -LiteralPath target/windows-dist/forge-windows-installer.zip) -DestinationPath $bundle
+          $installer = "$bundle/install-windows.ps1"
+          $result = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$installer" -InstallDirectory "$installation"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $first = $result | ConvertFrom-Json
           if ($first.action -ne 'installed') { throw 'PowerShell 5.1 fresh install failed' }
-          $result = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$installer" -Archive "$archive" -Sha256 "$checksum" -InstallDirectory "$installation"
+          $result = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$installer" -InstallDirectory "$installation"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if (($result | ConvertFrom-Json).action -ne 'unchanged') { throw 'PowerShell 5.1 reinstall was not unchanged' }
           & "$installation/bin/forge.cmd" doctor --json | Set-Content target/qa/windows-portable/powershell51-doctor.json
