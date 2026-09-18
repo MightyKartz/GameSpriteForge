@@ -14,7 +14,7 @@ Bring assets from your preferred creative tools, manage them in a project librar
 
 ## Install
 
-[v0.6.1](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.1) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
+[v0.6.2](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.2) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
 
 On macOS:
 
@@ -96,11 +96,13 @@ Sword is a cultivation-themed survival game prototype. Codex created its source 
 
 **New in v0.6.1:** Windows users download a single `forge-windows-installer.zip` containing the verified package, checksum and installer; extraction plus one script installs everything. Capabilities are unchanged from v0.6.0.
 
+**New in v0.6.2:** optional `border_connected` chroma matting protects enclosed details that match the key color, and `edgeColorRecovery` restores soft edge colors from a flat background. Guides now recommend clean transparent RGBA sources and `preserve_alpha` first, with matting as a reviewed fallback.
+
 Character animation remains experimental; advanced character and world-asset commands require optional source-build features. Check `forge doctor --json` for your executable's capabilities.
 
 Music and sound effects are generated in external applications. ACE-Step and Stable Audio 3 have optional read-only source-directory detection; Forge does not install or run their models. Online xAI requests use your own account and may incur charges.
 
-Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.6.1 release notes](docs/releases/v0.6.1.md) for the verified release scope.
+Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.6.2 release notes](docs/releases/v0.6.2.md) for the verified release scope.
 
 ## Documentation
 

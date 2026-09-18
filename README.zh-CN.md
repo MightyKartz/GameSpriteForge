@@ -14,7 +14,7 @@
 
 ## 安装
 
-[v0.6.1](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.1) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要原生交付和预览时，另行安装 **Godot 4.6.x 或 4.7.x**。安装包尚未签名，macOS 包尚未公证。
+[v0.6.2](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.2) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要原生交付和预览时，另行安装 **Godot 4.6.x 或 4.7.x**。安装包尚未签名，macOS 包尚未公证。
 
 macOS 安装：
 
@@ -94,11 +94,13 @@ Sword 是一款修仙题材的生存游戏原型。源图由 Codex 创作，Forg
 
 **v0.6.1 新功能：**Windows 用户只需下载一个 `forge-windows-installer.zip`，其中包含已校验的完整包、校验和与安装脚本；解压后运行一个脚本即可完成安装。功能能力与 v0.6.0 一致。
 
+**v0.6.2 新功能：**可选的 `border_connected` 抠图只处理与图片边缘连通的背景，保护被主体包围的同色细节；`edgeColorRecovery` 会从平面背景反推柔和边缘颜色。指南现在优先推荐干净透明 RGBA 源图和 `preserve_alpha`，抠图作为审核后的备选方案。
+
 角色动画仍属实验性功能；高级角色及世界资产命令需要启用可选的源码构建功能。使用 `forge doctor --json` 核对当前 CLI 的能力。
 
 音乐和音效由外部应用生成。ACE-Step 和 Stable Audio 3 提供可选的源代码目录只读检测，Forge 不安装或运行其模型。在线 xAI 请求使用你的账号，可能产生费用。
 
-技术检查不能代替美术审查、试听或许可核对，使用前请在游戏中验收。已验证的版本范围见 [v0.6.1 发布说明](docs/releases/v0.6.1.md)。
+技术检查不能代替美术审查、试听或许可核对，使用前请在游戏中验收。已验证的版本范围见 [v0.6.2 发布说明](docs/releases/v0.6.2.md)。
 
 ## 文档
 
