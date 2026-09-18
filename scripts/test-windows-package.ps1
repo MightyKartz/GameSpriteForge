@@ -56,7 +56,8 @@ try {
     $cases.Add(@{name='fresh_install_and_bundled_discovery';passed=$true;launcher=$fresh.launcher})
     # The public single-download bundle carries its nested archive, checksum and
     # installer together. Extract it, then let the installer discover both files.
-    $bundle=Join-Path $root 'forge-windows-bundle.zip'
+    # Name the bundle after the published artifact so its sidecar checksum names match.
+    $bundle=Join-Path $root 'forge-windows-installer.zip'
     $bundleStage=Join-Path $root 'bundle-staging'
     New-Item -ItemType Directory -Path $bundleStage,(Join-Path $bundleStage 'forge-windows') -Force | Out-Null
     $bundleContent=Join-Path $bundleStage 'forge-windows'
