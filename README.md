@@ -32,6 +32,16 @@ forge guide
 
 On Windows, follow the [portable installation guide](docs/releases/windows-portable.md). For an existing game, verify the upgrade before changing its pinned CLI.
 
+Download the single `forge-windows-installer.zip` from the latest release,
+extract it, and run the included installer. It discovers and verifies the bundled
+archive automatically:
+
+```powershell
+Expand-Archive .\forge-windows-installer.zip .\forge-windows
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\forge-windows\install-windows.ps1
+& "$env:LOCALAPPDATA\GameSpriteForge\bin\forge.cmd" doctor --json
+```
+
 ## What you can do
 
 | Workflow | Capabilities |

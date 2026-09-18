@@ -32,6 +32,15 @@ forge guide
 
 Windows 用户请按[便携包安装指南](docs/releases/windows-portable.md)操作。已有游戏应先验证升级，再修改固定的 CLI 版本。
 
+从最新发布页只下载一个 `forge-windows-installer.zip`，解压后运行其中的安装脚本；
+脚本会自动读取并校验同目录的完整包：
+
+```powershell
+Expand-Archive .\forge-windows-installer.zip .\forge-windows
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\forge-windows\install-windows.ps1
+& "$env:LOCALAPPDATA\GameSpriteForge\bin\forge.cmd" doctor --json
+```
+
 ## 主要功能
 
 | 工作流 | 可以完成的事情 |

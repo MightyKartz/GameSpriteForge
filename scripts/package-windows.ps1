@@ -65,8 +65,7 @@ Write-Utf8File (Join-Path $stage 'BUILD_INFO.json') (($info | ConvertTo-Json -De
 $manifest = @(Get-PayloadFiles $stage | Sort-Object Relative | ForEach-Object { (Get-Sha256 $_.Absolute)+'  '+$_.Relative })
 Write-Utf8File (Join-Path $stage 'MANIFEST.sha256') (($manifest -join "`n")+"`n")
 $null = Assert-Payload $stage
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-[IO.Compression.ZipFile]::CreateFromDirectory($stage,$zipPath,[IO.Compression.CompressionLevel]::Optimal,$false)
+Compress-WindowsPackage $stage $zipPath
 $archiveHash = Get-Sha256 $zipPath
 Write-Utf8File ($zipPath+'.sha256') ($archiveHash+'  '+[IO.Path]::GetFileName($zipPath)+"`n")
 [ordered]@{schemaVersion='1';ok=$true;archive=$zipPath;sha256=$archiveHash;payload=$stage;build=$info} | ConvertTo-Json -Depth 12
