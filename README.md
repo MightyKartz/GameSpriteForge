@@ -14,7 +14,7 @@ Bring assets from your preferred creative tools, manage them in a project librar
 
 ## Install
 
-[v0.6.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.0) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
+[v0.6.1](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.1) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
 
 On macOS:
 
@@ -94,11 +94,13 @@ Sword is a cultivation-themed survival game prototype. Codex created its source 
 
 **New in v0.6.0:** builds with `godot_version_selection` support Godot 4.7.x alongside 4.6.x, with selectable 4.7.2 and 4.6.3 downloads and matching export templates. The new default download is 4.7.2; existing project locks remain unchanged. See the [Godot workflow guide](.agents/skills/forge-use/references/godot-workflow.md).
 
+**New in v0.6.1:** Windows users download a single `forge-windows-installer.zip` containing the verified package, checksum and installer; extraction plus one script installs everything. Capabilities are unchanged from v0.6.0.
+
 Character animation remains experimental; advanced character and world-asset commands require optional source-build features. Check `forge doctor --json` for your executable's capabilities.
 
 Music and sound effects are generated in external applications. ACE-Step and Stable Audio 3 have optional read-only source-directory detection; Forge does not install or run their models. Online xAI requests use your own account and may incur charges.
 
-Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.6.0 release notes](docs/releases/v0.6.0.md) for the verified release scope.
+Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.6.1 release notes](docs/releases/v0.6.1.md) for the verified release scope.
 
 ## Documentation
 
