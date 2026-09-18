@@ -1,5 +1,5 @@
 use forge_core::matting::chroma::{
-    apply_chroma_key, process_chroma_batch, ChromaKeyMode, ChromaParameters,
+    apply_chroma_key, process_chroma_batch, ChromaBackgroundScope, ChromaKeyMode, ChromaParameters,
 };
 use image::{Rgba, RgbaImage};
 use std::path::PathBuf;
@@ -12,6 +12,8 @@ fn base_params() -> ChromaParameters {
         softness: 0,
         despill_strength: 0.0,
         halo_pixels: 0,
+        background_scope: ChromaBackgroundScope::Auto,
+        edge_color_recovery: false,
     }
 }
 
@@ -94,4 +96,56 @@ fn batch_processed_frame_dimensions_match_raw_before_normalization() {
     assert_eq!(result.frames[0].width, 7);
     assert_eq!(result.frames[0].height, 5);
     assert!(processed_dir.join("bboxes.json").exists());
+}
+
+#[test]
+fn manual_border_connected_scope_preserves_enclosed_key_colored_detail() {
+    let mut image = RgbaImage::from_pixel(32, 32, Rgba([255, 0, 255, 255]));
+    for y in 10..22 {
+        for x in 10..22 {
+            let barrier = x == 10 || x == 21 || y == 10 || y == 21;
+            image.put_pixel(
+                x,
+                y,
+                if barrier {
+                    Rgba([20, 25, 30, 255])
+                } else {
+                    Rgba([255, 0, 255, 255])
+                },
+            );
+        }
+    }
+
+    let mut params = base_params();
+    params.key_mode = ChromaKeyMode::Manual;
+    params.manual_key_color = "#FF00FF".into();
+    params.background_scope = ChromaBackgroundScope::BorderConnected;
+
+    let processed = apply_chroma_key(&image, &params).unwrap();
+
+    assert_eq!(processed.get_pixel(0, 0)[3], 0);
+    assert_eq!(processed.get_pixel(16, 16)[3], 255);
+    assert_eq!(&processed.get_pixel(16, 16).0[..3], &[255, 0, 255]);
+}
+
+#[test]
+fn edge_color_recovery_reconstructs_a_blended_foreground_edge() {
+    let mut image = RgbaImage::from_pixel(24, 24, Rgba([255, 0, 255, 255]));
+    image.put_pixel(6, 12, Rgba([128, 128, 255, 255]));
+
+    let mut params = base_params();
+    params.key_mode = ChromaKeyMode::Manual;
+    params.manual_key_color = "#FF00FF".into();
+    params.threshold = 52;
+    params.softness = 255;
+    params.background_scope = ChromaBackgroundScope::BorderConnected;
+    params.edge_color_recovery = true;
+
+    let processed = apply_chroma_key(&image, &params).unwrap();
+    let edge = processed.get_pixel(6, 12);
+
+    assert!(edge[3] > 120 && edge[3] < 135, "{edge:?}");
+    assert!(edge[0] < 8, "{edge:?}");
+    assert!(edge[1] > 247, "{edge:?}");
+    assert_eq!(edge[2], 255);
 }

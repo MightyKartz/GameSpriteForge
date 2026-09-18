@@ -1,5 +1,5 @@
 use forge_core::{
-    matting::{ChromaKeyMode, ChromaParameters},
+    matting::{ChromaBackgroundScope, ChromaKeyMode, ChromaParameters},
     source_matte::{matte_png, SourceMatteRequest},
 };
 use image::{Rgb, RgbImage, Rgba, RgbaImage};
@@ -18,6 +18,8 @@ fn request(root: &Path) -> SourceMatteRequest {
             softness: 100,
             despill_strength: 0.0,
             halo_pixels: 0,
+            background_scope: ChromaBackgroundScope::Auto,
+            edge_color_recovery: false,
         },
     }
 }
@@ -115,4 +117,39 @@ fn existing_output_is_never_replaced() {
         .unwrap();
     assert!(matte_png(&request).is_err());
     assert_eq!(fs::read(&request.output).unwrap(), b"retained output");
+}
+
+#[test]
+fn source_matte_report_records_border_connected_scope() {
+    let root = tempfile::tempdir().unwrap();
+    let mut request = request(root.path());
+    request.parameters.background_scope = ChromaBackgroundScope::BorderConnected;
+    let mut source = RgbImage::from_pixel(17, 17, Rgb([255, 255, 255]));
+    for y in 5..12 {
+        for x in 5..12 {
+            let barrier = x == 5 || x == 11 || y == 5 || y == 11;
+            source.put_pixel(
+                x,
+                y,
+                if barrier {
+                    Rgb([20, 25, 30])
+                } else {
+                    Rgb([255, 255, 255])
+                },
+            );
+        }
+    }
+    source.save(&request.input).unwrap();
+
+    let report = matte_png(&request).unwrap();
+    let output = image::open(&request.output).unwrap().to_rgba8();
+
+    assert_eq!(output.get_pixel(0, 0)[3], 0);
+    assert_eq!(output.get_pixel(8, 8)[3], 255);
+    assert_eq!(
+        report.parameters.background_scope,
+        ChromaBackgroundScope::BorderConnected
+    );
+    assert!(!report.parameters.edge_color_recovery);
+    assert!(report.visible_pixels > 0);
 }

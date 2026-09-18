@@ -68,6 +68,18 @@ def check(binary, root):
     matte_hash = sha(matte)
     call(["source", "matte", "--request", matte_path], 1)
     assert sha(matte) == matte_hash
+
+    edge_request = dict(matte_request)
+    edge_request["output"] = "derived/edge-matte.png"
+    edge_request["parameters"] = dict(matte_request["parameters"],
+                                      backgroundScope="border_connected",
+                                      edgeColorRecovery=True)
+    edge_path = specs / "edge-matte-request.json"
+    edge_path.write_text(json.dumps(edge_request), encoding="utf-8")
+    edge_report = call(["source", "matte", "--request", edge_path])
+    assert edge_report["parameters"]["backgroundScope"] == "border_connected"
+    assert edge_report["parameters"]["edgeColorRecovery"] is True
+    assert (specs / "derived/edge-matte.png").is_file()
     matte_request["output"] = "sources/original.png"
     matte_path.write_text(json.dumps(matte_request), encoding="utf-8")
     call(["source", "matte", "--request", matte_path], 1)
@@ -109,7 +121,8 @@ def check(binary, root):
     assert helper["anchor"] == {"type": "feet", "x": 32.0, "y": 60.0}
     assert sha(original) == original_hash and sha(matte) == matte_hash
     summary = {"ok": True, "checks": ["request_relative_matte_paths", "new_output_only", "source_unchanged",
-               "soft_alpha_and_hash_evidence", "matte_without_job_stores", "native_rgb_rgba_rectangles",
+               "soft_alpha_and_hash_evidence", "optional_connected_edge_recovery_request",
+               "matte_without_job_stores", "native_rgb_rgba_rectangles",
                "native_png_bytes_and_origin", "legacy_normalization", "zero_provider_estimates"],
                "nativeJobId": native_job["job_id"], "nativePack": str(native_pack)}
     (root / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")

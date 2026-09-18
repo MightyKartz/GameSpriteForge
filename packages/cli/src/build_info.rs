@@ -50,6 +50,8 @@ pub const CAPABILITIES: &[&str] = &[
     "local_static_import",
     "static_preserve_source_canvas",
     "single_png_chroma_matting",
+    "connected_background_matting",
+    "edge_color_recovery",
     "layered_pack_v1",
     "layered_transform_opacity_tracks",
     "godot_unified_playback",

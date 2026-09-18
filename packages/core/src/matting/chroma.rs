@@ -26,6 +26,20 @@ pub enum ChromaKeyMode {
     Manual,
 }
 
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ChromaBackgroundScope {
+    /// Preserve the existing behavior: auto-corners also clears the connected
+    /// background, while a manual key uses the global color distance.
+    #[default]
+    Auto,
+    /// Remove every pixel selected by the color distance, wherever it occurs.
+    Global,
+    /// Remove only the key-colored region connected to the image border. This
+    /// protects enclosed foreground details that happen to match the key.
+    BorderConnected,
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChromaParameters {
@@ -35,6 +49,10 @@ pub struct ChromaParameters {
     pub softness: u8,
     pub despill_strength: f32,
     pub halo_pixels: u8,
+    #[serde(default, skip_serializing_if = "is_auto_background_scope")]
+    pub background_scope: ChromaBackgroundScope,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub edge_color_recovery: bool,
 }
 
 impl Default for ChromaParameters {
@@ -46,6 +64,8 @@ impl Default for ChromaParameters {
             softness: 18,
             despill_strength: 0.5,
             halo_pixels: 0,
+            background_scope: ChromaBackgroundScope::Auto,
+            edge_color_recovery: false,
         }
     }
 }
@@ -87,11 +107,22 @@ pub fn apply_chroma_key(
 ) -> MattingResult<RgbaImage> {
     let params = sanitized_parameters(parameters);
     let key = key_color(image, &params)?;
+    let use_border_scope = params.background_scope == ChromaBackgroundScope::BorderConnected;
+    let connected = use_border_scope.then(|| border_connected_background(image, key, &params));
     let mut keyed = ImageBuffer::from_fn(image.width(), image.height(), |x, y| {
-        let pixel = image.get_pixel(x, y);
-        matte_pixel(*pixel, key, &params)
+        let pixel = *image.get_pixel(x, y);
+        if use_border_scope
+            && !connected
+                .as_ref()
+                .is_some_and(|mask| mask[y as usize * image.width() as usize + x as usize])
+        {
+            return pixel;
+        }
+        matte_pixel(pixel, key, &params)
     });
-    if params.key_mode == ChromaKeyMode::AutoCorners {
+    if params.key_mode == ChromaKeyMode::AutoCorners
+        && params.background_scope == ChromaBackgroundScope::Auto
+    {
         clear_border_connected_chroma(image, &mut keyed, key, &params);
     }
 
@@ -100,6 +131,72 @@ pub fn apply_chroma_key(
     } else {
         Ok(apply_halo_cleanup(&keyed, params.halo_pixels.min(4)))
     }
+}
+
+fn border_connected_background(
+    source: &RgbaImage,
+    key: [u8; 3],
+    parameters: &ChromaParameters,
+) -> Vec<bool> {
+    let width = source.width() as usize;
+    let height = source.height() as usize;
+    if width == 0 || height == 0 {
+        return Vec::new();
+    }
+    let mut background = vec![false; width * height];
+    let mut queue = VecDeque::new();
+    let mut enqueue = |x: usize, y: usize, queue: &mut VecDeque<usize>| {
+        let index = y * width + x;
+        if !background[index]
+            && strict_border_chroma_candidate(
+                *source.get_pixel(x as u32, y as u32),
+                key,
+                parameters,
+            )
+        {
+            background[index] = true;
+            queue.push_back(index);
+        }
+    };
+    for x in 0..width {
+        enqueue(x, 0, &mut queue);
+        if height > 1 {
+            enqueue(x, height - 1, &mut queue);
+        }
+    }
+    for y in 0..height {
+        enqueue(0, y, &mut queue);
+        if width > 1 {
+            enqueue(width - 1, y, &mut queue);
+        }
+    }
+    while let Some(index) = queue.pop_front() {
+        let x = index % width;
+        let y = index / width;
+        for (neighbor_x, neighbor_y) in [
+            (x.wrapping_sub(1), y),
+            (x + 1, y),
+            (x, y.wrapping_sub(1)),
+            (x, y + 1),
+        ] {
+            if neighbor_x >= width || neighbor_y >= height {
+                continue;
+            }
+            let neighbor = neighbor_y * width + neighbor_x;
+            if background[neighbor]
+                || !strict_border_chroma_candidate(
+                    *source.get_pixel(neighbor_x as u32, neighbor_y as u32),
+                    key,
+                    parameters,
+                )
+            {
+                continue;
+            }
+            background[neighbor] = true;
+            queue.push_back(neighbor);
+        }
+    }
+    background
 }
 
 fn clear_border_connected_chroma(
@@ -163,6 +260,16 @@ fn clear_border_connected_chroma(
             queue.push_back(neighbor);
         }
     }
+}
+
+fn strict_border_chroma_candidate(
+    pixel: Rgba<u8>,
+    key: [u8; 3],
+    parameters: &ChromaParameters,
+) -> bool {
+    pixel[3] == 0
+        || color_distance([pixel[0], pixel[1], pixel[2]], key)
+            <= parameters.threshold as f32 + parameters.softness as f32 * 2.0
 }
 
 fn border_chroma_candidate(pixel: Rgba<u8>, key: [u8; 3], parameters: &ChromaParameters) -> bool {
@@ -296,6 +403,14 @@ pub fn alpha_bbox(image: &RgbaImage) -> Option<AlphaBBox> {
     })
 }
 
+fn is_auto_background_scope(scope: &ChromaBackgroundScope) -> bool {
+    matches!(scope, ChromaBackgroundScope::Auto)
+}
+
+fn is_false(value: &bool) -> bool {
+    !*value
+}
+
 fn sanitized_parameters(parameters: &ChromaParameters) -> ChromaParameters {
     ChromaParameters {
         key_mode: parameters.key_mode.clone(),
@@ -304,6 +419,8 @@ fn sanitized_parameters(parameters: &ChromaParameters) -> ChromaParameters {
         softness: parameters.softness,
         despill_strength: parameters.despill_strength.clamp(0.0, 2.0),
         halo_pixels: parameters.halo_pixels.min(4),
+        background_scope: parameters.background_scope.clone(),
+        edge_color_recovery: parameters.edge_color_recovery,
     }
 }
 
@@ -369,7 +486,9 @@ fn matte_pixel(pixel: Rgba<u8>, key: [u8; 3], parameters: &ChromaParameters) -> 
     let alpha = (pixel[3] as f32 * alpha_factor).round().clamp(0.0, 255.0) as u8;
     let mut output = Rgba([pixel[0], pixel[1], pixel[2], alpha]);
 
-    if alpha > 0 && parameters.despill_strength > 0.0 {
+    if alpha > 0 && parameters.edge_color_recovery {
+        recover_edge_color(&mut output, key, alpha_factor);
+    } else if alpha > 0 && parameters.despill_strength > 0.0 {
         despill(&mut output, key, parameters.despill_strength, alpha_factor);
     }
 
@@ -381,6 +500,19 @@ fn color_distance(color: [u8; 3], key: [u8; 3]) -> f32 {
     let green = color[1] as f32 - key[1] as f32;
     let blue = color[2] as f32 - key[2] as f32;
     (red * red + green * green + blue * blue).sqrt()
+}
+
+fn recover_edge_color(pixel: &mut Rgba<u8>, key: [u8; 3], alpha_factor: f32) {
+    // Chroma edge pixels are approximately C = aF + (1-a)K. Recover F only
+    // where enough foreground remains; very low coverage would amplify noise.
+    if !(0.08..1.0).contains(&alpha_factor) {
+        return;
+    }
+    for channel in 0..3 {
+        let recovered =
+            (pixel[channel] as f32 - (1.0 - alpha_factor) * key[channel] as f32) / alpha_factor;
+        pixel[channel] = recovered.round().clamp(0.0, 255.0) as u8;
+    }
 }
 
 fn despill(pixel: &mut Rgba<u8>, key: [u8; 3], strength: f32, alpha_factor: f32) {

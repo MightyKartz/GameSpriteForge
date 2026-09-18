@@ -125,7 +125,8 @@ Run `"$FORGE_BIN" source matte --request /absolute/matte.json --json` with:
   "output":"derived/portrait-matte.png",
   "parameters":{
     "keyMode":"manual", "manualKeyColor":"#FFFFFF",
-    "threshold":24, "softness":32, "despillStrength":0.0, "haloPixels":0
+    "threshold":24, "softness":32, "despillStrength":0.0, "haloPixels":0,
+    "backgroundScope":"border_connected", "edgeColorRecovery":true
   }
 }
 ```
@@ -136,7 +137,13 @@ dimensions and coordinates, applies the local chroma algorithm, and clears RGB
 where alpha becomes zero. Inputs are single still 8-bit RGB/RGBA PNGs (up to
 128 MiB and 33,554,432 pixels). Threshold/softness are 0–255, despill strength
 0–2, and halo erosion 0–4 pixels. Omitted parameters select `auto_corners` with
-threshold 48, softness 18, despill 0.5, and halo 0.
+threshold 48, softness 18, despill 0.5, and halo 0. Optional
+`backgroundScope:"border_connected"` removes only the key-colored region connected
+to the image border, protecting enclosed foreground details that match the key.
+`edgeColorRecovery:true` estimates the original RGB of soft edge pixels from the
+key color instead of only reducing the key's dominant channel. Use recovery for
+reviewed flat-background edges; it does not understand artwork and can amplify
+noise when the input is not a clean color-key composite.
 
 Matting has no Provider calls or Job store. Retain its report with input/output
 hashes, dimensions, parameters, resolved key color, alpha statistics, and
