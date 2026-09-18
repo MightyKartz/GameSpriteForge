@@ -161,6 +161,8 @@ jobs:
           path: |
             target/windows-dist/*.zip
             target/windows-dist/*.sha256
+            target/windows-dist/install-windows.ps1
+            target/windows-dist/windows-package-common.ps1
             target/qa/windows-portable/summary.json
             target/qa/windows-historical-upgrade/summary.json
             target/qa/windows-portable/powershell51-doctor.json

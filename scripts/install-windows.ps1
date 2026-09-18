@@ -13,20 +13,15 @@ Set-StrictMode -Version Latest
 $scriptRoot = $PSScriptRoot
 if (!$scriptRoot) { $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path }
 $packageCommon = Join-Path $scriptRoot 'windows-package-common.ps1'
-if (!(Test-Path -LiteralPath $packageCommon -PathType Leaf)) {
-    $candidate = Get-ChildItem -LiteralPath $scriptRoot -Directory | Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'windows-package-common.ps1') -PathType Leaf } | Select-Object -First 1
-    if ($candidate) { $scriptRoot = $candidate.FullName }
-}
-. (Join-Path $scriptRoot 'windows-package-common.ps1')
+if (!(Test-Path -LiteralPath $packageCommon -PathType Leaf)) { throw "Missing installer support script: $packageCommon" }
+. $packageCommon
 $archivePath = $null
 if ($Archive) {
     $archivePath = (Resolve-Path -LiteralPath $Archive).Path
 } else {
-    $selected = Get-ChildItem -LiteralPath $scriptRoot -Filter 'forge-x86_64-pc-windows-msvc.zip' -File | Select-Object -First 1
-    if (!$selected) {
-        $selected = Get-ChildItem -LiteralPath $scriptRoot -Directory | ForEach-Object { Get-ChildItem -LiteralPath $_.FullName -Filter 'forge-x86_64-pc-windows-msvc.zip' -File -ErrorAction SilentlyContinue } | Select-Object -First 1
-    }
-    if (!$selected) { throw 'No archive supplied; place the verified forge-x86_64-pc-windows-msvc.zip beside the installer' }
+    $selected = @(Get-ChildItem -LiteralPath $scriptRoot -Filter 'forge-x86_64-pc-windows-msvc.zip' -File)
+    if ($selected.Count -eq 0) { throw 'No archive supplied; place the verified forge-x86_64-pc-windows-msvc.zip beside the installer' }
+    if ($selected.Count -gt 1) { throw 'Multiple package archives beside the installer; pass -Archive explicitly' }
     $archivePath = $selected.FullName
 }
 if (!$Sha256) {
