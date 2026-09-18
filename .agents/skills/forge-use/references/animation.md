@@ -45,12 +45,19 @@ independently crop/recenter aligned frames; that can erase intended motion.
 All actions must share the same frame canvas and anchor, and margins must be zero.
 Fractional anchors require `pixelSnap:false`.
 
-When explicit chroma matting is needed, supported builds accept optional
-`backgroundScope:"border_connected"` and `edgeColorRecovery:true` inside the
-request's matting parameters. Border-connected mode protects enclosed details
-that match the key, and edge recovery estimates soft-edge RGB from that key.
-Review a contact sheet on dark and light backgrounds; neither option approves
-animation quality.
+Prefer a clean transparent RGBA sheet over a color-keyed source. Keep every
+visible and faint glow pixel inside its declared cell, inspect the grid with
+`source inspect --frame-width W --frame-height H`, and use
+`matting:{"mode":"preserve_alpha"}` so the original soft edges survive. If an
+existing sheet needs more room, expand the canvas or move each frame before
+planning; do not erase faint pixels just to satisfy the boundary gate.
+
+When explicit chroma matting is needed as a fallback, supported builds accept
+optional `backgroundScope:"border_connected"` and `edgeColorRecovery:true`
+inside the request's matting parameters. Border-connected mode protects enclosed
+details that match the key, and edge recovery estimates soft-edge RGB from that
+key. Review a contact sheet on dark and light backgrounds; neither option
+approves animation quality.
 
 For multiple actions use `plan prepare-character`, `schemaVersion:"2"`,
 `metadata.defaultAnimation`, and at least two `animations[]` entries instead of

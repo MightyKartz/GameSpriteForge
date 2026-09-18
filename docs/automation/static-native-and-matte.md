@@ -58,7 +58,9 @@ or convert static assets into a rigged/layered scene.
 ## Remove a flat background from one PNG
 
 `source matte` runs the existing local chroma algorithm on one still PNG and
-writes a new RGBA PNG. Save a request such as:
+writes a new RGBA PNG. Prefer a clean transparent source when available; matting
+is a fallback for flat color-key backgrounds, not a substitute for preserving
+reviewed alpha. Save a request such as:
 
 ```json
 {

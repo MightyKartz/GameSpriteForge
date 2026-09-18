@@ -12,15 +12,17 @@ SHA-256, source/tool identity and rights information. Do not invent a model name
 Forge Provider or Style Lock in provenance. Image generation may consume Codex
 usage; local Forge preparation should report **zero Forge Provider requests**.
 
-Prefer one transparent PNG per item. Use `icon_set` for centered UI items and
-`prop_set` for objects with a ground anchor; a still character can be a prop.
+Prefer one clean transparent PNG per item. Use `icon_set` for centered UI items
+and `prop_set` for objects with a ground anchor; a still character can be a prop.
 For an existing collection sheet, preserve the sheet and record how each separate
 item source was derived. Do not treat unrelated props as consecutive frames.
-Inspect actual transparency, subject edges and framing before import. Forge
-normalizes alpha-bearing PNGs; it does not remove an opaque background or apply
-chroma-key matting in the default static workflow. Source builds can explicitly
-remove a flat background with `source matte`, or retain a reviewed rectangular
-RGB/RGBA canvas with `canvasPolicy:"preserve_source"`, as described below.
+Inspect actual transparency, subject edges and framing before import. Keep faint
+glow inside the intended canvas; move or expand a source rather than deleting
+soft pixels just to pass inspection. Forge normalizes alpha-bearing PNGs; it
+does not remove an opaque background or apply chroma-key matting in the default
+static workflow. Source builds can explicitly remove a flat background with
+`source matte` as a fallback, or retain a reviewed rectangular RGB/RGBA canvas
+with `canvasPolicy:"preserve_source"`, as described below.
 
 ## Prepare a request
 

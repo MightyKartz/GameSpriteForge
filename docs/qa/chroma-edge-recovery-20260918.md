@@ -38,3 +38,20 @@ old request JSON remain unchanged.
 This was a macOS local synthetic/real-image check, not Windows CI evidence and
 not a license review. Border-connected removal is suitable for flat color-key
 backgrounds, not semantic segmentation or complex photographic backgrounds.
+
+## Follow-up: transparent source path
+
+Codex image generation was unavailable during this follow-up because the local
+usage limit returned HTTP 429, so the QA source was derived locally without
+pretending a new model generation occurred. Each original 627×627 transparent
+frame was copied pixel-exactly into a 700×700 cell with 37 px of padding on all
+sides. No resampling, matting, color changes or Provider requests occurred.
+
+The expanded sheet (`sha256
+9b280b743b9320dda6c735a1443758c30f37bedd25e33c3922c43c3aca025ebd`) passed
+`source inspect` with no alpha-1 or alpha-32 cell-edge contact. A `preserve_alpha`
+Forge animation Job succeeded with zero Provider requests, `game_ready`,
+`cellBoundarySafe:true`, and all four exported Pack frames decoded pixel-exactly
+to the expanded source. This confirms that preserving a clean transparent source
+is the highest-fidelity path; chroma matting and edge recovery remain fallbacks
+for flat-background inputs.
