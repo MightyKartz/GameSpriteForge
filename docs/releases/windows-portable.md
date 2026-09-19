@@ -100,7 +100,9 @@ cargo build --locked --release -p forge-cli --no-default-features
 The package test calls the installed public launcher with external helper search
 disabled. It checks fresh installation, unchanged reinstall, bad-checksum refusal,
 upgrade activation with retained backups, compiled identity and bundled helper
-paths. It also runs real MPEG-4 MP4 encoding, PNG extraction and GIF creation/probing.
+paths. It also runs real H.264 MP4 encoding with Media Foundation, PNG extraction
+and GIF creation/probing. The installed-launcher preview test additionally checks
+decoded frames, timing, cache reuse, source integrity and PNG resource review.
 Pass `-PreviousArchive` for an actual old-binary upgrade. In the absence of a prior
 Windows package, the test labels its older packaging-revision fixture explicitly:
 the compiled version/commit are unchanged, and no older CLI compatibility is claimed.
@@ -126,7 +128,12 @@ libraries and nonfree components are not enabled. Networking is disabled in the
 helpers; Forge supplies local downloaded media. External x86 assembly is disabled
 to avoid an additional assembler dependency; this can reduce video performance.
 The normal built-in codecs and filters remain enabled, including native H.264
-decoding, PNG and GIF processing. x264/x265 encoding is not included.
+decoding, PNG and GIF processing. `--enable-mediafoundation` explicitly enables
+Windows H.264 encoding despite disabled autodetection. x264/x265 encoding is not
+included. Earlier helper builds lack this encoder. The native CI gate must use
+the newly built helpers, then repeat export through the installed public launcher.
+Windows must provide a working Media Foundation encoder; missing OS components
+or unusable encoders produce an error, without automatic installation.
 
 The recipe uses relative include/library paths, disables PE linker timestamps,
 and fixes `SOURCE_DATE_EPOCH=0` so GNU strip does not reinsert the current time.

@@ -21,7 +21,8 @@ Browser review must use original PNGs; shareable video is a separate derivative.
 5. Verify synthetic alpha, moving silhouettes, nonuniform timing, reordered
    frames, input/output integrity, cache invalidation and malicious metadata.
    Exercise actual FFmpeg, offline browser playback and Godot 4.7.2 locally;
-   use existing macOS/Windows CI for portable Rust contracts.
+   use existing macOS/Windows CI for portable Rust contracts. Native Windows
+   H.264 acceptance uses freshly built portable helpers and the installed launcher.
 6. Update English/Chinese user guidance and record reproducible QA evidence.
    Push one reviewable PR; do not merge or release in this task.
 
@@ -43,3 +44,8 @@ are not silently regenerated; the new PNG player works with legacy flat Packs.
 MP4 export requires an available H.264 encoder (platform encoder or libx264 in
 the user's FFmpeg); missing tools/encoders must fail clearly, never relabel GIF
 bytes or install/download software automatically.
+
+Verification found historical Windows helpers disable autodetection and omit
+H.264 encoding. Explicitly enable FFmpeg's Windows Media Foundation wrapper in
+the pinned helper recipe, preserve the existing no-GPL/no-nonfree build flags,
+and test encoding before packaging and again through the public launcher.

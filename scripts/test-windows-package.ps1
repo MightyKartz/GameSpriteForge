@@ -154,8 +154,8 @@ try {
     # Use helpers reported by the launcher under the empty external search path.
     $media=Join-Path $root 'media smoke'
     New-Item -ItemType Directory -Path $media | Out-Null
-    & $doctor.ffmpegPath -hide_banner -loglevel error -f lavfi -i 'testsrc2=size=64x64:rate=8' -t 1 -c:v mpeg4 -y (Join-Path $media 'sample.mp4')
-    if ($LASTEXITCODE -ne 0) { throw 'Bundled FFmpeg MP4 encoding failed' }
+    & $doctor.ffmpegPath -hide_banner -loglevel error -f lavfi -i 'testsrc2=size=64x64:rate=8' -t 1 -c:v h264_mf -pix_fmt yuv420p -y (Join-Path $media 'sample.mp4')
+    if ($LASTEXITCODE -ne 0) { throw 'Bundled FFmpeg H.264/Media Foundation encoding failed' }
     & $doctor.ffmpegPath -hide_banner -loglevel error -i (Join-Path $media 'sample.mp4') -vf 'select=not(mod(n\,2))' -vsync 0 -y (Join-Path $media 'frame-%02d.png')
     if ($LASTEXITCODE -ne 0 -or @(Get-ChildItem -LiteralPath $media -Filter 'frame-*.png').Count -ne 4) { throw 'Bundled FFmpeg frame extraction failed' }
     & $doctor.ffmpegPath -hide_banner -loglevel error -i (Join-Path $media 'sample.mp4') -vf fps=8 -y (Join-Path $media 'preview.gif')

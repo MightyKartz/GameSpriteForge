@@ -24,6 +24,28 @@ had old durations; the fixture now updates all timing declarations consistently.
 No Pack validator was weakened. Native Windows acceptance must come from the
 latest PR CI run, not the earlier failed jobs.
 
+On `6301a43`, Windows reached the native MP4 test and exposed a real packaging
+gap: the published helpers have no supported H.264 encoder. The pinned Windows
+recipe now explicitly enables Media Foundation (autodetection stays disabled),
+checks `h264_mf` availability and encodes H.264 during package smoke checks.
+Native MP4/cache tests move to the Windows portable workflow using those freshly
+built helpers. An additional installed-launcher test checks decoded pixels,
+nonuniform timing, composed GIF disposal, byte-identical PNG review, CSP hashes,
+cache reuse, collision rejection and unchanged Pack/catalog inventories. macOS
+keeps the native test against published helpers. Windows CI results remain the
+acceptance gate for this correction; encoder listing alone is insufficient.
+
+The follow-up local CLI test passed on clean `6301a43`, default features empty,
+debug `aarch64-apple-darwin`, SHA-256
+`75c47b59a66478fbbe8d0fb7d0ca6ac2166e14722dfa3ebfb6cdc5bacd404464`.
+That build also repeated all five Godot 4.7.2 delivery cases and exported the
+actual lightning Pack with published macOS helpers. Headless Chrome loaded a
+deliberately CRLF-encoded review page with three players, including legacy and
+multi-action Packs; animation selection, stepping and background selection worked
+without CSP errors. The only console error was a missing favicon. Safari could
+not be repeated during this follow-up because the local desktop was locked;
+the Safari observations below belong to the initial implementation verification.
+
 ## Verified build identity
 
 The final CLI smoke check used commit
@@ -69,8 +91,8 @@ invalidation and corrupt-cache rejection. The native test is explicitly ignored
 in ordinary Rust runs and explicitly executed after media-helper setup in CI.
 
 MP4 integration passed with both local libx264 and the v0.6.2 macOS package's
-LGPL FFmpeg / `h264_videotoolbox`. No encoder was downloaded or added to the
-release bundle. The helper SHA-256 was
+LGPL FFmpeg / `h264_videotoolbox`, without changing the macOS helper bundle.
+The helper SHA-256 was
 `264ae41bfffc9aede23a8ec74aa05f063aae6a0c0bede34d7593cb44d33b289e`.
 Hardware encoder outputs need not be byte-identical across fresh renders; each
 cached output is verified against its own recorded digest.
@@ -105,9 +127,11 @@ on a 60 fps grid. Additive/multiply blending and layered motion require Godot.
 
 ## Remaining acceptance
 
-Windows was not run locally. The existing Godot workflow now executes preview
-Rust tests and the native MP4 test on macOS and Windows, using published media
-helpers. Consult the PR's checks for actual Windows results before merging.
+Windows was not run locally. The Godot workflow executes preview Rust contracts
+on macOS and Windows, and native MP4 with published macOS helpers. Windows native
+MP4 and installed-launcher acceptance run in the portable packaging workflow
+against the updated helper build. Consult the PR's checks for actual results
+before merging.
 No released package, existing Pack schema, installed consumer or public release
 was changed by this task. GIF removal from the Pack format is intentionally a
 separate format-version migration.
