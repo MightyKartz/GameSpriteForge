@@ -330,6 +330,21 @@ enum AssetCommand {
 
 #[derive(Subcommand)]
 enum PackCommand {
+    /// Export a composited H.264 preview from original PNG frames, without modifying the Pack.
+    Preview {
+        #[arg(long)]
+        path: PathBuf,
+        #[arg(long)]
+        out: PathBuf,
+        #[arg(long)]
+        animation: Option<String>,
+        #[arg(long, default_value = "dark", value_parser = ["dark", "light", "checkerboard"])]
+        background: String,
+        #[arg(long)]
+        cache_dir: Option<PathBuf>,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
     Validate {
         #[arg(long)]
         path: PathBuf,
@@ -1117,6 +1132,31 @@ fn run() -> Result<(), (String, String)> {
             }
         },
         Command::Pack { command } => match command {
+            PackCommand::Preview {
+                path,
+                out,
+                animation,
+                background,
+                cache_dir,
+                ..
+            } => {
+                use forge_core::animation_preview::{export_mp4, Background};
+                let background = match background.as_str() {
+                    "light" => Background::Light,
+                    "checkerboard" => Background::Checkerboard,
+                    _ => Background::Dark,
+                };
+                let report = export_mp4(
+                    &path,
+                    &out,
+                    animation.as_deref(),
+                    background,
+                    cache_dir.as_deref(),
+                    &Default::default(),
+                )
+                .map_err(display_error)?;
+                success(&report)
+            }
             PackCommand::Validate { path, .. } => {
                 forge_pack::validate_pack_layout(&path).map_err(display_error)?;
                 success(&serde_json::json!({ "path": path, "valid": true }))

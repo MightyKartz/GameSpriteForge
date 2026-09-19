@@ -57,7 +57,12 @@ forge asset lock --project ./library --id music.battle --revision REVISION --out
 ```
 
 Open the generated `index.html` locally. The page is read-only and copies existing
-media without altering GIF timing or audio bytes. Unsupported/missing previews
+media without altering source files. With `project_asset_png_animation_preview`,
+flat animation/character Packs play their original PNGs using native frame order
+and durations, with play/pause, frame stepping and background selection. This
+also works with older Packs whose GIFs have alpha or disposal artifacts. Browser
+scheduling may vary; Godot remains the reference for engine blend modes.
+Other media retain their existing bytes. Unsupported/missing previews
 are reported. Choose `technical`, `visual`, `auditory` or `license` review domains;
 user assertions and their retained evidence bind to exactly one content version.
 New versions do not inherit approval. `asset status --state candidate|discarded`

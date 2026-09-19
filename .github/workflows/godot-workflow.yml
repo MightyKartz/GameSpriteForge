@@ -44,6 +44,7 @@ jobs:
           cargo fmt --all -- --check
           cargo clippy --locked --workspace --all-targets -- -D warnings
           cargo test --locked -p core --lib godot
+          cargo test --locked -p core --test animation_preview_tests --test animation_pixel_quality_tests --test animation_delivery_tests --test asset_library_review_tests
           cargo test --locked -p forge-cli --bin forge
           cargo build --locked -p forge-cli --no-default-features
           python - <<'PYTHON'
@@ -78,6 +79,8 @@ jobs:
                   path = tools/filename; path.write_bytes(payload); path.chmod(0o755)
           with open(os.environ['GITHUB_PATH'], 'a') as output: output.write(str(tools)+'\n')
           PY
+      - name: Verify native MP4 encoding and preview cache
+        run: cargo test --locked -p core --test animation_preview_tests native_mp4 -- --ignored
       - name: Verify official managed download and templates
         run: |
           "$FORGE_BIN" setup godot --download --version "$GODOT_VERSION" --templates --json > target/setup.json

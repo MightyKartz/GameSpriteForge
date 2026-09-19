@@ -52,6 +52,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\forge-windows\install-
 | **Audio** | Import WAV music, sound effects and ambience; trim, adjust gain, add fades and prepare loops. |
 | **Godot delivery** | Validate Packs and install native textures, scenes, animations and audio streams. Lock chosen versions, retain delivery receipts and roll back failed updates. |
 
+**Development build preview update:** flat animation Packs can be reviewed from
+original PNGs with frame stepping and background selection, or exported on demand
+as H.264 MP4. This is not included in the v0.6.2 downloads above; check
+`doctor --json` for `pack_mp4_preview`. See the [preview guide](.agents/skills/forge-use/references/animation.md#sharing-a-video-preview)
+for commands and timing/transparency limits.
+
 ### Audio delivery
 
 Forge prepares local WAV files and delivers native audio resources to Godot. This example plays a synthesized three-note chime in a Godot demonstration scene.

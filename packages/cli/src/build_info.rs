@@ -71,6 +71,8 @@ pub const CAPABILITIES: &[&str] = &[
     "project_image_contract_verification",
     "effect_quality_profile",
     "preview_timing_diagnostics",
+    "pack_mp4_preview",
+    "project_asset_png_animation_preview",
     "delivery_receipts",
     "godot_install_verification",
     "transactional_godot_install",

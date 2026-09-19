@@ -213,7 +213,11 @@ forge asset annotate --project ./library --id hero --name "Main hero" --tag play
 
 Preview writes a new directory containing `index.html`, a small report and copies
 of supported existing media. Open `index.html` in a local browser. No server,
-external service, script, automatic browser launch or Provider is involved. PNG,
+external service, automatic browser launch or Provider is involved. A fixed,
+CSP-hashed local script plays flat animation/character Packs directly from copied
+PNGs, with native frame indices/durations, animation selection, pause, stepping
+and background selection. Metadata is escaped and parsed only as data. Browser
+scheduling may vary; engine blend modes require Godot review. Other PNG,
 JPEG, GIF, WebP and browser-supported WAV/MP3/OGG/FLAC/M4A/MP4/WebM use native image,
 audio or video elements; unsupported formats show an explicit message. Existing
 GIF bytes/timing and audio bytes remain unchanged. Pack previews include available

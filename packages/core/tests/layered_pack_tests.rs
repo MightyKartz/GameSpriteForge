@@ -255,6 +255,9 @@ fn output_is_no_clobber_and_resource_generation_is_deterministic() {
             json!(["Updated explanatory text does not change the structural contract."]);
     });
     forge_pack::validate_pack_layout(&first.pack_dir).unwrap();
+    assert!(forge_core::animation_preview::read(&first.pack_dir)
+        .unwrap()
+        .is_none());
     let sentinel = first.pack_dir.join("user-note.txt");
     fs::write(&sentinel, "do not overwrite").unwrap();
     assert!(prepare_layered_pack(&request, &first.pack_dir).is_err());
