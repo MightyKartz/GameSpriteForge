@@ -1,3 +1,4 @@
+pub mod animation_preview;
 pub mod asset_project;
 pub mod audio;
 pub mod automation;

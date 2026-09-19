@@ -134,6 +134,9 @@ fn prepares_audio_pack_with_trim_fades_resampling_fractional_crossfade_and_prove
     let result = prepare_audio(&input, &output).unwrap();
     assert_eq!(result.pack_path, fs::canonicalize(&output).unwrap());
     forge_pack::validate_pack_layout(&output).unwrap();
+    assert!(forge_core::animation_preview::read(&output)
+        .unwrap()
+        .is_none());
     let manifest = read_audio_manifest(&output).unwrap();
     let audio = &manifest.items[0].audio;
     assert!((audio.duration_seconds - 1.753).abs() < 2.0 / 44100.0);

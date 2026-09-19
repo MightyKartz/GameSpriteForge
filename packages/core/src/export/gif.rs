@@ -1,4 +1,4 @@
-use gif::{Encoder, Frame, Repeat};
+use gif::{DisposalMethod, Encoder, Frame, Repeat};
 use image::{Rgba, RgbaImage};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
@@ -70,7 +70,24 @@ pub fn build_preview_gif_with_timing(
         width: first.width(),
         height: first.height(),
     })?;
-    let delay = (100.0 / params.fps).round().max(1.0) as u16;
+    if native_frame_durations_ms.is_some_and(|d| d.len() != frame_paths.len() || d.contains(&0)) {
+        return Err(ExportError::InvalidParameter(
+            "frame durations must contain one positive duration per frame".into(),
+        ));
+    }
+    let delays = (0..frame_paths.len())
+        .map(|i| {
+            let ms = native_frame_durations_ms
+                .map_or(1000.0 / f64::from(params.fps), |d| f64::from(d[i]));
+            let units = (ms / 10.0).round().max(1.0);
+            if units > f64::from(u16::MAX) {
+                return Err(ExportError::InvalidParameter(
+                    "GIF frame duration exceeds 655350 ms".into(),
+                ));
+            }
+            Ok(units as u16)
+        })
+        .collect::<Result<Vec<_>, ExportError>>()?;
 
     if let Some(parent) = output_path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -81,19 +98,37 @@ pub fn build_preview_gif_with_timing(
         encoder.set_repeat(Repeat::Infinite)?;
     }
 
-    write_gif_frame(&mut encoder, width, height, first, delay, params.background)?;
-    for path in &frame_paths[1..] {
+    write_gif_frame(
+        &mut encoder,
+        width,
+        height,
+        first,
+        delays[0],
+        params.background,
+    )?;
+    for (path, delay) in frame_paths[1..].iter().zip(&delays[1..]) {
         let frame = image::open(path)?.to_rgba8();
         if frame.width() != width as u32 || frame.height() != height as u32 {
             return Err(ExportError::FrameSizeMismatch);
         }
-        write_gif_frame(&mut encoder, width, height, frame, delay, params.background)?;
+        write_gif_frame(
+            &mut encoder,
+            width,
+            height,
+            frame,
+            *delay,
+            params.background,
+        )?;
     }
 
     drop(encoder);
-    let encoded_frame_duration_ms = u32::from(delay) * 10;
+    let encoded_durations: Vec<u32> = delays.iter().map(|d| u32::from(*d) * 10).collect();
+    let encoded_frame_duration_ms = encoded_durations
+        .iter()
+        .all(|d| *d == encoded_durations[0])
+        .then_some(encoded_durations[0]);
     let nominal_frame_duration_ms = 1000.0 / f64::from(params.fps);
-    let encoded_total_duration_ms = u64::from(encoded_frame_duration_ms) * frame_paths.len() as u64;
+    let encoded_total_duration_ms: u64 = encoded_durations.iter().map(|d| u64::from(*d)).sum();
     let native_total_duration_ms = native_frame_durations_ms.map_or(
         nominal_frame_duration_ms * frame_paths.len() as f64,
         |durations| durations.iter().map(|duration| f64::from(*duration)).sum(),
@@ -109,12 +144,15 @@ pub fn build_preview_gif_with_timing(
             "requestedFps": params.fps,
             "nominalFrameDurationMs": nominal_frame_duration_ms,
             "encodedFrameDurationMs": encoded_frame_duration_ms,
+            "encodedFrameDurationsMs": encoded_durations,
             "encodedTotalDurationMs": encoded_total_duration_ms,
             "nativeFrameDurationsMs": native_frame_durations_ms,
             "nativeTotalDurationMs": native_total_duration_ms,
             "encodedMinusNativeDurationMs": encoded_total_duration_ms as f64 - native_total_duration_ms,
             "loop": params.loop_animation,
-            "notes": ["GIF stores uniform preview delays in 10 ms units; viewers may further clamp delays.",
+            "alphaPolicy": if params.background == GifBackground::Transparent { "binary_threshold_128" } else { "composite_checkerboard" },
+            "notes": ["GIF delays follow native frame timing rounded to 10 ms units; viewers may further clamp delays.",
+                "GIF has indexed colors and no partial alpha. Use PNG playback or a composited MP4 for soft effects.",
                 "Native animation metadata preserves requested per-frame timing; GIF is not timing authority."]
         }))?,
     )?;
@@ -133,11 +171,22 @@ fn write_gif_frame<W: std::io::Write>(
     background: GifBackground,
 ) -> Result<(), ExportError> {
     let mut rgba = match background {
-        GifBackground::Transparent => frame.into_raw(),
+        GifBackground::Transparent => {
+            let mut bytes = frame.into_raw();
+            for pixel in bytes.as_chunks_mut::<4>().0 {
+                if pixel[3] < 128 {
+                    pixel.fill(0);
+                } else {
+                    pixel[3] = 255;
+                }
+            }
+            bytes
+        }
         GifBackground::Checkerboard => checkerboard_composite(frame).into_raw(),
     };
     let mut gif_frame = Frame::from_rgba_speed(width, height, rgba.as_mut_slice(), 10);
     gif_frame.delay = delay;
+    gif_frame.dispose = DisposalMethod::Background;
     encoder.write_frame(&gif_frame)?;
     Ok(())
 }

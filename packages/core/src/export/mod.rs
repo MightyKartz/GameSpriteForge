@@ -199,8 +199,25 @@ pub fn export_pack(params: ExportPackParams) -> Result<ExportPackOutput, ExportE
 
     let sheet_output =
         build_sprite_sheet(&sequence.frame_paths, &sequence.export_dir, params.sheet)?;
+    let preview_frames = if let Some(indices) = params
+        .metadata
+        .animation_frames
+        .as_ref()
+        .filter(|v| !v.is_empty())
+    {
+        indices
+            .iter()
+            .map(|index| {
+                sequence.frame_paths.get(*index).cloned().ok_or_else(|| {
+                    ExportError::InvalidParameter("animation frame index out of range".into())
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?
+    } else {
+        sequence.frame_paths.clone()
+    };
     let preview_output = build_preview_gif_with_timing(
-        &sequence.frame_paths,
+        &preview_frames,
         &sequence.export_dir.join("preview.gif"),
         params.gif,
         params.metadata.frame_durations_ms.as_deref(),

@@ -15,6 +15,7 @@ on:
       - 'scripts/test-local-audio-cli.py'
       - 'scripts/test-asset-library-cli.py'
       - 'scripts/test-asset-library-review-cli.py'
+      - 'scripts/test-animation-preview-cli.py'
       - 'scripts/test-asset-library-portability-cli.py'
       - 'scripts/test-static-native-matte-cli.py'
       - 'scripts/test-godot-unified-player.py'
@@ -36,6 +37,7 @@ on:
       - 'scripts/test-local-audio-cli.py'
       - 'scripts/test-asset-library-cli.py'
       - 'scripts/test-asset-library-review-cli.py'
+      - 'scripts/test-animation-preview-cli.py'
       - 'scripts/test-asset-library-portability-cli.py'
       - 'scripts/test-static-native-matte-cli.py'
       - 'scripts/test-godot-unified-player.py'
@@ -72,6 +74,13 @@ jobs:
       - name: Build pinned LGPL helpers from source
         run: |
           ./scripts/build-windows-ffmpeg.ps1 -WorkDirectory "$env:RUNNER_TEMP/forge-ffmpeg" -Jobs 4 -SevenZip 'C:/Program Files/7-Zip/7z.exe'
+      - name: Verify native Windows MP4 encoding and preview cache
+        # Native encoding/cache tests use the exact helpers that enter the package.
+        run: |
+          $env:GAME_SPRITE_FORGE_FFMPEG_SEARCH_DIRS = "$env:RUNNER_TEMP/forge-ffmpeg/helpers/bin"
+          $env:FORGE_PREVIEW_TEST_EVIDENCE = "$env:GITHUB_WORKSPACE/target/qa/windows-native-video"
+          cargo +1.98.1 test --locked -p core --test animation_preview_tests native_mp4 -- --ignored
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Obtain checksum-pinned Godot for package doctor verification
         run: |
           $archive = "$env:RUNNER_TEMP/godot.zip"
@@ -138,6 +147,8 @@ jobs:
           $summary = Get-Content -LiteralPath target/qa/windows-portable/summary.json -Raw | ConvertFrom-Json
           $launcher = $summary.cases[0].launcher
           $godot = "$env:RUNNER_TEMP/godot/Godot_v4.6.3-stable_win64_console.exe"
+          python scripts/test-animation-preview-cli.py --forge "$launcher" --bundled-tools --output target/qa/windows-animation-video
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-local-audio-cli.py --forge "$launcher" --godot "$godot" --output target/qa/windows-audio
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-asset-library-cli.py --forge "$launcher"
@@ -168,6 +179,8 @@ jobs:
             target/qa/windows-portable/powershell51-doctor.json
             target/qa/windows-guide/summary.json
             target/qa/windows-native-static/summary.json
+            target/qa/windows-animation-video/summary.json
+            target/qa/windows-native-video/**
             target/qa/windows-audio/summary.json
             target/qa/windows-library-portability/consumer/summary.json
             target/qa/windows-layered-preview/summary.json
@@ -186,6 +199,8 @@ jobs:
             ${{ runner.temp }}/forge-ffmpeg/helpers/FFMPEG_BUILD.json
             target/qa/windows-portable/summary.json
             target/qa/windows-native-static/**
+            target/qa/windows-animation-video/**
+            target/qa/windows-native-video/**
             target/qa/windows-audio/**
             target/qa/windows-layered-preview/**
             target/qa/windows-unified-controller/**

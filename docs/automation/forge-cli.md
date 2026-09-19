@@ -214,6 +214,14 @@ may lack these capabilities. Read the maintained
 installation audit limits; [animation guidance](../../.agents/skills/forge-use/references/animation.md)
 covers opt-in effect semantics and GIF quantization.
 
+Builds with `pack_mp4_preview` support `forge pack preview --path asset.gsfpack
+--out preview.mp4 --background dark --json`. This on-demand H.264 derivative
+uses original PNG frames, a baked background and a 60 fps time grid. Optional
+`--animation NAME` chooses an action and `--cache-dir PATH` reuses verified
+content-addressed results. It never rewrites the Pack. See `forge guide animation`
+for encoder, timing and transparency limits. Builds with
+`project_asset_png_animation_preview` use original PNGs in offline library review.
+
 `asset verify-images` checks an existing project's declared PNG hashes,
 dimensions, alpha constraints and exact scanned file set without writing a lock,
 using Jobs or starting Godot. The report is limited to image contracts and lists
