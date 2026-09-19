@@ -252,8 +252,14 @@ pub fn export_mp4(
         .ok_or_else(|| {
             invalid("FFmpeg has no supported H.264 encoder (libx264, h264_videotoolbox or h264_mf)")
         })?;
+    // Media Foundation prefers NV12 input. The encoded H.264 remains 8-bit 4:2:0.
+    let pixel_format = if encoder == "h264_mf" {
+        "nv12"
+    } else {
+        "yuv420p"
+    };
     let key = digest(&serde_json::to_vec(
-        &serde_json::json!({"profile":"forge-mp4-v1", "source":inventory.sha256, "animation":animation, "background":background, "encoder":encoder, "ffmpeg":ffmpeg_sha256, "fps":60}),
+        &serde_json::json!({"profile":"forge-mp4-v1", "source":inventory.sha256, "animation":animation, "background":background, "encoder":encoder, "pixelFormat":pixel_format, "ffmpeg":ffmpeg_sha256, "fps":60}),
     )?);
     if let Some(cache) = cache {
         let entry = cache.join(&key);
@@ -358,7 +364,7 @@ pub fn export_mp4(
     command
         .args([
             "-pix_fmt",
-            "yuv420p",
+            pixel_format,
             "-movflags",
             "+faststart",
             "-f",

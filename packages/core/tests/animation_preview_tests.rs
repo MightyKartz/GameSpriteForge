@@ -193,6 +193,17 @@ fn native_mp4_preserves_duration_canvas_and_cache_integrity() {
         )
     };
     let first = export("one.mp4", Background::Dark).unwrap();
+    // CI retains the actual encoded bytes and decoded frames even on assertion failure.
+    let evidence = std::env::var_os("FORGE_PREVIEW_TEST_EVIDENCE").map(PathBuf::from);
+    if let Some(path) = &evidence {
+        fs::create_dir_all(path).unwrap();
+        fs::copy(&first.output, path.join("preview.mp4")).unwrap();
+        fs::write(
+            path.join("report.json"),
+            serde_json::to_vec_pretty(&first).unwrap(),
+        )
+        .unwrap();
+    }
     assert!(!first.cache_hit);
     assert_eq!((first.width, first.height), (66, 66));
     assert!((first.encoded_duration_ms - first.native_duration_ms).abs() <= 1000.0 / 120.0);
@@ -228,9 +239,23 @@ fn native_mp4_preserves_duration_canvas_and_cache_integrity() {
             .unwrap();
         assert!(decoded.status.success());
         assert_eq!(decoded.stdout.len(), 66 * 66 * 3);
+        if let Some(path) = &evidence {
+            image::RgbImage::from_raw(66, 66, decoded.stdout.clone())
+                .unwrap()
+                .save(path.join(format!("frame-{time}.png")))
+                .unwrap();
+        }
         let channel = |x: usize| decoded.stdout[(30 * 66 + x) * 3 + 2];
-        assert!(channel(bright_x) > 130, "requested frame must be visible");
-        assert!(channel(dark_x) < 65, "prior frame must not accumulate");
+        assert!(
+            channel(bright_x) > 130,
+            "requested frame must be visible at {time}: {}",
+            channel(bright_x)
+        );
+        assert!(
+            channel(dark_x) < 65,
+            "prior frame must not accumulate at {time}: {}",
+            channel(dark_x)
+        );
         assert!(
             decoded.stdout[0] > 20,
             "near-transparent black must composite into background"

@@ -41,6 +41,15 @@ autodetection disabled. Explicitly enable `--enable-d3d11va` alongside Media
 Foundation; retain the unmodified, checksum-pinned FFmpeg source and the native
 encoding gate. No GPU-only encoding mode is requested.
 
+The rebuilt Windows helper encoded H.264 successfully, but the decoded-pixel
+assertion failed with planar `yuv420p` input. Use `nv12` for Media Foundation,
+as recommended by [FFmpeg's Media Foundation documentation](https://www.ffmpeg.org/ffmpeg-all.html#MediaFoundation),
+while retaining `yuv420p` for other encoders. Include the input pixel format in
+cache identity. Keep the existing pixel thresholds unchanged and retain the
+encoded MP4, report and decoded PNG frames from the native Windows test, including
+failed runs. Actual native acceptance, not the format recommendation, determines
+whether this correction is sufficient.
+
 The follow-up local CLI test passed on clean `6301a43`, default features empty,
 debug `aarch64-apple-darwin`, SHA-256
 `75c47b59a66478fbbe8d0fb7d0ca6ac2166e14722dfa3ebfb6cdc5bacd404464`.
