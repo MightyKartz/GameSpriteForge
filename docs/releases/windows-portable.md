@@ -129,7 +129,9 @@ helpers; Forge supplies local downloaded media. External x86 assembly is disable
 to avoid an additional assembler dependency; this can reduce video performance.
 The normal built-in codecs and filters remain enabled, including native H.264
 decoding, PNG and GIF processing. `--enable-mediafoundation` explicitly enables
-Windows H.264 encoding despite disabled autodetection. x264/x265 encoding is not
+Windows H.264 encoding despite disabled autodetection. `--enable-d3d11va` supplies
+the D3D11 context types required by the pinned FFmpeg's Media Foundation wrapper;
+this does not force hardware encoding. x264/x265 encoding is not
 included. Earlier helper builds lack this encoder. The native CI gate must use
 the newly built helpers, then repeat export through the installed public launcher.
 Windows must provide a working Media Foundation encoder; missing OS components

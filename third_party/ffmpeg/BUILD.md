@@ -43,7 +43,8 @@ and codec-patent review remains a commercial release gate.
 
 The pinned Windows recipe is [build-windows-ffmpeg.ps1](../../scripts/build-windows-ffmpeg.ps1).
 It disables library autodetection and explicitly enables zlib and Media Foundation
-(`--enable-mediafoundation`). The latter exposes Windows H.264 encoding through
+(`--enable-mediafoundation --enable-d3d11va`). The pinned Media Foundation wrapper
+requires D3D11VA context support at compile time. It exposes Windows H.264 encoding through
 `h264_mf`; it does not add x264. CI verifies native MP4 export against these exact
 helpers, then repeats preview acceptance through the installed portable launcher.
 See the [Windows portable guide](../../docs/releases/windows-portable.md) for

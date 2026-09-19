@@ -47,7 +47,8 @@ cd "$work/zlib-1.3.2"
 make -f win32/Makefile.gcc -j"$jobs" libz.a
 cd "$work/ffmpeg-8.1.2"
 sh ./configure --arch=x86_64 --target-os=mingw32 --cc=gcc --cxx=g++ \
-  --disable-gpl --disable-nonfree --disable-autodetect --enable-zlib --enable-mediafoundation \
+  --disable-gpl --disable-nonfree --disable-autodetect --enable-zlib \
+  --enable-mediafoundation --enable-d3d11va \
   --disable-doc --disable-debug --disable-ffplay --disable-network --disable-x86asm \
   --enable-static --disable-shared --disable-pthreads \
   --extra-cflags=-I../zlib-1.3.2 "--extra-ldflags=-L../zlib-1.3.2 -static -Wl,--no-insert-timestamp"
@@ -108,7 +109,7 @@ foreach ($pin in $pins[0..1]) { Copy-Item -LiteralPath (Join-Path $work $pin.nam
 $receipt = [ordered]@{
     schemaVersion='1'; ffmpegVersion='8.1.2'; zlibVersion='1.3.2'; compiler=$compilerVersion
     downloads=$pins; sourceModified=$false; sourceRecipeSha256=$recipeHash
-    configuration='LGPL-only; no autodetected libraries; static zlib; Windows Media Foundation encoding; network and external x86 assembly disabled'
+    configuration='LGPL-only; no autodetected libraries; static zlib; Windows Media Foundation encoding with D3D11VA context support; network and external x86 assembly disabled'
     binaries=@{}
 }
 foreach ($name in @('ffmpeg','ffprobe')) { $receipt.binaries["$name.exe"] = (Get-FileHash -LiteralPath (Join-Path $output "bin/$name.exe") -Algorithm SHA256).Hash.ToLowerInvariant() }

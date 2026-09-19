@@ -35,6 +35,12 @@ cache reuse, collision rejection and unchanged Pack/catalog inventories. macOS
 keeps the native test against published helpers. Windows CI results remain the
 acceptance gate for this correction; encoder listing alone is insufficient.
 
+The first rebuilt helper run exposed a pinned-FFmpeg configuration dependency:
+its Media Foundation wrapper references D3D11 context types even with D3D11VA
+autodetection disabled. Explicitly enable `--enable-d3d11va` alongside Media
+Foundation; retain the unmodified, checksum-pinned FFmpeg source and the native
+encoding gate. No GPU-only encoding mode is requested.
+
 The follow-up local CLI test passed on clean `6301a43`, default features empty,
 debug `aarch64-apple-darwin`, SHA-256
 `75c47b59a66478fbbe8d0fb7d0ca6ac2166e14722dfa3ebfb6cdc5bacd404464`.
