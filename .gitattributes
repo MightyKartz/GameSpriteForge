@@ -2,3 +2,5 @@
 /scripts/godot/*.gd text eol=lf
 /scripts/godot/runtime/*.gd text eol=lf
 /scripts/godot/runtime/*.gdshader text eol=lf
+# HTML parsing normalizes line endings before checking the embedded player's CSP hash.
+/packages/core/src/animation_preview_player.js text eol=lf

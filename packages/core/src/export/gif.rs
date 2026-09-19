@@ -173,7 +173,7 @@ fn write_gif_frame<W: std::io::Write>(
     let mut rgba = match background {
         GifBackground::Transparent => {
             let mut bytes = frame.into_raw();
-            for pixel in bytes.chunks_exact_mut(4) {
+            for pixel in bytes.as_chunks_mut::<4>().0 {
                 if pixel[3] < 128 {
                     pixel.fill(0);
                 } else {

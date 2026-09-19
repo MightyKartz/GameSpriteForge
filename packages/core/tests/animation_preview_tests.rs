@@ -240,4 +240,21 @@ fn native_mp4_preserves_duration_canvas_and_cache_integrity() {
     assert!(export("corrupt.mp4", Background::Dark).is_err());
     assert!(!temp.path().join("corrupt.mp4").exists());
     assert_eq!(before, directory_inventory(&pack).unwrap());
+
+    // Timing is part of content identity: an edited request must not reuse an
+    // earlier video's bytes even when the PNG sequence is unchanged.
+    for name in ["forgepack.json", "assets/manifest.json"] {
+        let path = pack.join(name);
+        let mut data: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        data["animations"][0]["frameDurationsMs"] = json!([120, 240, 110]);
+        fs::write(path, serde_json::to_vec_pretty(&data).unwrap()).unwrap();
+    }
+    let path = pack.join("assets/godot_import.json");
+    let mut data: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    data["spriteFrames"]["animations"][0]["frameDurationsMs"] = json!([120, 240, 110]);
+    fs::write(path, serde_json::to_vec_pretty(&data).unwrap()).unwrap();
+    let retimed = export("retimed.mp4", Background::Dark).unwrap();
+    assert!(!retimed.cache_hit);
+    assert_ne!(retimed.cache_key, first.cache_key);
+    assert_eq!(retimed.native_duration_ms, 470.0);
 }

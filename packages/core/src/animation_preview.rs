@@ -425,6 +425,31 @@ pub fn export_mp4(
 
 pub const PLAYER_SCRIPT: &str = include_str!("animation_preview_player.js");
 pub fn script_hash() -> String {
+    html_script_hash(PLAYER_SCRIPT)
+}
+
+fn html_script_hash(script: &str) -> String {
     use base64::Engine;
-    base64::engine::general_purpose::STANDARD.encode(Sha256::digest(PLAYER_SCRIPT.as_bytes()))
+    // The HTML tokenizer normalizes CRLF and lone CR before the CSP hash check.
+    // Also cover source archives and editors that don't honor .gitattributes.
+    let normalized = script.replace("\r\n", "\n").replace('\r', "\n");
+    base64::engine::general_purpose::STANDARD.encode(Sha256::digest(normalized.as_bytes()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn player_csp_matches_html_line_ending_normalization() {
+        let lf = PLAYER_SCRIPT.replace("\r\n", "\n");
+        assert_eq!(
+            html_script_hash(&lf),
+            html_script_hash(&lf.replace('\n', "\r\n"))
+        );
+        assert_eq!(
+            html_script_hash(&lf),
+            html_script_hash(&lf.replace('\n', "\r"))
+        );
+    }
 }

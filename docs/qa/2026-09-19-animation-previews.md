@@ -2,6 +2,28 @@
 
 Implementation plan: [animation preview delivery](../architecture/animation-preview-plan.md).
 
+## PR #55 follow-up review
+
+The initial CI run on `92963cb` failed all four native matrix jobs in Clippy,
+before reaching video or Godot execution. CI pins Rust 1.98.1, whose
+`chunks_exact_to_as_chunks` lint was absent from the earlier local toolchain.
+Use fixed-array RGBA chunks rather than suppressing the lint. Local verification
+now uses Rust 1.98.1, matching CI.
+
+Review also found a Windows checkout hazard: CRLF in the embedded player changes
+its raw-byte hash, while HTML parsing normalizes newlines before CSP validation.
+The player is now pinned to LF in `.gitattributes`, and hash calculation follows
+HTML normalization even for source archives with CRLF or lone CR. A regression
+test covers all three forms and runs in the native matrix.
+
+Rust 1.98.1 workspace/all-target Clippy, the new hash test and the four focused
+animation/catalog test suites passed. The native test passed with the published
+macOS FFmpeg after adding timing-only cache invalidation coverage. The initial
+retiming fixture correctly failed Pack validation because its Godot helper still
+had old durations; the fixture now updates all timing declarations consistently.
+No Pack validator was weakened. Native Windows acceptance must come from the
+latest PR CI run, not the earlier failed jobs.
+
 ## Verified build identity
 
 The final CLI smoke check used commit
