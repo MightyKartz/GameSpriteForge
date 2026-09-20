@@ -140,13 +140,36 @@ wall-clock browser timing. PNG frame stepping preserves the actual source image;
 live playback is subject to browser scheduling. MP4 is lossy, opaque and sampled
 on a 60 fps grid. Additive/multiply blending and layered motion require Godot.
 
-## Remaining acceptance
+## Completed PR acceptance — 2026-09-20
+
+All nine checks passed on PR head `10ebe5a08aabf78a9b8bd9561fea12acdfb1c491`:
+
+- [Godot native matrix](https://github.com/MightyKartz/GameSpriteForge/actions/runs/35452516220):
+  macOS and Windows with Godot 4.6.3 and 4.7.2.
+- [Windows portable package](https://github.com/MightyKartz/GameSpriteForge/actions/runs/35452516146):
+  native H.264 encode/decode/cache, installed-launcher preview, fresh installation,
+  historical upgrade and PowerShell 5.1. NV12 passed the unchanged pixel assertions.
+- [Quality and exchange](https://github.com/MightyKartz/GameSpriteForge/actions/runs/35452516185):
+  full quality matrix, Windows CLI and both cross-platform resource-exchange jobs.
+
+The final local default-feature debug CLI was clean at that head, SHA-256
+`3dcfd9b6531e180bb7369483e426cb26efb61a1a105fde9a8bfc4f69661d355d`.
+The clean default-feature Windows release CLI at the same head was
+`dc69cfe17037637aaac6efe1526528369d58db00872798f8aa123174df08fa56`.
+Windows retained MP4 and decoded PNG evidence shows the requested moving
+silhouette with no prior-frame accumulation; the installed-launcher test also
+verified PNG byte preservation and unchanged Pack/catalog inventories.
+
+These are PR-build results. Versioned release artifacts require their own
+packaging and installation checks.
+
+## Platform scope
 
 Windows was not run locally. The Godot workflow executes preview Rust contracts
 on macOS and Windows, and native MP4 with published macOS helpers. Windows native
 MP4 and installed-launcher acceptance run in the portable packaging workflow
 against the updated helper build. Consult the PR's checks for actual results
-before merging.
+for versioned release builds.
 No released package, existing Pack schema, installed consumer or public release
 was changed by this task. GIF removal from the Pack format is intentionally a
 separate format-version migration.

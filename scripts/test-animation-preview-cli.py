@@ -19,7 +19,8 @@ parser.add_argument('--bundled-tools', action='store_true')
 args = parser.parse_args()
 root = args.output.resolve()
 root.mkdir(parents=True, exist_ok=False)
-forge = args.forge.resolve()
+# Preserve the public launcher path, including a macOS installation symlink.
+forge = args.forge.absolute()
 env = dict(os.environ, FORGE_JOB_STORE=str(root / 'jobs'), FORGE_PLAN_STORE=str(root / 'plans'),
            FORGE_CONFIG_DIR=str(root / 'config'), FORGE_REAL_PROVIDER_MAX_REQUESTS='0')
 if args.bundled_tools:

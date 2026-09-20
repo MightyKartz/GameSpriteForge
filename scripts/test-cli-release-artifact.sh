@@ -52,6 +52,9 @@ python3 "${ROOT}/scripts/test-asset-library-cli.py" \
   --forge "${TEST_ROOT}/upgrade/bin/forge" --legacy-forge "${OLD}"
 python3 "${ROOT}/scripts/test-asset-library-review-cli.py" \
   --forge "${TEST_ROOT}/upgrade/bin/forge"
+python3 "${ROOT}/scripts/test-animation-preview-cli.py" \
+  --forge "${TEST_ROOT}/upgrade/bin/forge" --bundled-tools \
+  --output "${TEST_ROOT}/packaged-animation-preview"
 python3 "${ROOT}/scripts/test-asset-library-portability-cli.py" \
   --forge "${TEST_ROOT}/upgrade/bin/forge" --godot "$(command -v godot)" \
   --output "${TEST_ROOT}/packaged-library-portability"

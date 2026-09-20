@@ -14,7 +14,7 @@ Bring assets from your preferred creative tools, manage them in a project librar
 
 ## Install
 
-[v0.6.2](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.2) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
+[v0.6.3](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.3) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
 
 On macOS:
 
@@ -52,9 +52,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\forge-windows\install-
 | **Audio** | Import WAV music, sound effects and ambience; trim, adjust gain, add fades and prepare loops. |
 | **Godot delivery** | Validate Packs and install native textures, scenes, animations and audio streams. Lock chosen versions, retain delivery receipts and roll back failed updates. |
 
-**Development build preview update:** flat animation Packs can be reviewed from
+**New in v0.6.3:** flat animation Packs can be reviewed from
 original PNGs with frame stepping and background selection, or exported on demand
-as H.264 MP4. This is not included in the v0.6.2 downloads above; check
+as H.264 MP4. Windows packages include Media Foundation H.264 encoding. Check
 `doctor --json` for `pack_mp4_preview`. See the [preview guide](.agents/skills/forge-use/references/animation.md#sharing-a-video-preview)
 for commands and timing/transparency limits.
 
@@ -108,7 +108,7 @@ Character animation remains experimental; advanced character and world-asset com
 
 Music and sound effects are generated in external applications. ACE-Step and Stable Audio 3 have optional read-only source-directory detection; Forge does not install or run their models. Online xAI requests use your own account and may incur charges.
 
-Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.6.2 release notes](docs/releases/v0.6.2.md) for the verified release scope.
+Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.6.3 release notes](docs/releases/v0.6.3.md) for the verified release scope.
 
 ## Documentation
 
