@@ -51,6 +51,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\forge-windows\install-
 | **音频** | 导入 WAV 音乐、音效和环境声，进行裁剪、增益调整、淡入淡出和循环处理。 |
 | **Godot 交付** | 验证 Pack，安装原生纹理、场景、动画和音频资源；锁定选定版本、保留交付回执，并在更新失败时回滚。 |
 
+**开发版预览更新：** 平面动画 Pack 可直接播放原始 PNG，支持逐帧查看和切换背景，
+也可按需导出 H.264 MP4。上述 v0.6.2 下载包尚不包含此更新；请通过
+`doctor --json` 检查 `pack_mp4_preview` 能力。
+命令及时间精度、透明度限制见[预览指南](.agents/skills/forge-use/references/animation.md#sharing-a-video-preview)。
+
 ### 音频交付
 
 Forge 将本地 WAV 加工并交付为 Godot 原生音频资源。这个示例在 Godot 演示场景中播放一段合成的三音提示音。

@@ -98,8 +98,9 @@ Inspect both changes and remaining manual actions before executing a repair.
 Validate the Pack, then follow [Godot delivery](local-static.md#install-into-godot)
 (`"$FORGE_BIN" guide static`) with a stable asset key and target. Animation installs
 native `SpriteFrames` and
-`AnimatedSprite2D` resources. GIF previews use uniform FPS: inspect nonuniform
-`frameDurationsMs` in Pack/Godot resources and review actual playback in-engine.
+`AnimatedSprite2D` resources. Inspect nonuniform `frameDurationsMs` in Pack/Godot
+resources and review actual playback in-engine. Older GIF exports may use uniform
+FPS even when native timing differs.
 Keep original source hashes, request, source-transform evidence and receipt;
 record structural results separately from visual approval.
 
@@ -124,6 +125,42 @@ beside it. It records encoded GIF duration, nominal FPS and actual native timing
 For example, 8 fps requests 125 ms but GIF's centisecond resolution stores 130 ms;
 eight frames preview as 1040 ms instead of 1000 ms. Nonuniform native durations
 also remain authoritative. Keep the sidecar when sharing the preview.
+
+Builds with `pack_mp4_preview` fix GIF disposal and encode per-frame delays rounded
+to 10 ms. Transparent GIF uses an alpha threshold of 128; soft transparency and
+full PNG colors cannot be retained. Existing Pack GIFs are not rewritten.
+
+## Sharing a video preview
+
+With `pack_mp4_preview`, export a flat animation/character Pack directly from its
+original PNGs, without using its GIF:
+
+```bash
+forge pack preview --path ./effect.gsfpack --out ./strike.mp4 --animation strike --background dark --cache-dir ./preview-cache --json
+```
+
+`--animation` defaults to the first manifest animation. Background choices are
+`dark` (default), `light` and `checkerboard`. The MP4 contains one cycle, with a
+baked background and normal alpha composition; it is not a transparent game
+asset. Timing uses a 60 fps grid (very short frames may be skipped); JSON reports
+native/encoded duration, encoder, source/video hashes and cache identity. Odd
+dimensions are padded right/bottom, never scaled. Maximum canvas: 4096 × 4096;
+maximum cycle: five minutes. Engine blend modes require native Godot review.
+
+FFmpeg must provide libx264, h264_videotoolbox or h264_mf. Forge uses its existing
+bundled/PATH helper discovery, and never downloads an encoder automatically.
+Missing or unusable encoders fail explicitly. `--out` must be a new `.mp4` path
+outside the Pack. `--cache-dir` is optional and must also be outside the Pack;
+it keys on source content, animation, background, encoding profile and FFmpeg
+binary hash. Cached bytes are verified before reuse. A corrupt entry is rejected;
+remove that cache-key directory and retry. Cache files are derivatives, not
+catalog revisions or delivery receipts.
+
+For precise transparent review, builds with `project_asset_png_animation_preview`
+use PNG playback in `forge asset preview`, including old flat Packs. The player
+offers animation choice, pause, frame stepping and background selection. Display
+refresh and browser scheduling still affect live playback. GIF remains an internal
+compatibility artifact required by existing v1/v2 Pack contracts.
 
 For retained source-transform reports and immutable delivery receipts, read
 [delivery evidence](delivery.md) (`"$FORGE_BIN" guide delivery`). A source checkout

@@ -1,4 +1,4 @@
-//! Offline HTML and byte-preserving media copies; no server or metadata scripts.
+//! Offline HTML with byte-preserving PNG playback; no server or executable metadata.
 use super::*;
 use serde::Serialize;
 
@@ -52,6 +52,13 @@ pub fn create(
         issues: vec![],
     };
     let mut html = String::from("<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src 'self' file: data:; media-src 'self' file:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'\"><title>Forge resource review</title><style>body{margin:0;background:#101719;color:#e6eeeb;font:16px/1.5 system-ui}header,main{max-width:1400px;margin:auto;padding:28px}h1,h2{line-height:1.15}header p,.muted{color:#b0c5bc}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}.card{background:#1a2527;border:1px solid #39514b;border-radius:12px;padding:20px;overflow:hidden}img,video{max-width:100%;max-height:380px;object-fit:contain;background:repeating-conic-gradient(#35403e 0% 25%,#25312e 0% 50%) 50%/20px 20px}audio{width:100%}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#101719;padding:12px}code,small{overflow-wrap:anywhere}figure{margin:18px 0}figcaption{font-size:13px;color:#b0c5bc}summary{cursor:pointer}a{color:#a4e3bd}.badge{padding:3px 9px;border:1px solid #5b796b;border-radius:20px;display:inline-block;margin:2px}footer{padding:28px;color:#b0c5bc}</style><header><p>FORGE / LOCAL RESOURCE LIBRARY</p><h1>Review exact resource versions</h1><p>Offline copies of existing media. This page does not change selections or record approvals.</p></header><main class=\"grid\">");
+    html = html.replace(
+        "default-src 'none';",
+        &format!(
+            "default-src 'none'; script-src 'sha256-{}';",
+            crate::animation_preview::script_hash()
+        ),
+    );
     for (index, reference) in references.iter().enumerate() {
         let asset = read_asset(root, &catalog, &reference.asset_id)?;
         let revision = read_revision(root, &asset, &reference.revision)?;
@@ -139,8 +146,28 @@ pub fn create(
                     )]
                 };
                 let has_previews = files.iter().any(|(_, path)| path.starts_with("previews/"));
+                let animation_source = if directory {
+                    match crate::animation_preview::read(&resource.path) {
+                        Ok(source) => source,
+                        Err(error) => {
+                            report
+                                .issues
+                                .push(format!("{} PNG player: {error}", reference.asset_id));
+                            html.push_str(
+                                "<p>PNG animation unavailable; compatibility media follows.</p>",
+                            );
+                            None
+                        }
+                    }
+                } else {
+                    None
+                };
+                let mut player_urls = std::collections::BTreeMap::new();
                 let mut copied = 0;
                 for (source, label) in files {
+                    let player_frame = animation_source
+                        .as_ref()
+                        .is_some_and(|a| a.frames.contains(&source));
                     let extension = source
                         .extension()
                         .and_then(|s| s.to_str())
@@ -152,7 +179,12 @@ pub fn create(
                         matches!(extension.as_str(), "png" | "jpg" | "jpeg" | "gif" | "webp");
                     let video = matches!(extension.as_str(), "mp4" | "webm");
                     if !(audio || image || video)
-                        || (directory && has_previews && !audio && !label.starts_with("previews/"))
+                        || (!player_frame && animation_source.is_some() && !audio)
+                        || (!player_frame
+                            && directory
+                            && has_previews
+                            && !audio
+                            && !label.starts_with("previews/"))
                     {
                         continue;
                     }
@@ -175,6 +207,11 @@ pub fn create(
                     {
                         return Err(invalid("preview media changed during copy"));
                     }
+                    if player_frame {
+                        player_urls.insert(source, relative);
+                        copied += 1;
+                        continue;
+                    }
                     let element = if audio {
                         format!("<audio controls preload=\"metadata\" src=\"{relative}\"></audio>")
                     } else if video {
@@ -191,6 +228,22 @@ pub fn create(
                     ));
                     copied += 1;
                 }
+                if let Some(animation) = animation_source {
+                    let urls = animation
+                        .frames
+                        .iter()
+                        .map(|p| {
+                            player_urls
+                                .get(p)
+                                .cloned()
+                                .ok_or_else(|| invalid("animation frame missing from inventory"))
+                        })
+                        .collect::<Result<Vec<_>, _>>()?;
+                    let data = serde_json::to_string(
+                        &serde_json::json!({"urls":urls,"animations":animation.animations}),
+                    )?;
+                    html.push_str(&format!("<figure data-forge-animation=\"{}\"><img src=\"{}\" alt=\"PNG animation preview\"><div><label>Animation <select data-animation></select></label> <button data-play disabled>Play</button> <button data-prev aria-label=\"Previous frame\">◀</button> <button data-next aria-label=\"Next frame\">▶</button> <label>Background <select data-background><option value=\"dark\">Dark</option><option value=\"light\">Light</option><option value=\"checkerboard\">Checkerboard</option></select></label></div><input type=\"range\" min=\"0\" value=\"0\" step=\"1\" aria-label=\"Animation frame\"><output></output><figcaption>Original PNG frames · native frame order and durations · normal alpha composition. Use Godot for engine blend modes.</figcaption></figure>", escape(&data), escape(&urls[0])));
+                }
                 if intake::content_at(&resource.path)? != *content {
                     return Err(invalid("resource changed while preparing preview"));
                 }
@@ -198,7 +251,7 @@ pub fn create(
                 if copied == 0 {
                     html.push_str("<p>No browser preview is available for this format. Use the source application's viewer.</p>");
                 }
-                html.push_str("<p class=\"muted\">Original media bytes and existing animation timing are preserved. Audio/video decoding depends on this browser.</p>");
+                html.push_str("<p class=\"muted\">Media copies preserve source bytes. PNG playback follows Pack timing; browser scheduling may vary. GIF has limited colors and binary transparency. Audio/video decoding depends on this browser.</p>");
             }
             Err(error) => {
                 let message = format!("{}: {error}", reference.asset_id);
@@ -225,7 +278,10 @@ pub fn create(
         html.push_str(&format!("<details><summary>Record a review with CLI (PowerShell)</summary><pre>{}</pre></details>", escape(&powershell)));
         html.push_str(&format!("<details><summary>Record a review with CLI (POSIX shell)</summary><pre>{}</pre></details><details><summary>Source and processing metadata</summary><pre>{}</pre></details></article>", escape(&command), escape(&serde_json::to_string_pretty(&revision)?)));
     }
-    html.push_str("</main><footer>Forge · File availability, technical checks, visual review, listening review and license statements are separate evidence.</footer></html>");
+    html.push_str("</main><footer>Forge · File availability, technical checks, visual review, listening review and license statements are separate evidence.</footer>");
+    html.push_str("<script type=\"text/javascript\">");
+    html.push_str(crate::animation_preview::PLAYER_SCRIPT);
+    html.push_str("</script></html>");
     fs::write(staging.path().join("index.html"), html)?;
     fs::write(
         staging.path().join("preview.json"),

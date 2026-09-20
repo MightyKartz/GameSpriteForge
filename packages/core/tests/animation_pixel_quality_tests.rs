@@ -252,7 +252,11 @@ fn gif_sidecar_retains_native_nonuniform_timing() {
         serde_json::json!([80, 240])
     );
     assert_eq!(timing["nativeTotalDurationMs"], 320.0);
-    assert_eq!(timing["encodedMinusNativeDurationMs"], -60.0);
+    assert_eq!(
+        timing["encodedFrameDurationsMs"],
+        serde_json::json!([80, 240])
+    );
+    assert_eq!(timing["encodedMinusNativeDurationMs"], 0.0);
 }
 
 #[test]
@@ -339,7 +343,7 @@ fn multi_action_effect_pipeline_retains_tail_evidence_and_each_preview_timing() 
         default_timing["nativeFrameDurationsMs"],
         serde_json::json!([80, 120, 200])
     );
-    assert_eq!(default_timing["encodedMinusNativeDurationMs"], -10.0);
+    assert_eq!(default_timing["encodedMinusNativeDurationMs"], 0.0);
     assert!(pack.path.join("previews/burst.timing.json").is_file());
     assert!(pack.path.join("previews/dissolve.timing.json").is_file());
 }
