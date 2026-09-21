@@ -2,9 +2,9 @@
 
 [English](./README.md) | 简体中文
 
-**为 Godot 加工、验证和安全更新游戏素材。**
+**供 AI Agent 使用的游戏资源 CLI，首要支持 Godot。**
 
-接入你喜欢的创作工具提供的图片、动画帧和音频。Forge 负责可重复的加工、Godot 原生交付和安装失败恢复；Codex 等智能体可以操作 CLI，你负责审阅结果。
+Codex 等 Agent 使用 Forge 加工、诊断、验证创作工具提供的图片、动画帧和音频，并交付到游戏引擎。Forge 提供可重复的处理与安装恢复，让 Agent 更可靠地开发游戏。开发者提出目标，并按任务需要参与创意审核。
 
 [最新发布](https://github.com/MightyKartz/GameSpriteForge/releases/latest) · [安装](#安装) · [主要功能](#主要功能) · [CLI 指南](docs/automation/forge-cli.md)
 
@@ -95,7 +95,7 @@ Godot 原生导入可能就足够了。项目资源库和 Provider 生成均为�
 
 在 Codex 中打开游戏项目并提出需求：
 
-> 请用 Forge 为这个 Godot 项目加工素材。先读取项目固定版本的 `forge guide`，保留原图，安装前展示加工结果。经我确认交付后再安装，并告诉我结果或恢复步骤。技术记录保存在文件里。
+> 请用 Forge 为这个 Godot 项目加工素材。先读取项目固定版本的 `forge guide`，检查预览和诊断，保留原图及项目锁。在已有授权内完成加工、安装和真实引擎验证；意图或权限缺失时再询问，保留任务要求的创意审核。报告结果、待审核项或恢复步骤，详细证据保存在文件里。
 
 内置指南支持离线读取。通过 `forge guide project-assets`、`forge guide static`、`forge guide animation`、`forge guide audio` 或 `forge guide delivery` 查看对应主题。macOS/Linux 还可选择[安装 Codex skill](docs/automation/forge-cli.md#optional-bundled-codex-skill)，让 Codex 发现它。
 

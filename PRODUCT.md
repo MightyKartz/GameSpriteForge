@@ -1,11 +1,13 @@
 # Product
 
-**Reliable asset preparation and updates for Godot projects.**
+**A game-resource CLI for AI agents, starting with Godot.**
 
-Forge helps independent developers and small teams turn images, animation and
-audio into reusable game resources. Its public product is a Rust CLI that people, coding agents and
-scripts can use throughout asset production, from local preparation and quality
-checks to traceable Packs and native Godot delivery.
+Coding agents are the direct users; game developers are the beneficiaries. Forge
+turns images, animation frames and audio into usable game resources through
+repeatable preparation, actionable diagnostics, validation and native delivery.
+Design commands, reports and guidance for agents to discover and complete tasks
+with little bespoke scripting or intervention. Developers need not learn Forge
+protocols; human review and delivery authority follow the actual task.
 
 ## Current investment priorities
 
@@ -29,23 +31,26 @@ prerequisites for understanding the user's task. Offer them when repeated
 updates, recovery or reuse justify the extra machinery.
 
 Before broader product investment, compare Codex plus reusable existing tools
-against Codex plus Forge on the same tasks. Track user effort, correctness and
-ongoing maintenance, including Forge's own overhead. The
+against Codex plus Forge on the same tasks. Track autonomous completion, agent
+time, retries, bespoke scripts, interventions and verifiable delivery, including
+setup and maintenance overhead. Human time is a supporting measure. The
 [focus decision](docs/architecture/product-focus.md) and
 [comparison protocol](docs/qa/asset-delivery-comparison.md) define the evidence
 needed. Current engineering tests do not establish a productivity or market win.
 
 **中文：**当前投入聚焦于 Godot 素材的稳定加工、更新、验证和失败恢复。保留现有命令、
 格式与历史记录的兼容性，暂缓扩展通用生成平台、智能体编排和高级角色/世界功能。
-Codex 负责意图理解、创作与游戏代码；Forge 必须通过实际交付中减少的人力和返工证明
-自身价值。简单导入允许使用 Godot 原生能力，不强制引入资源库或整套证据流程。
+直接使用者是 Agent，游戏开发者是最终受益者。Codex 负责意图理解、创作与游戏代码；
+Forge 通过提高 Agent 自主完成率、减少耗时、临时脚本、重试和非预期人工介入证明价值，
+并计入自身设置与维护成本。人工时间是辅助指标。简单导入允许使用 Godot 原生能力，
+不强制引入资源库或整套证据流程。
 
 ## Who it serves
 
-Developers working with Codex, other image tools or existing artwork need more
-than a collection of generated images. They need assets with consistent framing,
-intentional placement, usable engine resources and a record of how each result
-was produced. Forge connects that creative work to the game project.
+Agents developing games need assets with consistent framing, intentional
+placement, usable engine resources and recoverable production history. Forge
+provides these operations as discoverable tools. Developers specify the game
+outcome; agents handle the processing details within that authority.
 
 ## What Forge provides
 

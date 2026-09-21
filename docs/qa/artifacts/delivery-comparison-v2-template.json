@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 2,
+  "protocolId": "agent-delivery-v2",
+  "status": "unmeasured_template",
+  "cohortId": null,
+  "registeredAt": null,
+  "project": null,
+  "iteration": null,
+  "task": null,
+  "realNeedEvidence": null,
+  "stream": null,
+  "acceptanceContract": null,
+  "perArmBudget": null,
+  "authorizationAndReviewBoundary": null,
+  "sourceSnapshotSha256": null,
+  "projectSnapshotSha256": null,
+  "platform": null,
+  "godotIdentity": null,
+  "modelAndSettings": null,
+  "armOrder": null,
+  "cacheAndContextIsolation": null,
+  "baseline": {
+    "toolsAndScriptHashes": null,
+    "forgeBinarySha256AndDoctor": null,
+    "taskStartedAt": null,
+    "taskFinishedAt": null,
+    "taskWallSeconds": null,
+    "externalWaitSeconds": null,
+    "agentTaskElapsedSeconds": null,
+    "setupAgentElapsedSeconds": null,
+    "maintenanceAgentElapsedSeconds": null,
+    "maintenanceAllocation": null,
+    "attempts": [],
+    "firstAttemptAcceptancePassed": null,
+    "finalAcceptancePassed": null,
+    "autonomousCompletion": null,
+    "unplannedHumanInterventions": null,
+    "plannedHumanReviews": null,
+    "unresolvedFailures": null,
+    "toolCalls": null,
+    "toolFailures": null,
+    "recoveryAttempts": null,
+    "documentationLookups": null,
+    "authoredOrModifiedScripts": null,
+    "activeHumanSeconds": null,
+    "setupHumanSeconds": null,
+    "maintenanceHumanSeconds": null,
+    "generation": {
+      "elapsedSeconds": null,
+      "modelUsage": null,
+      "billedCost": null,
+      "billingEvidence": null
+    },
+    "agentReasoning": {
+      "modelUsage": null,
+      "billedCost": null,
+      "billingEvidence": null
+    },
+    "localProcessing": {
+      "elapsedSeconds": null,
+      "meteredCost": null,
+      "costEvidence": null
+    },
+    "reviews": {
+      "structural": {
+        "status": "not_assessed",
+        "reviewer": null,
+        "evidence": null
+      },
+      "nativeEngine": {
+        "status": "not_assessed",
+        "reviewer": null,
+        "evidence": null
+      },
+      "visual": {
+        "status": "not_assessed",
+        "reviewer": null,
+        "evidence": null
+      },
+      "auditory": {
+        "status": "not_assessed",
+        "reviewer": null,
+        "evidence": null
+      },
+      "license": {
+        "status": "not_assessed",
+        "reviewer": null,
+        "evidence": null
+      }
+    },
+    "eventLog": null,
+    "measurementSources": null,
+    "evidencePaths": [],
+    "technicalAcceptancePassed": null
+  },
+  "forge": {
+    "toolsAndScriptHashes": null,
+    "forgeBinarySha256AndDoctor": null,
+    "taskStartedAt": null,
+    "taskFinishedAt": null,
+    "taskWallSeconds": null,
+    "externalWaitSeconds": null,
+    "agentTaskElapsedSeconds": null,
+    "setupAgentElapsedSeconds": null,
+    "maintenanceAgentElapsedSeconds": null,
+    "maintenanceAllocation": null,
+    "attempts": [],
+    "firstAttemptAcceptancePassed": null,
+    "finalAcceptancePassed": null,
+    "autonomousCompletion": null,
+    "unplannedHumanInterventions": null,
+    "plannedHumanReviews": null,
+    "unresolvedFailures": null,
+    "toolCalls": null,
+    "toolFailures": null,
+    "recoveryAttempts": null,
+    "documentationLookups": null,
+    "authoredOrModifiedScripts": null,
+    "activeHumanSeconds": null,
+    "setupHumanSeconds": null,
+    "maintenanceHumanSeconds": null,
+    "generation": {
+      "elapsedSeconds": null,
+      "modelUsage": null,
+      "billedCost": null,
+      "billingEvidence": null
+    },
+    "agentReasoning": {
+      "modelUsage": null,
+      "billedCost": null,
+      "billingEvidence": null
+    },
+    "localProcessing": {
+      "elapsedSeconds": null,
+      "meteredCost": null,
+      "costEvidence": null
+    },
+    "reviews": {
+      "structural": {
+        "status": "not_assessed",
+        "reviewer": null,
+        "evidence": null
+      },
+      "nativeEngine": {
+        "status": "not_assessed",
+        "reviewer": null,
+        "evidence": null
+      },
+      "visual": {
+        "status": "not_assessed",
+        "reviewer": null,
+        "evidence": null
+      },
+      "auditory": {
+        "status": "not_assessed",
+        "reviewer": null,
+        "evidence": null
+      },
+      "license": {
+        "status": "not_assessed",
+        "reviewer": null,
+        "evidence": null
+      }
+    },
+    "eventLog": null,
+    "measurementSources": null,
+    "evidencePaths": [],
+    "technicalAcceptancePassed": null
+  },
+  "nextRealTaskReuse": null,
+  "deviations": [],
+  "decision": "insufficient_evidence"
+}
