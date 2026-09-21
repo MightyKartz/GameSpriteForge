@@ -193,6 +193,8 @@ def run(args):
         log = native.stdout + native.stderr
         (root / "native-playback.log").write_text(log)
         assert native.returncode == 0 and "M3_NATIVE_PASS" in log and "SCRIPT ERROR" not in log and "ERROR:" not in log, log
+        summary["nativeMix"] = json.loads(next(line.removeprefix("M3_NATIVE_MIX ") for line in native.stdout.splitlines()
+                                                if line.startswith("M3_NATIVE_MIX ")))
         assert inventory(sources) == original_sources
         assert caller == {p: digest(game / p) for p in caller}
         summary.update(ok=True, sourceBytesPreserved=True, callerFilesPreserved=True, nativePlayback=True)

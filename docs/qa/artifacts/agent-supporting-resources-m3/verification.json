@@ -101,7 +101,7 @@
     "workflow": "shared existing embedded example for two audio formats and props; no new orchestration framework",
     "recovery": "one preparation Job retained; failed install and successful new install both preserved",
     "sourceWavLoopRegions": "not automatically imported; explicit whole-output loop verified",
-    "technicalNativePlayback": "headless AudioStreamPlayer start, loop continuation, one-shot completion",
+    "technicalNativePlayback": "The recorded initial local run used AudioStreamPlayer wall time. Final checker uses explicit native stream mixing; post-fix measurements and CI are recorded on the PR.",
     "productivity": "not measured; M4 deferred",
     "cost": null,
     "consumerPinsChanged": false,
@@ -119,6 +119,12 @@
       "stage": "checker teardown",
       "cause": "Audio playback resource cleanup occurred after exit; wait for audio teardown and defer quit",
       "fixed": true
+    },
+    {
+      "run": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/35596947853/job/106323856399",
+      "stage": "macOS Godot 4.6.3 native playback acceptance",
+      "cause": "One-shot had not finished after a fixed SceneTree timer; the timer is not a reliable audio-device clock on the CI host.",
+      "fixed": "Advance native AudioStreamPlayback.mix_audio for 1.5 seconds of mixer frames; require nonzero samples, music signal beyond the first loop and one-shot completion. Revalidated locally with both Godot 4.6.3 and 4.7.2; final CI required."
     }
   ],
   "localEvidence": {

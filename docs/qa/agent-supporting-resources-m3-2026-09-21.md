@@ -22,7 +22,7 @@ approval. No new CLI command, request schema or orchestration framework is added
 | 已审核素材交付 | 嵌入 `local-delivery-example` 已保留准备结果、安装失败证据，但只允许图像/动画操作 | 增加已有 `prepare-audio` 操作；检查音频能力、显式输出格式；继续复用相同安装/回执代码 |
 | 音频预览 | 现有页面已复制并播放原始/处理后 WAV | 修复 `audio_set` Pack 被建议使用 `visual` 审核域的问题；建议 `auditory`，不自动批准 |
 | 中断恢复 | Job 状态、安装事务与可移植回执已具备 | guide 统一三条最短路径与按阶段恢复表；真实项目解析失败后只重试安装 |
-| 引擎播放 | 既有测试已检查保存资源、采样率、声道、时长及循环范围 | 增加独立 AudioStreamPlayer 检查：超过一次完整时长后音乐仍播放，音效已结束 |
+| 引擎播放 | 既有测试已检查保存资源、采样率、声道、时长及循环范围 | 增加独立原生 stream mixer 检查：推进超过一次完整时长后音乐仍输出样本，音效已结束 |
 
 不增加新来源格式、自动降混、响度归一化、模型安装、源文件覆盖或通用任务框架。
 请求的历史 48000 Hz/双声道默认值保持兼容；新的交付示例要求显式字段。
@@ -58,7 +58,8 @@ python3 scripts/test-cli-skill.py --forge /ABS/forge
 5. 用已有资源库预览精确版本：WAV 副本哈希匹配原始/处理后文件，音频推荐
    auditory、静态推荐 visual；预览前后资源库字节不变，没有产生任何审核批准。
 6. 独立 Godot 脚本加载保存的 `.res`/道具场景，检查格式、循环范围、锚点和纹理
-   采样，再实际启动两个 AudioStreamPlayer 检查循环/结束行为。
+   采样，再通过 Godot 自身的 `AudioStreamPlayback.mix_audio` 推进 1.5 秒混音帧，
+   检查音乐循环后的非零样本及一次性音效结束状态。
 7. 验证安装与回执，保留输入哈希、所有命令/错误及源/游戏逻辑/隔离锁文件不变证据。
 
 CI 复用 Godot agent workflow，在 macOS/Windows × Godot 4.6.3/4.7.2 四个组合执行
@@ -68,8 +69,8 @@ CI 复用 Godot agent workflow，在 macOS/Windows × Godot 4.6.3/4.7.2 四个�
 ## 验证层级与限制
 
 - **结构/数据：** Pack、回执、来源哈希、PCM 样本、输出时长、画布、锚点及循环意图。
-- **真实引擎：** 保存资源加载、引擎采样设置、播放器启动、音乐跨循环继续、音效结束。
-  Headless 音频驱动不提供扬声器/设备试听或无缝循环观感证据。
+- **真实引擎：** 保存资源加载、引擎采样设置、原生混音的非零样本、音乐跨循环继续、音效结束。
+  手动推进引擎混音不依赖 CI 的设备音频时钟，不提供扬声器/设备试听或无缝循环观感证据。
 - **试听：** `not_assessed`；需实际完整试听、重复循环接缝、游戏音量和设备审核。
 - **视觉：** `not_assessed`；合成道具的技术正确性不代表美术风格/可读性批准。
 - **许可：** 仅测试作者的合成素材来源声明；技术报告、浏览器预览及 receipt 不确认许可。
@@ -78,3 +79,9 @@ CI 复用 Godot agent workflow，在 macOS/Windows × Godot 4.6.3/4.7.2 四个�
 
 运行身份、测试结果与保留的失败记录见
 [本地验收摘要](artifacts/agent-supporting-resources-m3/verification.json)。
+
+
+CI 曾在 macOS/Godot 4.6.3 的固定 1.5 秒等待后发现 one-shot 仍未结束，
+而 Windows 与本机通过。此断言把场景树计时误作设备音频推进证据；保留失败产物，
+改用[Godot 原生混音接口](https://docs.godotengine.org/en/4.6/classes/class_audiostreamplayback.html#class-audiostreamplayback-method-mix-audio)
+显式推进流并检查返回样本与结束状态，不放宽为“仅能加载即通过”。最终 CI 必须在修正后的提交重新通过。
