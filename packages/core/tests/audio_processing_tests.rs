@@ -449,3 +449,21 @@ fn native_absolute_paths_with_spaces_are_valid_audio_sources() {
         }
     }
 }
+
+#[test]
+fn invalid_source_in_batch_identifies_the_item_and_original_path() {
+    let temp = tempfile::tempdir().unwrap();
+    let good = temp.path().join("music.wav");
+    let bad = temp.path().join("pickup.wav");
+    wav(&good, 0.1, false);
+    fs::write(&bad, vec![0_u8; 64]).unwrap();
+    let mut input = request(&good);
+    let mut item = input.items[0].clone();
+    item.id = "pickup".into();
+    item.path = bad.clone();
+    input.items.push(item);
+    let error = validate_request(&input).unwrap_err();
+    assert!(error.contains("audio item pickup"), "{error}");
+    assert!(error.contains(&bad.display().to_string()), "{error}");
+    assert!(error.contains("RIFF/WAVE"), "{error}");
+}

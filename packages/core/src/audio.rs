@@ -175,7 +175,9 @@ pub fn validate_request(request: &PrepareAudioRequest) -> Result<(), String> {
                 }
             }
         }
-        local_wav(&item.path)?;
+        local_wav(&item.path).map_err(|error| {
+            format!("audio item {} ({}): {error}", item.id, item.path.display())
+        })?;
     }
     if !request.source_locks.is_empty() {
         let expected: HashSet<PathBuf> = request
@@ -430,7 +432,10 @@ pub fn prepare_audio_cancellable(
             if retained_hash != input_hash {
                 return Err(format!("source changed during audio intake: {}", item.id));
             }
-            let inspected = inspect_source_cancellable(&retained_path, &cancelled)?;
+            let inspected =
+                inspect_source_cancellable(&retained_path, &cancelled).map_err(|error| {
+                    format!("audio item {} ({}): {error}", item.id, input_path.display())
+                })?;
             let trim_end = item.trim_end_seconds.unwrap_or(inspected.duration_seconds);
             if item.trim_start_seconds >= inspected.duration_seconds
                 || trim_end > inspected.duration_seconds + 0.000001

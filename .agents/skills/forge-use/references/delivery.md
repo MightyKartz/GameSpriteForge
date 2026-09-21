@@ -44,8 +44,8 @@ python3 /absolute/new-local-delivery.py \
 
 The script is [bundled here](../examples/local-delivery.py). It requires reviewed
 `sourceLocks` in the request, an existing project and a new output directory
-outside the Godot project. It supports `prepare-static`, `prepare-asset` and
-`prepare-character`, checks zero-Provider estimates/reports, and retains the
+outside the Godot project. It supports `prepare-static`, `prepare-asset`, `prepare-character` and
+`prepare-audio`, checks zero-Provider estimates/reports, and retains the
 validated Pack before installation. The supplied hash is the real executable
 reported as `doctor.data.cliPath`, not a Windows `.cmd` wrapper's hash. Keep
 invoking the public launcher; the example checks launcher and payload changes
@@ -97,7 +97,7 @@ checkerboards, style and recognizable motion still require visual inspection.
 
 ## Bind reviewed input bytes
 
-Local static, single-action and multi-action preparation requests accept optional
+Local audio, static, single-action and multi-action preparation requests accept optional
 `sourceLocks`. When present and nonempty, it must cover every distinct source
 file exactly once, with no unrelated files or duplicate canonical paths:
 
@@ -243,3 +243,27 @@ successful exit codes, explicit completion results and validated resources;
 ordinary warnings alone do not fail a Job. Serialize other Godot imports/exports
 that share the project's cache as well. An unrelated editor or export process
 does not acquire Forge's installation lock.
+
+
+## Recover by phase
+
+Use the same lifecycle and error envelope for animation, WAV and static PNGs.
+Read `error.code` / `error.message` for rejected commands; a successfully retrieved
+Job/report can still contain a failed `lifecycle_state`, `error_code`,
+`error_summary` and `next_actions`. Retain both, rather than translating every
+failure into “generation failed”.
+
+| Where the task stopped | Smallest next action |
+| --- | --- |
+| Input/Plan rejected | Inspect the identified item/path, fix the request or create a corrected source copy, recheck hashes, prepare a new Plan. Do not alter originals or weaken locks. |
+| Token execution response lost | Inspect existing Jobs in the same store (`job list`, `job get`, `job report`) before any new execution. Tokens are single-use; do not blindly repeat `audio import`. |
+| Job still running / polling timeout | Follow its Job ID; timeout does not cancel a worker. Use explicit `job cancel` only when cancellation is intended. |
+| Preparation failed / output needs revision | Retain the failed Job and diagnostic evidence; prepare a new candidate/request with corrected input or explicit controls. Local audio/static have no targeted generation retry. |
+| Godot install failed | Inspect the install Job phase/logs; repair that project/dependency issue and plan installation again from the retained Pack. Do not repeat successful preparation. |
+| Pack or receipt moved | Verify with `receipt verify --path RECEIPT --pack RETAINED_PACK --project MOVED_PROJECT`; preserve original evidence and independently retained expected receipt hash. |
+
+After a recovered installation, export a **new** receipt with the original
+preparation Job and the new successful install Job. Keep the failed progress,
+old receipts and existing game toolchain lock. Native loading, installation
+integrity, visual review, listening review and license confirmation remain
+separate results.

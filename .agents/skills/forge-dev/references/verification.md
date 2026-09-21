@@ -60,6 +60,7 @@ for additional modes. On Windows use `python` and native executable paths.
 | Native install/update/rollback (both platforms) | `test-native-godot-transactions.py --godot GODOT --output OUTPUT` |
 | External animation clock | `test-godot-external-clock.py --godot GODOT` |
 | Audio processing, receipts and caches | `test-local-audio-cli.py --forge FORGE --godot GODOT` |
+| Agent audio/static delivery and recovery | `experiments/agent_supporting_resources.py --forge FORGE --godot GODOT --output OUTPUT` (Python 3.10+) |
 | Native audio resources | `test-godot-audio-delivery.py --godot GODOT` |
 | Source locks, stable targets, receipts and audits | `test-sword-feedback-cli.py --forge FORGE --godot GODOT` |
 | Storage diagnostics and complete pinned local delivery | `test-survival-feedback-cli.py --forge FORGE --godot GODOT --output OUTPUT` |

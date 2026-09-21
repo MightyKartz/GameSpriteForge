@@ -75,7 +75,9 @@ pub(super) fn validate_request(request: &PrepareStaticRequest) -> Result<(), Str
                 item.id
             ));
         }
-        let image = read_png(&item.path, request.canvas_policy)?;
+        let image = read_png(&item.path, request.canvas_policy).map_err(|error| {
+            format!("static item {} ({}): {error}", item.id, item.path.display())
+        })?;
         if request.canvas_policy == StaticCanvasPolicy::PreserveSource {
             dimensions
                 .entry(image.dimensions())

@@ -55,9 +55,12 @@ def deliver(args):
         raise ValueError("--expected-binary-sha256 must be the reviewed executable SHA-256")
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}", args.asset_key):
         raise ValueError("--asset-key must be an engine-safe identifier")
+    if args.operation == "prepare-audio" and not {"sampleRate", "channels"}.issubset(spec):
+        raise ValueError("Audio delivery requires explicit sampleRate and channels; inspect sources first, preserve supported formats or explicitly choose conversion")
     launcher_sha = digest(launcher)
     state = {"schemaVersion": 1, "completed": False, "phase": "preflight", "commands": [],
-             "visualReview": "not_recorded", "project": str(project), "assetKey": args.asset_key}
+             "visualReview": "not_recorded", "listeningReview": "not_assessed",
+             "licenseReview": "not_assessed", "operation": args.operation, "project": str(project), "assetKey": args.asset_key}
     owned_output = False
     with tempfile.TemporaryDirectory(prefix="forge-delivery-preflight-") as scratch:
         env = dict(os.environ, FORGE_JOB_STORE=str(Path(scratch) / "jobs"),
@@ -89,6 +92,8 @@ def deliver(args):
         state["toolchain"] = {"executable": str(payload), "binarySha256": digest(payload),
                               "build": doctor["build"], "version": doctor["cliVersion"]}
         required = {"filesystem_write_probe", "delivery_receipts", "godot_install_verification", "reviewed_source_hashes"}
+        if args.operation == "prepare-audio":
+            required.update({"local_audio_import", "audio_pack_validation", "audio_godot_delivery"})
         if not required.issubset(doctor["capabilities"]):
             raise ValueError("Selected Forge lacks required capabilities; do not change a consumer pin implicitly")
         for directory in dict.fromkeys([project, parent]):
@@ -155,14 +160,14 @@ def deliver(args):
         finally:
             save(output / "progress.json", state)
     return {"completed": True, "output": str(output), "receiptSha256": state["deliveryReceiptSha256"],
-            "visualReview": "not_recorded"}
+            "visualReview": "not_recorded", "listeningReview": "not_assessed", "licenseReview": "not_assessed"}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for flag in ["forge", "expected-binary-sha256", "request", "project", "asset-key", "out"]:
         parser.add_argument("--" + flag, required=True)
-    parser.add_argument("--operation", choices=["prepare-static", "prepare-asset", "prepare-character"], required=True)
+    parser.add_argument("--operation", choices=["prepare-static", "prepare-asset", "prepare-character", "prepare-audio"], required=True)
     parser.add_argument("--timeout", type=float, default=300, help="Seconds to poll each Job; timeout leaves the Job and evidence intact")
     args = parser.parse_args()
     if args.timeout <= 0:

@@ -107,7 +107,7 @@ pub fn create(
                 let directory = resource.path.is_dir();
                 if directory {
                     if let Ok(pack) = forge_pack::inspect_pack(&resource.path) {
-                        if pack.asset_type == "audio" {
+                        if pack.asset_type == "audio_set" {
                             suggested_domain = "auditory";
                         }
                         html.push_str(&format!("<details><summary>Pack members, animations and audio clips</summary><pre>{}</pre></details>", escape(&serde_json::to_string_pretty(&pack)?)));

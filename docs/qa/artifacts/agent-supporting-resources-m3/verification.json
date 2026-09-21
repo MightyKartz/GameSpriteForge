@@ -1,0 +1,158 @@
+{
+  "ok": true,
+  "syntheticOnly": true,
+  "runnerSha256": "b8876d4d7405d8bc8070694a296525cda8d09feda7d0ae0bf3af9e5ff2e1e232",
+  "checkerSha256": "dfa96a1077f5921fd0cf676b3a126090094c6c3680121f4b74acd05d83e1d986",
+  "embeddedExampleSha256": "db218a92b02d33d195112dcc85de21fa8dcdb35279ea1df38c4982242e135b75",
+  "binarySha256": "0ae1a6bd1f852f14b5583971595bfe9b09e2d55d83b0aa240cbfc2ac7075f99d",
+  "godotVersion": "4.7.2.stable.official.ed1daf0bf",
+  "sourceSha256": {
+    "cue.wav": "8df615e507409fb75fdf5212842af0f09cf89d55b324f74c1bb23bf4c9a7ca2b",
+    "invalid.png": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b",
+    "invalid.wav": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b",
+    "music.wav": "67f675f3c2ab771c0f660c9d59af4f79592ba0a0b1eb52140ef5c0500fdf8be6",
+    "prop.png": "3a237bcaaffde0c4bcf044eff8684c81bd0dc0572a90b56e947eea46b0336fa3"
+  },
+  "rejections": {
+    "missingAudioHelpers": {
+      "code": "invalid_audio_source",
+      "message": "ffmpeg_missing: Forge could not find its bundled ffmpeg/ffprobe helpers; reinstall Forge or configure development binaries on PATH."
+    },
+    "music": {
+      "code": "operation_failed",
+      "message": "invalid request: audio item broken (/private/tmp/forge-m3-tasks-final/sources/invalid.wav): audio intake currently requires RIFF/WAVE content with a valid length; convert other formats to WAV externally"
+    },
+    "implicitAudioConversion": "Audio delivery requires explicit sampleRate and channels; inspect sources first, preserve supported formats or explicitly choose conversion",
+    "props": {
+      "code": "operation_failed",
+      "message": "invalid request: static item broken (/private/tmp/forge-m3-tasks-final/sources/invalid.png): Format error decoding Png: Invalid PNG signature."
+    }
+  },
+  "tasks": {
+    "music": {
+      "operation": "prepare-audio",
+      "prepareJob": "0b4499c7-584b-4cef-9923-541c4dcf94b3",
+      "receiptSha256": "c95e2461873fc76972804cc43617e255e0905f9a19b68573c86d057ffd01a661",
+      "previewNoApprovalMutation": true,
+      "providerRequests": 0,
+      "revision": "1c40f4137003bd75a0818cd814426c712d2136a11a779b0405b056ed4004705e"
+    },
+    "cue": {
+      "operation": "prepare-audio",
+      "prepareJob": "b9f5df24-ab11-4f46-be10-e71f0fbc0846",
+      "receiptSha256": "282f119d4f94af32d508a088cc8e26787ef787aa8795c24cf28e4abc9dd0246e",
+      "previewNoApprovalMutation": true,
+      "providerRequests": 0,
+      "revision": "61374c35e59d36ab8d21e3e5f01a585d7ac24ce83017d47d09231662b4500932"
+    },
+    "props": {
+      "operation": "prepare-static",
+      "prepareJob": "d9914784-1607-4db0-aaa7-d1251f46f6e5",
+      "receiptSha256": "2f617cd5d80883d984df6461a5f945a8840202e2e62267f8e3491fb0645977e4",
+      "previewNoApprovalMutation": true,
+      "providerRequests": 0,
+      "revision": "7a2f20369a62e0befac7de8f18829832f20e5d1459f3cbf70760d4f845d7934b"
+    }
+  },
+  "recovery": {
+    "prepareJob": "0b4499c7-584b-4cef-9923-541c4dcf94b3",
+    "failedInstallJob": "57ef5fe7-7bd3-418f-865a-f89cc5b0969b",
+    "recoveredInstallJob": "2e20b6f1-5c78-442c-b726-13cfa54c5eb3",
+    "oldEvidenceUnchanged": true,
+    "packUnchanged": true
+  },
+  "sourceBytesPreserved": true,
+  "callerFilesPreserved": true,
+  "nativePlayback": true,
+  "visualReview": "not_assessed",
+  "listeningReview": "not_assessed",
+  "licenseConfirmation": "fixture_author_assertion_only",
+  "build": {
+    "gitCommit": "f24fb810a78676929ae7a74eeebd6b582ba14be8",
+    "dirty": true,
+    "target": "aarch64-apple-darwin",
+    "profile": "debug",
+    "features": []
+  },
+  "cliPath": "/Users/kartz/Development/Forge/target/debug/forge",
+  "sourceBase": "f24fb810a78676929ae7a74eeebd6b582ba14be8",
+  "baseline": {
+    "build": {
+      "gitCommit": "f24fb810a78676929ae7a74eeebd6b582ba14be8",
+      "dirty": false,
+      "target": "aarch64-apple-darwin",
+      "profile": "debug",
+      "features": []
+    },
+    "binarySha256": "88c224490a12518e07476ad13629bffaca57c1b16e88a2d6cf15f5dc4b996e0a",
+    "localAudio": "passed",
+    "localStatic": "passed: props linear/nearest, icons linear"
+  },
+  "checks": {
+    "coreTests": 28,
+    "packTests": 41,
+    "guideCases": 33,
+    "clippy": "passed",
+    "formatting": "passed",
+    "skillValidator": "passed",
+    "embeddedGuideLocalLinks": "passed"
+  },
+  "observations": {
+    "workflow": "shared existing embedded example for two audio formats and props; no new orchestration framework",
+    "recovery": "one preparation Job retained; failed install and successful new install both preserved",
+    "sourceWavLoopRegions": "not automatically imported; explicit whole-output loop verified",
+    "technicalNativePlayback": "The recorded initial local run used AudioStreamPlayer wall time. Final checker uses explicit native stream mixing; post-fix measurements and CI are recorded on the PR.",
+    "productivity": "not measured; M4 deferred",
+    "cost": null,
+    "consumerPinsChanged": false,
+    "releasePublished": false
+  },
+  "developmentFailures": [
+    {
+      "run": "/tmp/forge-m3-tasks-1",
+      "stage": "independent native checker",
+      "cause": "GDScript Variant comparison needed explicit bool type",
+      "fixed": true
+    },
+    {
+      "run": "/tmp/forge-m3-native-debug.log",
+      "stage": "checker teardown",
+      "cause": "Audio playback resource cleanup occurred after exit; wait for audio teardown and defer quit",
+      "fixed": true
+    },
+    {
+      "run": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/35596947853/job/106323856399",
+      "stage": "macOS Godot 4.6.3 native playback acceptance",
+      "cause": "One-shot had not finished after a fixed SceneTree timer; the timer is not a reliable audio-device clock on the CI host.",
+      "fixed": "Advance native AudioStreamPlayback.mix_audio for 1.5 seconds of mixer frames; require nonzero samples, music signal beyond the first loop and one-shot completion. Revalidated locally with both Godot 4.6.3 and 4.7.2; final CI required."
+    }
+  ],
+  "localEvidence": {
+    "taskRun": "/tmp/forge-m3-tasks-final",
+    "nativeLogSha256": "1084baf5843183de26fc81d1c7ee2fd610a088fc6c570d8d210c1550f38477dd",
+    "failedRunRetained": "/tmp/forge-m3-tasks-1",
+    "baselineAudio": "/tmp/forge-m3-baseline-audio",
+    "baselineStatic": "/tmp/forge-m3-baseline-static"
+  },
+  "ci": "Required before merge: macOS/Windows with Godot 4.6.3/4.7.2, quality matrix and Windows portable checks. Exact-head result and native artifacts are recorded on the PR; local evidence does not claim Windows execution.",
+  "finalGuideVerification": {
+    "ok": true,
+    "build": {
+      "dirty": true,
+      "features": [],
+      "gitCommit": "f24fb810a78676929ae7a74eeebd6b582ba14be8",
+      "profile": "debug",
+      "target": "aarch64-apple-darwin"
+    },
+    "binarySha256": "192c15ead0edcdae0d614ce3d5aaa93ecb9cda8797ebb40004b83c606203be0a",
+    "contentHash": "9f77925241edab74fd5b5e4ae6af73794ec1f73a2472ab6cc673ec917b98f871",
+    "commandCount": 167,
+    "cases": 33,
+    "note": "Rebuilt after two guide-only clarification edits (receipt --path and listening approval); the executed delivery example and Rust implementation are unchanged from the native task run."
+  },
+  "selfReview": {
+    "fix": "Restore ordinary Job/Plan stores after audio installation recovery, so subsequent static rejection inventory checks observe the active stores.",
+    "scope": "Acceptance runner only; product implementation and embedded guide unchanged.",
+    "evidence": "The native task run above predates this harness correction. Post-correction local result and exact-head CI artifacts are recorded on the PR."
+  }
+}

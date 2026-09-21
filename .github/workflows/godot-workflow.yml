@@ -124,6 +124,7 @@ jobs:
           python scripts/test-local-animation-delivery.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/animation
           python scripts/experiments/agent_resource_baseline.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/agent-resource
           python scripts/experiments/agent_animation_revision.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/animation-revision
+          python scripts/experiments/agent_supporting_resources.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/supporting-resources
           python scripts/test-local-audio-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/audio
           python scripts/test-layered-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/layered
           python scripts/test-godot-preview-ui.py --project target/media-acceptance/layered/preview/project --godot "$godot_path" --output target/media-acceptance/preview
@@ -141,6 +142,10 @@ jobs:
             target/workflow-acceptance/**/screenshot.png
             target/media-acceptance/**/summary.json
             target/media-acceptance/**/*.log
+            target/media-acceptance/supporting-resources/*.json
+            target/media-acceptance/supporting-resources/commands/*.json
+            target/media-acceptance/supporting-resources/*-delivery/progress.json
+            target/media-acceptance/supporting-resources/*-delivery/*receipt.json
             target/media-acceptance/animation-revision/summary.json
             target/media-acceptance/animation-revision/logs/*.json
             target/media-acceptance/animation-revision/requests/*.json
