@@ -45,6 +45,22 @@ def require_native(result, count):
             "Native resource acceptance failed; see command logs")
 
 
+def check_negative_duration(game, native_contract, command, argv):
+    path = game / "acceptance.json"
+    original = path.read_bytes()
+    changed = copy.deepcopy(native_contract)
+    changed["characters"][0]["actions"][0]["durationsMs"][0] += 10
+    try:
+        save(path, changed)
+        negative = command("native-negative-control", argv)
+        require(negative.returncode != 0
+                and "FAIL:duration:synthetic:idle:0" in negative.stderr.splitlines()
+                and "SCRIPT ERROR" not in negative.stdout + negative.stderr,
+                "Native checker did not reject incorrect expected timing")
+    finally:
+        path.write_bytes(original)
+
+
 def make_inputs(root):
     inputs = root / "inputs"
     inputs.mkdir()
@@ -81,7 +97,8 @@ def make_inputs(root):
                 for index in range(3):
                     frame = Image.new("RGBA", (size, size))
                     draw = ImageDraw.Draw(frame)
-                    draw.rectangle((23, 15, 39, 51), fill=(150, 80, 190, 255))
+                    draw.rectangle((23, 15, 39, 51), fill={"idle": (150, 80, 190, 255), "walk": (80, 150, 190, 255),
+                                                       "attack": (190, 80, 150, 255)}[action])
                     reach = 5 + index * (6 if action == "attack" else 2)
                     draw.line((39, 30, 39 + reach, 30), fill=(40, 190, 220, 128), width=2)
                     frame.putpixel((22, 20), (120, 50, 210, 1))
@@ -151,7 +168,9 @@ def run(args):
     env.pop("FORGE_REAL_PROVIDER_ACCEPT", None)
     report = {"schemaVersion": 1, "ok": False, "calls": [], "results": {}, "rejections": {},
               "visualReview": "not_assessed", "listeningReview": "not_assessed",
-              "humanSeconds": None, "modelCost": None, "productivityDecision": "insufficient_evidence"}
+              "humanSeconds": None, "modelCost": None, "productivityDecision": "insufficient_evidence",
+              "sourcesUnchanged": None}
+    hashes = None
 
     def command(label, argv):
         started = time.perf_counter()
@@ -245,7 +264,7 @@ def run(args):
             installed = execute(name + "-install", "install-godot", install_path)
             report["results"][name] = {"jobId": job["job_id"], "installJobId": installed["job_id"],
                                         "packManifestSha256": digest(pack / "forgepack.json"),
-                                        "qualityReport": quality, "nativeAcceptance": False}
+                                        "qualityReport": quality, "nativeAcceptance": None}
 
         # The adapter contains Forge paths. Acceptance values remain independent.
         native_contract = copy.deepcopy(contract)
@@ -269,21 +288,25 @@ def run(args):
         require_native(native, 5)
         for result in report["results"].values():
             result["nativeAcceptance"] = True
-        native_contract["characters"][0]["actions"][0]["durationsMs"][0] += 10
-        save(game / "acceptance.json", native_contract)
-        negative = command("native-negative-control", argv)
-        require(negative.returncode != 0 and "FAIL:duration:synthetic:idle:0" in negative.stderr,
-                "Native checker did not reject incorrect expected timing")
+        check_negative_duration(game, native_contract, command, argv)
         report["negativeControl"] = "wrong_expected_duration_rejected"
-        native_contract["characters"][0]["actions"][0]["durationsMs"][0] -= 10
-        save(game / "acceptance.json", native_contract)
-        require(hashes == {p.name: digest(p) for p in (root / "inputs").iterdir()}, "Source inputs changed")
         report["ok"] = True
     except Exception as error:
         report["error"] = str(error)
         raise
     finally:
+        if hashes is not None:
+            try:
+                report["sourcesUnchanged"] = hashes == {
+                    p.name: digest(p) for p in (root / "inputs").iterdir()}
+            except OSError as error:
+                report["sourcesUnchanged"] = False
+                report["sourceIntegrityError"] = str(error)
+            if not report["sourcesUnchanged"]:
+                report["ok"] = False
+                report.setdefault("error", "Source inputs changed")
         save(root / "report.json", report)
+    require(report["ok"], report.get("error", "Resource baseline failed"))
     return report
 
 

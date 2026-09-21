@@ -72,6 +72,9 @@ jobs:
           ln -s "${godot_binary}" "${RUNNER_TEMP}/godot-bin/godot"
           printf '%s\n' "${RUNNER_TEMP}/godot-bin" >> "${GITHUB_PATH}"
 
+      - name: Verify Agent resource native acceptance oracle
+        run: python3 scripts/experiments/test-agent-resource-native.py --godot "$FORGE_GODOT_PATH" --output "${RUNNER_TEMP}/forge-v03-quality/agent-resource-oracle"
+
       - name: Build pinned LGPL FFmpeg helpers
         shell: bash
         run: |

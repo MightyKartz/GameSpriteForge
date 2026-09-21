@@ -7,6 +7,9 @@ func check(condition: bool, label: String) -> void:
 		failures.append(label)
 		printerr("FAIL:" + label)
 
+func expected_size(value) -> Vector2i:
+	return Vector2i(int(value[0]), int(value[1]))
+
 func same_visible_pixels(actual: Image, source: Image) -> bool:
 	if actual == null or source == null or actual.get_size() != source.get_size():
 		return false
@@ -34,10 +37,18 @@ func verify() -> void:
 		if not scene is PackedScene:
 			continue
 		var player = scene.instantiate()
+		var sprite = player.get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+		check(sprite != null, "sprite:" + character.id)
+		if sprite == null:
+			player.free()
+			continue
+		var frames: SpriteFrames = sprite.sprite_frames
+		check(frames != null, "sprite-frames:" + character.id)
+		if frames == null:
+			player.free()
+			continue
 		root.add_child(player)
 		player.set_process(false)
-		var sprite = player.get_node("AnimatedSprite2D")
-		var frames: SpriteFrames = sprite.sprite_frames
 		check(frames.get_animation_names().size() == character.actions.size(), "action-count:" + character.id)
 		check(not sprite.centered, "centering:" + character.id)
 		check(sprite.position == -Vector2(character.anchor[0], character.anchor[1]), "anchor:" + character.id)
@@ -56,7 +67,11 @@ func verify() -> void:
 				var texture = frames.get_frame_texture(action.name, i)
 				var ms := frames.get_frame_duration(action.name, i) / frames.get_animation_speed(action.name) * 1000.0
 				check(absf(ms - action.durationsMs[i]) < 0.001, "duration:%s:%s:%s" % [character.id, action.name, i])
-				check(texture != null and same_visible_pixels(texture.get_image(), Image.load_from_file(action.frames[i])), "pixels:%s:%s:%s" % [character.id, action.name, i])
+				var actual = texture.get_image() if texture != null else null
+				var source = Image.load_from_file(action.frames[i])
+				check(actual != null and actual.get_size() == expected_size(character.size), "size:%s:%s:%s" % [character.id, action.name, i])
+				check(source != null and source.get_size() == expected_size(character.size), "source-size:%s:%s:%s" % [character.id, action.name, i])
+				check(same_visible_pixels(actual, source), "pixels:%s:%s:%s" % [character.id, action.name, i])
 				player.seek((elapsed + action.durationsMs[i] / 2.0) / 1000.0)
 				check(sprite.frame == i, "seek:" + action.name)
 				elapsed += action.durationsMs[i]
@@ -70,7 +85,11 @@ func verify() -> void:
 		var texture = load(item.texture)
 		check(texture is Texture2D, "static-load:" + item.id)
 		if texture is Texture2D:
-			check(same_visible_pixels(texture.get_image(), Image.load_from_file(item.source)), "static-pixels:" + item.id)
+			var actual = texture.get_image()
+			var source = Image.load_from_file(item.source)
+			check(actual != null and actual.get_size() == expected_size(item.size), "static-size:" + item.id)
+			check(source != null and source.get_size() == expected_size(item.size), "static-source-size:" + item.id)
+			check(same_visible_pixels(actual, source), "static-pixels:" + item.id)
 		count += 1
 	for item in contract.audio:
 		var stream = load(item.stream)
@@ -80,6 +99,7 @@ func verify() -> void:
 			check(stream.mix_rate == item.sampleRate and stream.stereo == (item.channels == 2), "audio-format:" + item.id)
 			check(stream.data.size() == item.frames * item.channels * 2, "audio-frames:" + item.id)
 			check(stream.loop_mode == (AudioStreamWAV.LOOP_FORWARD if item.loop else AudioStreamWAV.LOOP_DISABLED), "audio-loop:" + item.id)
+			check(stream.loop_begin == 0 and stream.loop_end == (int(item.frames) if item.loop else 0), "audio-loop-range:" + item.id)
 		count += 1
 	if failures.is_empty():
 		print("RESOURCE_TASK_PASS:" + str(count))

@@ -45,7 +45,7 @@ or a claim of artistic quality or productivity improvement.
 时长及音频约定，不读取 Forge manifest 来生成预期。Godot 适配器只补充资源路径。
 Pack 帧顺序按 manifest 映射回源帧；原生检查进一步核对每个动作的像素及实际时序。
 纹理检查忽略 alpha=0 下的隐藏 RGB，但要求所有非零 alpha 的 RGB 和全部 alpha 不变。
-音频检查已保存资源类型、PCM16、采样率、声道、样本数与循环模式，尚未核对听感、
+音频检查已保存资源类型、PCM16、采样率、声道、样本数、循环模式与完整循环区间，尚未核对听感、
 实际音频输出、循环接缝或 PCM 内容相等。
 
 动画配方从一开始就使用 `requireGameReady: false`，定位为 prototype 技术验证，
@@ -59,6 +59,9 @@ Pack 帧顺序按 manifest 映射回源帧；原生检查进一步核对每个�
 
 ```bash
 python3 scripts/experiments/test-agent-resource-baseline.py -v
+python3 scripts/experiments/test-agent-resource-native.py \
+  --godot /absolute/path/to/Godot \
+  --output /tmp/forge-agent-m0-oracle-new-attempt
 python3 scripts/experiments/agent_resource_baseline.py \
   --forge /absolute/path/to/forge \
   --godot /absolute/path/to/Godot \
@@ -69,8 +72,8 @@ python3 scripts/experiments/agent_resource_baseline.py \
 acceptance、Plans、Jobs、游戏目录、命令日志、耗时、二进制 / 原图哈希及 doctor 身份。
 执行顺序为 doctor → 两项错误请求 → 每类 prepare / execute / report / validate /
 install → 原生验收 → 错误预期时长负对照。已知原生失败会返回非零，`report.json`
-保留 `ok:false`；不应把它作为已通过的 CI 验收。常规 CI 只运行验收器和素材完整性单测，
-M1 修复后再把原生正向任务接入门禁。输入哈希检查与命令超时日志也在报告中保留。
+保留 `ok:false`；不应把它作为已通过的 CI 验收。常规 CI 运行验收器和素材完整性单测，以及独立构造原生资源的验收器回归测试；
+这些不是 Forge 交付通过证据。M1 修复后再把完整原生交付任务接入门禁。输入哈希检查与命令超时日志也在报告中保留。
 
 原始日志和生成目录保留在执行机器的 `/tmp/forge-agent-m0-*`，不提交 Job 存储与
 导入缓存。可移植观察摘录见 [M0 observations](artifacts/agent-resource-m0/observations.json)，
@@ -113,3 +116,28 @@ alpha 没变，RGB 变了。Godot 自动生成的 `.png.import` 使用
 
 本次没有修改公共产品能力声明、游戏消费端 pin 或历史回执，没有发布新版本。
 本地原生证据仅覆盖 macOS / Godot 4.7.2，不替代 Windows 或 Godot 4.6 的运行验证。
+
+
+## PR #59 审查修复
+
+首轮 PR 自审复现了验收器的漏检，已补回归，原始 M0 观察记录保持不变：
+
+- **画布约定未生效**：把独立验收的角色 / 道具尺寸改为 128×128 后，旧检查器仍通过。
+  现在同时核对源帧、原生纹理与声明尺寸，不再仅比较两张图彼此相同。
+- **循环区间漏检**：把音乐资源改为仅循环一个采样点，旧检查器仍通过。
+  现在核对 loop_begin=0、loop_end=完整帧数；非循环资源要求区间为 0。
+- **错误资源触发脚本异常**：缺失 AnimatedSprite2D / SpriteFrames 时，先检查再进入
+  场景树，避免控制器的初始化抢先报错，改为直接输出资源缺失诊断。
+- **失败尝试污染验收文件**：负对照改用独立副本及 finally 恢复原始文件字节；
+  超时、错误通过、脚本异常均不能留下修改后的时长。提前失败也核对输入哈希。
+- **动作素材不能区分**：旧 synthetic 的 idle / walk 对应帧完全相同，存在互换仍通过的
+  盲点。现为每个动作设置不同像素标记，保留原有画布、锚点、alpha、伸展和时长约定。
+  因此新合成输入哈希不同，不能当作旧观察的同输入重复运行；历史证据不重写。
+
+5 项 Python 测试和 8 个原生验收器用例通过。原生用例使用微型原生资源和独立预期，
+覆盖正常资源、错误角色 / 静态尺寸、循环区间、时长、alpha=1 颜色及两种缺失资源。
+完整发布版基准仍复现 18 项已知导入像素失败；隔离导入设置对照再次通过全部 5 项
+任务，负对照返回预期错误并恢复验收文件。证据见
+[PR review verification](artifacts/agent-resource-m0/pr59-review.json)。
+未完成整组验收的结果项以 `nativeAcceptance: null` 表示尚未确认，不将其一律标为失败。
+本轮修复的是 M0 验收准确性；生产安装器的透明边缘策略仍由下一阶段 M1 处理。
