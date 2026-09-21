@@ -5621,6 +5621,19 @@ fn effective_provider_refs(
         .unwrap_or_default())
 }
 
+// Seed only Forge's flat sprite/static textures, before Godot's first import.
+// Both the PNG and its sidecar live inside the existing installation transaction.
+fn copy_godot_sprite_texture(source: &Path, destination: &Path) -> Result<(), AutomationRunError> {
+    fs::copy(source, destination)?;
+    let mut sidecar = destination.as_os_str().to_owned();
+    sidecar.push(".import");
+    fs::write(
+        Path::new(&sidecar),
+        include_str!("../../../../scripts/godot/sprite-texture.import"),
+    )?;
+    Ok(())
+}
+
 fn copy_godot_pack_sources(
     pack: &Path,
     target: &Path,
@@ -5756,7 +5769,7 @@ fn copy_godot_pack_sources(
                     "static item texture is invalid: {source}"
                 )));
             }
-            fs::copy(source_path, item_target.join(format!("{id}.png")))?;
+            copy_godot_sprite_texture(&source_path, &item_target.join(format!("{id}.png")))?;
         }
         return Ok(());
     }
@@ -5785,7 +5798,7 @@ fn copy_godot_pack_sources(
         let file_name = Path::new(relative).file_name().ok_or_else(|| {
             AutomationRunError::Processing("Godot texture path has no filename".into())
         })?;
-        fs::copy(source, target.join(file_name))?;
+        copy_godot_sprite_texture(&source, &target.join(file_name))?;
     }
     Ok(())
 }

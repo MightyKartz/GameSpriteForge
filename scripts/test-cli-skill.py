@@ -34,6 +34,7 @@ GUIDE_RESOURCES = (
     ("static", "references/local-static.md", "text/markdown"),
     ("provider", "references/provider.md", "text/markdown"),
     ("animation", "references/animation.md", "text/markdown"),
+    ("animation-example", "examples/local-character.json", "application/json"),
     ("delivery", "references/delivery.md", "text/markdown"),
     ("static-example", "examples/local-static.json", "application/json"),
     ("provider-example", "examples/provider-icons.json", "application/json"),
@@ -322,6 +323,12 @@ class Harness:
                     f"Plain path and topic differ: {topic}")
             if media_type == "application/json":
                 request = json.loads(plain)
+                if topic == "animation-example":
+                    require(isinstance(request, dict) and request.get("schemaVersion") == "2"
+                            and [a["name"] for a in request.get("animations", [])] == ["idle", "walk", "attack"],
+                            "Character example must be an unwrapped three-action request")
+                    examples.append(relative)
+                    continue
                 require(isinstance(request, dict) and request.get("schemaVersion") == "1"
                         and isinstance(request.get("items"), list) and request["items"],
                         f"Guide example is not a directly usable request: {topic}")
@@ -631,6 +638,36 @@ class Harness:
             require(estimate["providerRequestEstimate"] == 0 and estimate["maximumProviderRequests"] == 0,
                     f"Local example can request a Provider: {plan}")
             verified.append({"path": relative, "kind": request["kind"], "providerRequestEstimate": 0})
+        # Plan the exact embedded three-action request; no repository or media helper is needed.
+        exported = self.plain(["guide", "animation-example"], forge=binary, cwd=project)
+        request = json.loads(exported)
+        example_root = self.root / "character-example"
+        specs = example_root / "asset-specs"
+        specs.mkdir(parents=True)
+        copied = specs / "character.json"
+        copied.write_text(exported, encoding="utf-8")
+        require([a["name"] for a in request["animations"]] == ["idle", "walk", "attack"],
+                "Embedded example must cover the three-action task")
+        for action in request["animations"]:
+            for index, relative in enumerate(action["input"]["paths"]):
+                source = (specs / relative).resolve()
+                require(source.is_relative_to(example_root), "Character example escapes fixture")
+                make_png(source, index)
+        plan = self.call(["plan", "prepare-character", "--request", copied], forge=binary, cwd=project)
+        require(plan["estimate"]["providerRequestEstimate"] == plan["estimate"]["maximumProviderRequests"] == 0,
+                "Character example is not offline")
+        job = self.call(["plan", "execute", "--token", plan["token"], "--wait"], forge=binary, cwd=project)
+        require(job["lifecycle_state"] == "succeeded", "Character guide example failed preparation")
+        pack = Path(next(a["path"] for a in job["artifacts"] if a["kind"] == "gsfpack"))
+        require(self.call(["pack", "validate", "--path", pack], forge=binary)["valid"], "Character guide Pack invalid")
+        manifest = read_json(pack / "assets/manifest.json")
+        require({a["name"]: a["frameDurationsMs"] for a in manifest["animations"]}
+                == {a["name"]: a["frameDurationsMs"] for a in request["animations"]}, "Guide timing changed")
+        usage = self.call(["job", "report", "--id", job["job_id"]], forge=binary)
+        require(usage["providerRequestCount"] == 0 and usage["providerRequestOccurred"] is False,
+                "Local guide example unexpectedly used a Provider")
+        verified.append({"path": "examples/local-character.json", "kind": "character",
+                         "providerRequestEstimate": 0, "preparationVerified": True})
         require(not (project / ".agents").exists() and not (self.home / ".agents").exists(),
                 "Guide example planning unexpectedly installed a skill")
         self.completed("guide_local_examples_create_real_zero_provider_plans_without_skill_installation",
@@ -667,7 +704,7 @@ class Harness:
                  "contentHash": self.bundle.get("contentHash") if self.bundle else None,
                  "cases": self.cases, "commandCount": len(self.calls),
                  "providerRequestsExecuted": 0,
-                 "scope": "temporary projects/home; synthetic local PNGs; plans only; no Godot or Provider execution"}
+                 "scope": "temporary projects/home; synthetic local PNGs; plans and local character preparation; no Godot or Provider execution"}
         if self.guide_only:
             value["notRun"] = ["skill_installation_and_check", "modified_and_unmanaged_protection",
                                "skill_updates_and_backups", "symlink_protection", "skill_invalid_arguments"]

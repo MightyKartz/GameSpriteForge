@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-21",
+  "platform": "macOS aarch64",
+  "scope": "M1 development snapshot before PR; default features, no release or consumer upgrade",
+  "build": {
+    "gitCommit": "d2038b510eafdfeea14ae6cff98db4496e92972e",
+    "dirty": true,
+    "target": "aarch64-apple-darwin",
+    "profile": "debug",
+    "features": []
+  },
+  "cliVersion": "0.6.4",
+  "forgeSha256": "dad2cb296571b4070d40381bb8be7a21c6015b90428b097cd4075172440e8dfd",
+  "capabilities": [
+    "filesystem_write_probe",
+    "godot_install_phase_diagnostics",
+    "static_canvas_group_diagnostics",
+    "godot_environment_setup",
+    "godot_version_selection",
+    "godot_project_toolchain_lock",
+    "godot_project_acceptance",
+    "godot_desktop_export_verification",
+    "project_asset_catalog_v3",
+    "project_asset_intake_search",
+    "project_asset_output_registration",
+    "project_asset_retention_delivery",
+    "project_asset_preview_review",
+    "project_asset_portability",
+    "project_asset_integrity_index",
+    "project_asset_metadata_merge",
+    "project_asset_catalog_migration",
+    "local_audio_import",
+    "audio_pack_validation",
+    "audio_godot_delivery",
+    "optional_audio_tool_discovery",
+    "local_static_import",
+    "static_preserve_source_canvas",
+    "single_png_chroma_matting",
+    "connected_background_matting",
+    "edge_color_recovery",
+    "layered_pack_v1",
+    "layered_transform_opacity_tracks",
+    "godot_unified_playback",
+    "godot_native_preview",
+    "effect_blend_modes",
+    "local_animation_import",
+    "preserve_source_coordinates",
+    "local_animation_timing",
+    "whole_sheet_source_transform",
+    "pack_validation",
+    "godot_install",
+    "bundled_forge_use_skill",
+    "embedded_usage_guide",
+    "reviewed_source_hashes",
+    "local_request_relative_paths",
+    "source_png_inspection",
+    "project_image_contract_verification",
+    "effect_quality_profile",
+    "preview_timing_diagnostics",
+    "pack_mp4_preview",
+    "project_asset_png_animation_preview",
+    "delivery_receipts",
+    "godot_install_verification",
+    "transactional_godot_install",
+    "godot_import_cache_integrity",
+    "godot_lossless_sprite_import"
+  ],
+  "godotVersion": "4.7.2.stable.official.ed1daf0bf",
+  "baseline": {
+    "ok": true,
+    "sameInputBytesAsPr59Review": true,
+    "sourceSha256": {
+      "music.wav": "407063f4ed93661178286bb83797f925023c27f9acb1577db9d4da1ce35855a8",
+      "synthetic-walk-1.png": "d3fad8189bfb05af9cfc6c823f2db24fdbee291c591dead360c0240906a36117",
+      "thunder-idle-2.png": "d7fce9681cd1d90f6318c63c0830ceb2495ab3b992e2901209b24b09457f27f0",
+      "thunder-idle-3.png": "a8c7c45e371225da8659f1b146510ae8439b5427edc5e79a69f7876facf646ec",
+      "synthetic-walk-0.png": "b95863ae76b2b4335750b4ea5f113dce565c2f202733f7307b9bdfc39030214a",
+      "thunder-idle.png": "8ac96952fccac991dee828bb7a197b900e89266a06f17c1d5a5ebe4ae0f3f8bb",
+      "synthetic-walk-2.png": "2f22e0df3669311266ed043aaf0e6b555f5f525b28dab7e7416d295125fd6dac",
+      "thunder-idle-1.png": "3084f7d2d890f4ad7ec82a445527e810526c231a862a4a73809ff07371256182",
+      "thunder-idle-0.png": "6c2d705213f293368a552672520c2e2aaafd5654442f3e62c2a2e33be7414cf3",
+      "thunder-move.png": "1c8de0e6a5950a389dd74871da553030335c3420dfbe837b35859b13b14e23a4",
+      "synthetic-idle-1.png": "b593161c9aa14f03ab59fb6d8721d8ff5a10fa44b5d253eca8b58960b93e711b",
+      "synthetic-idle-0.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+      "synthetic-attack-2.png": "29ab679a8c77e1350dee90b85f3b72b211bbd2fefdedc942ab92330c55a811ba",
+      "synthetic-attack-0.png": "0c5521830d54b5c268c830920076656924ca53d898d5876f5a81ddb34ddceb1f",
+      "synthetic-idle-2.png": "bcc8deacb1959b3160f8fc77bbd422ee5fc99a1ce12361eadeb242cee37a0563",
+      "synthetic-attack-1.png": "62d111b78af6a42681603dee9858e0d4cb6a71f2356908bc9a331664b71cd14f",
+      "prop.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+      "synthetic-walk-sheet.png": "f70653ddd26be6522e3d0a98bf1e5a969615e83e39b0b95d4e17b30be4eebbb4",
+      "thunder-move-0.png": "16e74b2be113e85b210f848ed0c7dd737b1e52f184fa5168899f37ac049c6372",
+      "thunder-move-1.png": "11c1c7192d72a7820935fd37866001a33d605f81e858a73df30669eea40dc138",
+      "thunder-move-3.png": "e2dcf41e89c6a9bb6b324f073d42cbdce733e32e06f4a61ccb570a13fddcf0df",
+      "cue.wav": "7edbc997db5922c99506857fc86e9651550a227cf3aa6e44b3a9ca7893fcb6b2",
+      "thunder-move-2.png": "9bcf1c48a4cd4eaf32e03e7363ffdc27da959f8325accd8f7a6051d916cb323d"
+    },
+    "runnerSha256": "efa2901eee6ba6fe5d71c0c783b74acfc7ff37e9ff1ce1f913d968a9b4a06b0b",
+    "checkerSha256": "ccd8f8335cc7ee61c6fa060aa361c84eb6a3192f29a1f8fd93a15e5a50543072",
+    "acceptanceSha256": "cdf716d1704f01b36604a63532532ad2d35214ded94161c2feabf7ae7495c571",
+    "sourcesUnchanged": true,
+    "nativeFailures": [],
+    "nativeAcceptance": {
+      "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nRESOURCE_TASK_PASS:5\n",
+      "stderr": "",
+      "exitCode": 0
+    },
+    "negativeControl": "wrong_expected_duration_rejected",
+    "rejections": {
+      "duration-count": {
+        "code": "operation_failed",
+        "message": "invalid request: animation \"attack\": invalid parameter: frameDurationsMs must contain one positive integer per frame (expected 3); got 2 durations"
+      },
+      "missing-frame": {
+        "code": "operation_failed",
+        "message": "invalid request: animation \"attack\", frame 1 (zero-based): PNG file does not exist: /tmp/forge-m1-native-baseline-1/requests/../inputs/missing.png"
+      }
+    }
+  },
+  "transactions": {
+    "ok": true,
+    "requiredTests": [
+      "real_godot_animation_verification_and_script_failure_protocol",
+      "real_godot_failed_blue_update_restores_red_native_texture_without_reimport",
+      "real_godot_install_and_failed_update_preserve_approved_resources",
+      "real_godot_install_with_v3_catalog",
+      "retained_alias_revisions_install_and_roll_back_without_production_jobs"
+    ],
+    "godot": "/Applications/Godot.app/Contents/MacOS/Godot",
+    "gitCommit": "d2038b510eafdfeea14ae6cff98db4496e92972e",
+    "dirty": true,
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "godotVersion": "4.7.2.stable.official.ed1daf0bf",
+    "discoveredTests": [
+      "real_godot_animation_verification_and_script_failure_protocol",
+      "real_godot_failed_blue_update_restores_red_native_texture_without_reimport",
+      "real_godot_install_and_failed_update_preserve_approved_resources",
+      "real_godot_install_with_v3_catalog",
+      "retained_alias_revisions_install_and_roll_back_without_production_jobs"
+    ],
+    "passedTests": [
+      "real_godot_animation_verification_and_script_failure_protocol",
+      "real_godot_failed_blue_update_restores_red_native_texture_without_reimport",
+      "real_godot_install_and_failed_update_preserve_approved_resources",
+      "real_godot_install_with_v3_catalog",
+      "retained_alias_revisions_install_and_roll_back_without_production_jobs"
+    ]
+  },
+  "guide": {
+    "ok": true,
+    "cases": 33,
+    "contentHash": "bb79ef74a0d83c7f05509bcb4a67d952d3909d90f6fd7996f541be6a9a128f20",
+    "providerRequestsExecuted": 0
+  },
+  "animationCli": {
+    "cases": [
+      "single",
+      "character",
+      "nearest",
+      "legacy",
+      "source_transform"
+    ],
+    "assertions": [
+      "five local plans and installs estimate zero Provider requests",
+      "decoded RGBA pixels preserved",
+      "shared canvas and anchor across actions",
+      "Pack validation passes",
+      "Godot native durations, sampling, anchor and loop verified",
+      "legacy defaults preserved",
+      "invalid duration and cross-action canvas rejected",
+      "synthetic whole-sheet padding and offset preserve original bytes, hashes and derived RGBA",
+      "every transformed grid cell matches its exported frame",
+      "source offset losing alpha=1 rejected"
+    ],
+    "providerRequests": 0
+  },
+  "checks": {
+    "formatting": "passed",
+    "clippyWorkspaceAllTargets": "passed",
+    "coreTestsPassed": 33,
+    "packTestsPassed": 41,
+    "cliGuideTestsPassed": 3,
+    "skillValidator": "passed"
+  },
+  "developmentFailures": [
+    "First native transaction attempt: the added static fixture combined preserve_source with canvasSize; corrected the fixture and reran all five native tests successfully.",
+    "First guide harness attempt assumed every JSON example used schemaVersion 1; extended validation for the version 2 character request and reran the full guide suite."
+  ],
+  "ci": "Native Windows and Godot 4.6.3 must be verified by the PR checks and uploaded workflow artifacts; local execution is macOS 4.7.2 only.",
+  "visualReview": "not_assessed",
+  "listeningReview": "not_assessed",
+  "humanSeconds": null,
+  "modelCost": null,
+  "productivityDecision": "insufficient_evidence"
+}

@@ -373,3 +373,74 @@ fn omitted_sheet_preprocessing_retains_legacy_recipe_and_no_derived_file() {
     let (_, job) = run(temp.path(), AutomationOperation::PrepareAsset(request));
     assert!(!job.join("source-preprocessing").exists());
 }
+
+#[test]
+fn character_input_errors_identify_action_frame_and_source() {
+    let temp = tempfile::tempdir().unwrap();
+    let paths = fixtures(temp.path());
+    let mut value = recipe(&paths);
+    value["schemaVersion"] = json!("2");
+    value["metadata"] = json!({"name":"Diagnostic fixture", "defaultAnimation":"idle"});
+    let input = value.as_object_mut().unwrap().remove("input").unwrap();
+    value["animations"] = json!([
+        {"name":"idle", "input":input, "fps":10, "frameDurationsMs":[70,150,230]},
+        {"name":"attack", "input":input, "fps":10, "frameDurationsMs":[60,240,100]}
+    ]);
+    let plans = PlanStore::new(temp.path().join("plans")).unwrap();
+    let error = |value: Value| {
+        plans
+            .prepare(AutomationOperation::PrepareCharacterPack(
+                serde_json::from_value(value).unwrap(),
+            ))
+            .unwrap_err()
+            .to_string()
+    };
+    let mut bad = value.clone();
+    bad["animations"][1]["frameDurationsMs"] = json!([60, 240]);
+    let message = error(bad);
+    assert!(
+        message.contains("animation \"attack\"")
+            && message.contains("expected 3")
+            && message.contains("got 2 durations"),
+        "{message}"
+    );
+    let mut bad = value.clone();
+    bad["animations"][1]["frameDurationsMs"] = json!([60, 0, 100]);
+    let message = error(bad);
+    assert!(
+        message.contains("animation \"attack\"") && message.contains("frameDurationsMs[1] is zero"),
+        "{message}"
+    );
+    for mode in ["preserve_source", "square_bottom"] {
+        let mut bad = value.clone();
+        bad["normalize"]["mode"] = json!(mode);
+        bad["animations"][1]["input"]["paths"][1] = json!(temp.path().join("missing.png"));
+        let message = error(bad);
+        assert!(
+            message.contains("animation \"attack\", frame 1 (zero-based)")
+                && message.contains("missing.png"),
+            "{message}"
+        );
+    }
+    let wrong_size = temp.path().join("wrong-size.png");
+    RgbaImage::new(65, 64).save(&wrong_size).unwrap();
+    let mut bad = value.clone();
+    bad["animations"][1]["input"]["paths"][1] = json!(wrong_size);
+    let message = error(bad);
+    assert!(
+        message.contains("animation \"attack\", frame 1 (zero-based)")
+            && message.contains("wrong-size.png")
+            && message.contains("expected 64x64, got 65x64"),
+        "{message}"
+    );
+    fs::write(&wrong_size, b"not a PNG").unwrap();
+    let mut bad = value;
+    bad["animations"][1]["input"]["paths"][1] = json!(wrong_size);
+    let message = error(bad);
+    assert!(
+        message.contains("animation \"attack\", frame 1 (zero-based)")
+            && message.contains("wrong-size.png")
+            && message.contains("invalid PNG dimensions"),
+        "{message}"
+    );
+}

@@ -3,6 +3,7 @@ extends SceneTree
 var _failed := false
 var _phase := "install"
 var _audio_results: Array = []
+var _verified_sprite_textures: Array[String] = []
 
 func _initialize() -> void:
 	var args := OS.get_cmdline_user_args()
@@ -842,6 +843,32 @@ func _fail(message: String) -> void:
 
 # Verification runs in a fresh Godot process so it reads saved resources instead
 # of accepting the objects that were just constructed by the installer.
+# Flat sprite/static delivery owns its PNG import settings. Compare the saved
+# native texture with the Pack, including faint alpha and hidden RGB, not just size.
+func _verify_sprite_texture(source_path: String, texture_path: String) -> void:
+	var config := ConfigFile.new()
+	if config.load(texture_path + ".import") != OK:
+		_fail("Installed sprite texture import settings are missing: " + texture_path)
+		return
+	var settings := {"compress/mode": 0, "mipmaps/generate": false,
+		"process/fix_alpha_border": false, "process/premult_alpha": false, "process/size_limit": 0}
+	for key in settings:
+		if config.get_value("params", key, null) != settings[key]:
+			_fail("Installed sprite texture import setting differs: %s (%s)" % [texture_path, key])
+			return
+	var texture := ResourceLoader.load(texture_path, "Texture2D") as Texture2D
+	var expected := Image.load_from_file(source_path)
+	var actual := texture.get_image() if texture != null else null
+	if actual == null or expected == null or actual.get_size() != expected.get_size():
+		_fail("Installed sprite texture dimensions differ from the Pack: " + texture_path)
+		return
+	actual.convert(Image.FORMAT_RGBA8)
+	expected.convert(Image.FORMAT_RGBA8)
+	if actual.get_data() != expected.get_data():
+		_fail("Installed sprite texture RGBA differs from the Pack: " + texture_path)
+		return
+	_verified_sprite_textures.append(texture_path)
+
 func _verify_native_resources(helper: Dictionary, pack_path: String, target_res: String, asset_type: String) -> void:
 	if asset_type == "audio_set":
 		_verify_audio_set(helper, pack_path, target_res)
@@ -859,6 +886,9 @@ func _verify_native_resources(helper: Dictionary, pack_path: String, target_res:
 		for item in items:
 			var item_id := String(item.get("id", ""))
 			var texture_path := target_res.path_join("items").path_join(item_id + ".png")
+			_verify_sprite_texture(pack_path.path_join(String(item["texture"])), texture_path)
+			if _failed:
+				return
 			var texture := ResourceLoader.load(texture_path, "Texture2D") as Texture2D
 			if texture == null or texture.get_width() <= 0 or texture.get_height() <= 0:
 				_fail("Installed static texture is missing or empty: %s" % item_id)
@@ -928,6 +958,10 @@ func _verify_native_resources(helper: Dictionary, pack_path: String, target_res:
 	var atlas := _read_json(pack_path.path_join(String(spec["atlas"])))
 	if _failed:
 		return
+	for relative in spec["textures"]:
+		_verify_sprite_texture(pack_path.path_join(String(relative)), target_res.path_join(String(relative).get_file()))
+		if _failed:
+			return
 	var frames := ResourceLoader.load(target_res.path_join("forge_sprite_frames.tres"), "SpriteFrames") as SpriteFrames
 	if frames == null or frames.get_animation_names().size() != spec["animations"].size():
 		_fail("Installed SpriteFrames has missing or extra animations.")
@@ -1059,6 +1093,7 @@ func _complete(target_res: String, asset_type: String) -> void:
 		"schemaVersion": "1", "status": "succeeded", "phase": _phase,
 		"target": target_res, "assetType": asset_type,
 		"audioStreams": _audio_results,
+		"verifiedSpriteTextures": _verified_sprite_textures,
 	}))
 	print("PASS Forge Godot %s: %s" % [_phase, target_res])
 	quit(0)

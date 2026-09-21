@@ -80,6 +80,7 @@ pub const CAPABILITIES: &[&str] = &[
     "godot_install_verification",
     "transactional_godot_install",
     "godot_import_cache_integrity",
+    "godot_lossless_sprite_import",
 ];
 
 #[cfg(test)]

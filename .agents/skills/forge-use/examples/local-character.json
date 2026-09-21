@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "2",
+  "metadata": {"name": "Example hero", "defaultAnimation": "idle"},
+  "normalize": {
+    "mode": "preserve_source", "margin": 0, "marginBottom": 0, "alphaThreshold": 0,
+    "manualAnchor": {"x": 32, "y": 52, "lockedByUser": true}
+  },
+  "rendering": {"textureFilter": "nearest", "pixelSnap": true},
+  "quality": {"requireGameReady": false},
+  "animations": [
+    {
+      "name": "idle", "fps": 10, "loop": true, "frameDurationsMs": [70, 150, 230],
+      "input": {"kind": "png_sequence", "paths": ["../sources/idle-0.png", "../sources/idle-1.png", "../sources/idle-2.png"]},
+      "matting": {"mode": "preserve_alpha"}
+    },
+    {
+      "name": "walk", "fps": 10, "loop": true, "frameDurationsMs": [80, 120, 160],
+      "input": {"kind": "png_sequence", "paths": ["../sources/walk-0.png", "../sources/walk-1.png", "../sources/walk-2.png"]},
+      "matting": {"mode": "preserve_alpha"}
+    },
+    {
+      "name": "attack", "fps": 10, "loop": false, "frameDurationsMs": [60, 240, 100],
+      "input": {"kind": "png_sequence", "paths": ["../sources/attack-0.png", "../sources/attack-1.png", "../sources/attack-2.png"]},
+      "matting": {"mode": "preserve_alpha"}
+    }
+  ]
+}
