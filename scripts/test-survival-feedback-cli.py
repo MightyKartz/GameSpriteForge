@@ -50,7 +50,7 @@ def main():
     commands = []
 
     def call(*arguments):
-        proc = subprocess.run([str(forge), *map(str, arguments), "--json"], env=env, capture_output=True, text=True, timeout=120)
+        proc = subprocess.run([str(forge), *map(str, arguments), "--json"], env=env, capture_output=True, encoding="utf-8", timeout=120)
         result = json.loads(proc.stdout)
         commands.append({"arguments": list(map(str, arguments)), "exit": proc.returncode, "result": result})
         assert proc.returncode == 0 and result["ok"], (arguments, result, proc.stderr)
@@ -88,7 +88,7 @@ def main():
     def run_example(out, expected_pin=pin, selected_project=project):
         return subprocess.run([sys.executable, str(example), "--forge", str(forge), "--expected-binary-sha256", expected_pin,
                                "--request", str(request), "--project", str(selected_project), "--asset-key", "synthetic",
-                               "--out", str(out), "--operation", "prepare-static"], env=env, capture_output=True, text=True, timeout=360)
+                               "--out", str(out), "--operation", "prepare-static"], env=env, capture_output=True, encoding="utf-8", timeout=360)
 
     wrong = root / "wrong-pin"
     result = run_example(wrong, "0" * 64)
@@ -126,6 +126,72 @@ def main():
     assert (contested / "progress.json").read_bytes() == b"other writer evidence"
 
     cases = ["storage_probe_cleanup", "pinned_binary_rejection", "reviewed_source_locks_required", "embedded_example", "concurrent_output_preserved"]
+
+    # Exercise the actual CLI with a non-UTF-8 default decoder and an original
+    # request rewritten during preflight. Only the concurrent edit and the stop
+    # before installation are injected; Plan/Job/Pack/receipt commands are real.
+    reviewed_dir = root / "审阅请求"
+    reviewed_dir.mkdir()
+    reviewed_request = reviewed_dir / "request.json"
+    reviewed_spec = json.loads(json.dumps(spec))
+    reviewed_spec["name"] = "合成素材"
+    reviewed_spec["items"][0]["path"] = "../source.png"
+    reviewed_spec["sourceLocks"][0]["path"] = "../source.png"
+    original_run = subprocess.run
+    original_source = source.read_bytes()
+
+    class ReachedInstall(Exception):
+        pass
+
+    for change_source in [False, True]:
+        reviewed_request.write_text(json.dumps(reviewed_spec, ensure_ascii=False), encoding="utf-8")
+        selected_output = root / ("中文快照" if not change_source else "changed-source")
+        params = argparse.Namespace(forge=str(forge), request=str(reviewed_request), project=str(project),
+                                    out=str(selected_output), expected_binary_sha256=pin, asset_key="synthetic",
+                                    operation="prepare-static", timeout=60)
+
+        def concurrent_request_edit(command, **kwargs):
+            if command[1:3] == ["godot", "plan-install"]:
+                raise ReachedInstall()
+            result = original_run(command, **kwargs)
+            if command[1] == "doctor":
+                rewritten = {k: v for k, v in reviewed_spec.items() if k != "sourceLocks"}
+                rewritten["name"] = "Unreviewed replacement"
+                reviewed_request.write_text(json.dumps(rewritten), encoding="utf-8")
+                if change_source:
+                    source.write_bytes(original_source + b"changed after review")
+            return result
+
+        try:
+            with patch.dict(os.environ, env), patch("subprocess._text_encoding", return_value="cp1252"), \
+                    patch("subprocess.run", side_effect=concurrent_request_edit):
+                try:
+                    module["deliver"](params)
+                except ReachedInstall:
+                    assert not change_source, "Changed reviewed bytes must fail before installation"
+                except RuntimeError as error:
+                    assert change_source and "reviewed source SHA-256 mismatch" in str(error), str(error)
+                else:
+                    raise AssertionError("Expected the explicit install stop or reviewed-source rejection")
+        finally:
+            source.write_bytes(original_source)
+
+        progress = json.loads((selected_output / "progress.json").read_text(encoding="utf-8"))
+        if change_source:
+            assert "prepareJob" not in progress
+            assert not list((selected_output / "plans").glob("*.json"))
+        else:
+            assert (selected_output / "retained.gsfpack").is_dir()
+            assert (selected_output / "prepared-receipt.json").is_file()
+            claimed, = (selected_output / "plans").glob("*.claimed.json")
+            planned = json.loads(claimed.read_text(encoding="utf-8"))["operation"]["request"]
+            assert planned["name"] == reviewed_spec["name"]
+            assert planned["sourceLocks"][0]["sha256"] == digest(source)
+            assert Path(planned["items"][0]["path"]).resolve() == source.resolve()
+            assert Path(planned["sourceLocks"][0]["path"]).resolve() == source.resolve()
+    assert not (project / ".forge").exists()
+    cases.extend(["utf8_json_with_non_utf8_locale", "request_snapshot_preserves_locks_and_relative_paths",
+                  "request_rewrite_cannot_unlock_changed_source"])
     if args.expect_storage_unsupported:
         with tempfile.TemporaryDirectory(prefix="forge-unsupported-project-", dir=scratch_parent) as d:
             unsupported = Path(d)
@@ -136,10 +202,10 @@ def main():
             assert not out.exists() and not (unsupported / ".forge").exists()
         cases.append("unsupported_project_rejected_before_production")
     if args.godot:
-        out = root / "delivered"
+        out = root / "交付结果"
         result = run_example(out)
         assert result.returncode == 0, (result.stdout, result.stderr)
-        progress = json.loads((out / "progress.json").read_text())
+        progress = json.loads((out / "progress.json").read_text(encoding="utf-8"))
         assert progress["completed"] and progress["visualReview"] == "not_recorded"
         reports = [c["response"]["data"] for c in progress["commands"] if c["arguments"][:2] == ["job", "report"]]
         assert all(r["providerRequestCount"] == 0 for r in reports)

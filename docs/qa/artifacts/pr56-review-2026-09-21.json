@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "pr": "https://github.com/MightyKartz/GameSpriteForge/pull/56",
+  "build": {
+    "gitCommit": "5395d69b3934e17fb796429a35aebeacb5b8cad5",
+    "dirty": false,
+    "target": "aarch64-apple-darwin",
+    "profile": "debug",
+    "features": []
+  },
+  "binarySha256": "2074eb78df423d10423dcba34c412ef360f8d0b31e906e6c694069e819df63cb",
+  "reproductions": [
+    {
+      "id": "locale-decoding",
+      "method": "Actual CLI and shipped example; simulate CP1252 via subprocess._text_encoding; synthetic non-ASCII output path",
+      "preparedPackExists": true,
+      "result": "FileNotFoundError copying the prepared Pack from a mojibake artifact path",
+      "nativeWindows": false
+    },
+    {
+      "id": "request-preflight-race",
+      "method": "Actual CLI; simulate concurrent sourceLocks removal after doctor returns; stop at godot plan-install",
+      "claimedPlanHasSourceLocks": false,
+      "retainedPackExists": true,
+      "preparedReceiptExists": true,
+      "reachedInstallationCommand": true,
+      "installationExecuted": false
+    }
+  ],
+  "ciSnapshot": {
+    "windows-cli": "passed",
+    "windows-portable": "passed",
+    "v03-quality": "pending",
+    "nativeGodotMatrix": "pending"
+  }
+}

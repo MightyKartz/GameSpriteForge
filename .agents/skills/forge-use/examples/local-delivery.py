@@ -47,7 +47,8 @@ def deliver(args):
         raise ValueError("--out must be outside the Godot project")
     if not (project / "project.godot").is_file():
         raise ValueError("--project must contain project.godot")
-    spec = json.loads(request.read_text(encoding="utf-8"))
+    request_text = request.read_text(encoding="utf-8")
+    spec = json.loads(request_text)
     if not spec.get("sourceLocks"):
         raise ValueError("Add reviewed sourceLocks to the request before delivery; this example never invents approval")
     if not re.fullmatch(r"[0-9a-fA-F]{64}", args.expected_binary_sha256):
@@ -64,11 +65,11 @@ def deliver(args):
         env.pop("FORGE_REAL_PROVIDER_ACCEPT", None)
         payload = None
 
-        def call(*arguments):
+        def call(*arguments, input=None, cwd=None):
             if digest(launcher) != launcher_sha or (payload and digest(payload) != args.expected_binary_sha256.lower()):
                 raise ValueError("Forge executable changed; stop and explicitly verify the selected toolchain")
             result = subprocess.run([str(launcher), *map(str, arguments), "--json"], env=env,
-                                    capture_output=True, text=True, timeout=120)
+                                    capture_output=True, encoding="utf-8", input=input, cwd=cwd, timeout=120)
             try:
                 envelope = json.loads(result.stdout)
             except json.JSONDecodeError as error:
@@ -119,7 +120,9 @@ def deliver(args):
                 time.sleep(1)
 
         try:
-            plan = call("plan", args.operation, "--request", request)
+            # Execute the checked in-memory snapshot. --stdin resolves relative
+            # sources, locks and assetProject against the original request root.
+            plan = call("plan", args.operation, "--stdin", input=request_text, cwd=request.parent)
             estimate = plan["estimate"]
             if estimate["providerRequestEstimate"] != 0 or estimate["maximumProviderRequests"] != 0:
                 raise ValueError("Expected zero-Provider local preparation")

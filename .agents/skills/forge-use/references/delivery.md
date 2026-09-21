@@ -49,7 +49,10 @@ outside the Godot project. It supports `prepare-static`, `prepare-asset` and
 validated Pack before installation. The supplied hash is the real executable
 reported as `doctor.data.cliPath`, not a Windows `.cmd` wrapper's hash. Keep
 invoking the public launcher; the example checks launcher and payload changes
-between calls. Do not upgrade the toolchain during a run.
+between calls. Do not upgrade the toolchain during a run. CLI JSON is decoded as
+UTF-8 independently of the system locale. The request is read once and that
+checked snapshot is sent through stdin, with relative paths resolved from the
+original request directory; later edits to the request cannot replace its locks.
 
 Invocation explicitly performs both preparation and installation; only use it
 when those operations are authorized. It does not supply an artistic approval.
