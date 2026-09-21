@@ -1,7 +1,10 @@
 # Survival feedback implementation plan
 
-Status: in progress. Baseline: `546bcef` (Forge 0.6.3).
+Status: implemented in [PR #56](https://github.com/MightyKartz/GameSpriteForge/pull/56).
+Local acceptance passed; native CI is tracked by the PR.
+Baseline: `546bcef` (Forge 0.6.3).
 Evidence: [consumer audit](../qa/survival-feedback-2026-09-21.md).
+Results: [implementation verification](../qa/survival-delivery-implementation-2026-09-21.md).
 
 ## This PR
 
