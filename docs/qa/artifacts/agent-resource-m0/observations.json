@@ -1,0 +1,928 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-21",
+  "purpose": "M0 technical observations; not a productivity benchmark or shipped fix",
+  "platform": "macOS aarch64",
+  "attempts": [
+    {
+      "attempt": "release-1",
+      "ok": false,
+      "error": "Native resource acceptance failed; see command logs",
+      "forgeSha256": "1eac35e14777c3ff798f3a25231aa9f73833e8837f1ba7b3d584620ef7691a38",
+      "doctor": {
+        "cliVersion": "0.6.4",
+        "build": {
+          "gitCommit": "6fd33cfada94f3fc9c0dfe3e5908b3618ebc870f",
+          "dirty": false,
+          "target": "aarch64-apple-darwin",
+          "profile": "release",
+          "features": []
+        },
+        "capabilities": [
+          "filesystem_write_probe",
+          "godot_install_phase_diagnostics",
+          "static_canvas_group_diagnostics",
+          "godot_environment_setup",
+          "godot_version_selection",
+          "godot_project_toolchain_lock",
+          "godot_project_acceptance",
+          "godot_desktop_export_verification",
+          "project_asset_catalog_v3",
+          "project_asset_intake_search",
+          "project_asset_output_registration",
+          "project_asset_retention_delivery",
+          "project_asset_preview_review",
+          "project_asset_portability",
+          "project_asset_integrity_index",
+          "project_asset_metadata_merge",
+          "project_asset_catalog_migration",
+          "local_audio_import",
+          "audio_pack_validation",
+          "audio_godot_delivery",
+          "optional_audio_tool_discovery",
+          "local_static_import",
+          "static_preserve_source_canvas",
+          "single_png_chroma_matting",
+          "connected_background_matting",
+          "edge_color_recovery",
+          "layered_pack_v1",
+          "layered_transform_opacity_tracks",
+          "godot_unified_playback",
+          "godot_native_preview",
+          "effect_blend_modes",
+          "local_animation_import",
+          "preserve_source_coordinates",
+          "local_animation_timing",
+          "whole_sheet_source_transform",
+          "pack_validation",
+          "godot_install",
+          "bundled_forge_use_skill",
+          "embedded_usage_guide",
+          "reviewed_source_hashes",
+          "local_request_relative_paths",
+          "source_png_inspection",
+          "project_image_contract_verification",
+          "effect_quality_profile",
+          "preview_timing_diagnostics",
+          "pack_mp4_preview",
+          "project_asset_png_animation_preview",
+          "delivery_receipts",
+          "godot_install_verification",
+          "transactional_godot_install",
+          "godot_import_cache_integrity"
+        ]
+      },
+      "godotVersion": "4.7.2.stable.official.ed1daf0bf",
+      "runnerSha256": null,
+      "checkerSha256": null,
+      "acceptanceSha256": "cdf716d1704f01b36604a63532532ad2d35214ded94161c2feabf7ae7495c571",
+      "sourceSha256": {
+        "music.wav": "407063f4ed93661178286bb83797f925023c27f9acb1577db9d4da1ce35855a8",
+        "synthetic-walk-1.png": "b593161c9aa14f03ab59fb6d8721d8ff5a10fa44b5d253eca8b58960b93e711b",
+        "thunder-idle-2.png": "d7fce9681cd1d90f6318c63c0830ceb2495ab3b992e2901209b24b09457f27f0",
+        "thunder-idle-3.png": "a8c7c45e371225da8659f1b146510ae8439b5427edc5e79a69f7876facf646ec",
+        "synthetic-walk-0.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+        "thunder-idle.png": "8ac96952fccac991dee828bb7a197b900e89266a06f17c1d5a5ebe4ae0f3f8bb",
+        "synthetic-walk-2.png": "bcc8deacb1959b3160f8fc77bbd422ee5fc99a1ce12361eadeb242cee37a0563",
+        "thunder-idle-1.png": "3084f7d2d890f4ad7ec82a445527e810526c231a862a4a73809ff07371256182",
+        "thunder-idle-0.png": "6c2d705213f293368a552672520c2e2aaafd5654442f3e62c2a2e33be7414cf3",
+        "thunder-move.png": "1c8de0e6a5950a389dd74871da553030335c3420dfbe837b35859b13b14e23a4",
+        "synthetic-idle-1.png": "b593161c9aa14f03ab59fb6d8721d8ff5a10fa44b5d253eca8b58960b93e711b",
+        "synthetic-idle-0.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+        "synthetic-attack-2.png": "b01eeb1bd231780bfbcde79ff677a997949dd927c4508fa3d21e564d2b886d7c",
+        "synthetic-attack-0.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+        "synthetic-idle-2.png": "bcc8deacb1959b3160f8fc77bbd422ee5fc99a1ce12361eadeb242cee37a0563",
+        "synthetic-attack-1.png": "224922ce97483aa179967ae149b71580b0f351e071ca4df627304ce4a467b20e",
+        "prop.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+        "synthetic-walk-sheet.png": "6ec4fadbac359795623036bebaf18ce73eefc6033dd2d4bde5408e3129cdbbe1",
+        "thunder-move-0.png": "16e74b2be113e85b210f848ed0c7dd737b1e52f184fa5168899f37ac049c6372",
+        "thunder-move-1.png": "11c1c7192d72a7820935fd37866001a33d605f81e858a73df30669eea40dc138",
+        "thunder-move-3.png": "e2dcf41e89c6a9bb6b324f073d42cbdce733e32e06f4a61ccb570a13fddcf0df",
+        "cue.wav": "7edbc997db5922c99506857fc86e9651550a227cf3aa6e44b3a9ca7893fcb6b2",
+        "thunder-move-2.png": "9bcf1c48a4cd4eaf32e03e7363ffdc27da959f8325accd8f7a6051d916cb323d"
+      },
+      "sourcesUnchanged": null,
+      "rejections": {
+        "duration-count": {
+          "code": "operation_failed",
+          "message": "invalid request: invalid parameter: frameDurationsMs must contain one positive integer per frame (expected 3)"
+        },
+        "missing-frame": {
+          "code": "operation_failed",
+          "message": "invalid request: invalid PNG dimensions: No such file or directory (os error 2)"
+        }
+      },
+      "nativeAcceptance": {
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+        "stderr": "FAIL:pixels:synthetic:idle:0\nFAIL:pixels:synthetic:idle:1\nFAIL:pixels:synthetic:idle:2\nFAIL:pixels:synthetic:walk:0\nFAIL:pixels:synthetic:walk:1\nFAIL:pixels:synthetic:walk:2\nFAIL:pixels:synthetic:attack:0\nFAIL:pixels:synthetic:attack:1\nFAIL:pixels:synthetic:attack:2\nFAIL:pixels:thunder:idle:0\nFAIL:pixels:thunder:idle:1\nFAIL:pixels:thunder:idle:2\nFAIL:pixels:thunder:idle:3\nFAIL:pixels:thunder:move:0\nFAIL:pixels:thunder:move:1\nFAIL:pixels:thunder:move:2\nFAIL:pixels:thunder:move:3\nFAIL:static-pixels:prop\n",
+        "exitCode": 1
+      },
+      "calls": [
+        {
+          "label": "doctor",
+          "exitCode": 0,
+          "seconds": 2.4059
+        },
+        {
+          "label": "godot-version",
+          "exitCode": 0,
+          "seconds": 0.074
+        },
+        {
+          "label": "duration-count",
+          "exitCode": 1,
+          "seconds": 0.0244
+        },
+        {
+          "label": "missing-frame",
+          "exitCode": 1,
+          "seconds": 0.0319
+        },
+        {
+          "label": "synthetic-plan",
+          "exitCode": 0,
+          "seconds": 0.0261
+        },
+        {
+          "label": "synthetic-execute",
+          "exitCode": 0,
+          "seconds": 0.2915
+        },
+        {
+          "label": "synthetic-report",
+          "exitCode": 0,
+          "seconds": 0.0188
+        },
+        {
+          "label": "synthetic-validate",
+          "exitCode": 0,
+          "seconds": 0.0307
+        },
+        {
+          "label": "synthetic-install-plan",
+          "exitCode": 0,
+          "seconds": 0.0393
+        },
+        {
+          "label": "synthetic-install-execute",
+          "exitCode": 0,
+          "seconds": 12.8424
+        },
+        {
+          "label": "thunder-plan",
+          "exitCode": 0,
+          "seconds": 0.0551
+        },
+        {
+          "label": "thunder-execute",
+          "exitCode": 0,
+          "seconds": 2.0114
+        },
+        {
+          "label": "thunder-report",
+          "exitCode": 0,
+          "seconds": 0.0235
+        },
+        {
+          "label": "thunder-validate",
+          "exitCode": 0,
+          "seconds": 0.0322
+        },
+        {
+          "label": "thunder-install-plan",
+          "exitCode": 0,
+          "seconds": 0.0956
+        },
+        {
+          "label": "thunder-install-execute",
+          "exitCode": 0,
+          "seconds": 13.204
+        },
+        {
+          "label": "props-plan",
+          "exitCode": 0,
+          "seconds": 0.0202
+        },
+        {
+          "label": "props-execute",
+          "exitCode": 0,
+          "seconds": 0.21
+        },
+        {
+          "label": "props-report",
+          "exitCode": 0,
+          "seconds": 0.0202
+        },
+        {
+          "label": "props-validate",
+          "exitCode": 0,
+          "seconds": 0.0256
+        },
+        {
+          "label": "props-install-plan",
+          "exitCode": 0,
+          "seconds": 0.0238
+        },
+        {
+          "label": "props-install-execute",
+          "exitCode": 0,
+          "seconds": 10.7974
+        },
+        {
+          "label": "audio-plan",
+          "exitCode": 0,
+          "seconds": 0.0251
+        },
+        {
+          "label": "audio-execute",
+          "exitCode": 0,
+          "seconds": 0.5887
+        },
+        {
+          "label": "audio-report",
+          "exitCode": 0,
+          "seconds": 0.0185
+        },
+        {
+          "label": "audio-validate",
+          "exitCode": 0,
+          "seconds": 0.0234
+        },
+        {
+          "label": "audio-install-plan",
+          "exitCode": 0,
+          "seconds": 0.0236
+        },
+        {
+          "label": "audio-install-execute",
+          "exitCode": 0,
+          "seconds": 9.6674
+        },
+        {
+          "label": "native-acceptance",
+          "exitCode": 1,
+          "seconds": 0.8255
+        }
+      ],
+      "preparationAndInstallation": {
+        "synthetic": {
+          "jobId": "3c07d2f4-941e-48ec-a617-ca782e1b883a",
+          "installJobId": "f1a8d992-fbe8-4ee2-b854-b63d76b6b25f",
+          "packManifestSha256": "a896aba9347e7ac2998cda56851d1fd8024c4e39da10c854594b8af31bae7fc3",
+          "providerRequestOccurred": false,
+          "providerRequestCount": 0
+        },
+        "thunder": {
+          "jobId": "3b4a7385-ac6f-468f-baa6-d8ee421e7243",
+          "installJobId": "f6311baa-da25-4030-8e55-580e0ac24465",
+          "packManifestSha256": "9d3e779d56793d2d0fabc5b32ad2b3e8f6529639f5999ba1a570f01551208103",
+          "providerRequestOccurred": false,
+          "providerRequestCount": 0
+        },
+        "props": {
+          "jobId": "2fb5a767-70c2-4c49-91a5-76c469a805ce",
+          "installJobId": "2c02ef23-de6a-4535-8194-cc7ac58b156b",
+          "packManifestSha256": "1afa8c7f0ce4002e13c9db2f2dd4062d4374bb001da90ae0b3b9aacbbb39673b",
+          "providerRequestOccurred": false,
+          "providerRequestCount": 0
+        },
+        "audio": {
+          "jobId": "98474440-91e7-43aa-8405-b447745911ae",
+          "installJobId": "12c75231-9763-42cc-b075-eef86d45eca4",
+          "packManifestSha256": "13fa3edde7e2c32692fba297017a227e1b36af695f2b88078c1a8e78cca502ac",
+          "providerRequestOccurred": false,
+          "providerRequestCount": 0
+        }
+      },
+      "harnessNote": "Initial runner before logging hardening; runner/checker hashes and final source recheck were not recorded. The original report mislabeled the forgepack.json file hash as packSha256; this excerpt labels it packManifestSha256."
+    },
+    {
+      "attempt": "source-1",
+      "ok": false,
+      "error": "Native resource acceptance failed; see command logs",
+      "forgeSha256": "0ce817635d218354f90bfefb4e1cbadd3db0d798a0e93b8ef165d74911944103",
+      "doctor": {
+        "cliVersion": "0.6.4",
+        "build": {
+          "gitCommit": "cfde2416454db7442b8007afb58f9ea29e4fd3c5",
+          "dirty": false,
+          "target": "aarch64-apple-darwin",
+          "profile": "debug",
+          "features": []
+        },
+        "capabilities": [
+          "filesystem_write_probe",
+          "godot_install_phase_diagnostics",
+          "static_canvas_group_diagnostics",
+          "godot_environment_setup",
+          "godot_version_selection",
+          "godot_project_toolchain_lock",
+          "godot_project_acceptance",
+          "godot_desktop_export_verification",
+          "project_asset_catalog_v3",
+          "project_asset_intake_search",
+          "project_asset_output_registration",
+          "project_asset_retention_delivery",
+          "project_asset_preview_review",
+          "project_asset_portability",
+          "project_asset_integrity_index",
+          "project_asset_metadata_merge",
+          "project_asset_catalog_migration",
+          "local_audio_import",
+          "audio_pack_validation",
+          "audio_godot_delivery",
+          "optional_audio_tool_discovery",
+          "local_static_import",
+          "static_preserve_source_canvas",
+          "single_png_chroma_matting",
+          "connected_background_matting",
+          "edge_color_recovery",
+          "layered_pack_v1",
+          "layered_transform_opacity_tracks",
+          "godot_unified_playback",
+          "godot_native_preview",
+          "effect_blend_modes",
+          "local_animation_import",
+          "preserve_source_coordinates",
+          "local_animation_timing",
+          "whole_sheet_source_transform",
+          "pack_validation",
+          "godot_install",
+          "bundled_forge_use_skill",
+          "embedded_usage_guide",
+          "reviewed_source_hashes",
+          "local_request_relative_paths",
+          "source_png_inspection",
+          "project_image_contract_verification",
+          "effect_quality_profile",
+          "preview_timing_diagnostics",
+          "pack_mp4_preview",
+          "project_asset_png_animation_preview",
+          "delivery_receipts",
+          "godot_install_verification",
+          "transactional_godot_install",
+          "godot_import_cache_integrity"
+        ]
+      },
+      "godotVersion": "4.7.2.stable.official.ed1daf0bf",
+      "runnerSha256": null,
+      "checkerSha256": null,
+      "acceptanceSha256": "cdf716d1704f01b36604a63532532ad2d35214ded94161c2feabf7ae7495c571",
+      "sourceSha256": {
+        "music.wav": "407063f4ed93661178286bb83797f925023c27f9acb1577db9d4da1ce35855a8",
+        "synthetic-walk-1.png": "b593161c9aa14f03ab59fb6d8721d8ff5a10fa44b5d253eca8b58960b93e711b",
+        "thunder-idle-2.png": "d7fce9681cd1d90f6318c63c0830ceb2495ab3b992e2901209b24b09457f27f0",
+        "thunder-idle-3.png": "a8c7c45e371225da8659f1b146510ae8439b5427edc5e79a69f7876facf646ec",
+        "synthetic-walk-0.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+        "thunder-idle.png": "8ac96952fccac991dee828bb7a197b900e89266a06f17c1d5a5ebe4ae0f3f8bb",
+        "synthetic-walk-2.png": "bcc8deacb1959b3160f8fc77bbd422ee5fc99a1ce12361eadeb242cee37a0563",
+        "thunder-idle-1.png": "3084f7d2d890f4ad7ec82a445527e810526c231a862a4a73809ff07371256182",
+        "thunder-idle-0.png": "6c2d705213f293368a552672520c2e2aaafd5654442f3e62c2a2e33be7414cf3",
+        "thunder-move.png": "1c8de0e6a5950a389dd74871da553030335c3420dfbe837b35859b13b14e23a4",
+        "synthetic-idle-1.png": "b593161c9aa14f03ab59fb6d8721d8ff5a10fa44b5d253eca8b58960b93e711b",
+        "synthetic-idle-0.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+        "synthetic-attack-2.png": "b01eeb1bd231780bfbcde79ff677a997949dd927c4508fa3d21e564d2b886d7c",
+        "synthetic-attack-0.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+        "synthetic-idle-2.png": "bcc8deacb1959b3160f8fc77bbd422ee5fc99a1ce12361eadeb242cee37a0563",
+        "synthetic-attack-1.png": "224922ce97483aa179967ae149b71580b0f351e071ca4df627304ce4a467b20e",
+        "prop.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+        "synthetic-walk-sheet.png": "6ec4fadbac359795623036bebaf18ce73eefc6033dd2d4bde5408e3129cdbbe1",
+        "thunder-move-0.png": "16e74b2be113e85b210f848ed0c7dd737b1e52f184fa5168899f37ac049c6372",
+        "thunder-move-1.png": "11c1c7192d72a7820935fd37866001a33d605f81e858a73df30669eea40dc138",
+        "thunder-move-3.png": "e2dcf41e89c6a9bb6b324f073d42cbdce733e32e06f4a61ccb570a13fddcf0df",
+        "cue.wav": "7edbc997db5922c99506857fc86e9651550a227cf3aa6e44b3a9ca7893fcb6b2",
+        "thunder-move-2.png": "9bcf1c48a4cd4eaf32e03e7363ffdc27da959f8325accd8f7a6051d916cb323d"
+      },
+      "sourcesUnchanged": null,
+      "rejections": {
+        "duration-count": {
+          "code": "operation_failed",
+          "message": "invalid request: invalid parameter: frameDurationsMs must contain one positive integer per frame (expected 3)"
+        },
+        "missing-frame": {
+          "code": "operation_failed",
+          "message": "invalid request: invalid PNG dimensions: No such file or directory (os error 2)"
+        }
+      },
+      "nativeAcceptance": {
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+        "stderr": "FAIL:pixels:synthetic:idle:0\nFAIL:pixels:synthetic:idle:1\nFAIL:pixels:synthetic:idle:2\nFAIL:pixels:synthetic:walk:0\nFAIL:pixels:synthetic:walk:1\nFAIL:pixels:synthetic:walk:2\nFAIL:pixels:synthetic:attack:0\nFAIL:pixels:synthetic:attack:1\nFAIL:pixels:synthetic:attack:2\nFAIL:pixels:thunder:idle:0\nFAIL:pixels:thunder:idle:1\nFAIL:pixels:thunder:idle:2\nFAIL:pixels:thunder:idle:3\nFAIL:pixels:thunder:move:0\nFAIL:pixels:thunder:move:1\nFAIL:pixels:thunder:move:2\nFAIL:pixels:thunder:move:3\nFAIL:static-pixels:prop\n",
+        "exitCode": 1
+      },
+      "calls": [
+        {
+          "label": "doctor",
+          "exitCode": 0,
+          "seconds": 41.52
+        },
+        {
+          "label": "godot-version",
+          "exitCode": 0,
+          "seconds": 0.0547
+        },
+        {
+          "label": "duration-count",
+          "exitCode": 1,
+          "seconds": 0.0215
+        },
+        {
+          "label": "missing-frame",
+          "exitCode": 1,
+          "seconds": 0.0184
+        },
+        {
+          "label": "synthetic-plan",
+          "exitCode": 0,
+          "seconds": 0.0203
+        },
+        {
+          "label": "synthetic-execute",
+          "exitCode": 0,
+          "seconds": 7.9755
+        },
+        {
+          "label": "synthetic-report",
+          "exitCode": 0,
+          "seconds": 0.0261
+        },
+        {
+          "label": "synthetic-validate",
+          "exitCode": 0,
+          "seconds": 0.0663
+        },
+        {
+          "label": "synthetic-install-plan",
+          "exitCode": 0,
+          "seconds": 0.087
+        },
+        {
+          "label": "synthetic-install-execute",
+          "exitCode": 0,
+          "seconds": 54.5667
+        },
+        {
+          "label": "thunder-plan",
+          "exitCode": 0,
+          "seconds": 0.33
+        },
+        {
+          "label": "thunder-execute",
+          "exitCode": 0,
+          "seconds": 39.2093
+        },
+        {
+          "label": "thunder-report",
+          "exitCode": 0,
+          "seconds": 0.0243
+        },
+        {
+          "label": "thunder-validate",
+          "exitCode": 0,
+          "seconds": 0.0592
+        },
+        {
+          "label": "thunder-install-plan",
+          "exitCode": 0,
+          "seconds": 0.8969
+        },
+        {
+          "label": "thunder-install-execute",
+          "exitCode": 0,
+          "seconds": 68.5873
+        },
+        {
+          "label": "props-plan",
+          "exitCode": 0,
+          "seconds": 0.0296
+        },
+        {
+          "label": "props-execute",
+          "exitCode": 0,
+          "seconds": 9.963
+        },
+        {
+          "label": "props-report",
+          "exitCode": 0,
+          "seconds": 0.0402
+        },
+        {
+          "label": "props-validate",
+          "exitCode": 0,
+          "seconds": 0.1257
+        },
+        {
+          "label": "props-install-plan",
+          "exitCode": 0,
+          "seconds": 0.1054
+        },
+        {
+          "label": "props-install-execute",
+          "exitCode": 0,
+          "seconds": 53.3337
+        },
+        {
+          "label": "audio-plan",
+          "exitCode": 0,
+          "seconds": 0.0315
+        },
+        {
+          "label": "audio-execute",
+          "exitCode": 0,
+          "seconds": 13.0861
+        },
+        {
+          "label": "audio-report",
+          "exitCode": 0,
+          "seconds": 0.1088
+        },
+        {
+          "label": "audio-validate",
+          "exitCode": 0,
+          "seconds": 0.1567
+        },
+        {
+          "label": "audio-install-plan",
+          "exitCode": 0,
+          "seconds": 0.1825
+        },
+        {
+          "label": "audio-install-execute",
+          "exitCode": 0,
+          "seconds": 57.8118
+        },
+        {
+          "label": "native-acceptance",
+          "exitCode": 1,
+          "seconds": 0.7151
+        }
+      ],
+      "preparationAndInstallation": {
+        "synthetic": {
+          "jobId": "cd192f23-80d6-449a-8fc0-b561e9b2128a",
+          "installJobId": "7a81034d-ea2f-4325-bd98-8c59054977bd",
+          "packManifestSha256": "aae27a18f0b92a4d8f994dba429adbc77088c0407d0c294876860d65f15e311c",
+          "providerRequestOccurred": false,
+          "providerRequestCount": 0
+        },
+        "thunder": {
+          "jobId": "59b4ecdf-70de-43d7-831f-633ec2f957d0",
+          "installJobId": "fc04f521-8a3b-4d1a-8708-33a9f006cfb1",
+          "packManifestSha256": "1154a05b3ac3e284bf6fbc5ba1398fa46db616f2dd071894572e3104e0f03175",
+          "providerRequestOccurred": false,
+          "providerRequestCount": 0
+        },
+        "props": {
+          "jobId": "3f838c53-0380-482c-96cc-a9b2d7f1d655",
+          "installJobId": "478b5ec9-69fd-4da4-843f-545653a392f6",
+          "packManifestSha256": "b003091d153e764ed5d434e551ae509e6b2d740e4e494c6b547955b73548405f",
+          "providerRequestOccurred": false,
+          "providerRequestCount": 0
+        },
+        "audio": {
+          "jobId": "7c7939ed-77b4-4518-ab72-73a1d628649f",
+          "installJobId": "d2b28501-3ad5-4b95-b5c2-75862335df44",
+          "packManifestSha256": "13fa3edde7e2c32692fba297017a227e1b36af695f2b88078c1a8e78cca502ac",
+          "providerRequestOccurred": false,
+          "providerRequestCount": 0
+        }
+      },
+      "harnessNote": "Initial runner before logging hardening; runner/checker hashes and final source recheck were not recorded. The original report mislabeled the forgepack.json file hash as packSha256; this excerpt labels it packManifestSha256."
+    },
+    {
+      "attempt": "release-2",
+      "ok": false,
+      "error": "Native resource acceptance failed; see command logs",
+      "forgeSha256": "1eac35e14777c3ff798f3a25231aa9f73833e8837f1ba7b3d584620ef7691a38",
+      "doctor": {
+        "cliVersion": "0.6.4",
+        "build": {
+          "gitCommit": "6fd33cfada94f3fc9c0dfe3e5908b3618ebc870f",
+          "dirty": false,
+          "target": "aarch64-apple-darwin",
+          "profile": "release",
+          "features": []
+        },
+        "capabilities": [
+          "filesystem_write_probe",
+          "godot_install_phase_diagnostics",
+          "static_canvas_group_diagnostics",
+          "godot_environment_setup",
+          "godot_version_selection",
+          "godot_project_toolchain_lock",
+          "godot_project_acceptance",
+          "godot_desktop_export_verification",
+          "project_asset_catalog_v3",
+          "project_asset_intake_search",
+          "project_asset_output_registration",
+          "project_asset_retention_delivery",
+          "project_asset_preview_review",
+          "project_asset_portability",
+          "project_asset_integrity_index",
+          "project_asset_metadata_merge",
+          "project_asset_catalog_migration",
+          "local_audio_import",
+          "audio_pack_validation",
+          "audio_godot_delivery",
+          "optional_audio_tool_discovery",
+          "local_static_import",
+          "static_preserve_source_canvas",
+          "single_png_chroma_matting",
+          "connected_background_matting",
+          "edge_color_recovery",
+          "layered_pack_v1",
+          "layered_transform_opacity_tracks",
+          "godot_unified_playback",
+          "godot_native_preview",
+          "effect_blend_modes",
+          "local_animation_import",
+          "preserve_source_coordinates",
+          "local_animation_timing",
+          "whole_sheet_source_transform",
+          "pack_validation",
+          "godot_install",
+          "bundled_forge_use_skill",
+          "embedded_usage_guide",
+          "reviewed_source_hashes",
+          "local_request_relative_paths",
+          "source_png_inspection",
+          "project_image_contract_verification",
+          "effect_quality_profile",
+          "preview_timing_diagnostics",
+          "pack_mp4_preview",
+          "project_asset_png_animation_preview",
+          "delivery_receipts",
+          "godot_install_verification",
+          "transactional_godot_install",
+          "godot_import_cache_integrity"
+        ]
+      },
+      "godotVersion": "4.7.2.stable.official.ed1daf0bf",
+      "runnerSha256": "9832350ea2415be67af96b58dd5d22846d48e03bd5f3c7ef450e22bd02c375b1",
+      "checkerSha256": "bd8678636cf295f3403861b40f9927af85a980e42340c1e9b1e9d1b0b68ee941",
+      "acceptanceSha256": "cdf716d1704f01b36604a63532532ad2d35214ded94161c2feabf7ae7495c571",
+      "sourceSha256": {
+        "music.wav": "407063f4ed93661178286bb83797f925023c27f9acb1577db9d4da1ce35855a8",
+        "synthetic-walk-1.png": "b593161c9aa14f03ab59fb6d8721d8ff5a10fa44b5d253eca8b58960b93e711b",
+        "thunder-idle-2.png": "d7fce9681cd1d90f6318c63c0830ceb2495ab3b992e2901209b24b09457f27f0",
+        "thunder-idle-3.png": "a8c7c45e371225da8659f1b146510ae8439b5427edc5e79a69f7876facf646ec",
+        "synthetic-walk-0.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+        "thunder-idle.png": "8ac96952fccac991dee828bb7a197b900e89266a06f17c1d5a5ebe4ae0f3f8bb",
+        "synthetic-walk-2.png": "bcc8deacb1959b3160f8fc77bbd422ee5fc99a1ce12361eadeb242cee37a0563",
+        "thunder-idle-1.png": "3084f7d2d890f4ad7ec82a445527e810526c231a862a4a73809ff07371256182",
+        "thunder-idle-0.png": "6c2d705213f293368a552672520c2e2aaafd5654442f3e62c2a2e33be7414cf3",
+        "thunder-move.png": "1c8de0e6a5950a389dd74871da553030335c3420dfbe837b35859b13b14e23a4",
+        "synthetic-idle-1.png": "b593161c9aa14f03ab59fb6d8721d8ff5a10fa44b5d253eca8b58960b93e711b",
+        "synthetic-idle-0.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+        "synthetic-attack-2.png": "b01eeb1bd231780bfbcde79ff677a997949dd927c4508fa3d21e564d2b886d7c",
+        "synthetic-attack-0.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+        "synthetic-idle-2.png": "bcc8deacb1959b3160f8fc77bbd422ee5fc99a1ce12361eadeb242cee37a0563",
+        "synthetic-attack-1.png": "224922ce97483aa179967ae149b71580b0f351e071ca4df627304ce4a467b20e",
+        "prop.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+        "synthetic-walk-sheet.png": "6ec4fadbac359795623036bebaf18ce73eefc6033dd2d4bde5408e3129cdbbe1",
+        "thunder-move-0.png": "16e74b2be113e85b210f848ed0c7dd737b1e52f184fa5168899f37ac049c6372",
+        "thunder-move-1.png": "11c1c7192d72a7820935fd37866001a33d605f81e858a73df30669eea40dc138",
+        "thunder-move-3.png": "e2dcf41e89c6a9bb6b324f073d42cbdce733e32e06f4a61ccb570a13fddcf0df",
+        "cue.wav": "7edbc997db5922c99506857fc86e9651550a227cf3aa6e44b3a9ca7893fcb6b2",
+        "thunder-move-2.png": "9bcf1c48a4cd4eaf32e03e7363ffdc27da959f8325accd8f7a6051d916cb323d"
+      },
+      "sourcesUnchanged": true,
+      "rejections": {
+        "duration-count": {
+          "code": "operation_failed",
+          "message": "invalid request: invalid parameter: frameDurationsMs must contain one positive integer per frame (expected 3)"
+        },
+        "missing-frame": {
+          "code": "operation_failed",
+          "message": "invalid request: invalid PNG dimensions: No such file or directory (os error 2)"
+        }
+      },
+      "nativeAcceptance": {
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+        "stderr": "FAIL:pixels:synthetic:idle:0\nFAIL:pixels:synthetic:idle:1\nFAIL:pixels:synthetic:idle:2\nFAIL:pixels:synthetic:walk:0\nFAIL:pixels:synthetic:walk:1\nFAIL:pixels:synthetic:walk:2\nFAIL:pixels:synthetic:attack:0\nFAIL:pixels:synthetic:attack:1\nFAIL:pixels:synthetic:attack:2\nFAIL:pixels:thunder:idle:0\nFAIL:pixels:thunder:idle:1\nFAIL:pixels:thunder:idle:2\nFAIL:pixels:thunder:idle:3\nFAIL:pixels:thunder:move:0\nFAIL:pixels:thunder:move:1\nFAIL:pixels:thunder:move:2\nFAIL:pixels:thunder:move:3\nFAIL:static-pixels:prop\n",
+        "exitCode": 1
+      },
+      "calls": [
+        {
+          "label": "doctor",
+          "exitCode": 0,
+          "seconds": 2.2705
+        },
+        {
+          "label": "godot-version",
+          "exitCode": 0,
+          "seconds": 0.0578
+        },
+        {
+          "label": "duration-count",
+          "exitCode": 1,
+          "seconds": 0.0311
+        },
+        {
+          "label": "missing-frame",
+          "exitCode": 1,
+          "seconds": 0.0276
+        },
+        {
+          "label": "synthetic-plan",
+          "exitCode": 0,
+          "seconds": 0.0248
+        },
+        {
+          "label": "synthetic-execute",
+          "exitCode": 0,
+          "seconds": 0.2958
+        },
+        {
+          "label": "synthetic-report",
+          "exitCode": 0,
+          "seconds": 0.0211
+        },
+        {
+          "label": "synthetic-validate",
+          "exitCode": 0,
+          "seconds": 0.0309
+        },
+        {
+          "label": "synthetic-install-plan",
+          "exitCode": 0,
+          "seconds": 0.0247
+        },
+        {
+          "label": "synthetic-install-execute",
+          "exitCode": 0,
+          "seconds": 13.1989
+        },
+        {
+          "label": "thunder-plan",
+          "exitCode": 0,
+          "seconds": 0.0407
+        },
+        {
+          "label": "thunder-execute",
+          "exitCode": 0,
+          "seconds": 1.5538
+        },
+        {
+          "label": "thunder-report",
+          "exitCode": 0,
+          "seconds": 0.0209
+        },
+        {
+          "label": "thunder-validate",
+          "exitCode": 0,
+          "seconds": 0.0255
+        },
+        {
+          "label": "thunder-install-plan",
+          "exitCode": 0,
+          "seconds": 0.075
+        },
+        {
+          "label": "thunder-install-execute",
+          "exitCode": 0,
+          "seconds": 11.6036
+        },
+        {
+          "label": "props-plan",
+          "exitCode": 0,
+          "seconds": 0.0183
+        },
+        {
+          "label": "props-execute",
+          "exitCode": 0,
+          "seconds": 0.1877
+        },
+        {
+          "label": "props-report",
+          "exitCode": 0,
+          "seconds": 0.0171
+        },
+        {
+          "label": "props-validate",
+          "exitCode": 0,
+          "seconds": 0.0231
+        },
+        {
+          "label": "props-install-plan",
+          "exitCode": 0,
+          "seconds": 0.0266
+        },
+        {
+          "label": "props-install-execute",
+          "exitCode": 0,
+          "seconds": 9.4474
+        },
+        {
+          "label": "audio-plan",
+          "exitCode": 0,
+          "seconds": 0.0491
+        },
+        {
+          "label": "audio-execute",
+          "exitCode": 0,
+          "seconds": 0.6477
+        },
+        {
+          "label": "audio-report",
+          "exitCode": 0,
+          "seconds": 0.017
+        },
+        {
+          "label": "audio-validate",
+          "exitCode": 0,
+          "seconds": 0.023
+        },
+        {
+          "label": "audio-install-plan",
+          "exitCode": 0,
+          "seconds": 0.0265
+        },
+        {
+          "label": "audio-install-execute",
+          "exitCode": 0,
+          "seconds": 12.336
+        },
+        {
+          "label": "native-acceptance",
+          "exitCode": 1,
+          "seconds": 0.7221
+        }
+      ],
+      "preparationAndInstallation": {
+        "synthetic": {
+          "jobId": "83e5b6bc-21f0-4a64-b5aa-25da7612e8f7",
+          "installJobId": "84e58d08-e7a4-4072-9d63-e15923ecb810",
+          "packManifestSha256": "da7f48656622d22543feefdd26319943bca3ecec4eea58dd611da027f1793107",
+          "providerRequestOccurred": false,
+          "providerRequestCount": 0
+        },
+        "thunder": {
+          "jobId": "1f828922-a855-435d-94f1-a8186fbd9e3b",
+          "installJobId": "f558ed28-6bd9-4a51-babe-33b7f33341be",
+          "packManifestSha256": "8294ac3dc6dd2e98e4e0e01acc30767ed20b65e376b890571516aa0be57e9c28",
+          "providerRequestOccurred": false,
+          "providerRequestCount": 0
+        },
+        "props": {
+          "jobId": "877955d3-62e9-419d-b38e-e6957b7049f4",
+          "installJobId": "24270d87-3df3-49d6-897d-3ebc3c209a89",
+          "packManifestSha256": "e96f67786d193c587847999f197df6e7309813de6bfd909a8724c0fbdff95884",
+          "providerRequestOccurred": false,
+          "providerRequestCount": 0
+        },
+        "audio": {
+          "jobId": "3ced7bc5-1e1d-464b-b9b6-51c0fae34dce",
+          "installJobId": "28c31ee4-7781-4d29-875e-46f334e0d395",
+          "packManifestSha256": "13fa3edde7e2c32692fba297017a227e1b36af695f2b88078c1a8e78cca502ac",
+          "providerRequestOccurred": false,
+          "providerRequestCount": 0
+        }
+      }
+    }
+  ],
+  "visualReview": "not_assessed",
+  "listeningReview": "not_assessed",
+  "humanSeconds": null,
+  "modelCost": null,
+  "productivityDecision": "insufficient_evidence",
+  "secondIndependentGame": "not_confirmed",
+  "alphaBorderControl": {
+    "basedOn": "release-1",
+    "separateProjectCopy": true,
+    "changedFiles": [
+      "addons/forge_assets/props/items/prop.png.import",
+      "addons/forge_assets/synthetic/sprite_sheet.png.import",
+      "addons/forge_assets/thunder/sprite_sheet.png.import"
+    ],
+    "change": "process/fix_alpha_border=true -> false",
+    "importExitCode": 0,
+    "native": {
+      "argv": [
+        "--script",
+        "res://verify.gd"
+      ],
+      "code": 0,
+      "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nRESOURCE_TASK_PASS:5\n",
+      "stderr": ""
+    },
+    "countsAsForgePass": false
+  },
+  "checkerControls": {
+    "unchanged": {
+      "exitCode": 0,
+      "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nRESOURCE_TASK_PASS:5\n",
+      "stderr": ""
+    },
+    "bad-duration": {
+      "exitCode": 1,
+      "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+      "stderr": "FAIL:duration:synthetic:idle:0\n"
+    },
+    "bad-visible-pixel": {
+      "exitCode": 1,
+      "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+      "stderr": "FAIL:pixels:synthetic:idle:0\n"
+    }
+  },
+  "checkerControlsSha256": "bd8678636cf295f3403861b40f9927af85a980e42340c1e9b1e9d1b0b68ee941"
+}

@@ -46,6 +46,9 @@ jobs:
       - name: Test delivery comparison acceptance and reporting
         run: python3 scripts/experiments/test-static-delivery-comparison.py -v
 
+      - name: Test Agent resource baseline acceptance and fixtures
+        run: python3 scripts/experiments/test-agent-resource-baseline.py -v
+
       - name: Verify resource content identity and publication contracts
         run: |
           cargo test --locked -p core --test content_digest_tests --test asset_library_tests --test asset_library_review_tests --test asset_library_transfer_tests
