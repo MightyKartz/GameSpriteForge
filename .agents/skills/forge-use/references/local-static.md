@@ -234,3 +234,19 @@ transactional target. Nearest/linear sampling remains as requested; review the
 rendered edges when upgrading an existing installation. See
 [animation delivery](animation.md#three-action-task) (`forge guide animation`) for
 the shared import policy and its limits.
+
+
+For an already reviewed recipe and authorized install, reuse
+`guide local-delivery-example` (read the resource, then run the saved Python
+example with `--operation prepare-static`). Use the separate steps above if the
+normalized output still needs visual review. Preview the contact sheet and
+normalized item textures; sources are retained originals. When already using a
+library, `asset preview --project LIBRARY --id ASSET --revision REVISION --out
+NEW_DIR` produces an offline comparison page without recording approval.
+
+Follow [recovery by phase](delivery.md#recover-by-phase) (`guide delivery`) after
+an interruption. A Godot project parse failure does not invalidate a prepared
+PNG Pack: retain it, correct the project, and create a new install Plan. Preserve
+prior receipts, the game's toolchain lock and game scripts outside Forge's owned
+target. Source inspection diagnostics (including edge contact) remain review
+cues; do not add padding or change normalization solely to silence a hint.

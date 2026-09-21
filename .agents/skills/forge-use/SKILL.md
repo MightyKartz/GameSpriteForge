@@ -71,15 +71,36 @@ versions. Local images/audio need no Provider credentials or Style Lock. Online
 Provider generation uses the user's account and can incur charges. Character
 animation remains experimental; unrelated still images are not animation frames.
 
+## Three shortest task paths
+
+All three paths share Plan → Job → inspect/validate → review → install → verify
+and receipt retention. Read one workflow; create a library only when versioned
+reuse or its comparison page helps.
+
+| Input/task | Prepare | Inspect output before installation |
+| --- | --- | --- |
+| Named animation frames | `guide animation`, then its `plan prepare-character` recipe | Per-action quality/PNG preview, shared anchor, frame order and durations |
+| Music or SFX WAV | `audio inspect`, `guide audio`, `plan prepare-audio` | `asset inspect` audioItems, quality warnings, processed WAV listening, declared loop |
+| Icons or props PNG | `source inspect`, `guide static`, `plan prepare-static` | Contact sheet/normalized PNGs, canvas, anchor and sampling |
+
+For each: `plan execute --token TOKEN --wait --json`, retain `data.job_id`, then
+`job report --id JOB --json`. Locate the Pack by its `gsfpack` artifact; use
+`pack validate` and `asset inspect`. Follow the selected workflow for review and
+`godot plan-install`; finish with `godot verify-install` and `receipt export` /
+`receipt verify`. See [recovery by phase](references/delivery.md#recover-by-phase)
+(`guide delivery`) when interrupted. Never infer approval from a succeeded Job.
+
 ## Reuse the complete delivery example when appropriate
 
-For reviewed static/animation inputs with an already authorized processing recipe
+For reviewed static/animation/audio inputs with an already authorized processing recipe
 and installation, read `forge guide local-delivery-example` on a build exposing
 it in the guide index. This Python example joins preparation, retained Packs,
 installation and final receipt verification. It requires reviewed `sourceLocks`
-and an expected binary hash; it does not itself pause for visual approval.
+and an expected binary hash; it does not itself pause for visual or listening approval.
 Use the separate prepare/review/install steps from the selected guide when the
-processed result still needs review. The example does not cover WAV preparation.
+processed result still needs review. For WAV preparation choose `--operation prepare-audio` and explicitly set
+`sampleRate` and `channels` after inspecting the source; the example refuses to
+choose these conversions for you.
 
 With `filesystem_write_probe`, explicitly run `storage check --path DIR --json`
 on production/output directories and inspect `supported`. Unsupported storage

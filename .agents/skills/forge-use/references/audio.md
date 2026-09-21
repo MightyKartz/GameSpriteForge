@@ -2,8 +2,7 @@
 
 Use this route for music, sound effects and ambience already exported by the
 user's chosen tools. Follow the [toolchain checks](../SKILL.md) (`forge guide
-overview` in the embedded bundle). These commands are included in the default
-v0.4.0 release. Require `local_audio_import`, `audio_pack_validation` and
+overview` in the embedded bundle). Require `local_audio_import`, `audio_pack_validation` and
 `audio_godot_delivery` for import and engine delivery;
 `optional_audio_tool_discovery` exposes the external-tool catalog. Check the
 actual executable and preserve existing consumer pins until an upgrade is verified.
@@ -65,6 +64,16 @@ Each item needs `id`, `path` and `role` (`music`, `sfx` or `ambience`); its opti
 name defaults to its ID. Local inputs must be regular WAV files, not symlinks,
 at most 512 MiB and 3600 seconds, with 8000–192000 Hz and 1–8 channels.
 
+Before planning, explicitly set `sampleRate` and `channels` from the inspection
+when preserving a supported source format. Group clips with different native
+formats into separate requests; request-level controls apply to every item.
+For example, preserve a 22050 Hz mono SFX with `sampleRate:22050, channels:1`,
+and keep 48000 Hz stereo music in another request. Request a conversion only
+when it is intended; sources above 96000 Hz or with more than two channels need
+an explicit delivery-format decision. Keep trim/fade/crossfade/gain at their
+neutral values unless requested. The historical CLI defaults below remain for
+compatibility; omitting fields is **not** a preserve-source mode.
+
 Output is PCM16 WAV. Request-level `sampleRate` defaults to `48000` (8000–96000
 allowed) and `channels` to `2` (`1` or `2` allowed). Processing controls belong
 directly on each item:
@@ -77,6 +86,14 @@ directly on each item:
 | `gainDb` | `0`; explicit gain from −60 to +24 dB |
 | `fadeInMs`, `fadeOutMs` | `0`; each fade must fit the processed duration |
 | `crossfadeMs` | `0`; optional end/start blend, at most 30000 ms |
+
+`loop` explicitly means the whole processed clip loops in Godot. Embedded WAV
+`smpl`/cue regions are not imported or exposed by `audio inspect`; preserve the
+original WAV and obtain any intended subrange from its source tool. Do not infer
+`loop:true` from a music role. Specify a reviewed trim to make a subrange the
+whole output, or retain the original and handle region playback in game code.
+Compare the manifest's declared `loop` with native `loopBegin`/`loopEnd`; this
+checks intent and delivery, not source metadata preservation or seamlessness.
 
 A positive crossfade requires `loop:true`, must be shorter than half the trimmed
 audio, and shortens the output by one crossfade duration. Trim endpoints must fit
@@ -124,6 +141,32 @@ or verified seamless loop. Listen to the complete output and repeated loop joins
 at the game's intended volume. Review clipping, fade shape, transitions and
 audibility in context. A loop flag or crossfade does not establish a seamless loop.
 Revise with a new request and Job while preserving earlier evidence.
+
+## Preview and recover using existing tools
+
+`asset inspect` returns `audioItems` with item IDs, processed paths, format,
+duration, loop and source/processing evidence. Listen to those **processed** WAVs
+located relative to the returned Pack root; retained `sources/` WAVs are originals,
+not the delivered sound. Direct playback needs no library. If already registered,
+`asset preview --project LIBRARY --id ASSET --revision REVISION --out NEW_DIR`
+creates an offline page with both copies labeled by Pack path. Its ordinary
+browser controls do not apply Godot loop metadata; use native engine playback
+to check looping. An audio Pack's suggested review domain is `auditory`.
+Only record an actual listening decision; technical and license reviews are
+independent domains, and previewing never creates approval.
+
+For an already reviewed recipe and authorized installation, reuse
+`guide local-delivery-example` with `--operation prepare-audio` (explicit
+`sampleRate`, `channels` and complete `sourceLocks` are required). It preserves
+prepared Packs and receipts if installation fails. For new sounds requiring
+listening before installation, use the separate prepare/review/install steps.
+See [recovery by phase](delivery.md#recover-by-phase) (`guide delivery`) for
+interrupted Jobs, failed installation and receipt relocation.
+
+Missing FFmpeg/FFprobe is a toolchain failure: inspect `doctor` and select the
+verified installed helpers or explicitly provision them. A missing Godot affects
+native delivery, not source generation. Neither failure justifies installing an
+audio model, downloading weights or retrying a Provider.
 
 ## Deliver and retain evidence
 
