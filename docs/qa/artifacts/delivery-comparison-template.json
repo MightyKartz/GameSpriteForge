@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "status": "unmeasured_template",
+  "project": null,
+  "iteration": null,
+  "task": null,
+  "acceptanceContract": null,
+  "sourceSnapshotSha256": null,
+  "projectSnapshotSha256": null,
+  "platform": null,
+  "godotIdentity": null,
+  "modelAndSettings": null,
+  "armOrder": null,
+  "baseline": {
+    "toolsAndScriptHashes": null,
+    "acceptancePassed": null,
+    "activeHumanSeconds": null,
+    "setupHumanSeconds": null,
+    "maintenanceHumanSeconds": null,
+    "machineElapsedSeconds": null,
+    "modelUsageAndCost": null,
+    "reworkCount": null,
+    "unresolvedFailures": null,
+    "evidencePaths": null
+  },
+  "forge": {
+    "binarySha256AndDoctor": null,
+    "acceptancePassed": null,
+    "activeHumanSeconds": null,
+    "setupHumanSeconds": null,
+    "maintenanceHumanSeconds": null,
+    "machineElapsedSeconds": null,
+    "modelUsageAndCost": null,
+    "reworkCount": null,
+    "unresolvedFailures": null,
+    "evidencePaths": null
+  },
+  "chooseForgeNextIteration": null,
+  "deviations": [],
+  "decision": "insufficient_evidence"
+}

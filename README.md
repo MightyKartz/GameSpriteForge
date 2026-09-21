@@ -2,9 +2,9 @@
 
 English | [简体中文](./README.zh-CN.md)
 
-**A CLI for 2D game art and audio.**
+**Prepare, verify and safely update game assets in Godot.**
 
-Bring assets from your preferred creative tools, manage them in a project library, and deliver them to Godot. Forge is built in Rust and works with Codex, Claude, terminal commands and scripts.
+Bring images, animation frames and audio from your preferred creative tools. Forge provides repeatable processing, native Godot delivery and recovery when an installation fails. Codex or another agent can operate the CLI while you review the results.
 
 [Latest release](https://github.com/MightyKartz/GameSpriteForge/releases/latest) · [Install](#install) · [Features](#what-you-can-do) · [CLI guide](docs/automation/forge-cli.md)
 
@@ -94,9 +94,13 @@ visual or gameplay approval. [Workflow guide](.agents/skills/forge-use/reference
 
 ## Use with Codex
 
+Forge is most useful for repeated asset processing and updates that need validation
+and recovery. For a few ready-to-import PNGs, Godot's native import may be enough.
+Project libraries and Provider generation are optional workflows.
+
 Open your game project in Codex and ask:
 
-> Use Forge with this game's source images, animation frames and WAV audio. Run `forge guide` first, preserve the originals, and show me the prepared results for review before installing them into Godot.
+> Prepare these assets for this Godot project with Forge. Read the pinned CLI's `forge guide`, preserve the originals, and show me the prepared results before installation. After I approve delivery, install them and report the result or recovery steps. Keep the technical records in files.
 
 The embedded guide works offline. Read a topic with `forge guide project-assets`, `forge guide static`, `forge guide animation`, `forge guide audio` or `forge guide delivery`. An optional [Codex skill installation](docs/automation/forge-cli.md#optional-bundled-codex-skill) enables discovery on macOS/Linux.
 
@@ -111,6 +115,11 @@ Sword is a cultivation-themed survival game prototype. Codex created its source 
 *Existing resources imported with earlier Forge builds, replayed in a dedicated asset showcase. [Source and capture details](docs/media/showcase/README.md).*
 
 ## Scope
+
+Current development prioritizes reliable asset delivery and simpler agent usage.
+Existing features remain available; wider platform expansion waits for measured
+benefits in real projects. See the [product priorities](PRODUCT.md#current-investment-priorities)
+and [comparison protocol](docs/qa/asset-delivery-comparison.md).
 
 **New in v0.6.0:** builds with `godot_version_selection` support Godot 4.7.x alongside 4.6.x, with selectable 4.7.2 and 4.6.3 downloads and matching export templates. The new default download is 4.7.2; existing project locks remain unchanged. See the [Godot workflow guide](.agents/skills/forge-use/references/godot-workflow.md).
 

@@ -1,124 +1,103 @@
 ---
 name: forge-use
-description: Use Forge CLI to prepare local game art or WAV audio, generate icon or prop sets with a Forge Provider, manage project resource libraries, inspect asset jobs, and deliver Packs to Godot.
+description: Use Forge CLI for repeatable local game asset preparation, verified Godot delivery and recovery, with optional libraries and Provider generation.
 ---
 
-# Use Forge for game assets
+# Prepare and deliver assets to Godot
 
-Start from the game's asset specs, toolchain lock and import receipts. This skill
-is self-contained: its required references and examples travel with the bundle.
-Since v0.3.2, Forge exposes its matching bundle through `guide`, so reading and
-using it requires no skill installation or source checkout. An optional skill
-installation lets Codex discover it by name. Neither route installs or upgrades Forge, enables
-Codex image tools, or replaces a project's pinned executable. Forge source
-development is a separate task.
+Start with the game's existing specs, toolchain lock and receipts. Use Forge when
+repeatable processing, native delivery, updates or recovery help the task. A few
+ready-to-import PNGs may only need Godot's native import. Do not create a library,
+configure a Provider or migrate existing assets just to start a local delivery.
+
+## Work from the user's task
+
+1. Establish the source files, intended game use and target project from available
+   context. Ask only for missing decisions that affect the result. Codex or another
+   tool creates artwork; Forge's local processing does not generate it with a model.
+2. Select the pinned executable and read only the matching workflow below. The agent
+   handles requests, Plans, Jobs and records; the user should see the prepared
+   result, relevant choices and any actionable failure.
+3. Prepare and inspect the result. Preserve the source and reviewed hashes. Honor
+   existing visual-review and installation authorization; do not ask again for
+   an approval already supplied, or invent approval for an unreviewed result.
+4. Install within the authorized scope, verify the final project and retain the
+   necessary evidence in files. Report installed paths, review status and recovery
+   steps. A failed installation should reuse the retained preparation after the
+   cause is fixed, not automatically regenerate source art.
 
 ## Select the actual toolchain
 
-The default Forge CLI includes local WAV audio, project resource libraries
-and delivery evidence alongside the local art workflows. Use the game's verified
-absolute executable path, including its installed launcher when applicable. If
-no executable is pinned, locate the local installation and verify
-it before selecting it. Do not substitute a convenient `forge` on PATH for an
-existing lock. Record the selected path and binary SHA-256:
+Use the game's verified absolute executable path, preserving its public launcher.
+If none is pinned, locate and verify an installation before selecting it. Never
+silently upgrade a game or replace its pin with a convenient executable on PATH.
 
 ```bash
 export FORGE_BIN="/absolute/path/to/forge"
-"$FORGE_BIN" --version
 "$FORGE_BIN" doctor --json
-"$FORGE_BIN" plan --help
 shasum -a 256 "$FORGE_BIN"
 ```
 
-Check `doctor.data.build` (`gitCommit`, `dirty`, `target`, `profile`, `features`)
-and `doctor.data.capabilities`. A development executable can share a release
-version while accepting different fields. Unknown Git identity is `null`; it is
-not a clean-build claim. Check command help and successfully plan the actual
-request instead of dropping unsupported fields. Runtime Godot/FFmpeg availability
-is separate from compiled capabilities. Godot is a separate engine; builds with `godot_version_selection` accept 4.6.x or 4.7.x. The v0.5.0 release accepts only 4.6.x; v0.6.0 includes 4.6.x and 4.7.x.
+Record `doctor.data.cliPath`, the payload SHA-256 and `data.build` (`gitCommit`,
+`dirty`, `target`, `profile`, `features`); check `data.capabilities`. On Windows a
+public launcher can be a script: hash the payload reported by `cliPath` as well.
+A version string alone is insufficient; unknown Git values are `null`. Tool
+availability is separate from compiled capabilities. Check command help and plan
+support rather than dropping unsupported request fields.
 
-The stable local PNG → static Pack → Godot route requires `local_static_import`,
-`pack_validation` and `godot_install`; v0.2.1 predates local static intake. Verify
-consumer contracts before updating any existing lock for future imports. Preserve
-old receipts and source history; actual re-imports create new receipts.
+`guide` reads this executable's offline bundle without installing a skill or
+calling a Provider. Installed skill links below stay within the bundle. For a
+pinned build without `guide`, use its `skill show --json` if available or matching
+file documentation; do not upgrade only to obtain newer instructions. Upgrading
+Forge never updates game pins or separately installed skills automatically.
 
-## Read the matching guide
+## Read only the needed workflow
 
-On v0.3.2 and later, or a verified build with `embedded_usage_guide`,
-`"$FORGE_BIN" guide` reads this entrypoint and the commands below read its bundled
-resources offline.
-They are read-only and use no Provider, Job store or Codex configuration. Keep
-using that same executable for the workflow. A CLI upgrade carries its matching
-guide; it does not update any separately installed skill files.
+| Task | Bundled guide | Installed reference |
+| --- | --- | --- |
+| Prepare local icons, props or backgrounds | `forge guide static` | [Static PNGs](references/local-static.md) |
+| Preserve existing animation coordinates and timing | `forge guide animation` | [Animation](references/animation.md) |
+| Prepare local WAV audio | `forge guide audio` | [Audio](references/audio.md) |
+| Diagnose delivery, verify sources/receipts, recover | `forge guide delivery` | [Delivery](references/delivery.md) |
+| Repeated revisions, reviews or cross-machine reuse | `forge guide project-assets` | [Optional library](references/project-assets.md) |
+| Configure Godot or verify/export a game | `forge guide godot-workflow` | [Godot workflow](references/godot-workflow.md) |
+| Explicitly requested online generation | `forge guide provider` | [Provider workflow](references/provider.md) |
 
-When this skill is installed, the relative links below work within its directory.
-When reading it through the CLI, use the corresponding `guide` command instead
-of looking for those files in the game project. Older pinned executables such as
-v0.3.0 have no `guide` command: use matching file documentation and verify the
-older CLI's capabilities without changing its pin just to access documentation.
-v0.3.1 can expose the complete bundle through `"$FORGE_BIN" skill show --json`.
-Installed skill files can also be read directly; check their instructions against
-the pinned executable's capabilities.
+Read request examples with `guide static-example`, `guide audio-example` or
+`guide provider-example`. Check exit status before using redirected output.
+Plain output preserves file bytes; `--json` includes the resource index and hashes.
+Godot must be available for native delivery; inspect the selected build's supported
+versions. Local images/audio need no Provider credentials or Style Lock. Online
+Provider generation uses the user's account and can incur charges. Character
+animation remains experimental; unrelated still images are not animation frames.
 
-## Optional Godot environment and project acceptance
+## Reuse the complete delivery example when appropriate
 
-On a build with `godot_environment_setup`, read `forge guide godot-workflow`
-([Godot workflow](references/godot-workflow.md)) for machine-local setup, portable
-project requirements, isolated runtime/screenshot checks and native desktop export.
-These commands are included from v0.5.0. Inspect capabilities first.
+For reviewed static/animation inputs with an already authorized processing recipe
+and installation, read `forge guide local-delivery-example` on a build exposing
+it in the guide index. This Python example joins preparation, retained Packs,
+installation and final receipt verification. It requires reviewed `sourceLocks`
+and an expected binary hash; it does not itself pause for visual approval.
+Use the separate prepare/review/install steps from the selected guide when the
+processed result still needs review. The example does not cover WAV preparation.
 
-## Choose the workflow
+With `filesystem_write_probe`, explicitly run `storage check --path DIR --json`
+on production/output directories and inspect `supported`. Unsupported storage
+requires a supported location; copying an installation back bypasses its guarantees.
+Keep existing library bindings when present; add a new library only for a reuse
+or version-history need. Never recursively replace a game's `.forge` directory.
 
-- **Existing resources, candidates, reviews and cross-machine reuse:** read
-  [project resource library](references/project-assets.md), or run
-  `"$FORGE_BIN" guide project-assets` on a build with `project_asset_catalog_v3`.
-- **Codex image generation or existing static PNGs:** read
-  [local static preparation and Godot delivery](references/local-static.md),
-  or run `"$FORGE_BIN" guide static`.
-  Use one PNG per icon or prop. Codex's image model is an external source tool,
-  not a Forge Provider; local preparation needs no Provider login or Style Lock.
-- **Forge Provider generation:** read the [Provider workflow](references/provider.md),
-  or run `"$FORGE_BIN" guide provider`. It covers Style → icon/prop generation,
-  usage evidence and targeted retry. This route
-  can make Provider requests. A local PNG alone does not require it.
-- **Actual animation frames:** read [experimental animation](references/animation.md),
-  or run `"$FORGE_BIN" guide animation`. It covers preserved coordinates, timing
-  and sheet preprocessing. Unrelated still
-  items are not animation frames. Character animation remains experimental.
-- **Local music, sound effects or ambience:** read [audio preparation](references/audio.md),
-  or run `"$FORGE_BIN" guide audio` on a build with `local_audio_import`.
-  Import WAV sources from the user's chosen tools. Optional external audio tools
-  are separate installations; Forge's diagnostics never run or install them.
-- **Source inspection, reviewed hashes, durable receipts and installed audits:**
-  read [delivery evidence](references/delivery.md), or run
-  `"$FORGE_BIN" guide delivery`. Check each new capability against the selected binary.
-  Builds with `filesystem_write_probe` also provide explicit destination checks
-  and `guide local-delivery-example`, a Python example joining fixed-binary local
-  preparation to standard receipts and final-project verification.
+## Verify execution and report the result
 
-The references link to local request examples. Without an installed bundle, read
-them with `"$FORGE_BIN" guide static-example`, `"$FORGE_BIN" guide provider-example`,
-or `"$FORGE_BIN" guide audio-example` when the selected build supports audio.
-Plain output is the resource's exact text; `--json` adds its path, SHA-256, bundle
-and CLI identity, and the resource list. Check command exit status before using
-the output, especially when redirecting an example into a new request file.
+Use dedicated `FORGE_JOB_STORE` / `FORGE_PLAN_STORE` directories. Plans fingerprint
+inputs; tokens expire after 15 minutes and are single-use. Inspect operation bounds
+and Provider estimates. With `--json`, check process status before parsing stdout,
+then require `ok:true`; parser failures may only write stderr. Execution additionally
+requires `data.lifecycle_state == "succeeded"`. Follow detached Jobs with `job get`
+and inspect `job report`; an existing Pack does not prove success.
 
-## Execute and assess results
-
-Use dedicated `FORGE_JOB_STORE` and `FORGE_PLAN_STORE` locations and retain them
-until the required evidence is saved. A plan fingerprints inputs without changing
-a Godot project. Its token expires after 15 minutes, is consumed once, and rejects
-changed inputs. Inspect its bounds and Provider estimates before execution.
-
-With `--json`, check process exit status before decoding stdout, then require
-`ok:true`. Parser errors can write only stderr. For an execution, also require
-`data.lifecycle_state == "succeeded"`; command acceptance or an existing Pack
-does not prove Job success. Follow a detached Job with `job get --id JOB --json`.
-Read `job report`, inspect artifacts and validate the Pack before delivery.
-
-Keep structural validation separate from visual or listening approval. Local static
-`game_ready` does not evaluate style consistency or approve artwork.
-Audio `technical_pass` does not establish sound quality or a seamless loop.
-`prototype_usable` remains a prototype. Do not disable a quality gate to claim
-success or record human acceptance for a review that was not performed. Record an
-explicitly requested prototype and its remaining review status in the receipt.
+Validate the retained Pack and final installed resources. Preserve old receipts;
+new imports create new evidence. Keep stores until required evidence is saved.
+Technical results (`game_ready`, `technical_pass`, `prototype_usable`) do not grant
+visual, listening, gameplay or license approval. Keep review status explicit and
+never weaken a quality gate to make a delivery appear successful.
