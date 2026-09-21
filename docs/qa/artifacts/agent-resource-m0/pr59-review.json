@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "reviewedCommit": "bbe4e22ee1538fac77ce317fbaedef6f1a8a7c0b",
+  "platform": "macOS aarch64",
+  "unitTestsPassed": 5,
+  "preFixReproductions": {
+    "wrongDeclaredCanvas": {
+      "exitCode": 0,
+      "completion": "RESOURCE_TASK_PASS:5"
+    },
+    "oneSampleMusicLoop": {
+      "exitCode": 0,
+      "completion": "RESOURCE_TASK_PASS:5"
+    }
+  },
+  "nativeOracleTests": {
+    "ok": true,
+    "checkerSha256": "ccd8f8335cc7ee61c6fa060aa361c84eb6a3192f29a1f8fd93a15e5a50543072",
+    "cases": [
+      {
+        "case": "valid",
+        "exitCode": 0,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nRESOURCE_TASK_PASS:3\n",
+        "stderr": ""
+      },
+      {
+        "case": "bad-character-size",
+        "exitCode": 1,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+        "stderr": "FAIL:size:synthetic:idle:0\nFAIL:source-size:synthetic:idle:0\nFAIL:size:synthetic:idle:1\nFAIL:source-size:synthetic:idle:1\n"
+      },
+      {
+        "case": "bad-static-size",
+        "exitCode": 1,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+        "stderr": "FAIL:static-size:prop\nFAIL:static-source-size:prop\n"
+      },
+      {
+        "case": "bad-loop-range",
+        "exitCode": 1,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+        "stderr": "FAIL:audio-loop-range:music\n"
+      },
+      {
+        "case": "bad-duration",
+        "exitCode": 1,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+        "stderr": "FAIL:duration:synthetic:idle:0\n"
+      },
+      {
+        "case": "bad-visible-pixel",
+        "exitCode": 1,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+        "stderr": "FAIL:pixels:synthetic:idle:0\nFAIL:pixels:synthetic:idle:1\nFAIL:static-pixels:prop\n"
+      },
+      {
+        "case": "missing-sprite",
+        "exitCode": 1,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+        "stderr": "FAIL:sprite:synthetic\n"
+      },
+      {
+        "case": "missing-frames",
+        "exitCode": 1,
+        "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+        "stderr": "ERROR: There is no animation with name 'idle'.\n   at: set_animation (scene/2d/animated_sprite_2d.cpp:585)\n   GDScript backtrace (most recent call first):\n       [0] verify (res://verify.gd:39)\nFAIL:sprite-frames:synthetic\n"
+      }
+    ],
+    "godotVersion": "4.7.2.stable.official.ed1daf0bf"
+  },
+  "defaultReleaseBaseline": {
+    "ok": false,
+    "forgeSha256": "1eac35e14777c3ff798f3a25231aa9f73833e8837f1ba7b3d584620ef7691a38",
+    "build": {
+      "gitCommit": "6fd33cfada94f3fc9c0dfe3e5908b3618ebc870f",
+      "dirty": false,
+      "target": "aarch64-apple-darwin",
+      "profile": "release",
+      "features": []
+    },
+    "cliVersion": "0.6.4",
+    "godotVersion": "4.7.2.stable.official.ed1daf0bf",
+    "runnerSha256": "efa2901eee6ba6fe5d71c0c783b74acfc7ff37e9ff1ce1f913d968a9b4a06b0b",
+    "checkerSha256": "ccd8f8335cc7ee61c6fa060aa361c84eb6a3192f29a1f8fd93a15e5a50543072",
+    "sourceSha256": {
+      "music.wav": "407063f4ed93661178286bb83797f925023c27f9acb1577db9d4da1ce35855a8",
+      "synthetic-walk-1.png": "d3fad8189bfb05af9cfc6c823f2db24fdbee291c591dead360c0240906a36117",
+      "thunder-idle-2.png": "d7fce9681cd1d90f6318c63c0830ceb2495ab3b992e2901209b24b09457f27f0",
+      "thunder-idle-3.png": "a8c7c45e371225da8659f1b146510ae8439b5427edc5e79a69f7876facf646ec",
+      "synthetic-walk-0.png": "b95863ae76b2b4335750b4ea5f113dce565c2f202733f7307b9bdfc39030214a",
+      "thunder-idle.png": "8ac96952fccac991dee828bb7a197b900e89266a06f17c1d5a5ebe4ae0f3f8bb",
+      "synthetic-walk-2.png": "2f22e0df3669311266ed043aaf0e6b555f5f525b28dab7e7416d295125fd6dac",
+      "thunder-idle-1.png": "3084f7d2d890f4ad7ec82a445527e810526c231a862a4a73809ff07371256182",
+      "thunder-idle-0.png": "6c2d705213f293368a552672520c2e2aaafd5654442f3e62c2a2e33be7414cf3",
+      "thunder-move.png": "1c8de0e6a5950a389dd74871da553030335c3420dfbe837b35859b13b14e23a4",
+      "synthetic-idle-1.png": "b593161c9aa14f03ab59fb6d8721d8ff5a10fa44b5d253eca8b58960b93e711b",
+      "synthetic-idle-0.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+      "synthetic-attack-2.png": "29ab679a8c77e1350dee90b85f3b72b211bbd2fefdedc942ab92330c55a811ba",
+      "synthetic-attack-0.png": "0c5521830d54b5c268c830920076656924ca53d898d5876f5a81ddb34ddceb1f",
+      "synthetic-idle-2.png": "bcc8deacb1959b3160f8fc77bbd422ee5fc99a1ce12361eadeb242cee37a0563",
+      "synthetic-attack-1.png": "62d111b78af6a42681603dee9858e0d4cb6a71f2356908bc9a331664b71cd14f",
+      "prop.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+      "synthetic-walk-sheet.png": "f70653ddd26be6522e3d0a98bf1e5a969615e83e39b0b95d4e17b30be4eebbb4",
+      "thunder-move-0.png": "16e74b2be113e85b210f848ed0c7dd737b1e52f184fa5168899f37ac049c6372",
+      "thunder-move-1.png": "11c1c7192d72a7820935fd37866001a33d605f81e858a73df30669eea40dc138",
+      "thunder-move-3.png": "e2dcf41e89c6a9bb6b324f073d42cbdce733e32e06f4a61ccb570a13fddcf0df",
+      "cue.wav": "7edbc997db5922c99506857fc86e9651550a227cf3aa6e44b3a9ca7893fcb6b2",
+      "thunder-move-2.png": "9bcf1c48a4cd4eaf32e03e7363ffdc27da959f8325accd8f7a6051d916cb323d"
+    },
+    "acceptanceSha256": "cdf716d1704f01b36604a63532532ad2d35214ded94161c2feabf7ae7495c571",
+    "sourcesUnchanged": true,
+    "nativeFailures": [
+      "pixels:synthetic:idle:0",
+      "pixels:synthetic:idle:1",
+      "pixels:synthetic:idle:2",
+      "pixels:synthetic:walk:0",
+      "pixels:synthetic:walk:1",
+      "pixels:synthetic:walk:2",
+      "pixels:synthetic:attack:0",
+      "pixels:synthetic:attack:1",
+      "pixels:synthetic:attack:2",
+      "pixels:thunder:idle:0",
+      "pixels:thunder:idle:1",
+      "pixels:thunder:idle:2",
+      "pixels:thunder:idle:3",
+      "pixels:thunder:move:0",
+      "pixels:thunder:move:1",
+      "pixels:thunder:move:2",
+      "pixels:thunder:move:3",
+      "static-pixels:prop"
+    ],
+    "preparationAndInstallationCompleted": [
+      "synthetic",
+      "thunder",
+      "props",
+      "audio"
+    ]
+  },
+  "separateImportControl": {
+    "setting": "process/fix_alpha_border=false",
+    "importExitCode": 0,
+    "positive": {
+      "exitCode": 0,
+      "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\nRESOURCE_TASK_PASS:5\n",
+      "stderr": ""
+    },
+    "negative": {
+      "exitCode": 1,
+      "stdout": "Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org\n\n",
+      "stderr": "FAIL:duration:synthetic:idle:0\n"
+    },
+    "contractRestored": true,
+    "countsAsForgePass": false
+  },
+  "visualReview": "not_assessed",
+  "listeningReview": "not_assessed",
+  "productivityDecision": "insufficient_evidence"
+}
