@@ -36,6 +36,11 @@ also publish the exact FFmpeg source archive, this build description, and the
 applicable LGPL license text. Release is blocked if `ffmpeg -version` reports
 `--enable-gpl` or `--enable-nonfree`.
 
+The consolidated release attachment `forge-source-and-notices.zip` preserves
+these files together. Its `sources/` directory contains the exact FFmpeg and
+zlib archives, with native license/build evidence under `macos/` and `windows/`.
+The original Windows portable archive also retains its complete source layout.
+
 This file records engineering policy, not legal advice. A distribution-license
 and codec-patent review remains a commercial release gate.
 

@@ -16,6 +16,15 @@ Bring assets from your preferred creative tools, manage them in a project librar
 
 [v0.6.3](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.3) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
 
+Choose one download for your system:
+
+| System | Download |
+| --- | --- |
+| macOS Apple Silicon | [Online installer](https://github.com/MightyKartz/GameSpriteForge/releases/latest/download/forge-installer.sh) |
+| Windows x64 | [Complete installer ZIP](https://github.com/MightyKartz/GameSpriteForge/releases/latest/download/forge-windows-installer.zip) |
+
+Follow the commands below. [Download file guide](docs/releases/downloads.md) explains portable archives, checksums and source attachments.
+
 On macOS:
 
 ```bash

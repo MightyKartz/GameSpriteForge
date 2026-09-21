@@ -5,11 +5,15 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 
 spec = importlib.util.spec_from_file_location('release_assets', Path(__file__).with_name('verify-release-assets.py'))
 release = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(release)
+spec = importlib.util.spec_from_file_location('release_downloads', Path(__file__).with_name('assemble-release-downloads.py'))
+downloads = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(downloads)
 
 
 class ReleaseAssets(unittest.TestCase):
@@ -18,10 +22,11 @@ class ReleaseAssets(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
 
-    def package(self, target='aarch64-apple-darwin', info_patch=None, corrupt=False, extra=False):
+    def package(self, target='aarch64-apple-darwin', info_patch=None, corrupt=False, extra=False,
+                filename='forge.zip', payload_extra=None):
         windows = target.startswith('x86_64')
         binary = 'bin/forge.exe' if windows else 'bin/forge'
-        files = {binary: b'synthetic CLI'}
+        files = {binary: b'synthetic CLI', **(payload_extra or {})}
         info = {'version': '0.4.0', 'commit': 'abc', 'target': target}
         if windows:
             info.update(build={'gitCommit': 'abc', 'target': target, 'dirty': False,
@@ -39,11 +44,11 @@ class ReleaseAssets(unittest.TestCase):
         if extra:
             files['unexpected'] = b'not inventoried'
         prefix = '' if windows else 'forge-dist/'
-        path = self.root / 'forge.zip'
+        path = self.root / filename
         with zipfile.ZipFile(path, 'w') as archive:
             for name, data in files.items():
                 archive.writestr(prefix + name, data)
-        Path(str(path) + '.sha256').write_text(hashlib.sha256(path.read_bytes()).hexdigest() + '  forge.zip\n')
+        Path(str(path) + '.sha256').write_text(hashlib.sha256(path.read_bytes()).hexdigest() + '  ' + filename + '\n')
         if windows:
             bundle = self.root / 'forge-windows-installer.zip'
             with zipfile.ZipFile(bundle, 'w') as archive:
@@ -53,6 +58,85 @@ class ReleaseAssets(unittest.TestCase):
                     archive.writestr(name, files[name])
             Path(str(bundle) + '.sha256').write_text(hashlib.sha256(bundle.read_bytes()).hexdigest() + '  forge-windows-installer.zip\n')
         return path
+
+    def download_inputs(self):
+        sources = {name: ('synthetic ' + name).encode() for name in downloads.SOURCE_HASHES}
+        self.enterContext(patch.dict(downloads.SOURCE_HASHES, {name: downloads.digest(data) for name, data in sources.items()}))
+        licenses = {'licenses/FFMPEG-LGPL-2.1.txt': b'synthetic LGPL'}
+        self.package(filename=downloads.MAC, payload_extra=licenses)
+        self.package('x86_64-pc-windows-msvc', filename=downloads.WINDOWS, payload_extra={
+            **licenses, 'licenses/ZLIB-LICENSE.txt': b'synthetic zlib license',
+            'FFMPEG_BUILD.json': b'{"synthetic": true}',
+            'sources/build-helpers.sh': b'helper build recipe',
+            **{'sources/' + name: data for name, data in sources.items()}})
+        (self.root / 'ffmpeg-8.1.2-source.tar.xz').write_bytes(sources['ffmpeg-8.1.2.tar.xz'])
+        (self.root / 'forge-installer.sh').write_bytes(b'unchanged installer')
+        (self.root / 'forge-sbom.cdx.json').write_bytes(b'{"bomFormat":"CycloneDX"}')
+        for name in downloads.REPOSITORY_FILES:
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(('synthetic ' + name).encode())
+
+    def assemble(self):
+        return downloads.assemble(self.root, self.root, self.root, '0.4.0', 'abc', self.root / 'public')
+
+    def test_consolidated_downloads_preserve_native_bytes_and_sources(self):
+        self.download_inputs()
+        hashes = self.assemble()
+        output = self.root / 'public'
+        self.assertEqual(set(hashes), {p.name for p in output.iterdir()})
+        self.assertEqual(len(hashes), 8)
+        for name in downloads.PUBLIC_NAMES:
+            data = (output / name).read_bytes()
+            self.assertEqual(downloads.digest(data), hashes[name])
+            if name != downloads.SUPPORT:
+                self.assertEqual(data, (self.root / name).read_bytes())
+        with zipfile.ZipFile(output / downloads.SUPPORT) as archive:
+            inventory = dict(line.split('  ', 1)[::-1] for line in archive.read('MANIFEST.sha256').decode().splitlines())
+            self.assertEqual(set(inventory) | {'MANIFEST.sha256'}, set(archive.namelist()))
+            for name, expected in inventory.items():
+                self.assertEqual(downloads.digest(archive.read(name)), expected)
+            for name, expected in downloads.SOURCE_HASHES.items():
+                self.assertEqual(downloads.digest(archive.read('sources/' + name)), expected)
+            report = json.loads(archive.read('release-verification.json'))
+            self.assertTrue(report['passed'])
+            self.assertEqual(len(report['packages']), 2)
+            self.assertIn('macos/licenses/FFMPEG-LGPL-2.1.txt', inventory)
+            self.assertIn('windows/licenses/ZLIB-LICENSE.txt', inventory)
+            self.assertIn('windows/sources/build-helpers.sh', inventory)
+        with self.assertRaises(ValueError):
+            self.assemble()
+
+    def test_source_corruption_blocks_assembly_before_writing(self):
+        self.download_inputs()
+        (self.root / 'ffmpeg-8.1.2-source.tar.xz').write_bytes(b'different source')
+        with self.assertRaisesRegex(ValueError, 'source hash mismatch'):
+            self.assemble()
+        self.assertFalse((self.root / 'public').exists())
+
+    def test_missing_support_file_blocks_assembly(self):
+        self.download_inputs()
+        (self.root / 'forge-sbom.cdx.json').unlink()
+        with self.assertRaises(FileNotFoundError):
+            self.assemble()
+        self.assertFalse((self.root / 'public').exists())
+
+    def test_tampered_native_archive_blocks_assembly(self):
+        self.download_inputs()
+        (self.root / downloads.MAC).write_bytes(b'corrupted native archive')
+        with self.assertRaisesRegex(ValueError, 'checksum mismatch'):
+            self.assemble()
+        self.assertFalse((self.root / 'public').exists())
+
+    def test_release_notes_choose_installers_and_pin_links(self):
+        notes = downloads.render_notes('[QA](../qa/check.md) [external](https://example.com) [section](#test)',
+                                       Path('docs/releases/v0.4.0.md'), 'owner/repo', '0.4.0-rc.1', 'abc', {'file.zip': 'hash'})
+        self.assertIn('FORGE_VERSION=v0.4.0-rc.1 sh forge-installer.sh', notes)
+        self.assertIn('/releases/download/v0.4.0-rc.1/forge-windows-installer.zip', notes)
+        self.assertIn('https://github.com/owner/repo/blob/abc/docs/qa/check.md', notes)
+        self.assertIn('[external](https://example.com)', notes)
+        self.assertIn('[section](#test)', notes)
+        self.assertIn('forge-source-and-notices.zip', notes)
 
     def test_both_native_layouts(self):
         for target in ['aarch64-apple-darwin', 'x86_64-pc-windows-msvc']:

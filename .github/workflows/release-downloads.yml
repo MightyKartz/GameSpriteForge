@@ -1,0 +1,25 @@
+name: Release download assembly
+on:
+  pull_request:
+    paths:
+      - 'scripts/assemble-release-downloads.py'
+      - 'scripts/verify-release-assets.py'
+      - 'scripts/test-release-assets.py'
+      - '.github/workflows/release-cli.yml'
+      - '.github/workflows/release-downloads.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  assembly:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - run: python scripts/test-release-assets.py -v
