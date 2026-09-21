@@ -3,6 +3,17 @@
 Decision: 2026-09-21. Status: adopted for new development; existing commands and
 formats remain compatible. This does not change the v0.6.4 release or consumer pins.
 
+Follow-up: the [agent resource production roadmap](agent-resource-production-roadmap.md)
+refines the investment order around agents as the direct users. Prioritize the
+animation preparation, inspection, correction and Godot delivery loop, with audio
+and static assets sharing its task experience. Updates and recovery remain core
+guarantees. The roadmap preserves the compatibility and evidence gates below;
+its planned capabilities are not claims about the current release.
+
+后续优先级以 [面向 Agent 的资源生产计划](agent-resource-production-roadmap.md) 为准：
+先打通角色动画的处理、检查、修正和 Godot 交付，再统一音频与静态素材体验。
+更新恢复作为底层保障；以下兼容性和收益验证要求继续适用。
+
 The product promise is to prepare reviewed assets, update them in Godot, verify
 the result and preserve a useful recovery path. Agents handle intent, generation,
 game code and task orchestration. Forge must earn its installation and maintenance
