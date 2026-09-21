@@ -22,6 +22,7 @@ pub mod provider;
 pub mod quality;
 pub mod source_inspect;
 pub mod source_matte;
+pub mod storage;
 pub mod subject;
 pub mod video;
 pub mod workflow_graph;

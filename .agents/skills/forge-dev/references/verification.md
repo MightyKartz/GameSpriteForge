@@ -62,8 +62,14 @@ for additional modes. On Windows use `python` and native executable paths.
 | Audio processing, receipts and caches | `test-local-audio-cli.py --forge FORGE --godot GODOT` |
 | Native audio resources | `test-godot-audio-delivery.py --godot GODOT` |
 | Source locks, stable targets, receipts and audits | `test-sword-feedback-cli.py --forge FORGE --godot GODOT` |
+| Storage diagnostics and complete pinned local delivery | `test-survival-feedback-cli.py --forge FORGE --godot GODOT --output OUTPUT` |
 
 `PREVIEW_PROJECT` is the `preview/project` produced by the layered CLI test.
+The Survival feedback runner also accepts `--storage-root EXISTING_DIRECTORY
+--expect-storage-unsupported` for an explicit native external-volume probe. It
+creates and removes its own subdirectory and preserves caller files. Omit the
+expectation flag on supported storage. Keep ExFAT evidence separate from ordinary
+macOS/Windows CI and do not infer full installation support from a probe.
 Use separate output directories for each script. Native static regression checks
 also include `cargo test --locked -p core --test static_delivery_tests -- --ignored
 --nocapture`. For a nonstandard Godot location, set both `FORGE_GODOT_PATH` (Forge

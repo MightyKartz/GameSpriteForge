@@ -78,12 +78,18 @@ const OWNERSHIP_MARKER: &str = ".forge-owned.json";
 #[path = "godot_install.rs"]
 mod godot_install;
 use godot_install::{
-    lock_install_catalog, lock_install_project, run_godot_process, validate_godot_output,
-    GodotInstallTransaction,
+    delivery_phase_error, lock_install_catalog, lock_install_project, run_godot_process,
+    validate_godot_output, GodotInstallTransaction,
 };
 
 #[derive(Debug, Error)]
 pub enum AutomationRunError {
+    #[error("Godot {phase} failed: {message}; inspect {logs}.stdout.log and {logs}.stderr.log; retain the prepared Pack and retry installation after correcting the reported cause")]
+    GodotDelivery {
+        phase: &'static str,
+        message: String,
+        logs: PathBuf,
+    },
     #[error("job error: {0}")]
     Job(#[from] JobStoreError),
     #[error("io error: {0}")]
@@ -109,6 +115,11 @@ pub enum AutomationRunError {
 impl AutomationRunError {
     pub fn code(&self) -> &'static str {
         match self {
+            Self::GodotDelivery { phase, .. } => match *phase {
+                "project_import" => "godot_project_import_failed",
+                "resource_install" => "godot_resource_install_failed",
+                _ => "godot_native_verification_failed",
+            },
             Self::Job(_) => "job_error",
             Self::Io(_) => "io_error",
             Self::Image(_) => "image_error",
@@ -424,6 +435,13 @@ pub fn run_operation_with_provider(
                         vec!["job_report".into(), "recover_asset_publication".into()];
                 } else {
                     record.next_actions = vec!["job_report".into(), "prepare_new_plan".into()];
+                    if matches!(error, AutomationRunError::GodotDelivery { .. }) {
+                        record.next_actions = vec![
+                            "job_report".into(),
+                            "inspect_godot_logs".into(),
+                            "prepare_install_plan".into(),
+                        ];
+                    }
                 }
             });
             Err(error)
@@ -5136,13 +5154,19 @@ fn run_install_godot(
             "godot.import",
             store,
             job_id,
-        )?;
+        )
+        .map_err(|error| {
+            delivery_phase_error(error, "project_import", &record.job_dir, "godot.import")
+        })?;
         validate_godot_output(
             &import_output,
             None,
             &request.target,
             &pack_summary.asset_type,
-        )?;
+        )
+        .map_err(|error| {
+            delivery_phase_error(error, "project_import", &record.job_dir, "godot.import")
+        })?;
         let mut native_results = Vec::new();
         for phase in ["install", "verify"] {
             let mut command = Command::new(&godot);
@@ -5158,6 +5182,16 @@ fn run_install_godot(
             if phase == "verify" {
                 command.arg("--verify");
             }
+            let delivery_phase = if phase == "install" {
+                "resource_install"
+            } else {
+                "native_verification"
+            };
+            let log_name = if phase == "install" {
+                "godot"
+            } else {
+                "godot.verify"
+            };
             let output = run_godot_process(
                 &mut command,
                 &record.job_dir,
@@ -5168,13 +5202,19 @@ fn run_install_godot(
                 },
                 store,
                 job_id,
-            )?;
+            )
+            .map_err(|error| {
+                delivery_phase_error(error, delivery_phase, &record.job_dir, log_name)
+            })?;
             validate_godot_output(
                 &output,
                 Some(phase),
                 &request.target,
                 &pack_summary.asset_type,
-            )?;
+            )
+            .map_err(|error| {
+                delivery_phase_error(error, delivery_phase, &record.job_dir, log_name)
+            })?;
             let stdout = String::from_utf8_lossy(&output.stdout);
             let result = stdout
                 .lines()

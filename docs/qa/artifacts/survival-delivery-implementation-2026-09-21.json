@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-21",
+  "build": {
+    "gitCommit": "a92fe2360f83c689842c0238deeb1a361b1df363",
+    "dirty": false,
+    "target": "aarch64-apple-darwin",
+    "profile": "debug",
+    "features": []
+  },
+  "binarySha256": "4e4289ff1eca2875c09bf43705083059a26ed0e2cefb8e6d5e5284a61f97d86d",
+  "godotVersion": "4.7.2.stable.official.ed1daf0bf",
+  "nativeCases": [
+    "storage_probe_cleanup",
+    "pinned_binary_rejection",
+    "reviewed_source_locks_required",
+    "embedded_example",
+    "concurrent_output_preserved",
+    "unsupported_project_rejected_before_production",
+    "native_delivery",
+    "zero_provider",
+    "existing_output_preserved",
+    "receipt_without_job_store",
+    "failed_project_retains_preparation_and_rolls_back_install"
+  ],
+  "storage": {
+    "schemaVersion": "1",
+    "supported": false,
+    "exclusivePublication": {
+      "supported": false,
+      "error": "Operation not supported (os error 45)"
+    },
+    "existingFileProtection": {
+      "supported": true
+    },
+    "replacement": {
+      "supported": true
+    },
+    "hardLinks": {
+      "supported": false,
+      "error": "Operation not supported (os error 45)"
+    },
+    "fileLocking": {
+      "supported": true
+    },
+    "temporaryFilesRemoved": true,
+    "notes": [
+      "This explicit check created and removed only its own temporary subdirectory.",
+      "supported covers the tested operations at this path now, not power-loss durability or a complete Godot installation.",
+      "If unsupported, select a supported working/output directory; do not bypass ownership, locks or final-project verification with recursive copies."
+    ]
+  },
+  "guide": {
+    "contentHash": "b65f04306d8e754073f810bf2850dfa349d2a642d72b2be9896309c2f4e0fad0",
+    "caseCount": 33,
+    "commandCount": 155,
+    "passed": true
+  },
+  "rust": {
+    "godotLibrary": 16,
+    "storageLibrary": 2,
+    "deliveryAudit": 6,
+    "installTransactions": 5,
+    "installTransactionsNativeIgnored": 5,
+    "staticPreparation": 9,
+    "sourceMatte": 5,
+    "cliUnit": 29,
+    "totalPassed": 72
+  },
+  "otherChecks": [
+    "cargo fmt --all -- --check",
+    "cargo clippy --locked --workspace --all-targets -- -D warnings",
+    "forge-use and forge-dev skill validators",
+    "changed Markdown links, Python syntax and JSON parsing"
+  ],
+  "ci": "https://github.com/MightyKartz/GameSpriteForge/pull/56/checks",
+  "limitations": [
+    "Local execution was macOS with Godot 4.7.2; Windows and Godot 4.6.3 acceptance is tracked separately in PR CI.",
+    "ExFAT publication remains unsupported and is explicitly diagnosed/rejected, not bypassed.",
+    "No release package, consumer reimport, artistic approval or device acceptance is claimed."
+  ]
+}

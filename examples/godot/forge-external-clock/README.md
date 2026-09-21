@@ -12,6 +12,20 @@ nonlooping actions hold their last frame with `finished: true`. Negative time cl
 to the first frame. Missing animations and invalid timing return an `error` field.
 The example does not decide attacks, collision, actor mappings, or game time scale.
 
+For a one-shot attack tied to a simulation event, define the impact point in game
+logic and map elapsed simulation time to the clip's anticipation/impact/recovery
+segments. Read each duration from SpriteFrames; do not assume four equally long
+frames. Changing attack speed can remap presentation time without changing source
+frames or the authoritative damage event. Pause and seek by supplying the same
+simulation time, including after rebuilding the view. A completed action holds
+the last frame here; returning to an idle action is the caller's decision.
+
+Keep one canvas/anchor transform for the whole action. Per-frame centering can
+hide source drift and move the feet. Weapon-family routing and optional opponent
+reflection belong in game code; reflection is not evidence of directional
+animation support. Check these mappings in an isolated test scene before using
+them in a production flow.
+
 Run the isolated verifier from the repository root:
 
 ```bash

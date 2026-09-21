@@ -62,6 +62,22 @@ hash and check the capabilities their requests require.
 
 ## Product commands
 
+Builds with `filesystem_write_probe` add `forge storage check --path DIRECTORY
+--json`, an explicit temporary write probe. Read `data.supported`, not just `ok`.
+The matching `guide local-delivery-example` serves a Python example with reviewed
+binary/source hashes, retained Packs, native installation and standard receipts.
+See [delivery evidence](../../.agents/skills/forge-use/references/delivery.md).
+
+## 存储与完整交付示例
+
+具有 `filesystem_write_probe` 能力的构建提供 `forge storage check --path DIRECTORY
+--json`：只在指定现有目录中新建并清理自己的临时子目录，检查发布和锁操作。
+应读取 `data.supported`，不能只看 `ok`。`guide local-delivery-example` 提供 Python
+示例，将已审阅的二进制/源文件哈希、保留 Pack、原生安装和标准回执连接起来。
+不支持的文件系统不会自动降级为拷贝安装；已有消费者版本锁保持不变。
+
+## Command reference
+
 ```text
 forge doctor --json
 forge guide [RESOURCE] [--json]

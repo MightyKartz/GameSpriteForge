@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "pr": "https://github.com/MightyKartz/GameSpriteForge/pull/56",
+  "build": {
+    "gitCommit": "5395d69b3934e17fb796429a35aebeacb5b8cad5",
+    "dirty": true,
+    "target": "aarch64-apple-darwin",
+    "profile": "debug",
+    "features": []
+  },
+  "binarySha256": "597d4c48e101d50ec112c3dc26439654fe65ebb42d6f049cff7eaa41d33c6d03",
+  "sourceFilesSha256": {
+    ".agents/skills/forge-use/examples/local-delivery.py": "6d3e321012cab133b55e8e4a19db13c95db4b7fc3842748b8a28dea0d017e328",
+    ".agents/skills/forge-use/references/delivery.md": "0eb0e0e9a0981331eeaac08856e849600090df94814b434a7735a03884d968bd",
+    "scripts/test-survival-feedback-cli.py": "b8dc93d7e2ad708704aa9cd09dff3af87a1798ec92c99f293375170625df05ea"
+  },
+  "nativePlatform": "macOS",
+  "godotVersion": "4.7.2.stable.official.ed1daf0bf",
+  "cases": [
+    "storage_probe_cleanup",
+    "pinned_binary_rejection",
+    "reviewed_source_locks_required",
+    "embedded_example",
+    "concurrent_output_preserved",
+    "utf8_json_with_non_utf8_locale",
+    "request_snapshot_preserves_locks_and_relative_paths",
+    "request_rewrite_cannot_unlock_changed_source",
+    "unsupported_project_rejected_before_production",
+    "native_delivery",
+    "zero_provider",
+    "existing_output_preserved",
+    "receipt_without_job_store",
+    "failed_project_retains_preparation_and_rolls_back_install"
+  ],
+  "caseCount": 14,
+  "guide": {
+    "ok": true,
+    "mode": "full",
+    "contentHash": "5fffe164e13b566b7dc9878e4837c240b5498321e6c4197c1f7e72257d190fff",
+    "commandCount": 155
+  },
+  "skillValidation": "passed",
+  "notes": [
+    "Build was taken from the reviewed base with the listed uncommitted fixes; source hashes identify the tested edits.",
+    "CP1252 default-decoder simulation uses real CLI commands; native Windows acceptance is delegated to the existing PR CI matrix.",
+    "Native Godot happy path uses a Chinese output directory; receipts verify after the isolated JobStore is deleted.",
+    "Native ExFAT preflight rejection and cleanup passed; unsupported publication semantics are unchanged."
+  ]
+}

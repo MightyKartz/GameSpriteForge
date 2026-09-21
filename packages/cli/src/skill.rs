@@ -35,6 +35,14 @@ struct GuideResource {
 const SOURCE_FILES: &[SourceFile] = &[
     SourceFile {
         resource: GuideResource {
+            topic: "local-delivery-example",
+            path: "examples/local-delivery.py",
+            media_type: "text/x-python",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/examples/local-delivery.py"),
+    },
+    SourceFile {
+        resource: GuideResource {
             topic: "godot-workflow",
             path: "references/godot-workflow.md",
             media_type: "text/markdown",
@@ -953,6 +961,11 @@ mod guide_tests {
 
         let bundle = Bundle::embedded();
         let expected = [
+            (
+                "local-delivery-example",
+                "examples/local-delivery.py",
+                "text/x-python",
+            ),
             (
                 "project-assets",
                 "references/project-assets.md",

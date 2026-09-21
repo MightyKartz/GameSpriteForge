@@ -6,6 +6,15 @@ require `project_asset_catalog_v3`; transfer and merge also require
 Earlier release pins may lack them. Do not change an existing game's toolchain
 pin just to use this guide.
 
+For a game already keeping Packs and custom import logs, adopt the library
+gradually: preserve the original files/logs, initialize a separate local asset
+library, scan retained Packs and review the registration batch before applying
+it. Keep logical asset IDs stable and add explicit revisions for changed content.
+Do not infer review acceptance from successful old Jobs, and do not auto-select
+the newest revision for a game. The standard delivery receipt remains useful
+independently of library adoption (`forge guide delivery`). Metadata registration
+does not replace media retention or migrate a game's installed files.
+
 ## Register existing resources
 
 ```bash

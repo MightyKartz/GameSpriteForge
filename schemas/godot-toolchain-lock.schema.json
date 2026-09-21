@@ -7,6 +7,6 @@
   "properties": {
     "schemaVersion": {"const": 1},
     "forgeVersion": {"type": "string", "minLength": 1},
-    "godotVersion": {"type": "string", "pattern": "^4\\.6\\.[^\\r\\n]+$"}
+    "godotVersion": {"type": "string", "pattern": "^4\\.[67]\\.[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$", "not": {"pattern": "[\\r\\n]"}}
   }
 }
