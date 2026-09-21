@@ -157,7 +157,8 @@ fn frame_issues(
         }
     }
     for delta in evidence.adjacent_differences.iter().flatten() {
-        if delta.alpha_mean_absolute_difference == 0.0
+        if !evidence.frames[delta.from_frame].fully_transparent
+            && delta.alpha_mean_absolute_difference == 0.0
             && delta.premultiplied_rgb_mean_absolute_difference == 0.0
         {
             issues.push(AnimationIssue {

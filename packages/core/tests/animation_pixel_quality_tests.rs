@@ -395,7 +395,13 @@ fn localized_issues_distinguish_empty_frames_edges_and_intentional_holds() {
     let mut edge = visible.clone();
     edge.put_pixel(63, 30, Rgba([200, 100, 50, 1]));
     let report = quality(
-        &[visible.clone(), visible, edge, RgbaImage::new(64, 64)],
+        &[
+            visible.clone(),
+            visible,
+            edge,
+            RgbaImage::new(64, 64),
+            RgbaImage::new(64, 64),
+        ],
         QualityProfile::Character,
         false,
         false,
@@ -428,6 +434,9 @@ fn localized_issues_distinguish_empty_frames_edges_and_intentional_holds() {
         .unwrap();
     assert_eq!((hold.frame_index, hold.related_frame_index), (1, Some(0)));
     assert_eq!(hold.severity, "info");
+    assert!(issues
+        .iter()
+        .all(|i| i.code != "identical_visible_frames" || i.frame_index == 1));
     assert!(hold
         .options
         .iter()

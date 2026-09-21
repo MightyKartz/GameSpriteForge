@@ -120,6 +120,10 @@
     {
       "scope": "browser fixture server",
       "result": "initial Python HTTP queue reset several parallel PNG requests; larger local server queue loaded the complete page; product error handling remained explicit"
+    },
+    {
+      "scope": "final self-review",
+      "result": "consecutive empty frames must not also suggest keeping an intentional hold; excluded transparent pairs from repeat hints and added a regression assertion"
     }
   ],
   "ci": "Native Windows and both supported Godot lines are pending PR CI at time of this local record; do not infer cross-platform results from macOS.",
