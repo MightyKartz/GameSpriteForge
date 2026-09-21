@@ -151,6 +151,9 @@ def run(args):
             else:
                 assert result.returncode == 0 and progress["completed"], (result.stdout, result.stderr)
                 receipt = output / "delivery-receipt.json"
+            # Recovery temporarily selected the retained preparation store. Restore
+            # the ordinary task stores before the next input-rejection snapshot.
+            cli.env.update(FORGE_JOB_STORE=str(root / "jobs"), FORGE_PLAN_STORE=str(root / "plans"))
             verified = cli.call(name + "-receipt", "receipt", "verify", "--path", receipt, "--pack", pack,
                                 "--project", game, "--expected-sha256", digest(receipt))
             assert verified["verified"] and verified["installationVerified"]

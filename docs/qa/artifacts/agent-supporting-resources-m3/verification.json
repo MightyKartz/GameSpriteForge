@@ -143,5 +143,10 @@
     "commandCount": 167,
     "cases": 33,
     "note": "Rebuilt after two guide-only clarification edits (receipt --path and listening approval); the executed delivery example and Rust implementation are unchanged from the native task run."
+  },
+  "selfReview": {
+    "fix": "Restore ordinary Job/Plan stores after audio installation recovery, so subsequent static rejection inventory checks observe the active stores.",
+    "scope": "Acceptance runner only; product implementation and embedded guide unchanged.",
+    "evidence": "The native task run above predates this harness correction. Post-correction local result and exact-head CI artifacts are recorded on the PR."
   }
 }
