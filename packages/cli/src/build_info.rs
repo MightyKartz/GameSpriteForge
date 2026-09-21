@@ -81,6 +81,8 @@ pub const CAPABILITIES: &[&str] = &[
     "transactional_godot_install",
     "godot_import_cache_integrity",
     "godot_lossless_sprite_import",
+    "animation_frame_issues",
+    "synchronized_animation_review",
 ];
 
 #[cfg(test)]

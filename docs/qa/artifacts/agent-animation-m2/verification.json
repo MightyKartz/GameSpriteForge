@@ -1,0 +1,142 @@
+{
+  "ok": true,
+  "runnerSha256": "5216f90ba63c2ae56d71c137b89af7fd3d8588a33469f27ba554644628785df4",
+  "checkerSha256": "ccd8f8335cc7ee61c6fa060aa361c84eb6a3192f29a1f8fd93a15e5a50543072",
+  "forgeSha256": "9dd1ef9fffd59f624e7b5292345f89d94cfabbd99ccb0c6a2ae2b8da630eb4f7",
+  "inputSha256": {
+    "music.wav": "407063f4ed93661178286bb83797f925023c27f9acb1577db9d4da1ce35855a8",
+    "intentional-jump.png": "0d16f5688a0cb1132f824777c51c66e31d6f0654efb817e49d0974b0c3395345",
+    "attack-1-clipped.png": "d3a7d3dbfc126be70f52074cdf0e3b4306377464f54aea7a6a3326ece169048c",
+    "empty.png": "052c48aa8b5e4f2c40bcd0d1bb7a4b93276276285dfa3e8a971b435dc88fdfee",
+    "synthetic-walk-1.png": "d3fad8189bfb05af9cfc6c823f2db24fdbee291c591dead360c0240906a36117",
+    "thunder-idle-2.png": "d7fce9681cd1d90f6318c63c0830ceb2495ab3b992e2901209b24b09457f27f0",
+    "thunder-idle-3.png": "a8c7c45e371225da8659f1b146510ae8439b5427edc5e79a69f7876facf646ec",
+    "synthetic-walk-0.png": "b95863ae76b2b4335750b4ea5f113dce565c2f202733f7307b9bdfc39030214a",
+    "thunder-idle.png": "8ac96952fccac991dee828bb7a197b900e89266a06f17c1d5a5ebe4ae0f3f8bb",
+    "synthetic-walk-2.png": "2f22e0df3669311266ed043aaf0e6b555f5f525b28dab7e7416d295125fd6dac",
+    "thunder-idle-1.png": "3084f7d2d890f4ad7ec82a445527e810526c231a862a4a73809ff07371256182",
+    "thunder-idle-0.png": "6c2d705213f293368a552672520c2e2aaafd5654442f3e62c2a2e33be7414cf3",
+    "thunder-move.png": "1c8de0e6a5950a389dd74871da553030335c3420dfbe837b35859b13b14e23a4",
+    "synthetic-idle-1.png": "b593161c9aa14f03ab59fb6d8721d8ff5a10fa44b5d253eca8b58960b93e711b",
+    "intentional-hold.png": "b95863ae76b2b4335750b4ea5f113dce565c2f202733f7307b9bdfc39030214a",
+    "synthetic-idle-0.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+    "synthetic-attack-2.png": "29ab679a8c77e1350dee90b85f3b72b211bbd2fefdedc942ab92330c55a811ba",
+    "synthetic-attack-0.png": "0c5521830d54b5c268c830920076656924ca53d898d5876f5a81ddb34ddceb1f",
+    "synthetic-idle-2.png": "bcc8deacb1959b3160f8fc77bbd422ee5fc99a1ce12361eadeb242cee37a0563",
+    "synthetic-attack-1.png": "62d111b78af6a42681603dee9858e0d4cb6a71f2356908bc9a331664b71cd14f",
+    "prop.png": "e6d9f88901626d22eb194e416b573bd023a441f57cf221cb1df2167ef0d35c42",
+    "synthetic-walk-sheet.png": "f70653ddd26be6522e3d0a98bf1e5a969615e83e39b0b95d4e17b30be4eebbb4",
+    "thunder-move-0.png": "16e74b2be113e85b210f848ed0c7dd737b1e52f184fa5168899f37ac049c6372",
+    "thunder-move-1.png": "11c1c7192d72a7820935fd37866001a33d605f81e858a73df30669eea40dc138",
+    "thunder-move-3.png": "e2dcf41e89c6a9bb6b324f073d42cbdce733e32e06f4a61ccb570a13fddcf0df",
+    "cue.wav": "7edbc997db5922c99506857fc86e9651550a227cf3aa6e44b3a9ca7893fcb6b2",
+    "thunder-move-2.png": "9bcf1c48a4cd4eaf32e03e7363ffdc27da959f8325accd8f7a6051d916cb323d"
+  },
+  "changedFrames": [
+    [
+      "attack",
+      1
+    ]
+  ],
+  "sourceAndOldPackUnchanged": true,
+  "oldReviewsPreserved": true,
+  "newRevisionReviews": [],
+  "gameConfigurationUnchanged": true,
+  "nativeAcceptance": true,
+  "checks": [
+    "missing_frame",
+    "invalid_region",
+    "zero_duration",
+    "empty_frame_blocked",
+    "clipping_review_hint",
+    "intentional_hold_and_jump_preserved",
+    "single_frame_only",
+    "preview_native_timing",
+    "fresh_review",
+    "native_delivery"
+  ],
+  "emptyFrameIssue": {
+    "certainty": "deterministic",
+    "code": "empty_frame",
+    "evidencePath": "/pixelDiagnostics/normalized/frames/1",
+    "frameIndex": 1,
+    "message": "Frame has no nontransparent pixels.",
+    "options": [
+      "replace_source_frame",
+      "inspect_matting"
+    ],
+    "relatedFrameIndex": null,
+    "severity": "error"
+  },
+  "edgeIssue": {
+    "certainty": "review_required",
+    "code": "canvas_edge_contact",
+    "evidencePath": "/pixelDiagnostics/normalized/frames/1",
+    "frameIndex": 1,
+    "message": "Nontransparent pixels touch a canvas edge; this does not prove clipping.",
+    "options": [
+      "inspect_source_frame",
+      "replace_source_frame",
+      "review_shared_canvas"
+    ],
+    "relatedFrameIndex": null,
+    "severity": "warning"
+  },
+  "visualReview": "not_assessed",
+  "providerCalls": 0,
+  "build": {
+    "gitCommit": "509791ba81d9179f06a5cab4bca9ce23d77372e5",
+    "dirty": true,
+    "target": "aarch64-apple-darwin",
+    "profile": "debug",
+    "features": []
+  },
+  "godotVersion": "4.7.2.stable.official.ed1daf0bf",
+  "sourceScope": "Development snapshot of codex/agent-animation-m2 based on main 509791b; dirty=true is intentional. PR CI builds the actual reviewed merge tree.",
+  "localChecks": {
+    "packTestsPassed": 41,
+    "coreFocusedTestsPassed": 29,
+    "coreNativeMp4Ignored": 1,
+    "cliTestsPassed": 29,
+    "guideCasesPassed": 33,
+    "clippy": "passed",
+    "format": "passed",
+    "skillValidation": "passed",
+    "controlledPreviewClock": "passed; includes differing durations, seek, loop, anchor, scale and failed PNG loading"
+  },
+  "priorAttempts": [
+    {
+      "scope": "empty-frame acceptance negative control",
+      "result": "failed before fix: command returned ok and wrote accepted=true despite keeping the Job awaiting_review; fixed by rejecting blocked local animation before writing evidence"
+    },
+    {
+      "scope": "initial schema integration",
+      "result": "strict Pack schema rejected added issues; optional schema definition added, 41 Pack tests passed"
+    },
+    {
+      "scope": "first local guide run",
+      "result": "doctor query exceeded 60s; isolated rerun passed all 33 cases"
+    },
+    {
+      "scope": "browser fixture server",
+      "result": "initial Python HTTP queue reset several parallel PNG requests; larger local server queue loaded the complete page; product error handling remained explicit"
+    }
+  ],
+  "ci": "Native Windows and both supported Godot lines are pending PR CI at time of this local record; do not infer cross-platform results from macOS.",
+  "modelCost": null,
+  "productivityDecision": "insufficient_evidence",
+  "browser": {
+    "engine": "Chromium via playwright-cli 0.1.19",
+    "source": "final native-loop comparison/index.html",
+    "checks": [
+      "synchronized attack frame 1 at t=60ms",
+      "dark and light backgrounds",
+      "4x nearest scaling",
+      "anchor baseline at source y=52",
+      "new revision technical/visual review unknown"
+    ],
+    "artisticApproval": false,
+    "screenshot": "comparison.png",
+    "screenshotSha256": "3b41596230cb3ee29f5687324c3fbca638cef1c3e670a67be49ed1f1878c7cea"
+  }
+}

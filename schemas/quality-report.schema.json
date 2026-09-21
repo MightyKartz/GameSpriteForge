@@ -140,6 +140,12 @@
         },
         "normalized": {
           "$ref": "#/$defs/pixelSequence"
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/animationIssue"
+          }
         }
       }
     }
@@ -321,6 +327,68 @@
               "type": "null"
             }
           ]
+        }
+      }
+    },
+    "animationIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "severity",
+        "certainty",
+        "frameIndex",
+        "relatedFrameIndex",
+        "evidencePath",
+        "message",
+        "options"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "empty_frame",
+            "foreground_below_threshold",
+            "canvas_edge_contact",
+            "frame_size_mismatch",
+            "identical_visible_frames"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "error",
+            "warning",
+            "info"
+          ]
+        },
+        "certainty": {
+          "enum": [
+            "deterministic",
+            "review_required"
+          ]
+        },
+        "frameIndex": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "relatedFrameIndex": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "evidencePath": {
+          "type": "string",
+          "pattern": "^/pixelDiagnostics/"
+        },
+        "message": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }

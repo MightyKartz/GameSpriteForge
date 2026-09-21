@@ -58,10 +58,27 @@ pub struct PixelSequenceEvidence {
     pub first_last_difference: Option<PixelDifference>,
 }
 
+/// Additive, per-action diagnostics. Indices are zero-based within the action;
+/// evidence_path is a JSON pointer relative to this action's QualityReport.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnimationIssue {
+    pub code: String,
+    pub severity: String,
+    pub certainty: String,
+    pub frame_index: usize,
+    pub related_frame_index: Option<usize>,
+    pub evidence_path: String,
+    pub message: String,
+    pub options: Vec<String>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AnimationPixelDiagnostics {
     pub schema_version: String,
+    #[serde(default)]
+    pub issues: Vec<AnimationIssue>,
     pub profile: QualityProfile,
     pub visual_approval: String,
     pub loop_check_applicable: bool,
@@ -70,6 +87,89 @@ pub struct AnimationPixelDiagnostics {
     /// Frames after matting / selected loop extraction, before normalization.
     pub processed_source: PixelSequenceEvidence,
     pub normalized: PixelSequenceEvidence,
+}
+
+fn frame_issues(
+    evidence: &PixelSequenceEvidence,
+    bboxes: &[FrameBbox],
+    transparent_tail: Option<usize>,
+) -> Vec<AnimationIssue> {
+    let mut issues = Vec::new();
+    for (index, frame) in evidence.frames.iter().enumerate() {
+        let path = format!("/pixelDiagnostics/normalized/frames/{index}");
+        let mut add =
+            |code: &str, severity: &str, certainty: &str, message: &str, options: &[&str]| {
+                issues.push(AnimationIssue {
+                    code: code.into(),
+                    severity: severity.into(),
+                    certainty: certainty.into(),
+                    frame_index: index,
+                    related_frame_index: None,
+                    evidence_path: path.clone(),
+                    message: message.into(),
+                    options: options.iter().map(|v| (*v).into()).collect(),
+                });
+            };
+        if frame.fully_transparent && transparent_tail.is_none_or(|start| index < start) {
+            add(
+                "empty_frame",
+                "error",
+                "deterministic",
+                "Frame has no nontransparent pixels.",
+                &["replace_source_frame", "inspect_matting"],
+            );
+        } else if !frame.fully_transparent
+            && bboxes.get(index).is_some_and(|bbox| !bbox.has_foreground())
+        {
+            add(
+                "foreground_below_threshold",
+                "error",
+                "deterministic",
+                "Visible alpha exists but no foreground survives the configured bounds threshold.",
+                &["inspect_alpha_threshold", "inspect_source_frame"],
+            );
+        }
+        if frame.alpha_touches_edge {
+            add(
+                "canvas_edge_contact",
+                "warning",
+                "review_required",
+                "Nontransparent pixels touch a canvas edge; this does not prove clipping.",
+                &[
+                    "inspect_source_frame",
+                    "replace_source_frame",
+                    "review_shared_canvas",
+                ],
+            );
+        }
+        if evidence
+            .frames
+            .first()
+            .is_some_and(|first| (first.width, first.height) != (frame.width, frame.height))
+        {
+            add(
+                "frame_size_mismatch",
+                "error",
+                "deterministic",
+                "Frame canvas differs from the first frame.",
+                &["restore_shared_canvas"],
+            );
+        }
+    }
+    for delta in evidence.adjacent_differences.iter().flatten() {
+        if delta.alpha_mean_absolute_difference == 0.0
+            && delta.premultiplied_rgb_mean_absolute_difference == 0.0
+        {
+            issues.push(AnimationIssue {
+                code: "identical_visible_frames".into(), severity: "info".into(), certainty: "review_required".into(),
+                frame_index: delta.to_frame, related_frame_index: Some(delta.from_frame),
+                evidence_path: format!("/pixelDiagnostics/normalized/adjacentDifferences/{}", delta.from_frame),
+                message: "Adjacent visible pixels are identical; an intentional hold is valid and is not removed.".into(),
+                options: vec!["keep_intentional_hold".into(), "inspect_source_frame".into()],
+            });
+        }
+    }
+    issues
 }
 
 pub fn measure_pixel_sequence(images: &[RgbaImage]) -> PixelSequenceEvidence {
@@ -250,6 +350,11 @@ pub fn compute_quality_report_with_pixels(
         .push("structural_quality_is_not_visual_approval".into());
     report.pixel_diagnostics = Some(AnimationPixelDiagnostics {
         schema_version: "1".into(),
+        issues: frame_issues(
+            &normalized,
+            bboxes,
+            if tail_allowed { valid_tail } else { None },
+        ),
         profile,
         visual_approval: "not_assessed".into(),
         loop_check_applicable: loop_animation,
