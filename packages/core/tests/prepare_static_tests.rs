@@ -42,6 +42,53 @@ fn request(root: &Path) -> PrepareStaticRequest {
 }
 
 #[test]
+fn mixed_preserved_canvases_report_all_measured_groups_without_creating_plan() {
+    let root = tempfile::tempdir().unwrap();
+    let mut request = request(root.path());
+    request.canvas_policy = StaticCanvasPolicy::PreserveSource;
+    request.canvas_size = None;
+    for (id, size) in [("wide", (96, 64)), ("same", (64, 64)), ("tall", (64, 96))] {
+        let path = root.path().join(format!("{id}.png"));
+        RgbaImage::from_pixel(size.0, size.1, Rgba([1, 2, 3, 255]))
+            .save(&path)
+            .unwrap();
+        request.items.push(PrepareStaticItem {
+            id: id.into(),
+            name: id.into(),
+            path,
+        });
+    }
+    let hashes: Vec<_> = request
+        .items
+        .iter()
+        .map(|i| hash_file(&i.path).unwrap())
+        .collect();
+    let plans = PlanStore::new(root.path().join("plans")).unwrap();
+    let error = plans
+        .prepare(AutomationOperation::PrepareStatic(request.clone()))
+        .unwrap_err()
+        .to_string();
+    for expected in [
+        "64x64: jade, same",
+        "64x96: tall",
+        "96x64: wide",
+        "separate Pack",
+        "no inputs were resized",
+    ] {
+        assert!(error.contains(expected), "{error}");
+    }
+    assert_eq!(fs::read_dir(plans.root()).unwrap().count(), 0);
+    assert_eq!(
+        hashes,
+        request
+            .items
+            .iter()
+            .map(|i| hash_file(&i.path).unwrap())
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
 fn local_static_import_preserves_green_alpha_and_source_provenance() {
     for kind in [StaticAssetKind::PropSet, StaticAssetKind::IconSet] {
         for sampling in [SamplingMode::Nearest, SamplingMode::Linear] {

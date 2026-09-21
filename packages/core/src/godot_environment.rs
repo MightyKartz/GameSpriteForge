@@ -272,6 +272,41 @@ pub fn validate_lock(project: &Path, engine: &Engine) -> Result<()> {
 mod tests {
     use super::*;
     #[test]
+    fn serialized_runtime_locks_match_public_schema_version_policy() {
+        let schema: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../schemas/godot-toolchain-lock.schema.json"
+        ))
+        .unwrap();
+        let validator = jsonschema::validator_for(&schema).unwrap();
+        for version in [
+            "4.6.stable.official.build",
+            "4.6.3.stable.official.build",
+            "4.7.stable.official.build",
+            "4.7.2.stable.mono.official.build",
+            "4.5.2.stable",
+            "4.8.dev1",
+            "4.70.stable",
+            "4.7",
+            "4.7.",
+            "4.7..stable",
+            "4.7.stable\n",
+            "4.7.stable\n4.6.stable",
+            "4.7.stable/../../",
+            "4.7.stable build",
+        ] {
+            let lock = ToolchainLock {
+                schema_version: 1,
+                forge_version: env!("CARGO_PKG_VERSION").into(),
+                godot_version: version.into(),
+            };
+            assert_eq!(
+                validator.is_valid(&serde_json::to_value(lock).unwrap()),
+                is_supported_version(version),
+                "{version:?}"
+            );
+        }
+    }
+    #[test]
     fn supported_minor_versions_include_patchless_releases() {
         for version in [
             "4.6.stable.official.build",

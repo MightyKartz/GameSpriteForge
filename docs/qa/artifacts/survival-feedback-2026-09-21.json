@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "auditDate": "2026-09-21",
+  "consumer": {
+    "name": "Survival",
+    "commit": "7054eb9",
+    "dirty": true,
+    "note": "Snapshot before concurrent portrait_combat_v1 publication; later registry/UI/assets changes and the new Pack are excluded. Consumer files were not modified by this audit."
+  },
+  "producer": {
+    "version": "0.6.3",
+    "gitCommit": "546bcefaf145b32f6d5f27b1e509a93b071037f8",
+    "dirty": false,
+    "features": [],
+    "target": "aarch64-apple-darwin",
+    "profile": "release",
+    "binarySha256": "618cdad7ef1981cf046852baad1a34c5e435847ab2ab2356a6eeb51cf5a5e342",
+    "executable": "/Users/kartz/.local/share/forge/versions/v0.6.3/bin/forge"
+  },
+  "installAudits": [
+    {
+      "asset": "delivery",
+      "exitCode": 0,
+      "packSha256": "21ac1481137bb60c226fbc0ed82c578eddfb73eeee2b10c703cda59d5a98b76c",
+      "snapshotSha256": "b96a8450b6f94eecdd3980b03db0c4a12cba4355df00e77add03854cc6b5b909",
+      "verifiedFiles": 4,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "fx_v2",
+      "exitCode": 0,
+      "packSha256": "1d0ac8d793ecddd4e9396ae19a233fe8b5c1e79a990c526cfdb0428890d45688",
+      "snapshotSha256": "f000c63e2437af7a5710f95870e32924dbf072c543c62257773eeb03d4fcfddf",
+      "verifiedFiles": 10,
+      "verifiedTextures": 4,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "guard",
+      "exitCode": 0,
+      "packSha256": "477b05714b791da1a717fbc509b36e756f1651d20573a588f3f51331af5ae90e",
+      "snapshotSha256": "3c0c4f31603136a4398b2732f9233a447d7e738ef3448d2a1734d694f23d5fb3",
+      "verifiedFiles": 4,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "icons_sampled_v2",
+      "exitCode": 0,
+      "packSha256": "31de81bdd9097ee464225b8c0031dcd3a2526f822a53d0dcd544b380e795be7c",
+      "snapshotSha256": "77b8ef87ae1d8e2c2a864f5b30f3ac79887e60fe45e9d0835f6169db02feff50",
+      "verifiedFiles": 11,
+      "verifiedTextures": 9,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "icons_v2",
+      "exitCode": 0,
+      "packSha256": "70466eb6cc5d09bebbef582b10e4b4b8b804bf14dc9db5c3774743a53c639b37",
+      "snapshotSha256": "3deab65bc7d64c0384816e74b311d247fd32d008e1969b881861edbc6b1c1a46",
+      "verifiedFiles": 20,
+      "verifiedTextures": 9,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "linqiao",
+      "exitCode": 0,
+      "packSha256": "897ec577e9338d517e874c984ce2ee8718b84510b833b2b9886c1968a358c20b",
+      "snapshotSha256": "d645eaa85c4f6c87dad4c0c9b7a1364075731fdba2407b007f17dc18ba06dba1",
+      "verifiedFiles": 4,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "linqiao_attack_v2",
+      "exitCode": 0,
+      "packSha256": "21b0de8dcadabd616abd03795cefe6c2c47781dde93eab37d5b1c7d9504a6113",
+      "snapshotSha256": "c079d6022cf5adc489eece90c3dc92323d99256a55ec1ee0a7ffefe818acf8df",
+      "verifiedFiles": 9,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "linqiao_blade_lab",
+      "exitCode": 0,
+      "packSha256": "f6e98d28eca5ec64d5428ef45572a8b47538a0a57315474c77492d9c9c2886a7",
+      "snapshotSha256": "a0f6a3f6e26de9bb4d733b50b071247c6ce7df713cce41e9901c97efdd9e5a66",
+      "verifiedFiles": 9,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "linqiao_body",
+      "exitCode": 0,
+      "packSha256": "15ba4c283ffd195fc69d8e11b56b4e6c3af4066cfb742b201d96b132fdf58d05",
+      "snapshotSha256": "3d6312726e65df39e99ae0d68ccc370267887355abf61c1dffab1a0ce0c0d2e3",
+      "verifiedFiles": 4,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "object_interaction_v1",
+      "exitCode": 0,
+      "packSha256": "89784412391c4e901d89d43377b56d4ad8f64e289bf8f2a1f2c034f80bbf1d3d",
+      "snapshotSha256": "a416b0308e733cfc72b9db255589f9aad5cf7942e7d5328e0adf9b3903b86a74",
+      "verifiedFiles": 6,
+      "verifiedTextures": 2,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "props_bench_sampled_v2",
+      "exitCode": 0,
+      "packSha256": "b61a805be62f4570fa24b75d649bcb809c89b450435659c736c4f877b75a1bd6",
+      "snapshotSha256": "c4f6a5a9769b13c01f57e48d2ef4d75505b9fa0d2a706cafdc841000298f8fab",
+      "verifiedFiles": 3,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "props_bench_v2",
+      "exitCode": 0,
+      "packSha256": "e91d59d670bcd5353bd7be3ece68370a55c56f7037e564ef8a7926c471e74cf9",
+      "snapshotSha256": "b0340ad8aac7c973e094c1c6f8afc64a4198cb8434528b1a7c4f832fd1047656",
+      "verifiedFiles": 4,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "props_power_sampled_v2",
+      "exitCode": 0,
+      "packSha256": "b9e9087499bcf663c01fd630109856952dd7f1b3b280abb6b0d53b0a16cdeb16",
+      "snapshotSha256": "2a24eebb52a6b487826c9f26c7fd57baae64f9a93352a66dfaca0777dd74003c",
+      "verifiedFiles": 3,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "props_power_v2",
+      "exitCode": 0,
+      "packSha256": "52f7a171e8adff08c210c1c986ac16ba01eff75e1065fcc803ea3cd2b102af26",
+      "snapshotSha256": "78290c8ef47ab6a5a47706cf019f767afceeb71ef3808627e427f0d824707be0",
+      "verifiedFiles": 4,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "workshop",
+      "exitCode": 0,
+      "packSha256": "07fe9b286d39729df93ec01a4bd3f02e3021c18502a0f9ff1f21564e2c722f83",
+      "snapshotSha256": "e68d503c318bb762190d8b34f59cb1542152beede0f36c9639b28a4d7ba2a010",
+      "verifiedFiles": 4,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "zhouye",
+      "exitCode": 0,
+      "packSha256": "d3b0c034bab64a2b817fb25a36eb199f2c2f127f35708121070d1eee6b568a8f",
+      "snapshotSha256": "cb2c95adc09912745232cb9f1f121712ed6a1d8f84b8c4ea52f49a2097ec96ba",
+      "verifiedFiles": 4,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "zhouye_attack_v2",
+      "exitCode": 0,
+      "packSha256": "68ca12ecf5fb693cc68c72540382313c0e47dfb9c509a1d416ca44a8c8b358fd",
+      "snapshotSha256": "920b2b90431d4e63bf2ef2fd3ce73a1933d08e87a4d7a1cd4597cc26e0e67068",
+      "verifiedFiles": 9,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "zhouye_blade_v4",
+      "exitCode": 0,
+      "packSha256": "1bb00b9dd7f08ddb3c551e82e2603a627c87ab387f6869e3e54e358169c7dc59",
+      "snapshotSha256": "3bd7c6293df6619bdf19ab342959c876fe0bb782b2c539ef2c6124e4bb577040",
+      "verifiedFiles": 9,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    },
+    {
+      "asset": "zhouye_body",
+      "exitCode": 0,
+      "packSha256": "30d13093948c7a694ff6f33b881b9d6b9f7cae9803fd5b147b7a3d81b309ca9c",
+      "snapshotSha256": "54be65a8c9e38e43d09d545d90fe02fb03cdea230ece6eafd7acc6a0243b37f8",
+      "verifiedFiles": 4,
+      "verifiedTextures": 1,
+      "cacheCheck": "verified",
+      "nativeLoad": "not_run",
+      "visualReview": "not_assessed"
+    }
+  ],
+  "filesystemProbes": [
+    {
+      "filesystem": "local temporary directory",
+      "sourceMatteExit": 0,
+      "outputExists": true,
+      "hardLink": true
+    },
+    {
+      "filesystem": "ExFAT",
+      "sourceMatteExit": 1,
+      "outputExists": false,
+      "errorCode": "invalid_source_matte",
+      "message": "cannot publish new output PNG: Operation not supported (os error 45)",
+      "hardLink": false,
+      "hardLinkErrno": 45
+    }
+  ],
+  "schemaProbe": {
+    "schema": "schemas/godot-toolchain-lock.schema.json",
+    "value": "4.7.2.stable.official.ed1daf0bf",
+    "pattern": "^4\\.6\\.[^\\r\\n]+$",
+    "matches": false
+  },
+  "receiptInventory": {
+    "customDeliveryLogs": 23,
+    "retainedPacks": 23,
+    "prepareStaticReports": 19,
+    "prepareAssetReports": 4,
+    "installReports": 23,
+    "allRecordedReportsSucceeded": true,
+    "allRecordedReportsProviderRequestCount": 0,
+    "standardReceiptExportCommands": 0,
+    "verifyInstallCommandsInWrapper": 0
+  },
+  "limitations": [
+    "Current installed release checked; no source rebuild or Rust code change.",
+    "Filesystem failure reproduced only for source matte and hard links, not every installation stage.",
+    "Installation checks were read-only; no native game loading, rendering, iOS, or human review performed.",
+    "Historical Job success and provider counts are from retained consumer records, not re-executed production."
+  ]
+}

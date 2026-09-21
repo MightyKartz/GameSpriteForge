@@ -14,6 +14,14 @@ with `embedded_usage_guide`; installed links work with older pinned executables.
 
 ## Preserve intentional drawing coordinates
 
+Before cropping a sheet into separate files, inspect the entire cleaned sheet
+with its actual cell dimensions. Record edge contact per cell and review extended
+weapons, boots, hair and soft effects. An opaque candidate is not made transparent
+by choosing `preserve_source`; reject a baked background or explicitly prepare a
+reviewed matte. A cell-edge warning is evidence to inspect, not permission to
+erase pixels or independently recenter frames. Keep failed candidates and bind
+the chosen bytes with `sourceLocks` (`forge guide delivery`).
+
 Use `plan prepare-asset` for one action. This v1 request assumes three already
 aligned 64×64 PNG frames, saved relative to an asset-spec file. New builds resolve
 paths relative to that file; use absolute paths with older pinned animation CLIs:

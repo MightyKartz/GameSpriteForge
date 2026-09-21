@@ -92,6 +92,9 @@ These commands are included from v0.5.0. Inspect capabilities first.
 - **Source inspection, reviewed hashes, durable receipts and installed audits:**
   read [delivery evidence](references/delivery.md), or run
   `"$FORGE_BIN" guide delivery`. Check each new capability against the selected binary.
+  Builds with `filesystem_write_probe` also provide explicit destination checks
+  and `guide local-delivery-example`, a Python example joining fixed-binary local
+  preparation to standard receipts and final-project verification.
 
 The references link to local request examples. Without an installed bundle, read
 them with `"$FORGE_BIN" guide static-example`, `"$FORGE_BIN" guide provider-example`,

@@ -181,7 +181,7 @@ pub fn matte_png(request: &SourceMatteRequest) -> Result<SourceMatteReport, Stri
     staged.as_file().sync_all().map_err(|e| e.to_string())?;
     staged
         .persist_noclobber(&output_path)
-        .map_err(|e| format!("cannot publish new output PNG: {}", e.error))?;
+        .map_err(|e| format!("cannot publish new output PNG: {}; keep prior outputs and run `forge storage check --path {}` to diagnose destination support", e.error, parent.display()))?;
     Ok(SourceMatteReport {
         schema_version: "1",
         algorithm: "local-chroma@1.0.0",

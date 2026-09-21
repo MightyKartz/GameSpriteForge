@@ -29,6 +29,9 @@ pub fn current() -> BuildInfo {
 // Stable IDs describe compiled CLI entry points; runtime tool availability is
 // reported separately by doctor. Add new IDs only alongside their implementation.
 pub const CAPABILITIES: &[&str] = &[
+    "filesystem_write_probe",
+    "godot_install_phase_diagnostics",
+    "static_canvas_group_diagnostics",
     "godot_environment_setup",
     "godot_version_selection",
     "godot_project_toolchain_lock",

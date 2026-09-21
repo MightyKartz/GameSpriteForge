@@ -106,6 +106,11 @@ enum Command {
         command: receipt::ReceiptCommand,
     },
     Doctor(JsonFlag),
+    /// Explicit filesystem write probes in a temporary subdirectory.
+    Storage {
+        #[command(subcommand)]
+        command: StorageCommand,
+    },
     /// Configure optional native tools without changing shell environment variables.
     Setup {
         #[command(subcommand)]
@@ -213,6 +218,17 @@ enum Command {
 struct JsonFlag {
     #[arg(long)]
     json: bool,
+}
+
+#[derive(Subcommand)]
+enum StorageCommand {
+    /// Test publication and locks; creates and removes a private temporary directory.
+    Check {
+        #[arg(long)]
+        path: PathBuf,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
 }
 
 #[derive(Subcommand)]
@@ -919,6 +935,12 @@ fn main() {
 fn run() -> Result<(), (String, String)> {
     let cli = Cli::parse();
     match cli.command {
+        Command::Storage {
+            command: StorageCommand::Check { path, .. },
+        } => success(
+            &forge_core::storage::check(&path)
+                .map_err(|error| ("storage_check_failed".into(), error.to_string()))?,
+        ),
         Command::Setup {
             command: godot_workflow::SetupCommand::Godot(args),
         } => success(&godot_workflow::setup(args).map_err(godot_workflow::error)?),

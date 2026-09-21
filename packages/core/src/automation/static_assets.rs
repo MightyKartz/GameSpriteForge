@@ -64,7 +64,7 @@ pub(super) fn validate_request(request: &PrepareStaticRequest) -> Result<(), Str
         );
     }
     let mut ids = HashSet::new();
-    let mut dimensions = None;
+    let mut dimensions: BTreeMap<(u32, u32), Vec<&str>> = BTreeMap::new();
     for item in &request.items {
         if !valid_id(&item.id)
             || item.name.trim().is_empty()
@@ -77,10 +77,10 @@ pub(super) fn validate_request(request: &PrepareStaticRequest) -> Result<(), Str
         }
         let image = read_png(&item.path, request.canvas_policy)?;
         if request.canvas_policy == StaticCanvasPolicy::PreserveSource {
-            if dimensions.is_some_and(|size| size != image.dimensions()) {
-                return Err("preserve_source items within one Pack must have the same source dimensions; use separate Packs for different canvases".into());
-            }
-            dimensions = Some(image.dimensions());
+            dimensions
+                .entry(image.dimensions())
+                .or_default()
+                .push(&item.id);
         }
         if !image
             .pixels()
@@ -91,6 +91,14 @@ pub(super) fn validate_request(request: &PrepareStaticRequest) -> Result<(), Str
                 item.id
             ));
         }
+    }
+    if dimensions.len() > 1 {
+        let groups = dimensions
+            .iter()
+            .map(|((width, height), ids)| format!("{width}x{height}: {}", ids.join(", ")))
+            .collect::<Vec<_>>()
+            .join("; ");
+        return Err(format!("preserve_source items within one Pack must have the same source dimensions; measured groups: [{groups}]. Prepare a separate Pack per group, or explicitly choose normalize with canvasSize after reviewing resampling; no inputs were resized"));
     }
     Ok(())
 }

@@ -295,6 +295,22 @@ pub(super) fn run_godot_process(
     })
 }
 
+pub(super) fn delivery_phase_error(
+    error: AutomationRunError,
+    phase: &'static str,
+    job_dir: &Path,
+    log_name: &str,
+) -> AutomationRunError {
+    if matches!(error, AutomationRunError::Cancelled) {
+        return error;
+    }
+    AutomationRunError::GodotDelivery {
+        phase,
+        message: error.to_string(),
+        logs: job_dir.join("logs").join(log_name),
+    }
+}
+
 pub(super) fn validate_godot_output(
     output: &Output,
     phase: Option<&str>,
@@ -350,6 +366,37 @@ pub(super) fn validate_godot_output(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn delivery_diagnostics_preserve_phase_logs_and_cancellation() {
+        for (phase, log, code) in [
+            (
+                "project_import",
+                "godot.import",
+                "godot_project_import_failed",
+            ),
+            ("resource_install", "godot", "godot_resource_install_failed"),
+            (
+                "native_verification",
+                "godot.verify",
+                "godot_native_verification_failed",
+            ),
+        ] {
+            let error = delivery_phase_error(
+                AutomationRunError::Processing("SCRIPT ERROR: Parse Error".into()),
+                phase,
+                Path::new("job"),
+                log,
+            );
+            assert_eq!(error.code(), code);
+            assert!(error.to_string().contains(&format!("{log}.stderr.log")));
+            assert!(error.to_string().contains("SCRIPT ERROR: Parse Error"));
+            assert!(matches!(
+                delivery_phase_error(AutomationRunError::Cancelled, phase, Path::new("job"), log),
+                AutomationRunError::Cancelled
+            ));
+        }
+    }
 
     #[test]
     fn transaction_restores_target_and_both_registries_on_error_and_drop() {

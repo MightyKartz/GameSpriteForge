@@ -6,6 +6,29 @@ when reading the embedded guide) before running the workflow.
 
 ## Preserve and inspect sources
 
+Choose the inspection requirements from the intended use. A background may be
+opaque; a cutout character normally needs real transparent padding. Use measured
+alpha counts and bounds from `source inspect`, rather than a checkerboard-looking
+image or an RGBA file extension, as evidence of actual transparency. Review soft
+edges on both light and dark grounds. Bind reviewed bytes with `sourceLocks`
+([delivery evidence](delivery.md), `forge guide delivery`).
+
+For `preserve_source`, group items by their measured canvas dimensions before
+planning. Builds with `static_canvas_group_diagnostics` list the item IDs in each
+dimension group when rejecting a mixed set. Choose separate Packs explicitly;
+only choose normalization if resampling fits the intended use.
+
+Compare results at their intended game display size as well as source size.
+Linear engine filtering alone does not establish quality under heavy minification.
+For icons, compare an explicitly normalized 128/256 canvas against preserved
+source pixels and review the actual UI. Keep both outputs and their recipes;
+do not replace originals. This is a review procedure, not an automatic size choice.
+
+For repeated `source matte` runs, choose a new output path. Existing outputs are
+protected intentionally; retain prior parameters/reports instead of deleting
+evidence to make a rerun succeed. Check destination storage with `forge storage
+check` when the selected executable has `filesystem_write_probe`.
+
 If new artwork or a creative edit is requested, use the available image-generation
 tool, then inspect its saved PNG output. Keep the original unchanged with its
 SHA-256, source/tool identity and rights information. Do not invent a model name,

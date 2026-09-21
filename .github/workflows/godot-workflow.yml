@@ -4,6 +4,7 @@ on:
     paths:
       - 'packages/**'
       - 'Cargo.*'
+      - 'schemas/**'
       - 'scripts/test-*.py'
       - 'scripts/requirements-local-assets.txt'
       - 'scripts/godot/forge_project_acceptance.gd'
@@ -44,6 +45,8 @@ jobs:
           cargo fmt --all -- --check
           cargo clippy --locked --workspace --all-targets -- -D warnings
           cargo test --locked -p core --lib godot
+          cargo test --locked -p core --lib storage::
+          cargo test --locked -p core --test prepare_static_tests --test godot_install_transaction_tests
           cargo test --locked -p core --lib animation_preview::
           cargo test --locked -p core --test animation_preview_tests --test animation_pixel_quality_tests --test animation_delivery_tests --test asset_library_review_tests
           cargo test --locked -p forge-cli --bin forge
@@ -111,6 +114,7 @@ jobs:
           cargo test --locked -p core --test static_delivery_tests -- --ignored --nocapture
           python scripts/test-native-godot-transactions.py --godot "$godot_path" --output target/media-acceptance/transactions
           python scripts/test-local-static-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/static
+          python scripts/test-survival-feedback-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/survival
           python scripts/test-local-animation-delivery.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/animation
           python scripts/test-local-audio-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/audio
           python scripts/test-layered-cli.py --forge "$FORGE_BIN" --godot "$godot_path" --output target/media-acceptance/layered

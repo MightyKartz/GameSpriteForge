@@ -7,6 +7,74 @@ applicable; cache baseline checks
 also require `godot_import_cache_integrity`. Older release pins do
 not acquire them by reading this guide. Keep the consumer's tested executable.
 
+## Check destination storage explicitly
+
+Builds with `filesystem_write_probe` provide:
+
+```bash
+"$FORGE_BIN" storage check --path /absolute/existing-directory --json
+```
+
+This is an explicit write probe: it creates and removes only its own temporary
+subdirectory. It checks exclusive publication, protection of existing files,
+replacement, hard links (used by receipts), and file locking. Require
+`data.supported:true`; a successfully produced diagnostic can have `ok:true`
+and `supported:false`. Ordinary `doctor` does not run this probe. A pass is not
+a crash-durability or complete-installation guarantee.
+
+Check the actual project and retained-output locations, especially external
+volumes. Some ExFAT configurations cannot provide the required operations.
+Select supported storage before production. Installing into another project and
+copying its target and `.forge` back bypasses the install lock, deletion inventory,
+registry/cache transaction and final validation; it is not a supported fallback.
+
+## Complete local delivery example
+
+On builds with `filesystem_write_probe`, retrieve the tested Python 3.10+ example
+using a NEW script filename, then inspect it before running:
+
+```bash
+"$FORGE_BIN" guide local-delivery-example > /absolute/new-local-delivery.py
+python3 /absolute/new-local-delivery.py \
+  --forge "$FORGE_BIN" --expected-binary-sha256 REVIEWED_BINARY_SHA256 \
+  --operation prepare-static --request /absolute/reviewed-request.json \
+  --project /absolute/game --asset-key reviewed_props \
+  --out /absolute/existing-evidence-parent/new-delivery
+```
+
+The script is [bundled here](../examples/local-delivery.py). It requires reviewed
+`sourceLocks` in the request, an existing project and a new output directory
+outside the Godot project. It supports `prepare-static`, `prepare-asset` and
+`prepare-character`, checks zero-Provider estimates/reports, and retains the
+validated Pack before installation. The supplied hash is the real executable
+reported as `doctor.data.cliPath`, not a Windows `.cmd` wrapper's hash. Keep
+invoking the public launcher; the example checks launcher and payload changes
+between calls. Do not upgrade the toolchain during a run.
+
+Invocation explicitly performs both preparation and installation; only use it
+when those operations are authorized. It does not supply an artistic approval.
+For output review before installation, use the separate Plan/Job commands below.
+
+`progress.json` retains commands, build identity, Job IDs and the final receipt
+hash. `prepared-receipt.json`, `retained.gsfpack`, and `delivery-receipt.json` use
+the standard contracts below. Verify the final project, then retain the returned
+receipt hash with the game's independently reviewed lock. Never treat an adjacent
+editable progress file as independent authenticity evidence.
+
+If installation fails, keep the output directory: the prepared Pack and receipt
+remain available. Set `FORGE_JOB_STORE`/`FORGE_PLAN_STORE` to that directory's
+`jobs`/`plans` when inspecting its Job IDs. Correct the reported project or tool
+issue, create a new install Plan for the retained Pack, then export a new delivery
+receipt using the original preparation Job and new install Job. A polling timeout
+does not cancel the worker; inspect `job report` or explicitly `job cancel` before
+starting another install. Never rerun over an existing evidence directory.
+
+Installation Job errors distinguish `godot_project_import_failed`,
+`godot_resource_install_failed`, and `godot_native_verification_failed` on builds
+with `godot_install_phase_diagnostics`. Read the indicated stdout/stderr logs;
+project script parse errors do not require regenerating a valid Pack. A successful
+Godot exit with script errors remains a failure.
+
 ## Measure before processing
 
 ```bash
