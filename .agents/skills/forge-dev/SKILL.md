@@ -12,6 +12,13 @@ The public product is the Rust `forge` CLI. The workspace contains `packages/cli
 application is available in Git history. Use existing package and script
 patterns. Do not copy external project source into Forge.
 
+Follow [product priorities](../../../PRODUCT.md#current-investment-priorities)
+for new scope. Prioritize repeated local processing, native delivery and recovery.
+Before adding a command or expanding an optional workflow, identify the recurring
+consumer task and check whether a guide or reusable script already solves it.
+Preserve compatibility; measure adoption and maintenance costs with the
+[comparison protocol](../../../docs/qa/asset-delivery-comparison.md).
+
 Read the [CLI protocol](../../../docs/automation/forge-cli.md) for requests, Jobs,
 Packs, and Godot installation, and [CONTRIBUTING](../../../CONTRIBUTING.md) for
 source builds. For asset preparation without changing Forge, use

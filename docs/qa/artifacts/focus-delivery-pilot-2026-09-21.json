@@ -1,0 +1,389 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-21",
+  "experiment": "ready_png_execution_pilot",
+  "passed": true,
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "source": "docs/media/showcase/sprites (eight public prepared PNGs)",
+  "sourceHashes": {
+    "barrel.png": "d1b3a68c8dfeb201b4779174a47cfcee2500eedb1749fb10bdccc2a6104c68f0",
+    "campfire.png": "f0e1d790660e13b6ec09be9c665de01c58323d5e7108a98ae3bc1dce17bfdd21",
+    "crate.png": "c6d844e3d7b1d479184750e4851b7056152ce1a445cd508c75fb8f6acdef65fa",
+    "crystal.png": "db48209218c64e39e70977e6228d003c8507c70380be02b5dd69faf6ec7d7dd5",
+    "key.png": "20c82f96c6d8f885ef24cc420cd723f7463fc31fa780608e4e22e8985661dd0e",
+    "potion.png": "7bf1df866e1bf3909f1d35ab40cce5d0bdd77229552bc4565dfcf78186a6e09d",
+    "pouch.png": "5405154240de035c41b3645291ab26692b1b3e322e0de50093a301c573cc1b42",
+    "signpost.png": "2d42c5716c61a809afb94dad49e06239c8bd88a855412e47c1b3bfe8f3f422ce"
+  },
+  "sourceSnapshotUnchanged": true,
+  "forge": {
+    "version": "0.6.4",
+    "build": {
+      "gitCommit": "6fd33cfada94f3fc9c0dfe3e5908b3618ebc870f",
+      "dirty": false,
+      "target": "aarch64-apple-darwin",
+      "profile": "release",
+      "features": []
+    },
+    "binarySha256": "1eac35e14777c3ff798f3a25231aa9f73833e8837f1ba7b3d584620ef7691a38"
+  },
+  "godot": {
+    "version": "4.7.2.stable.official.ed1daf0bf",
+    "sha256": "c7cccbf8fb143e34e02fd6521e09be2c2b974f0d5db080b19071c9c570718ccf"
+  },
+  "runnerSha256": "efbe2aded30c60082d8e98650ac5413d1d9ece2b2028ef8115af8a30f34e246b",
+  "checkerSha256": "6e0e666c41a490bb49fdf7c31ba744322d9a528a184185ae9b85224fe8bcb5a1",
+  "exampleSha256": "6d3e321012cab133b55e8e4a19db13c95db4b7fc3842748b8a28dea0d017e328",
+  "records": [
+    {
+      "trial": 1,
+      "arm": "native",
+      "armOrder": [
+        "native",
+        "forge"
+      ],
+      "phase": "first",
+      "passed": true,
+      "seconds": 3.6788742919961805
+    },
+    {
+      "trial": 1,
+      "arm": "native",
+      "armOrder": [
+        "native",
+        "forge"
+      ],
+      "phase": "update",
+      "passed": true,
+      "seconds": 3.0376073330044164
+    },
+    {
+      "trial": 1,
+      "arm": "forge",
+      "armOrder": [
+        "native",
+        "forge"
+      ],
+      "phase": "first",
+      "passed": true,
+      "seconds": 9.088007625003229
+    },
+    {
+      "trial": 1,
+      "arm": "forge",
+      "armOrder": [
+        "native",
+        "forge"
+      ],
+      "phase": "update",
+      "passed": true,
+      "seconds": 9.079101375005848
+    },
+    {
+      "trial": 2,
+      "arm": "forge",
+      "armOrder": [
+        "forge",
+        "native"
+      ],
+      "phase": "first",
+      "passed": true,
+      "seconds": 9.190871792001417
+    },
+    {
+      "trial": 2,
+      "arm": "forge",
+      "armOrder": [
+        "forge",
+        "native"
+      ],
+      "phase": "update",
+      "passed": true,
+      "seconds": 9.110694292001426
+    },
+    {
+      "trial": 2,
+      "arm": "native",
+      "armOrder": [
+        "forge",
+        "native"
+      ],
+      "phase": "first",
+      "passed": true,
+      "seconds": 3.22571862499899
+    },
+    {
+      "trial": 2,
+      "arm": "native",
+      "armOrder": [
+        "forge",
+        "native"
+      ],
+      "phase": "update",
+      "passed": true,
+      "seconds": 2.6213140839972766
+    },
+    {
+      "trial": 3,
+      "arm": "native",
+      "armOrder": [
+        "native",
+        "forge"
+      ],
+      "phase": "first",
+      "passed": true,
+      "seconds": 2.9275273750026827
+    },
+    {
+      "trial": 3,
+      "arm": "native",
+      "armOrder": [
+        "native",
+        "forge"
+      ],
+      "phase": "update",
+      "passed": true,
+      "seconds": 2.940629208002065
+    },
+    {
+      "trial": 3,
+      "arm": "forge",
+      "armOrder": [
+        "native",
+        "forge"
+      ],
+      "phase": "first",
+      "passed": true,
+      "seconds": 9.38320108300104
+    },
+    {
+      "trial": 3,
+      "arm": "forge",
+      "armOrder": [
+        "native",
+        "forge"
+      ],
+      "phase": "update",
+      "passed": true,
+      "seconds": 8.245278583999607
+    }
+  ],
+  "summary": {
+    "first": {
+      "completePassingPairs": 3,
+      "observedPairs": 3,
+      "medianSeconds": {
+        "native": 3.22571862499899,
+        "forge": 9.190871792001417
+      },
+      "failedAttempts": 0
+    },
+    "update": {
+      "completePassingPairs": 3,
+      "observedPairs": 3,
+      "medianSeconds": {
+        "native": 2.940629208002065,
+        "forge": 9.079101375005848
+      },
+      "failedAttempts": 0
+    }
+  },
+  "negativeControlPassed": true,
+  "humanSeconds": null,
+  "modelCost": null,
+  "maintenanceSeconds": null,
+  "productDecision": "insufficient_evidence",
+  "limitations": [
+    "public prepared artwork, not real game iterations",
+    "no human or model-cost measurement",
+    "tool installation and script authoring excluded",
+    "no rollback or cross-machine test",
+    "different additional safety/evidence guarantees",
+    "OS caches retained; arm order alternates"
+  ],
+  "guideVerification": {
+    "ok": true,
+    "binarySha256": "1f9fd528cfd51d0874cc6c07e7118514f12e30e673bdaacbfbdb9087513516e3",
+    "build": {
+      "dirty": true,
+      "features": [],
+      "gitCommit": "6fd33cfada94f3fc9c0dfe3e5908b3618ebc870f",
+      "profile": "debug",
+      "target": "aarch64-apple-darwin"
+    },
+    "contentHash": "293a952cc8610e9451ff9f3b2018934433dd5fd95e1d5a0bbf2a0931eddc2718",
+    "commandCount": 155,
+    "providerRequestsExecuted": 0,
+    "scope": "temporary projects/home; synthetic local PNGs; plans only; no Godot or Provider execution"
+  },
+  "validation": {
+    "comparisonRegressionTests": 6,
+    "skillValidators": [
+      "forge-use",
+      "forge-dev"
+    ],
+    "cargoFmt": true,
+    "changedLinksJsonYaml": true
+  },
+  "localRawEvidence": "/tmp/forge-focus-pilot-2/report.json",
+  "preliminaryRun": {
+    "runnerSha256": "d3ee8fdc1fc55de73855f98ef7e2fe8a090805fb1b9273575feb82dfc51f9081",
+    "checkerSha256": "6e0e666c41a490bb49fdf7c31ba744322d9a528a184185ae9b85224fe8bcb5a1",
+    "records": [
+      {
+        "trial": 1,
+        "arm": "native",
+        "armOrder": [
+          "native",
+          "forge"
+        ],
+        "phase": "first",
+        "passed": true,
+        "seconds": 3.96263729200291
+      },
+      {
+        "trial": 1,
+        "arm": "native",
+        "armOrder": [
+          "native",
+          "forge"
+        ],
+        "phase": "update",
+        "passed": true,
+        "seconds": 3.942818957999407
+      },
+      {
+        "trial": 1,
+        "arm": "forge",
+        "armOrder": [
+          "native",
+          "forge"
+        ],
+        "phase": "first",
+        "passed": true,
+        "seconds": 15.159130707994336
+      },
+      {
+        "trial": 1,
+        "arm": "forge",
+        "armOrder": [
+          "native",
+          "forge"
+        ],
+        "phase": "update",
+        "passed": true,
+        "seconds": 9.597101416999067
+      },
+      {
+        "trial": 2,
+        "arm": "forge",
+        "armOrder": [
+          "forge",
+          "native"
+        ],
+        "phase": "first",
+        "passed": true,
+        "seconds": 9.645298709001509
+      },
+      {
+        "trial": 2,
+        "arm": "forge",
+        "armOrder": [
+          "forge",
+          "native"
+        ],
+        "phase": "update",
+        "passed": true,
+        "seconds": 10.929172707998077
+      },
+      {
+        "trial": 2,
+        "arm": "native",
+        "armOrder": [
+          "forge",
+          "native"
+        ],
+        "phase": "first",
+        "passed": true,
+        "seconds": 3.5321542500023497
+      },
+      {
+        "trial": 2,
+        "arm": "native",
+        "armOrder": [
+          "forge",
+          "native"
+        ],
+        "phase": "update",
+        "passed": true,
+        "seconds": 3.4234702499961713
+      },
+      {
+        "trial": 3,
+        "arm": "native",
+        "armOrder": [
+          "native",
+          "forge"
+        ],
+        "phase": "first",
+        "passed": true,
+        "seconds": 3.4843663749998086
+      },
+      {
+        "trial": 3,
+        "arm": "native",
+        "armOrder": [
+          "native",
+          "forge"
+        ],
+        "phase": "update",
+        "passed": true,
+        "seconds": 3.816101707998314
+      },
+      {
+        "trial": 3,
+        "arm": "forge",
+        "armOrder": [
+          "native",
+          "forge"
+        ],
+        "phase": "first",
+        "passed": true,
+        "seconds": 10.832730833004462
+      },
+      {
+        "trial": 3,
+        "arm": "forge",
+        "armOrder": [
+          "native",
+          "forge"
+        ],
+        "phase": "update",
+        "passed": true,
+        "seconds": 11.224949041999935
+      }
+    ],
+    "summary": {
+      "first": {
+        "completePassingPairs": 3,
+        "observedPairs": 3,
+        "medianSeconds": {
+          "native": 3.5321542500023497,
+          "forge": 10.832730833004462
+        },
+        "failedAttempts": 0
+      },
+      "update": {
+        "completePassingPairs": 3,
+        "observedPairs": 3,
+        "medianSeconds": {
+          "native": 3.816101707998314,
+          "forge": 10.929172707998077
+        },
+        "failedAttempts": 0
+      }
+    },
+    "negativeControlPassed": true,
+    "reasonForRerun": "Stricter shared acceptance now rejects nested stale PNGs and SCRIPT ERROR on stdout; all preliminary observations retained."
+  }
+}

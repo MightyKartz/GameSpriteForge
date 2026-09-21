@@ -2,9 +2,9 @@
 
 [English](./README.md) | 简体中文
 
-**面向 2D 游戏美术与音频的 CLI 工具。**
+**为 Godot 加工、验证和安全更新游戏素材。**
 
-接入你喜欢的创作工具生成的素材，在项目资源库中统一管理，再交付到 Godot。Forge 使用 Rust 构建，支持 Codex、Claude、终端命令和脚本驱动。
+接入你喜欢的创作工具提供的图片、动画帧和音频。Forge 负责可重复的加工、Godot 原生交付和安装失败恢复；Codex 等智能体可以操作 CLI，你负责审阅结果。
 
 [最新发布](https://github.com/MightyKartz/GameSpriteForge/releases/latest) · [安装](#安装) · [主要功能](#主要功能) · [CLI 指南](docs/automation/forge-cli.md)
 
@@ -90,9 +90,12 @@ Forge 将本地 WAV 加工并交付为 Godot 原生音频资源。这个示例�
 
 ## 配合 Codex 使用
 
+Forge 更适合需要验证与恢复的反复加工和素材更新。只有少量已可直接使用的 PNG 时，
+Godot 原生导入可能就足够了。项目资源库和 Provider 生成均为可选工作流。
+
 在 Codex 中打开游戏项目并提出需求：
 
-> 请用 Forge 处理这个游戏的源图、动画帧和 WAV 音频。先运行 `forge guide`，保留原始素材，向我展示加工结果供审核，再安装到 Godot。
+> 请用 Forge 为这个 Godot 项目加工素材。先读取项目固定版本的 `forge guide`，保留原图，安装前展示加工结果。经我确认交付后再安装，并告诉我结果或恢复步骤。技术记录保存在文件里。
 
 内置指南支持离线读取。通过 `forge guide project-assets`、`forge guide static`、`forge guide animation`、`forge guide audio` 或 `forge guide delivery` 查看对应主题。macOS/Linux 还可选择[安装 Codex skill](docs/automation/forge-cli.md#optional-bundled-codex-skill)，让 Codex 发现它。
 
@@ -107,6 +110,10 @@ Sword 是一款修仙题材的生存游戏原型。源图由 Codex 创作，Forg
 *使用早期 Forge 构建导入的已有资源，在独立素材展示场景中回放。详见[来源与录制说明](docs/media/showcase/README.md)。*
 
 ## 能力范围
+
+当前开发优先保证素材交付可靠、智能体入口简明。现有功能继续可用，扩大平台范围前先
+验证真实项目收益。详见[产品投入重点](PRODUCT.md#current-investment-priorities)和
+[对照实验方案](docs/qa/asset-delivery-comparison.md)。
 
 **v0.6.0 新功能：**具有 `godot_version_selection` 能力的构建同时支持 Godot 4.6.x 与 4.7.x，可选择下载 4.6.3 或 4.7.2 及对应导出模板。新的默认下载版本为 4.7.2，已有项目的工具链锁保持不变，详见 [Godot 工作流指南](.agents/skills/forge-use/references/godot-workflow.md)。
 

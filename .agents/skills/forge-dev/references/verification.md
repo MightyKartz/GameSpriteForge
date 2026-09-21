@@ -93,6 +93,12 @@ evidence. Fixture media checks do not establish visual or listening approval.
 
 ## Embedded guide versus developer documentation
 
+The optional ready-PNG comparison is an experiment, not a required performance
+gate: follow [the protocol](../../../../docs/qa/asset-delivery-comparison.md).
+When changing its runner/checker, run
+`python3 scripts/experiments/test-static-delivery-comparison.py -v` and the native
+pilot with isolated projects. Do not infer human productivity from its timings.
+
 Changes to `.agents/skills/forge-use/` change the compiled payload. Rebuild with
 `cargo build --locked -p forge-cli --no-default-features`, then run
 `python3 scripts/test-cli-skill.py --forge /absolute/path/to/forge`.

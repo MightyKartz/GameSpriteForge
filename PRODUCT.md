@@ -1,11 +1,44 @@
 # Product
 
-**A 2D game asset pipeline for AI-assisted development.**
+**Reliable asset preparation and updates for Godot projects.**
 
 Forge helps independent developers and small teams turn images, animation and
 audio into reusable game resources. Its public product is a Rust CLI that people, coding agents and
 scripts can use throughout asset production, from local preparation and quality
 checks to traceable Packs and native Godot delivery.
+
+## Current investment priorities
+
+Develop the smallest reusable tool that saves work in real game projects. Codex
+and other agents handle intent, artwork creation, game code and orchestration;
+Forge concentrates on repeatable asset processing and verifiable delivery.
+
+- **Core investment:** preserve pixels, animation coordinates and timing; validate
+  engine resources; update owned assets safely; retain useful failure diagnostics,
+  recovery and source/version evidence.
+- **Maintain compatibility:** existing Provider integrations, library commands,
+  previews and Godot environment/export commands remain supported. Extend them
+  when a recurring consumer task demonstrates a benefit, not to expand a feature list.
+- **Pause expansion:** additional generation platforms, general agent orchestration,
+  a replacement game editor, and promotion of optional character/world workflows.
+  This is an investment boundary, not removal of existing commands or data.
+
+For simple ready-to-import images, Godot's native import and a reusable script
+may be sufficient. A library, Pack history and delivery receipts should not be
+prerequisites for understanding the user's task. Offer them when repeated
+updates, recovery or reuse justify the extra machinery.
+
+Before broader product investment, compare Codex plus reusable existing tools
+against Codex plus Forge on the same tasks. Track user effort, correctness and
+ongoing maintenance, including Forge's own overhead. The
+[focus decision](docs/architecture/product-focus.md) and
+[comparison protocol](docs/qa/asset-delivery-comparison.md) define the evidence
+needed. Current engineering tests do not establish a productivity or market win.
+
+**中文：**当前投入聚焦于 Godot 素材的稳定加工、更新、验证和失败恢复。保留现有命令、
+格式与历史记录的兼容性，暂缓扩展通用生成平台、智能体编排和高级角色/世界功能。
+Codex 负责意图理解、创作与游戏代码；Forge 必须通过实际交付中减少的人力和返工证明
+自身价值。简单导入允许使用 Godot 原生能力，不强制引入资源库或整套证据流程。
 
 ## Who it serves
 

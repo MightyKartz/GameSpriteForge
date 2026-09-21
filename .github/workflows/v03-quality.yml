@@ -43,6 +43,9 @@ jobs:
       - name: Test zero-generation reuse integrity
         run: python3 scripts/character/test_prepare_directional_reuse.py -v
 
+      - name: Test delivery comparison acceptance and reporting
+        run: python3 scripts/experiments/test-static-delivery-comparison.py -v
+
       - name: Verify resource content identity and publication contracts
         run: |
           cargo test --locked -p core --test content_digest_tests --test asset_library_tests --test asset_library_review_tests --test asset_library_transfer_tests
