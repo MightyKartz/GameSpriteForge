@@ -9,6 +9,9 @@ PREVIOUS="$(cd "${3:?previous release artifact directory required}" && pwd)"
 PREVIOUS_VERSION="${4:?previous release tag required}"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/forge-release-artifact.XXXXXX")"
 trap 'rm -rf "${TEST_ROOT}"' EXIT
+mkdir -p "${TEST_ROOT}/no-external-helpers"
+export GAME_SPRITE_FORGE_FFMPEG_SEARCH_DIRS="${TEST_ROOT}/no-external-helpers"
+export GAME_SPRITE_FORGE_DISABLE_MACOS_DEFAULT_TOOL_DIRS=1
 command -v godot >/dev/null
 godot --version | grep -E '^4\.6\.'
 
