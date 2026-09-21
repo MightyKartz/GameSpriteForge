@@ -126,6 +126,22 @@ jobs:
           if (!$upgrade.binaryChanged -or $upgrade.previousBuild.gitCommit -ne $baseline) { throw 'Upgrade did not use the actual pre-library executable' }
           python scripts/test-asset-library-cli.py --forge "$($history.cases[0].launcher)" --legacy-forge "$historical"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify upgrade from published v0.6.4
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $previous = "$env:RUNNER_TEMP/forge-v064"
+          New-Item -ItemType Directory -Path $previous | Out-Null
+          gh release download v0.6.4 --dir $previous --pattern 'forge-x86_64-pc-windows-msvc.zip*'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $archive = "$previous/forge-x86_64-pc-windows-msvc.zip"
+          $expected = (Get-Content -LiteralPath ($archive + '.sha256') -Raw).Split(' ')[0].Trim()
+          if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) { throw 'Previous release archive checksum mismatch' }
+          ./scripts/test-windows-package.ps1 -Archive target/windows-dist/forge-x86_64-pc-windows-msvc.zip -PreviousArchive $archive -Output target/qa/windows-v064-upgrade -Godot "$env:RUNNER_TEMP/godot/Godot_v4.6.3-stable_win64_console.exe"
+          $summary = Get-Content -LiteralPath target/qa/windows-v064-upgrade/summary.json -Raw | ConvertFrom-Json
+          $upgrade = @($summary.cases | Where-Object name -EQ 'upgrade_preserves_prior_payload_and_launcher_backup')[0]
+          if (!$upgrade.binaryChanged -or $upgrade.previousBuild.gitCommit -ne '6fd33cfada94f3fc9c0dfe3e5908b3618ebc870f') { throw 'Expected published v0.6.4 upgrade' }
+
       - name: Verify Windows PowerShell 5.1 installer compatibility
         run: |
           $archive = (Resolve-Path -LiteralPath target/windows-dist/forge-x86_64-pc-windows-msvc.zip).Path
@@ -147,6 +163,14 @@ jobs:
           $summary = Get-Content -LiteralPath target/qa/windows-portable/summary.json -Raw | ConvertFrom-Json
           $launcher = $summary.cases[0].launcher
           $godot = "$env:RUNNER_TEMP/godot/Godot_v4.6.3-stable_win64_console.exe"
+          $env:GAME_SPRITE_FORGE_FFMPEG_SEARCH_DIRS = "$env:RUNNER_TEMP/no-external-helpers"
+          New-Item -ItemType Directory -Path $env:GAME_SPRITE_FORGE_FFMPEG_SEARCH_DIRS -Force | Out-Null
+          $upgradeSummary = Get-Content -LiteralPath target/qa/windows-v064-upgrade/summary.json -Raw | ConvertFrom-Json
+          $launcher = @($upgradeSummary.cases | Where-Object name -EQ 'upgrade_preserves_prior_payload_and_launcher_backup')[0].launcher
+          python scripts/experiments/agent_animation_revision.py --forge "$launcher" --godot "$godot" --output target/qa/windows-agent-m2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/experiments/agent_supporting_resources.py --forge "$launcher" --godot "$godot" --output target/qa/windows-agent-m3
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-animation-preview-cli.py --forge "$launcher" --bundled-tools --output target/qa/windows-animation-video
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-local-audio-cli.py --forge "$launcher" --godot "$godot" --output target/qa/windows-audio
@@ -176,6 +200,9 @@ jobs:
             target/windows-dist/windows-package-common.ps1
             target/qa/windows-portable/summary.json
             target/qa/windows-historical-upgrade/summary.json
+            target/qa/windows-v064-upgrade/summary.json
+            target/qa/windows-agent-m2/**
+            target/qa/windows-agent-m3/**
             target/qa/windows-portable/powershell51-doctor.json
             target/qa/windows-guide/summary.json
             target/qa/windows-native-static/summary.json
@@ -198,6 +225,9 @@ jobs:
             ${{ runner.temp }}/forge-ffmpeg/build.log
             ${{ runner.temp }}/forge-ffmpeg/helpers/FFMPEG_BUILD.json
             target/qa/windows-portable/summary.json
+            target/qa/windows-v064-upgrade/**
+            target/qa/windows-agent-m2/**
+            target/qa/windows-agent-m3/**
             target/qa/windows-native-static/**
             target/qa/windows-animation-video/**
             target/qa/windows-native-video/**

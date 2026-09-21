@@ -9,7 +9,7 @@ on:
       version:
         description: "Release version to preflight (no GitHub Release is created)"
         required: true
-        default: "v0.6.4"
+        default: "v0.7.0"
         type: string
 
 permissions:
@@ -160,6 +160,48 @@ jobs:
           bash scripts/test-cli-release-artifact.sh \
             "${GITHUB_WORKSPACE}" "${FORGE_RELEASE_TAG}" \
             "${RUNNER_TEMP}/previous-release" v0.3.2
+
+      - name: Verify v0.6.4 upgrade and packaged Agent workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          previous="${RUNNER_TEMP}/previous-current-release"
+          installation="${RUNNER_TEMP}/forge-current-upgrade"
+          evidence="${RUNNER_TEMP}/release-agent-evidence"
+          mkdir -p "${previous}" "${evidence}" "${RUNNER_TEMP}/no-external-helpers"
+          gh release download v0.6.4 --dir "${previous}" --pattern 'forge-aarch64-apple-darwin.zip*'
+          export FORGE_INSTALL_TEST_MODE=1 FORGE_INSTALL_ROOT="${installation}/share"
+          export FORGE_BIN_DIR="${installation}/bin" FORGE_PROFILE_FILE="${installation}/profile"
+          export GAME_SPRITE_FORGE_FFMPEG_SEARCH_DIRS="${RUNNER_TEMP}/no-external-helpers"
+          export GAME_SPRITE_FORGE_DISABLE_MACOS_DEFAULT_TOOL_DIRS=1
+          export FORGE_GODOT_PATH="${RUNNER_TEMP}/godot-bin/godot"
+          FORGE_VERSION=v0.6.4 FORGE_RELEASE_BASE_URL="file://${previous}" sh install.sh
+          old_payload="${FORGE_INSTALL_ROOT}/versions/v0.6.4"
+          shasum -a 256 "${old_payload}/MANIFEST.sha256" > "${evidence}/previous-manifest.sha256"
+          for attempt in upgrade reinstall; do
+            FORGE_VERSION="${FORGE_RELEASE_TAG}" FORGE_RELEASE_BASE_URL="file://${GITHUB_WORKSPACE}" sh forge-installer.sh
+            python3 scripts/verify-cli-build.py --forge "${FORGE_BIN_DIR}/forge" \
+              --version "${FORGE_RELEASE_TAG#v}" --commit "${GITHUB_SHA}" --release \
+              --build-info "${FORGE_INSTALL_ROOT}/versions/${FORGE_RELEASE_TAG}/BUILD_INFO.json" \
+              > "${evidence}/${attempt}-identity.json"
+          done
+          shasum -a 256 -c "${evidence}/previous-manifest.sha256"
+          (cd "${old_payload}" && shasum -a 256 -c MANIFEST.sha256) > "${evidence}/previous-payload-check.txt"
+          python3 scripts/experiments/agent_animation_revision.py --forge "${FORGE_BIN_DIR}/forge" \
+            --godot "${FORGE_GODOT_PATH}" --output "${evidence}/m2"
+          python3 scripts/experiments/agent_supporting_resources.py --forge "${FORGE_BIN_DIR}/forge" \
+            --godot "${FORGE_GODOT_PATH}" --output "${evidence}/m3"
+
+      - name: Retain packaged Agent verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: forge-macos-agent-verification-${{ github.run_id }}
+          path: ${{ runner.temp }}/release-agent-evidence/**
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Generate SBOM
         env:

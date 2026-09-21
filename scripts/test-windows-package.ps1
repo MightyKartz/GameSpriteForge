@@ -141,7 +141,7 @@ try {
     $newIdentity=Assert-Payload $updated.payload
     $binaryChanged=$oldIdentity.binarySha256 -ne $newIdentity.binarySha256
     if ($PreviousArchive -and !$binaryChanged) { $upgradeKind='supplied_previous_packaging_revision_same_executable' }
-    $cases.Add(@{name='upgrade_preserves_prior_payload_and_launcher_backup';passed=$true;kind=$upgradeKind;backup=$updated.backupPath;binaryChanged=$binaryChanged;previousBinarySha256=$oldIdentity.binarySha256;currentBinarySha256=$newIdentity.binarySha256;previousBuild=$oldIdentity.build;currentBuild=$newIdentity.build})
+    $cases.Add(@{name='upgrade_preserves_prior_payload_and_launcher_backup';passed=$true;kind=$upgradeKind;launcher=$updated.launcher;backup=$updated.backupPath;binaryChanged=$binaryChanged;previousBinarySha256=$oldIdentity.binarySha256;currentBinarySha256=$newIdentity.binarySha256;previousBuild=$oldIdentity.build;currentBuild=$newIdentity.build})
     $tamperedRoot=Join-Path $root 'tampered-payload'
     Expand-VerifiedZip $package $tamperedRoot
     Write-Utf8File (Join-Path $tamperedRoot 'licenses/LICENSE') 'changed payload byte inventory'
