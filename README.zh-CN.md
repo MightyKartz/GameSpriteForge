@@ -14,7 +14,7 @@
 
 ## 安装
 
-[v0.6.3](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.3) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要原生交付和预览时，另行安装 **Godot 4.6.x 或 4.7.x**。安装包尚未签名，macOS 包尚未公证。
+[v0.6.4](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.4) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要原生交付和预览时，另行安装 **Godot 4.6.x 或 4.7.x**。安装包尚未签名，macOS 包尚未公证。
 
 按系统选择一个下载文件：
 
@@ -60,7 +60,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\forge-windows\install-
 | **音频** | 导入 WAV 音乐、音效和环境声，进行裁剪、增益调整、淡入淡出和循环处理。 |
 | **Godot 交付** | 验证 Pack，安装原生纹理、场景、动画和音频资源；锁定选定版本、保留交付回执，并在更新失败时回滚。 |
 
-**v0.6.3 新功能：** 平面动画 Pack 可直接播放原始 PNG，支持逐帧查看和切换背景，
+**v0.6.4 新功能：**加工素材前，可用 `forge storage check --path DIR --json`
+检查生产目录的文件系统能力。通过 `forge guide local-delivery-example` 读取固定 CLI、
+核对已审核源文件、保留恢复证据的交付示例。发布附件中的源码、许可证和验证报告已整合为一个可选 ZIP。
+
+**动画预览（v0.6.3）：** 平面动画 Pack 可直接播放原始 PNG，支持逐帧查看和切换背景，
 也可按需导出 H.264 MP4。Windows 包已包含 Media Foundation H.264 编码支持；请通过
 `doctor --json` 检查 `pack_mp4_preview` 能力。
 命令及时间精度、透明度限制见[预览指南](.agents/skills/forge-use/references/animation.md#sharing-a-video-preview)。
@@ -114,7 +118,7 @@ Sword 是一款修仙题材的生存游戏原型。源图由 Codex 创作，Forg
 
 音乐和音效由外部应用生成。ACE-Step 和 Stable Audio 3 提供可选的源代码目录只读检测，Forge 不安装或运行其模型。在线 xAI 请求使用你的账号，可能产生费用。
 
-技术检查不能代替美术审查、试听或许可核对，使用前请在游戏中验收。已验证的版本范围见 [v0.6.3 发布说明](docs/releases/v0.6.3.md)。
+技术检查不能代替美术审查、试听或许可核对，使用前请在游戏中验收。已验证的版本范围见 [v0.6.4 发布说明](docs/releases/v0.6.4.md)。
 
 ## 文档
 

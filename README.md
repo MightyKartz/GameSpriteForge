@@ -14,7 +14,7 @@ Bring assets from your preferred creative tools, manage them in a project librar
 
 ## Install
 
-[v0.6.3](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.3) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
+[v0.6.4](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.4) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
 
 Choose one download for your system:
 
@@ -61,7 +61,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\forge-windows\install-
 | **Audio** | Import WAV music, sound effects and ambience; trim, adjust gain, add fades and prepare loops. |
 | **Godot delivery** | Validate Packs and install native textures, scenes, animations and audio streams. Lock chosen versions, retain delivery receipts and roll back failed updates. |
 
-**New in v0.6.3:** flat animation Packs can be reviewed from
+**New in v0.6.4:** check a production directory with `forge storage check --path DIR --json`
+before preparing assets. Read `forge guide local-delivery-example` for a workflow
+that pins the CLI, verifies reviewed sources and retains recovery evidence.
+Release downloads now group source, notices and verification into one optional ZIP.
+
+**Animation previews (v0.6.3):** flat animation Packs can be reviewed from
 original PNGs with frame stepping and background selection, or exported on demand
 as H.264 MP4. Windows packages include Media Foundation H.264 encoding. Check
 `doctor --json` for `pack_mp4_preview`. See the [preview guide](.agents/skills/forge-use/references/animation.md#sharing-a-video-preview)
@@ -117,7 +122,7 @@ Character animation remains experimental; advanced character and world-asset com
 
 Music and sound effects are generated in external applications. ACE-Step and Stable Audio 3 have optional read-only source-directory detection; Forge does not install or run their models. Online xAI requests use your own account and may incur charges.
 
-Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.6.3 release notes](docs/releases/v0.6.3.md) for the verified release scope.
+Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.6.4 release notes](docs/releases/v0.6.4.md) for the verified release scope.
 
 ## Documentation
 
