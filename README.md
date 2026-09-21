@@ -2,9 +2,9 @@
 
 English | [简体中文](./README.zh-CN.md)
 
-**Prepare, verify and safely update game assets in Godot.**
+**A game-resource CLI for AI agents, starting with Godot.**
 
-Bring images, animation frames and audio from your preferred creative tools. Forge provides repeatable processing, native Godot delivery and recovery when an installation fails. Codex or another agent can operate the CLI while you review the results.
+Codex and other agents use Forge to prepare, diagnose, validate and deliver images, animation frames and audio from creative tools. Forge provides repeatable processing and installation recovery so agents can build games with reliable resources. Developers set the goals and participate in creative review when the task requires it.
 
 [Latest release](https://github.com/MightyKartz/GameSpriteForge/releases/latest) · [Install](#install) · [Features](#what-you-can-do) · [CLI guide](docs/automation/forge-cli.md)
 
@@ -100,7 +100,7 @@ Project libraries and Provider generation are optional workflows.
 
 Open your game project in Codex and ask:
 
-> Prepare these assets for this Godot project with Forge. Read the pinned CLI's `forge guide`, preserve the originals, and show me the prepared results before installation. After I approve delivery, install them and report the result or recovery steps. Keep the technical records in files.
+> Prepare these assets for this Godot project with Forge. Read the pinned CLI's `forge guide`, inspect the previews and diagnostics, and preserve the originals and project locks. Complete processing, installation and native verification within the authorized scope. Ask when intent or authority is missing, and retain any required creative review. Report the result, remaining review needs or recovery steps; keep detailed evidence in files.
 
 The embedded guide works offline. Read a topic with `forge guide project-assets`, `forge guide static`, `forge guide animation`, `forge guide audio` or `forge guide delivery`. An optional [Codex skill installation](docs/automation/forge-cli.md#optional-bundled-codex-skill) enables discovery on macOS/Linux.
 
