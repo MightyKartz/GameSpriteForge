@@ -16,6 +16,15 @@
 
 [v0.6.3](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.3) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要原生交付和预览时，另行安装 **Godot 4.6.x 或 4.7.x**。安装包尚未签名，macOS 包尚未公证。
 
+按系统选择一个下载文件：
+
+| 系统 | 下载 |
+| --- | --- |
+| macOS Apple Silicon | [在线安装脚本](https://github.com/MightyKartz/GameSpriteForge/releases/latest/download/forge-installer.sh) |
+| Windows x64 | [完整安装 ZIP](https://github.com/MightyKartz/GameSpriteForge/releases/latest/download/forge-windows-installer.zip) |
+
+下载后按下方命令操作。[下载文件说明](docs/releases/downloads.md)介绍便携包、校验文件和源码附件的用途。
+
 macOS 安装：
 
 ```bash

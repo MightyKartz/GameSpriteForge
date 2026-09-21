@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "previousRelease": {
+    "tagName": "v0.6.3",
+    "publishedAt": "2026-09-20T01:44:29Z",
+    "url": "https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.6.3"
+  },
+  "previousAssets": [
+    {
+      "name": "BUILD.md",
+      "size": 1752,
+      "digest": "sha256:9718b10d1c34068cd51437504728c61073a744d7ac27151c799f1377e630dc18"
+    },
+    {
+      "name": "ffmpeg-8.1.2-source.tar.xz",
+      "size": 11710924,
+      "digest": "sha256:464beb5e7bf0c311e68b45ae2f04e9cc2af88851abb4082231742a74d97b524c"
+    },
+    {
+      "name": "forge-aarch64-apple-darwin.zip",
+      "size": 28904028,
+      "digest": "sha256:4de40267cb98360f0022a5a55e8db97c84d360a59dba657f2fd4fef807e5eff6"
+    },
+    {
+      "name": "forge-aarch64-apple-darwin.zip.sha256",
+      "size": 97,
+      "digest": "sha256:0b6c290bef0bfdb159c0e89fa51ac88faad8ebf5263e2746804c8b2ded593b42"
+    },
+    {
+      "name": "forge-installer.sh",
+      "size": 6491,
+      "digest": "sha256:27d3c4b604d4c9c779b6c25fff1eead993f4fe6a3a74f2203cdb74e0327ba15d"
+    },
+    {
+      "name": "forge-sbom.cdx.json",
+      "size": 278876,
+      "digest": "sha256:57bc7436c1d1d1162d0f262000f37083caa2f293414b6067b35391857840c106"
+    },
+    {
+      "name": "forge-windows-installer.zip",
+      "size": 47709349,
+      "digest": "sha256:85dddd141733bc4f56f4c97f1f43f768be38a7fc092f528e87a0370218d76c83"
+    },
+    {
+      "name": "forge-windows-installer.zip.sha256",
+      "size": 94,
+      "digest": "sha256:afee71e1e3b7753b00b0ddc48417694dbc598206b122e41cfe161c32bfe57f32"
+    },
+    {
+      "name": "forge-x86_64-pc-windows-msvc.zip",
+      "size": 47729053,
+      "digest": "sha256:3557cc60920bd98c47ea429d18522924ab609985d33d26d7afb02481651cd4bd"
+    },
+    {
+      "name": "forge-x86_64-pc-windows-msvc.zip.sha256",
+      "size": 99,
+      "digest": "sha256:0cc411ac944f497fc2abafc03dd2a7309bfedffce83d4260d098d967aeebfb0a"
+    },
+    {
+      "name": "LICENSE",
+      "size": 1087,
+      "digest": "sha256:2e0a69a1b3668c9b29ac92e74c11eafde54f4d28ce6a55c999ce6f69a6f7f609"
+    },
+    {
+      "name": "PATCHES.md",
+      "size": 294,
+      "digest": "sha256:2c3a5e6ff0363cf5a0cd06f93b7106bb0e5ea7c37571309d53b3dba9d040937a"
+    },
+    {
+      "name": "release-verification.json",
+      "size": 837,
+      "digest": "sha256:727ba5236292896ac7a1403e77c5af2d7eb39109b7e2fc507eb5aa4643da7d73"
+    },
+    {
+      "name": "THIRD_PARTY_NOTICES.md",
+      "size": 512,
+      "digest": "sha256:2364436181eecef95d78917b4e485a6e8f0f287e15f075d69e1c1851f3463f00"
+    }
+  ],
+  "uploadedAssetCountBefore": 14,
+  "uploadedAssetCountAfter": 8,
+  "assemblyTrial": {
+    "inputVersion": "0.6.3",
+    "sourceCommit": "546bcefaf145b32f6d5f27b1e509a93b071037f8",
+    "published": false,
+    "assets": {
+      "forge-aarch64-apple-darwin.zip": "4de40267cb98360f0022a5a55e8db97c84d360a59dba657f2fd4fef807e5eff6",
+      "forge-aarch64-apple-darwin.zip.sha256": "0b6c290bef0bfdb159c0e89fa51ac88faad8ebf5263e2746804c8b2ded593b42",
+      "forge-installer.sh": "27d3c4b604d4c9c779b6c25fff1eead993f4fe6a3a74f2203cdb74e0327ba15d",
+      "forge-x86_64-pc-windows-msvc.zip": "3557cc60920bd98c47ea429d18522924ab609985d33d26d7afb02481651cd4bd",
+      "forge-x86_64-pc-windows-msvc.zip.sha256": "0cc411ac944f497fc2abafc03dd2a7309bfedffce83d4260d098d967aeebfb0a",
+      "forge-windows-installer.zip": "85dddd141733bc4f56f4c97f1f43f768be38a7fc092f528e87a0370218d76c83",
+      "forge-windows-installer.zip.sha256": "afee71e1e3b7753b00b0ddc48417694dbc598206b122e41cfe161c32bfe57f32",
+      "forge-source-and-notices.zip": "71e90fe375b870aef0693073ddf8ecd9927a5171812e4103f14806f2ecb768a5"
+    },
+    "unchangedNativeAndInstallerFiles": 7,
+    "supportFilesVerified": 29
+  },
+  "nativeMacOS": {
+    "publicLauncher": "isolated install/bin/forge",
+    "build": {
+      "gitCommit": "546bcefaf145b32f6d5f27b1e509a93b071037f8",
+      "dirty": false,
+      "target": "aarch64-apple-darwin",
+      "profile": "release",
+      "features": []
+    },
+    "binarySha256": "618cdad7ef1981cf046852baad1a34c5e435847ab2ab2356a6eeb51cf5a5e342",
+    "bundledFFmpegAndFFprobe": "8.1.2, verified under the isolated installed payload"
+  },
+  "checks": {
+    "syntheticReleaseGateTests": 12,
+    "yamlParsing": "passed",
+    "supportManifest": "all entries verified",
+    "windowsNativeExecution": "not run locally; archive identity/inventory verified without executing Windows binaries"
+  },
+  "limitations": [
+    "Historical release files were downloaded and rearranged only in an isolated local rehearsal; no public assets were rewritten.",
+    "This validates download assembly and byte preservation, not a newly built release. Native platform build/install gates remain mandatory in the paired release workflow."
+  ]
+}

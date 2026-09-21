@@ -222,11 +222,20 @@ jobs:
             --windows windows/windows-dist/forge-x86_64-pc-windows-msvc.zip \
             --version "${FORGE_RELEASE_TAG#v}" --commit "${GITHUB_SHA}" \
             --output release-verification.json
-      - name: Retain paired release verification
+          python3 scripts/assemble-release-downloads.py \
+            --macos macos --windows windows/windows-dist \
+            --version "${FORGE_RELEASE_TAG#v}" --commit "${GITHUB_SHA}" \
+            --repository "${GITHUB_REPOSITORY}" --output release-downloads \
+            --notes "docs/releases/${FORGE_RELEASE_TAG%%-*}.md" \
+            --notes-output release-notes.md
+      - name: Retain assembled downloads and paired verification
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: forge-release-verification-${{ github.run_id }}
-          path: release-verification.json
+          name: forge-release-downloads-${{ github.run_id }}
+          path: |
+            release-downloads/*
+            release-notes.md
+            release-verification.json
           if-no-files-found: error
           retention-days: 14
 
@@ -243,18 +252,12 @@ jobs:
           fi
           gh release create "${FORGE_RELEASE_TAG}" --verify-tag "${release_flags[@]}" \
             --title "Forge CLI ${FORGE_RELEASE_TAG}" \
-            --notes-file "docs/releases/${FORGE_RELEASE_TAG%%-*}.md" \
-            macos/forge-aarch64-apple-darwin.zip \
-            macos/forge-aarch64-apple-darwin.zip.sha256 \
-            macos/forge-installer.sh \
-            macos/forge-sbom.cdx.json \
-            macos/ffmpeg-8.1.2-source.tar.xz \
-            windows/windows-dist/forge-x86_64-pc-windows-msvc.zip \
-            windows/windows-dist/forge-x86_64-pc-windows-msvc.zip.sha256 \
-            windows/windows-dist/forge-windows-installer.zip \
-            windows/windows-dist/forge-windows-installer.zip.sha256 \
-            release-verification.json \
-            third_party/ffmpeg/BUILD.md \
-            third_party/ffmpeg/PATCHES.md \
-            THIRD_PARTY_NOTICES.md \
-            LICENSE
+            --notes-file release-notes.md \
+            'release-downloads/forge-installer.sh#macOS Apple Silicon installer (recommended)' \
+            'release-downloads/forge-windows-installer.zip#Windows x64 installer (recommended)' \
+            'release-downloads/forge-aarch64-apple-darwin.zip#macOS Apple Silicon portable archive' \
+            release-downloads/forge-aarch64-apple-darwin.zip.sha256 \
+            'release-downloads/forge-x86_64-pc-windows-msvc.zip#Windows x64 portable archive (advanced)' \
+            release-downloads/forge-x86_64-pc-windows-msvc.zip.sha256 \
+            release-downloads/forge-windows-installer.zip.sha256 \
+            'release-downloads/forge-source-and-notices.zip#Source, licenses, SBOM and verification (optional)'
