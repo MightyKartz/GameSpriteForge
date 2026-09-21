@@ -225,3 +225,12 @@ receipts; a later import gets a new one linked to its source and predecessor.
 Load the installed resources in Godot at the game's actual scale and record visual
 approval separately from the immutable import result. Successful structural
 validation and headless import do not establish art quality or device performance.
+
+
+With `godot_lossless_sprite_import`, icon/prop delivery preserves the Pack's RGBA
+texels using lossless PNG import settings, including nonzero soft-edge colors.
+The installer verifies native pixels and manages each `.import` file inside the
+transactional target. Nearest/linear sampling remains as requested; review the
+rendered edges when upgrading an existing installation. See
+[animation delivery](animation.md#three-action-task) (`forge guide animation`) for
+the shared import policy and its limits.

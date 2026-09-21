@@ -367,7 +367,7 @@ fn validate_operation(operation: &AutomationOperation) -> Result<(), PlanStoreEr
             validate_preserved_canvases(
                 request.normalize,
                 request.rendering.as_ref(),
-                std::iter::once(&request.input),
+                std::iter::once((request.metadata.animation.as_str(), &request.input)),
             )?;
             if matches!(request.input, AssetInput::Gsfpack { .. })
                 && (request.rendering.is_some()
@@ -1246,46 +1246,65 @@ fn validate_local_animation_input(
         // Content-derived splits are checked again after actual ingestion.
         _ => durations.len(),
     };
-    crate::export::validate_frame_durations(Some(durations), frame_count)
-        .map_err(|error| PlanStoreError::InvalidRequest(error.to_string()))
+    crate::export::validate_frame_durations(Some(durations), frame_count).map_err(|error| {
+        let detail = if durations.len() != frame_count {
+            format!("; got {} durations", durations.len())
+        } else if let Some(index) = durations.iter().position(|value| *value == 0) {
+            format!("; frameDurationsMs[{index}] is zero")
+        } else {
+            String::new()
+        };
+        PlanStoreError::InvalidRequest(format!("{error}{detail}"))
+    })
 }
 
 fn validate_preserved_canvases<'a>(
     options: crate::frames::NormalizeOptions,
     rendering: Option<&crate::export::AnimationRendering>,
-    inputs: impl Iterator<Item = &'a AssetInput>,
+    inputs: impl Iterator<Item = (&'a str, &'a AssetInput)>,
 ) -> Result<(), PlanStoreError> {
     if options.mode != crate::frames::CanvasMode::PreserveSource {
         return Ok(());
     }
-    let mut expected = None;
-    for input in inputs {
+    let mut expected: Option<(u32, u32)> = None;
+    for (animation, input) in inputs {
         let dimensions = match input {
             AssetInput::PngSequence { paths } => paths
                 .iter()
-                .map(|path| {
-                    image::image_dimensions(path).map_err(|error| {
-                        PlanStoreError::InvalidRequest(format!("invalid PNG dimensions: {error}"))
-                    })
+                .enumerate()
+                .map(|(index, path)| {
+                    let context = format!(
+                        "animation {animation:?}, frame {index} (zero-based), {}",
+                        path.display()
+                    );
+                    let size = image::image_dimensions(path).map_err(|error| {
+                        PlanStoreError::InvalidRequest(format!(
+                            "{context}: invalid PNG dimensions: {error}"
+                        ))
+                    })?;
+                    Ok((context, size))
                 })
-                .collect::<Result<Vec<_>, _>>()?,
+                .collect::<Result<Vec<_>, PlanStoreError>>()?,
             AssetInput::SpriteSheet {
+                path,
                 split: super::types::SpriteSheetSplit::FixedGrid(grid),
-                ..
-            } => vec![(grid.frame_width, grid.frame_height)],
+            } => vec![(
+                format!("animation {animation:?}, sprite sheet {}", path.display()),
+                (grid.frame_width, grid.frame_height),
+            )],
             _ => Vec::new(),
         };
-        for size in dimensions {
-            if expected.is_some_and(|previous| previous != size) {
-                return Err(PlanStoreError::InvalidRequest("preserve_source requires identical source canvas dimensions across every frame and animation".into()));
+        for (context, size) in dimensions {
+            if let Some(previous) = expected.filter(|previous| *previous != size) {
+                return Err(PlanStoreError::InvalidRequest(format!("{context}: preserve_source requires identical source canvas dimensions across every frame and animation; expected {}x{}, got {}x{}", previous.0, previous.1, size.0, size.1)));
             }
             if options
                 .manual_anchor
                 .is_some_and(|anchor| anchor.x > size.0 as f32 || anchor.y > size.1 as f32)
             {
-                return Err(PlanStoreError::InvalidRequest(
-                    "manualAnchor must be inside the preserved source canvas".into(),
-                ));
+                return Err(PlanStoreError::InvalidRequest(format!(
+                    "{context}: manualAnchor must be inside the preserved source canvas"
+                )));
             }
             let anchor = options
                 .manual_anchor
@@ -1293,12 +1312,27 @@ fn validate_preserved_canvases<'a>(
             if rendering.is_none_or(|r| r.pixel_snap)
                 && (anchor.x.fract() != 0.0 || anchor.y.fract() != 0.0)
             {
-                return Err(PlanStoreError::InvalidRequest("pixelSnap requires integer anchor coordinates; set a manualAnchor or rendering.pixelSnap false".into()));
+                return Err(PlanStoreError::InvalidRequest(format!("{context}: pixelSnap requires integer anchor coordinates; set a manualAnchor or rendering.pixelSnap false")));
             }
             expected = Some(size);
         }
     }
     Ok(())
+}
+
+fn animation_input_error(
+    name: &str,
+    frame: Option<usize>,
+    error: PlanStoreError,
+) -> PlanStoreError {
+    match error {
+        PlanStoreError::InvalidRequest(message) => {
+            let location =
+                frame.map_or_else(String::new, |index| format!(", frame {index} (zero-based)"));
+            PlanStoreError::InvalidRequest(format!("animation {name:?}{location}: {message}"))
+        }
+        other => other,
+    }
 }
 
 fn validate_character_pack_request(
@@ -1312,11 +1346,6 @@ fn validate_character_pack_request(
             .any(|animation| animation.loop_animation),
     )?;
     validate_local_animation_options(request.normalize, request.rendering.as_ref())?;
-    validate_preserved_canvases(
-        request.normalize,
-        request.rendering.as_ref(),
-        request.animations.iter().map(|a| &a.input),
-    )?;
     if request.schema_version != "2" {
         return Err(PlanStoreError::InvalidRequest(
             "Character Pack requests require schemaVersion \"2\"".into(),
@@ -1334,7 +1363,8 @@ fn validate_character_pack_request(
     }
     let mut names = HashSet::new();
     for animation in &request.animations {
-        validate_local_animation_input(&animation.input, animation.frame_durations_ms.as_deref())?;
+        validate_local_animation_input(&animation.input, animation.frame_durations_ms.as_deref())
+            .map_err(|error| animation_input_error(&animation.name, None, error))?;
         if !is_engine_safe_name(&animation.name) {
             return Err(PlanStoreError::InvalidRequest(format!(
                 "animation name must contain only letters, numbers, '-' or '_': {}",
@@ -1361,15 +1391,19 @@ fn validate_character_pack_request(
                         animation.name
                     )));
                 }
-                for path in paths {
-                    validate_png(path)?;
+                for (index, path) in paths.iter().enumerate() {
+                    validate_png(path).map_err(|error| {
+                        animation_input_error(&animation.name, Some(index), error)
+                    })?;
                 }
             }
             AssetInput::SpriteSheet { path, split } => {
-                validate_png(path)?;
+                validate_png(path)
+                    .map_err(|error| animation_input_error(&animation.name, None, error))?;
                 if let super::types::SpriteSheetSplit::FixedGrid(grid) = split {
                     super::source_transform::validate(path, grid)
-                        .map_err(PlanStoreError::InvalidRequest)?;
+                        .map_err(PlanStoreError::InvalidRequest)
+                        .map_err(|error| animation_input_error(&animation.name, None, error))?;
                     if grid.frame_width == 0
                         || grid.frame_height == 0
                         || grid.columns == 0
@@ -1392,9 +1426,18 @@ fn validate_character_pack_request(
                 start_time_ms,
                 end_time_ms,
                 target_frame_count,
-            } => validate_video_clip(path, *start_time_ms, *end_time_ms, *target_frame_count)?,
+            } => validate_video_clip(path, *start_time_ms, *end_time_ms, *target_frame_count)
+                .map_err(|error| animation_input_error(&animation.name, None, error))?,
         }
     }
+    validate_preserved_canvases(
+        request.normalize,
+        request.rendering.as_ref(),
+        request
+            .animations
+            .iter()
+            .map(|a| (a.name.as_str(), &a.input)),
+    )?;
     if !names.contains(&request.metadata.default_animation) {
         return Err(PlanStoreError::InvalidRequest(
             "metadata.defaultAnimation must name one animation".into(),

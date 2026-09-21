@@ -107,6 +107,14 @@ const SOURCE_FILES: &[SourceFile] = &[
     },
     SourceFile {
         resource: GuideResource {
+            topic: "animation-example",
+            path: "examples/local-character.json",
+            media_type: "application/json",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/examples/local-character.json"),
+    },
+    SourceFile {
+        resource: GuideResource {
             topic: "delivery",
             path: "references/delivery.md",
             media_type: "text/markdown",
@@ -981,6 +989,11 @@ mod guide_tests {
             ("static", "references/local-static.md", "text/markdown"),
             ("provider", "references/provider.md", "text/markdown"),
             ("animation", "references/animation.md", "text/markdown"),
+            (
+                "animation-example",
+                "examples/local-character.json",
+                "application/json",
+            ),
             (
                 "static-example",
                 "examples/local-static.json",

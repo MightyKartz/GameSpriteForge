@@ -361,6 +361,9 @@ fn real_godot_animation_verification_and_script_failure_protocol() {
     let root = tempfile::tempdir().unwrap();
     let (jobs, plans, _, project) = fixture(root.path());
     let source = root.path().join("source.png");
+    let mut source_pixels = image::open(&source).unwrap().to_rgba8();
+    source_pixels.put_pixel(20, 30, Rgba([9, 17, 29, 1]));
+    source_pixels.save(&source).unwrap();
     let request = serde_json::from_value(json!({
         "schemaVersion":"1", "input":{"kind":"png_sequence","paths":[source,source]},
         "metadata":{"name":"Burst", "animation":"burst", "fps":8.0,"loop":false,"frameDurationsMs":[80,240]},
@@ -406,8 +409,40 @@ fn real_godot_animation_verification_and_script_failure_protocol() {
             serde_json::from_slice(&fs::read(&report.path).unwrap()).unwrap();
         assert_eq!(report["nativeLoadVerified"], true);
         assert_eq!(report["visualApproval"], false);
+        assert_eq!(
+            report["phases"][1]["verifiedSpriteTextures"],
+            json!(["res://addons/forge_assets/fixture/sprite_sheet.png"])
+        );
         let script = job.job_dir.join("tools/install_forge_pack.gd");
         let frames = project.join("addons/forge_assets/fixture/forge_sprite_frames.tres");
+        // Even with identical visible opaque pixels, tampered import policy must fail.
+        let sidecar = project.join("addons/forge_assets/fixture/sprite_sheet.png.import");
+        let settings = fs::read_to_string(&sidecar).unwrap();
+        assert!(settings.contains("process/fix_alpha_border=false"));
+        fs::write(
+            &sidecar,
+            settings.replace(
+                "process/fix_alpha_border=false",
+                "process/fix_alpha_border=true",
+            ),
+        )
+        .unwrap();
+        let output = std::process::Command::new(&executable)
+            .arg("--headless")
+            .arg("--path")
+            .arg(&project)
+            .arg("--script")
+            .arg(&script)
+            .arg("--")
+            .arg(&pack)
+            .arg("addons/forge_assets/fixture")
+            .arg("--verify")
+            .output()
+            .unwrap();
+        assert!(!output.status.success());
+        assert!(String::from_utf8_lossy(&output.stdout).contains("import setting differs"));
+        assert!(!String::from_utf8_lossy(&output.stdout).contains("FORGE_INSTALL_RESULT"));
+        fs::write(&sidecar, settings).unwrap();
         let contents = fs::read_to_string(&frames).unwrap();
         fs::write(
             &frames,
@@ -616,10 +651,11 @@ fn real_godot_failed_blue_update_restores_red_native_texture_without_reimport() 
                 image.put_pixel(x, y, Rgba(color));
             }
         }
+        image.put_pixel(20, 30, Rgba([9, 17, 29, 1]));
         image.save(&source).unwrap();
         let request = serde_json::from_value(json!({
             "schemaVersion":"1","kind":"prop_set","id":"fixture","name":name,"license":"private",
-            "sampling":"nearest","canvasSize":64,"items":[{"id":"stone","name":"Stone","path":source}]
+            "sampling":"nearest","canvasPolicy":"preserve_source","items":[{"id":"stone","name":"Stone","path":source}]
         })).unwrap();
         let prepared = plans
             .prepare(AutomationOperation::PrepareStatic(request))
@@ -684,6 +720,14 @@ func _initialize() -> void:
         .unwrap()
     };
     let before_native = native_image();
+    // Reinstall into an existing cache before testing failed-update rollback.
+    temp_env::with_var("FORGE_GODOT_PATH", Some(&godot), || {
+        let prepared = plans.prepare(install_operation(&red, &project)).unwrap();
+        let plan = plans.claim(&prepared.token).unwrap();
+        let job = stage_plan_job(&jobs, &plan).unwrap();
+        run_operation(&jobs, &job.job_id, &plan.operation).unwrap();
+    });
+    assert_eq!(native_image(), before_native);
     assert_eq!(before_native["center"], json!([240, 40, 20, 255]));
     let target = project.join("addons/forge_assets/fixture");
     let before_target = inventory(&target).unwrap();

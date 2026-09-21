@@ -85,6 +85,56 @@ result. `requireGameReady:false` is appropriate only for an explicitly intended
 prototype and cannot waive a blocked result. Preserve the prototype decision and
 review status; do not disable a failed gate to label the result successful.
 
+## Three-action task
+
+On builds whose guide index includes `animation-example`, retrieve the
+[three-action request](../examples/local-character.json) (`forge guide animation-example`).
+It expects three aligned 64×64 transparent PNGs for each of idle, walk and attack,
+under `sources/` next to the request's `asset-specs/` directory. Paths resolve
+relative to the request file. Adjust paths, shared anchor and timing to the actual
+art; do not rescale or recenter frames to imitate the example.
+
+This example deliberately selects prototype review (`requireGameReady:false`).
+Choose the intended quality gate before execution and retain the result; a
+blocked result still requires correction. It is not an artistic approval.
+For a regular sheet, replace one action's input with `kind:"sprite_sheet"`, a
+`path`, and `split:{"mode":"fixed_grid","frameWidth":64,"frameHeight":64,
+"columns":3,"rows":1}`. Its frame order is row-major; timings are milliseconds.
+
+```bash
+"$FORGE_BIN" guide animation-example > /absolute/asset-specs/new-character.json
+"$FORGE_BIN" plan prepare-character --request /absolute/asset-specs/new-character.json --json
+"$FORGE_BIN" plan execute --token TOKEN_FROM_PLAN --wait --json
+"$FORGE_BIN" job report --id JOB_FROM_EXECUTION --json
+"$FORGE_BIN" pack validate --path PACK_FROM_JOB --json
+"$FORGE_BIN" godot plan-install --pack PACK_FROM_JOB --project /absolute/game --asset-key hero --target addons/forge_assets/hero --json
+"$FORGE_BIN" plan execute --token TOKEN_FROM_INSTALL_PLAN --wait --json
+"$FORGE_BIN" godot verify-install --project /absolute/game --asset-key hero --pack PACK_FROM_JOB --json
+```
+
+For repeated delivery after source review, add the reviewed `sourceLocks` and use
+`forge guide local-delivery-example` with `--operation prepare-character`; that
+existing script retains progress, the Pack and portable receipts. Follow
+[delivery evidence](delivery.md) (`forge guide delivery`) for its invocation and
+recovery. After a timeout, inspect the recorded Job before starting another one.
+
+With `godot_lossless_sprite_import`, flat animation/character and icon/prop PNGs
+are imported losslessly without alpha-border RGB rewriting, premultiplication,
+mipmaps or downscaling. Both nearest and linear scene sampling retain the Pack's
+RGBA texels; filtering/blending during rendering remains intentional. The
+installer checks saved native pixels against the Pack and rolls back on a
+mismatch; the verification phase records `verifiedSpriteTextures`. Its `.import` settings are managed inside the asset target, including
+reinstallation. This policy does not change layered or world assets, existing
+installations until explicitly reinstalled, or a game's pinned executable.
+Older builds may alter faint RGB during Godot import despite preserving Pack PNGs.
+Review linear-filtered edges on the actual game background when upgrading.
+
+Invalid multi-action inputs identify the action; missing sequence files and
+preserved-canvas errors include the zero-based frame index and source path.
+A duration-count error reports expected and supplied counts; a zero duration
+identifies `frameDurationsMs[index]`. Correct that input and create a new plan.
+These diagnostics and structural checks do not establish natural motion.
+
 ## Whole-sheet preprocessing and repair
 
 Within a `fixed_grid` split, supported builds accept `sourcePaddingRightPx`,
