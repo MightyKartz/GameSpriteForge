@@ -32,6 +32,8 @@ pub struct Animation {
 pub struct AnimationSource {
     pub frames: Vec<PathBuf>,
     pub animations: Vec<Animation>,
+    pub anchor: [f64; 2],
+    pub texture_filter: String,
 }
 
 /// None means an audio/world/layered/static Pack, whose existing viewer still applies.
@@ -111,7 +113,25 @@ pub fn read(pack: &Path) -> PreviewResult<Option<AnimationSource>> {
     if animations.is_empty() {
         return Err(invalid("empty animation list").into());
     }
-    Ok(Some(AnimationSource { frames, animations }))
+    let anchor = &imported.manifest["anchor"];
+    let anchor = [
+        anchor["x"]
+            .as_f64()
+            .ok_or_else(|| invalid("missing anchor x"))?,
+        anchor["y"]
+            .as_f64()
+            .ok_or_else(|| invalid("missing anchor y"))?,
+    ];
+    let texture_filter = imported.manifest["rendering"]["textureFilter"]
+        .as_str()
+        .unwrap_or("nearest")
+        .to_owned();
+    Ok(Some(AnimationSource {
+        texture_filter,
+        frames,
+        animations,
+        anchor,
+    }))
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]

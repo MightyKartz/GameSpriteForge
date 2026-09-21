@@ -135,6 +135,79 @@ A duration-count error reports expected and supplied counts; a zero duration
 identifies `frameDurationsMs[index]`. Correct that input and create a new plan.
 These diagnostics and structural checks do not establish natural motion.
 
+## Diagnose and revise one frame
+
+Builds with `animation_frame_issues` add `pixelDiagnostics.issues` to each
+animation's existing quality report. Read `job report --id JOB --json` and locate
+`reports.animation_quality_report.animations[]` by `name` (single-action Jobs use
+`reports.quality_report`). Indices are zero-based **within that normalized action**, not the
+reordered atlas. PNG sequences and unchanged fixed grids retain their declared
+order. For a selected video loop, use its existing loop-selection provenance to
+map output indices back; never treat them as raw video frame indices. `evidencePath` is a JSON pointer relative to that action's report;
+it is not a filesystem path. The request's input and Job artifacts locate the PNGs.
+
+- `empty_frame`, `foreground_below_threshold`, `frame_size_mismatch`: deterministic
+  errors; inspect source/matting/thresholds or restore the shared canvas.
+- `canvas_edge_contact`: review required; contact is measurable but clipping is
+  uncertain. Keep intentional edge contact, or explicitly replace the source / agree
+  a larger shared canvas. Forge cannot reconstruct missing pixels.
+- `identical_visible_frames`: informational; consecutive visible pixels match.
+  Keep an intentional hold. Hidden RGB under alpha=0 is excluded from this hint.
+
+Each issue carries severity, certainty, frame index, optional related frame,
+evidence pointer and correction options. Existing position/size and loop metrics
+remain measurements; they do not infer foot contact or character identity.
+An intentional jump must not be recentered merely to improve a score. The existing
+quality gate remains explicit; a blocked frame cannot be approved or exported.
+Older reports may omit `issues`; use the same selected toolchain to validate new
+Packs because older strict report schemas may reject the added field.
+
+Use the existing request as the minimal correction recipe:
+
+1. Preserve the original request, source PNGs, Job, Pack and review evidence. Copy
+   the request beside the original so relative paths keep their meaning.
+2. For an individual frame sequence, change only the selected action's
+   `input.paths[FRAME]` to a **new** replacement PNG. Keep its shared canvas and
+   anchor. To change timing explicitly, edit only that action's
+   `frameDurationsMs[FRAME]`. Do not copy a job acceptance into this new candidate.
+3. For a fixed-grid sheet, keep an immutable revised sheet with the same cell
+   layout, or explicitly switch that action to ordered individual frame files.
+   Compare every unaffected cell; never silently infer order or drop frames.
+4. If `sourceLocks` are present, first verify every unchanged hash. After reviewing
+   the replacement source, replace only its corresponding lock; the locks must
+   cover the new request's complete input set, exactly once. A shared source may
+   still be used by another action and must retain its old lock. Do not recompute
+   unchanged hashes to silently accept unrelated edits.
+5. Create and execute a new `plan prepare-character` / `prepare-asset`. Read its
+   new report, validate the Pack, and compare named actions' pixels and durations.
+   Only the explicitly selected frames/timings may differ. Export builds the whole
+   Pack again; this is not an in-place patch or a partial cache execution.
+6. Review the candidate, then use the ordinary install/verify sequence above with
+   the stable asset key and target. Forge owns that complete target; keep gameplay
+   configuration outside it. No source or consumer toolchain pin is auto-upgraded.
+
+The Agent may create a corrected PNG locally or use an external generation tool.
+That generation is separate from Forge; retain the actual source/provenance and
+never claim that the local replacement called a Provider.
+
+For retained before/after candidates, reuse the optional library binding
+`assetProject:{"projectPath":"../library","assetId":"hero"}` and exact revision
+reviews (`forge guide project-assets`). A new revision starts without old approvals.
+On builds with `synchronized_animation_review`, compare two exact revisions:
+
+```bash
+"$FORGE_BIN" asset preview --project /absolute/library --id hero --revision BEFORE --revision AFTER --out /absolute/new-comparison --json
+```
+
+The offline page uses original PNGs at 1× by default, frame stepping, light/dark
+backgrounds and anchor guides. Enable **Synchronize PNG players** to select a
+shared action, play/pause or seek together. All versions use the same elapsed
+milliseconds, each with its own native durations and loop policy; differing
+speeds are not hidden by matching frame indices or stretching the cycle. Non-loop
+versions stop at their endpoint. Previewing records no approval. Browser refresh
+and normal alpha blending still differ from native engine rendering; use the
+Godot verification and actual background for delivery review.
+
 ## Whole-sheet preprocessing and repair
 
 Within a `fixed_grid` split, supported builds accept `sourcePaddingRightPx`,

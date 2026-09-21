@@ -158,6 +158,13 @@ fn effect_still_requires_consistent_dimensions_and_exposes_boundary_contact() {
     assert_eq!(mismatch.verdict, QualityVerdict::Blocked);
     assert!(mismatch
         .pixel_diagnostics
+        .as_ref()
+        .unwrap()
+        .issues
+        .iter()
+        .any(|i| i.code == "frame_size_mismatch" && i.frame_index == 1));
+    assert!(mismatch
+        .pixel_diagnostics
         .unwrap()
         .normalized
         .adjacent_differences[0]
@@ -380,4 +387,123 @@ fn invalid_transparent_tail_policy_is_rejected_before_a_plan_is_written() {
         .to_string()
         .contains("allowTransparentTail"));
     assert_eq!(fs::read_dir(&plans_root).unwrap().count(), 0);
+}
+
+#[test]
+fn localized_issues_distinguish_empty_frames_edges_and_intentional_holds() {
+    let visible = frame(12, 12, 12, 12);
+    let mut edge = visible.clone();
+    edge.put_pixel(63, 30, Rgba([200, 100, 50, 1]));
+    let report = quality(
+        &[
+            visible.clone(),
+            visible,
+            edge,
+            RgbaImage::new(64, 64),
+            RgbaImage::new(64, 64),
+        ],
+        QualityProfile::Character,
+        false,
+        false,
+    );
+    assert_eq!(report.verdict, QualityVerdict::Blocked);
+    let value = serde_json::to_value(&report).unwrap();
+    let issues = &report.pixel_diagnostics.as_ref().unwrap().issues;
+    for issue in issues {
+        assert!(
+            value.pointer(&issue.evidence_path).is_some(),
+            "{}",
+            issue.evidence_path
+        );
+    }
+    let empty = issues.iter().find(|i| i.code == "empty_frame").unwrap();
+    assert_eq!(empty.frame_index, 3);
+    assert_eq!(
+        (empty.severity.as_str(), empty.certainty.as_str()),
+        ("error", "deterministic")
+    );
+    let contact = issues
+        .iter()
+        .find(|i| i.code == "canvas_edge_contact")
+        .unwrap();
+    assert_eq!(contact.frame_index, 2);
+    assert_eq!(contact.certainty, "review_required");
+    let hold = issues
+        .iter()
+        .find(|i| i.code == "identical_visible_frames")
+        .unwrap();
+    assert_eq!((hold.frame_index, hold.related_frame_index), (1, Some(0)));
+    assert_eq!(hold.severity, "info");
+    assert!(issues
+        .iter()
+        .all(|i| i.code != "identical_visible_frames" || i.frame_index == 1));
+    assert!(hold
+        .options
+        .iter()
+        .any(|option| option == "keep_intentional_hold"));
+}
+
+#[test]
+fn intentional_effect_tail_is_not_reported_as_an_empty_frame_error() {
+    let report = quality(
+        &[frame(12, 12, 12, 12), RgbaImage::new(64, 64)],
+        QualityProfile::Effect,
+        false,
+        true,
+    );
+    assert!(report
+        .pixel_diagnostics
+        .unwrap()
+        .issues
+        .iter()
+        .all(|i| i.code != "empty_frame"));
+}
+
+#[test]
+fn old_pixel_reports_without_issues_remain_readable() {
+    let report = quality(
+        &[frame(12, 12, 12, 12), frame(12, 12, 12, 12)],
+        QualityProfile::Character,
+        false,
+        false,
+    );
+    let mut value = serde_json::to_value(report).unwrap();
+    value["pixelDiagnostics"]
+        .as_object_mut()
+        .unwrap()
+        .remove("issues");
+    let old: forge_core::quality::QualityReport = serde_json::from_value(value).unwrap();
+    assert!(old.pixel_diagnostics.unwrap().issues.is_empty());
+}
+
+#[test]
+fn faint_alpha_is_a_threshold_issue_not_an_empty_frame() {
+    let directory = tempdir().unwrap();
+    let mut faint = RgbaImage::new(64, 64);
+    faint.put_pixel(10, 10, Rgba([120, 50, 210, 1]));
+    let images = [faint.clone(), faint];
+    let paths = save_frames(directory.path(), &images);
+    let bboxes: Vec<_> = images
+        .iter()
+        .map(|image| bbox_from_image(image, 127))
+        .collect();
+    let report = compute_quality_report_with_pixels(
+        &bboxes,
+        &[FrameSize::new(64, 64); 2],
+        &paths,
+        &paths,
+        false,
+        QualityProfile::Character,
+        false,
+    )
+    .unwrap();
+    let issues = report.pixel_diagnostics.unwrap().issues;
+    assert_eq!(
+        issues
+            .iter()
+            .filter(|i| i.code == "foreground_below_threshold")
+            .count(),
+        2
+    );
+    assert!(issues.iter().all(|i| i.code != "empty_frame"));
 }

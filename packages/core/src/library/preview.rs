@@ -59,6 +59,8 @@ pub fn create(
             crate::animation_preview::script_hash()
         ),
     );
+    html = html.replace("</header>", "<p><label><input type=\"checkbox\" data-sync> Synchronize PNG players</label> <span data-sync-status>Compare matching animations at the same elapsed time.</span></p></header>");
+    html = html.replace("</style>", ".frame-viewport{overflow:auto;max-height:600px}.frame-surface{position:relative;width:max-content}.frame-surface img{display:block;max-width:none;max-height:none}.anchor-line{position:absolute;pointer-events:none;background:#ff526e}.anchor-x{width:1px;top:0;bottom:0}.anchor-y{height:1px;left:0;right:0}</style>");
     for (index, reference) in references.iter().enumerate() {
         let asset = read_asset(root, &catalog, &reference.asset_id)?;
         let revision = read_revision(root, &asset, &reference.revision)?;
@@ -240,9 +242,9 @@ pub fn create(
                         })
                         .collect::<Result<Vec<_>, _>>()?;
                     let data = serde_json::to_string(
-                        &serde_json::json!({"urls":urls,"animations":animation.animations}),
+                        &serde_json::json!({"urls":urls,"animations":animation.animations,"anchor":animation.anchor,"textureFilter":animation.texture_filter}),
                     )?;
-                    html.push_str(&format!("<figure data-forge-animation=\"{}\"><img src=\"{}\" alt=\"PNG animation preview\"><div><label>Animation <select data-animation></select></label> <button data-play disabled>Play</button> <button data-prev aria-label=\"Previous frame\">◀</button> <button data-next aria-label=\"Next frame\">▶</button> <label>Background <select data-background><option value=\"dark\">Dark</option><option value=\"light\">Light</option><option value=\"checkerboard\">Checkerboard</option></select></label></div><input type=\"range\" min=\"0\" value=\"0\" step=\"1\" aria-label=\"Animation frame\"><output></output><figcaption>Original PNG frames · native frame order and durations · normal alpha composition. Use Godot for engine blend modes.</figcaption></figure>", escape(&data), escape(&urls[0])));
+                    html.push_str(&format!("<figure data-forge-animation=\"{}\"><div class=\"frame-viewport\"><div class=\"frame-surface\"><img src=\"{}\" alt=\"PNG animation preview\"><span class=\"anchor-line anchor-x\" hidden></span><span class=\"anchor-line anchor-y\" hidden></span></div></div><div><label>Animation <select data-animation></select></label> <button data-play disabled>Play</button> <button data-prev aria-label=\"Previous frame\">◀</button> <button data-next aria-label=\"Next frame\">▶</button> <label>Background <select data-background><option value=\"dark\">Dark</option><option value=\"light\">Light</option><option value=\"checkerboard\">Checkerboard</option></select></label> <label>Scale <select data-scale><option value=\"1\">1× (original pixels)</option><option value=\"2\">2×</option><option value=\"4\">4×</option></select></label> <label><input type=\"checkbox\" data-guides> Anchor guides</label></div><input data-frame type=\"range\" min=\"0\" value=\"0\" step=\"1\" aria-label=\"Animation frame\"><output></output><figcaption>Original PNG frames · native frame order and durations · normal alpha composition. Use Godot for engine blend modes.</figcaption></figure>", escape(&data), escape(&urls[0])));
                 }
                 if intake::content_at(&resource.path)? != *content {
                     return Err(invalid("resource changed while preparing preview"));

@@ -3143,6 +3143,34 @@ fn review_job(id: &str, accept: bool, reason: &str) -> Result<(), (String, Strin
             "job is not awaiting review".into(),
         ));
     }
+    // A blocked local animation must be rejected before writing an acceptance
+    // record. There is no reviewable Pack until its source defect is corrected.
+    if accept
+        && matches!(
+            record.operation_kind,
+            forge_core::job::JobOperationKind::PrepareAsset
+                | forge_core::job::JobOperationKind::PrepareCharacterPack
+        )
+    {
+        let name = if record.operation_kind == forge_core::job::JobOperationKind::PrepareAsset {
+            "quality-report.json"
+        } else {
+            "animation-quality-report.json"
+        };
+        let quality: serde_json::Value =
+            serde_json::from_slice(&fs::read(record.job_dir.join(name)).map_err(io_error)?)
+                .map_err(json_error)?;
+        if quality["verdict"] == "blocked"
+            || quality["animations"].as_array().is_some_and(|entries| {
+                entries
+                    .iter()
+                    .any(|entry| entry["report"]["verdict"] == "blocked")
+            })
+        {
+            return Err(("hard_failure_not_reviewable".into(),
+                "blocked animation frames cannot be accepted; correct the source and create a new preparation plan".into()));
+        }
+    }
     let path = record.job_dir.join("review-decision.json");
     fs::write(&path, serde_json::to_vec_pretty(&serde_json::json!({
         "schemaVersion": "1", "accepted": accept, "reason": reason, "reviewedAt": chrono::Utc::now()
