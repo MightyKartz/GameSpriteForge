@@ -1147,7 +1147,8 @@ mod tests {
         fs::create_dir(&root).unwrap();
         let target = root.join("target.txt");
         fs::write(&target, b"probe").unwrap();
-        let ok = symlink_file(&target, &root.join("link")).is_ok();
+        let link = root.join("link");
+        let ok = symlink_file(&target, &link).is_ok();
         let _ = fs::remove_dir_all(&root);
         ok
     }
