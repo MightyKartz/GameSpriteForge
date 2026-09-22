@@ -120,6 +120,21 @@ member ID; kind and tag filters are exact. Availability filters are `available`,
 These are file states, independent of human review. Search verifies source bytes
 and can therefore read large media; it does not create an index or write files.
 
+```sh
+forge asset tags --project ./assets --json
+forge asset search --project ./assets --kind image --metadata-only --json
+```
+
+`asset tags` lists the kind/tag/purpose vocabulary already in use, with asset
+and revision counts, so callers can compose exact filters instead of guessing
+spellings. It reads catalog metadata only: no media bytes are read and no index
+cache is created or repaired. `search --metadata-only` skips source-byte
+verification for large libraries; hits report `status:"unknown"` instead of an
+availability state, so combining it with `--status` is rejected. The response
+shape is unchanged, and Pack member lists come from recorded source metadata
+rather than a live directory read. Both commands are read-only; verified
+searches remain the default everywhere else.
+
 The legacy `asset list/inspect` response shape remains unchanged; raw local
 revisions are available through the new search/history commands. Pack-member
 search indexes the whole Pack revision and does not enable member-only delivery.

@@ -39,6 +39,8 @@ pub const CAPABILITIES: &[&str] = &[
     "godot_desktop_export_verification",
     "project_asset_catalog_v3",
     "project_asset_intake_search",
+    "project_asset_vocabulary",
+    "project_asset_metadata_search",
     "project_asset_output_registration",
     "project_asset_retention_delivery",
     "project_asset_preview_review",

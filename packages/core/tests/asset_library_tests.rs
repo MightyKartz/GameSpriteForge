@@ -459,6 +459,161 @@ fn intake_scan_registration_conflicts_and_unavailable_history() {
 }
 
 #[test]
+fn vocabulary_and_metadata_only_search_skip_source_byte_verification() {
+    use library::intake::{self, SearchFilter};
+    let temp = tempfile::tempdir().unwrap();
+    let media = temp.path().join("media");
+    let root = temp.path().join("library");
+    fs::create_dir_all(&media).unwrap();
+    RgbaImage::from_pixel(2, 2, Rgba([1, 2, 3, 255]))
+        .save(media.join("art.png"))
+        .unwrap();
+    let mut wav = b"RIFF".to_vec();
+    wav.extend(196_u32.to_le_bytes());
+    wav.extend(b"WAVEfmt ");
+    wav.extend(16_u32.to_le_bytes());
+    wav.extend(1_u16.to_le_bytes());
+    wav.extend(1_u16.to_le_bytes());
+    wav.extend(8000_u32.to_le_bytes());
+    wav.extend(16000_u32.to_le_bytes());
+    wav.extend(2_u16.to_le_bytes());
+    wav.extend(16_u16.to_le_bytes());
+    wav.extend(b"data");
+    wav.extend(160_u32.to_le_bytes());
+    wav.extend([0_u8; 160]);
+    fs::write(media.join("sound.wav"), wav).unwrap();
+    library::initialize(&root, "Local").unwrap();
+    let mut scan = intake::scan(&media).unwrap();
+    assert_eq!(scan.batch.items.len(), 2);
+    for item in &mut scan.batch.items {
+        item.tags = vec!["battle".into()];
+        if item.kind == "audio" {
+            item.tags = vec!["battle".into(), "boss".into()];
+            item.purpose = Some("combat".into());
+        }
+    }
+    intake::register(&root, &scan.batch).unwrap();
+    let vocabulary = intake::vocabulary(&root).unwrap();
+    assert_eq!(vocabulary.assets, 2);
+    assert_eq!(vocabulary.revisions, 2);
+    assert_eq!(
+        vocabulary
+            .kinds
+            .iter()
+            .map(|entry| (entry.value.as_str(), entry.assets))
+            .collect::<Vec<_>>(),
+        vec![("audio", 1), ("image", 1)]
+    );
+    assert_eq!(
+        vocabulary
+            .tags
+            .iter()
+            .map(|entry| (entry.value.as_str(), entry.assets))
+            .collect::<Vec<_>>(),
+        vec![("battle", 2), ("boss", 1)]
+    );
+    assert_eq!(
+        vocabulary
+            .purposes
+            .iter()
+            .map(|entry| (entry.value.as_str(), entry.assets))
+            .collect::<Vec<_>>(),
+        vec![("combat", 1)]
+    );
+    // Metadata-only reads never touch source bytes: removing a source does
+    // not turn its status into unavailable, and verified searches still work.
+    let audio = scan
+        .batch
+        .items
+        .iter()
+        .find(|item| item.kind == "audio")
+        .unwrap();
+    fs::remove_file(&audio.path).unwrap();
+    let metadata = intake::search(
+        &root,
+        &SearchFilter {
+            metadata_only: true,
+            limit: 20,
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(metadata.total, 2);
+    assert!(metadata.items.iter().all(|hit| hit.status == "unknown"));
+    assert!(intake::search(
+        &root,
+        &SearchFilter {
+            metadata_only: true,
+            status: Some("unavailable".into()),
+            limit: 20,
+            ..Default::default()
+        },
+    )
+    .is_err());
+    let verified = intake::search(
+        &root,
+        &SearchFilter {
+            status: Some("unavailable".into()),
+            limit: 20,
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(verified.total, 1);
+    assert_eq!(verified.items[0].asset_id, audio.asset_id);
+}
+
+#[test]
+fn vocabulary_counts_revisions_and_ignores_untagged_assets() {
+    use library::intake::{self, SearchFilter};
+    let temp = tempfile::tempdir().unwrap();
+    let media = temp.path().join("media");
+    let root = temp.path().join("library");
+    fs::create_dir_all(&media).unwrap();
+    RgbaImage::from_pixel(2, 2, Rgba([1, 2, 3, 255]))
+        .save(media.join("art.png"))
+        .unwrap();
+    library::initialize(&root, "Local").unwrap();
+    let scan = intake::scan(&media).unwrap();
+    intake::register(&root, &scan.batch).unwrap();
+    let original = scan.batch.items[0].clone();
+    RgbaImage::from_pixel(2, 2, Rgba([9, 9, 9, 255]))
+        .save(&original.path)
+        .unwrap();
+    let mut revised = original.clone();
+    revised.expected_content = intake::content_at(&revised.path).unwrap();
+    revised.new_revision = true;
+    intake::register(
+        &root,
+        &intake::IntakeBatch {
+            schema_version: "1".into(),
+            items: vec![revised],
+        },
+    )
+    .unwrap();
+    let vocabulary = intake::vocabulary(&root).unwrap();
+    assert_eq!(vocabulary.assets, 1);
+    assert_eq!(vocabulary.revisions, 2);
+    assert_eq!(vocabulary.kinds[0].value, "image");
+    assert_eq!(vocabulary.kinds[0].revisions, 2);
+    assert!(vocabulary.tags.is_empty());
+    assert!(vocabulary.purposes.is_empty());
+    assert_eq!(
+        intake::search(
+            &root,
+            &SearchFilter {
+                metadata_only: true,
+                limit: 20,
+                ..Default::default()
+            },
+        )
+        .unwrap()
+        .total,
+        2
+    );
+}
+
+#[test]
 fn intake_pack_members_duplicate_locations_and_batch_atomicity() {
     use library::intake::{self, IntakeBatch, SearchFilter};
     let temp = tempfile::tempdir().unwrap();
