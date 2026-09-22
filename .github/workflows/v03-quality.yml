@@ -193,7 +193,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python scripts/test-asset-library-review-cli.py --forge target/debug/forge.exe
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python scripts/test-cli-skill.py --forge "$env:GITHUB_WORKSPACE/target/debug/forge.exe" --guide-only
+          python scripts/test-cli-skill.py --forge "$env:GITHUB_WORKSPACE/target/debug/forge.exe" --output "$env:GITHUB_WORKSPACE/target/qa/v03-skill"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Produce Windows resource transfer fixture
         shell: pwsh

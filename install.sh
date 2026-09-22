@@ -160,3 +160,4 @@ fi
 
 printf 'Forge %s installed successfully.\n' "${VERSION}"
 printf 'Open a new terminal, then run: forge doctor --json\n'
+printf 'Optional Codex integration: forge skill install --project /path/to/game (commit .agents/skills/forge-use/), or forge skill install --user for all local projects.\n'

@@ -99,7 +99,7 @@ jobs:
           if (!$bundleCase) { throw 'Single-download bundle was not tested' }
           Copy-Item -LiteralPath $bundleCase.bundle -Destination target/windows-dist/forge-windows-installer.zip
           Copy-Item -LiteralPath ($bundleCase.bundle + '.sha256') -Destination target/windows-dist/forge-windows-installer.zip.sha256
-          python scripts/test-cli-skill.py --forge "$env:GITHUB_WORKSPACE/target/release/forge.exe" --guide-only --output "$env:GITHUB_WORKSPACE/target/qa/windows-guide"
+          python scripts/test-cli-skill.py --forge "$env:GITHUB_WORKSPACE/target/release/forge.exe" --output "$env:GITHUB_WORKSPACE/target/qa/windows-guide"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           foreach ($command in @('guide','skill show')) {
             $cliArgs = @($command.Split(' ')) + @('--json')
