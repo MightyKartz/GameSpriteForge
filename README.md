@@ -14,7 +14,7 @@ Codex and other agents use Forge to prepare, diagnose, validate and deliver imag
 
 ## Install
 
-[v0.7.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.7.0) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
+[v0.7.1](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.7.1) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
 
 Choose one download for your system:
 
@@ -61,11 +61,15 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\forge-windows\install-
 | **Audio** | Import WAV music, sound effects and ambience; trim, adjust gain, add fades and prepare loops. |
 | **Godot delivery** | Validate Packs and install native textures, scenes, animations and audio streams. Lock chosen versions, retain delivery receipts and roll back failed updates. |
 
-**New in v0.7.0:** lossless Godot sprite delivery, frame-localized diagnostics,
-synchronized version previews and an embedded audio/static/animation delivery flow.
-Agents can correct inputs and retry installation from retained Packs. Read
-`forge guide` from the selected executable. [Release notes](docs/releases/v0.7.0.md)
-explain compatibility and validation; real-project productivity remains unmeasured.
+**New in v0.7.1:** the resource library answers discovery questions directly:
+`forge asset tags` lists the kind/tag/purpose vocabulary in use, `forge asset
+search --metadata-only` skips source-byte verification, preview reports carry a
+machine-readable media manifest, and `forge asset check-requirements` reconciles
+declared scene needs against the library with gap statuses and request skeletons.
+v0.7.0 delivered lossless Godot sprite import, frame-localized diagnostics and
+synchronized version previews. Read `forge guide` from the selected executable.
+[Release notes](docs/releases/v0.7.1.md) explain compatibility and validation;
+real-project productivity remains unmeasured.
 
 **Animation previews (v0.6.3):** flat animation Packs can be reviewed from
 original PNGs with frame stepping and background selection, or exported on demand
@@ -132,7 +136,7 @@ Character animation remains experimental; advanced character and world-asset com
 
 Music and sound effects are generated in external applications. ACE-Step and Stable Audio 3 have optional read-only source-directory detection; Forge does not install or run their models. Online xAI requests use your own account and may incur charges.
 
-Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.7.0 release notes](docs/releases/v0.7.0.md) for the verified release scope.
+Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.7.1 release notes](docs/releases/v0.7.1.md) for the verified release scope.
 
 ## Documentation
 
