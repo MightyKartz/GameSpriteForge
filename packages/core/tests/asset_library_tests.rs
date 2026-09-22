@@ -614,6 +614,166 @@ fn vocabulary_counts_revisions_and_ignores_untagged_assets() {
 }
 
 #[test]
+fn requirements_reconciliation_reports_each_status_and_stays_read_only() {
+    use library::intake;
+    use library::requirements::{self, Requirement, RequirementsBatch};
+    let temp = tempfile::tempdir().unwrap();
+    let media = temp.path().join("media");
+    let root = temp.path().join("library");
+    fs::create_dir_all(&media).unwrap();
+    RgbaImage::from_pixel(2, 2, Rgba([1, 2, 3, 255]))
+        .save(media.join("art.png"))
+        .unwrap();
+    let mut wav = b"RIFF".to_vec();
+    wav.extend(196_u32.to_le_bytes());
+    wav.extend(b"WAVEfmt ");
+    wav.extend(16_u32.to_le_bytes());
+    wav.extend(1_u16.to_le_bytes());
+    wav.extend(1_u16.to_le_bytes());
+    wav.extend(8000_u32.to_le_bytes());
+    wav.extend(16000_u32.to_le_bytes());
+    wav.extend(2_u16.to_le_bytes());
+    wav.extend(16_u16.to_le_bytes());
+    wav.extend(b"data");
+    wav.extend(160_u32.to_le_bytes());
+    wav.extend([0_u8; 160]);
+    fs::write(media.join("sound.wav"), wav).unwrap();
+    library::initialize(&root, "Local").unwrap();
+    let mut scan = intake::scan(&media).unwrap();
+    for item in &mut scan.batch.items {
+        if item.kind == "image" {
+            item.tags = vec!["battle".into()];
+        }
+    }
+    intake::register(&root, &scan.batch).unwrap();
+    let audio = scan
+        .batch
+        .items
+        .iter()
+        .find(|item| item.kind == "audio")
+        .unwrap();
+    fs::remove_file(&audio.path).unwrap();
+    let head = fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap();
+    let batch = RequirementsBatch {
+        schema_version: "1".into(),
+        kind: "asset_requirements".into(),
+        requirements: vec![
+            Requirement {
+                id: "have-image".into(),
+                kind: Some("image".into()),
+                tags: vec!["battle".into()],
+                ..Default::default()
+            },
+            Requirement {
+                id: "approved-image".into(),
+                kind: Some("image".into()),
+                review_domain: Some("visual".into()),
+                review_verdict: Some("approved".into()),
+                ..Default::default()
+            },
+            Requirement {
+                id: "lost-audio".into(),
+                kind: Some("audio".into()),
+                ..Default::default()
+            },
+            Requirement {
+                id: "Dragon Statue".into(),
+                kind: Some("prop_set".into()),
+                ..Default::default()
+            },
+            Requirement {
+                id: "boss-theme".into(),
+                kind: Some("audio".into()),
+                tags: vec!["boss".into()],
+                ..Default::default()
+            },
+        ],
+    };
+    let report = requirements::check_requirements(&root, &batch).unwrap();
+    assert_eq!(report.covered, 1);
+    assert_eq!(report.needs_review, 1);
+    assert_eq!(report.incomplete, 1);
+    assert_eq!(report.missing, 2);
+    let by_id = |id: &str| {
+        report
+            .results
+            .iter()
+            .find(|result| result.id == id)
+            .unwrap()
+    };
+    assert_eq!(by_id("have-image").status, "covered");
+    assert_eq!(by_id("have-image").total, 1);
+    assert_eq!(by_id("have-image").hits.len(), 1);
+    assert!(by_id("have-image").suggested_request.is_none());
+    assert_eq!(by_id("approved-image").status, "needs_review");
+    assert!(by_id("approved-image").suggested_request.is_none());
+    assert_eq!(by_id("lost-audio").status, "incomplete");
+    assert_eq!(by_id("lost-audio").hits[0].status, "unavailable");
+    let missing = by_id("Dragon Statue");
+    assert_eq!(missing.status, "missing");
+    let template = missing.suggested_request.as_ref().unwrap();
+    assert_eq!(template["kind"], "prop_set");
+    assert_eq!(template["items"][0]["id"], "Dragon-Statue");
+    assert!(template["items"][0]["path"]
+        .as_str()
+        .unwrap()
+        .starts_with("TODO"));
+    let missing_audio = by_id("boss-theme");
+    assert_eq!(missing_audio.status, "missing");
+    assert!(missing_audio.suggested_request.is_none());
+    // Read-only: the catalog head and all objects are untouched.
+    assert_eq!(head, fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap());
+    let mut duplicate = batch.clone();
+    duplicate
+        .requirements
+        .push(duplicate.requirements[0].clone());
+    assert!(requirements::check_requirements(&root, &duplicate).is_err());
+    let mut unpaired = batch.clone();
+    unpaired.requirements[0].review_verdict = Some("approved".into());
+    assert!(requirements::check_requirements(&root, &unpaired).is_err());
+    // Tag filters require every tag.
+    let filtered = RequirementsBatch {
+        schema_version: "1".into(),
+        kind: "asset_requirements".into(),
+        requirements: vec![Requirement {
+            id: "strict".into(),
+            tags: vec!["battle".into(), "missing-tag".into()],
+            ..Default::default()
+        }],
+    };
+    assert_eq!(
+        requirements::check_requirements(&root, &filtered)
+            .unwrap()
+            .results[0]
+            .status,
+        "missing"
+    );
+}
+
+#[test]
+fn requirements_validate_batch_shape_before_reading() {
+    use library::requirements::{self, Requirement, RequirementsBatch};
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("library");
+    library::initialize(&root, "Local").unwrap();
+    let empty = RequirementsBatch {
+        schema_version: "1".into(),
+        kind: "asset_requirements".into(),
+        requirements: vec![],
+    };
+    assert!(requirements::check_requirements(&root, &empty).is_err());
+    let wrong_kind = RequirementsBatch {
+        schema_version: "1".into(),
+        kind: "game_art_manifest".into(),
+        requirements: vec![Requirement {
+            id: "x".into(),
+            ..Default::default()
+        }],
+    };
+    assert!(requirements::check_requirements(&root, &wrong_kind).is_err());
+}
+
+#[test]
 fn intake_pack_members_duplicate_locations_and_batch_atomicity() {
     use library::intake::{self, IntakeBatch, SearchFilter};
     let temp = tempfile::tempdir().unwrap();

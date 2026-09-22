@@ -88,6 +88,20 @@ changes disposition, without deleting media or changing a consumer lock. Search
 can combine `--purpose`, `--tag`, `--kind`, `--disposition`, availability `--status`
 and paired `--review-domain`/`--review-verdict` filters.
 
+## Check what the game still needs
+
+```bash
+forge asset check-requirements --project ./library --input ./needs.json --json
+```
+
+Declare what a scene or milestone needs (`schemas/asset-requirements.schema.json`,
+example in `examples/asset-library/requirements.json`) and reconcile it against
+the library. Each entry reports `covered`, `needs_review`, `incomplete` or
+`missing` with up to five hits; missing `icon_set`/`prop_set` entries include a
+pre-filled local static request skeleton with TODO placeholders you complete
+after creating the artwork. The check is read-only and never calls a Provider;
+`covered` reflects inventory and recorded review state, not visual approval.
+
 Retention copies and verifies selected media inside the library. It does not
 reconstruct missing source requests or preserve an entire Job store. The resource
 lock is independent of Forge/Godot toolchain locks and does not follow new versions.

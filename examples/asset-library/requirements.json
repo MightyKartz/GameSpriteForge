@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1",
+  "kind": "asset_requirements",
+  "requirements": [
+    {
+      "id": "hero-idle",
+      "kind": "prop_set",
+      "tags": [
+        "hero"
+      ],
+      "reviewDomain": "visual",
+      "reviewVerdict": "approved"
+    },
+    {
+      "id": "forest-music",
+      "kind": "audio",
+      "tags": [
+        "forest"
+      ],
+      "purpose": "background"
+    },
+    {
+      "id": "inventory icons",
+      "kind": "icon_set",
+      "query": "inventory"
+    }
+  ]
+}
