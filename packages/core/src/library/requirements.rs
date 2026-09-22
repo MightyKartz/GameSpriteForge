@@ -7,6 +7,9 @@ use serde::{Deserialize, Serialize};
 
 const MAX_REQUIREMENTS: usize = 200;
 const MAX_HITS_PER_REQUIREMENT: usize = 5;
+/// Matches are evaluated in search order and capped per requirement; `total`
+/// counts evaluated matches, so libraries with more matches per requirement
+/// report the evaluated prefix rather than the full cardinality.
 const SEARCH_LIMIT: usize = 1000;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -116,6 +119,17 @@ fn suggested_request(requirement: &Requirement) -> Option<serde_json::Value> {
             }
         })
         .collect();
+    // Static requests require an engine-safe id starting with an ASCII
+    // alphanumeric; keep non-Latin logical ids usable in the skeleton.
+    let item_id = if item_id
+        .chars()
+        .next()
+        .is_some_and(|c| c.is_ascii_alphanumeric())
+    {
+        item_id
+    } else {
+        format!("asset-{item_id}")
+    };
     Some(serde_json::json!({
         "schemaVersion": "1",
         "kind": kind,

@@ -687,13 +687,18 @@ fn requirements_reconciliation_reports_each_status_and_stays_read_only() {
                 tags: vec!["boss".into()],
                 ..Default::default()
             },
+            Requirement {
+                id: "龙雕像".into(),
+                kind: Some("prop_set".into()),
+                ..Default::default()
+            },
         ],
     };
     let report = requirements::check_requirements(&root, &batch).unwrap();
     assert_eq!(report.covered, 1);
     assert_eq!(report.needs_review, 1);
     assert_eq!(report.incomplete, 1);
-    assert_eq!(report.missing, 2);
+    assert_eq!(report.missing, 3);
     let by_id = |id: &str| {
         report
             .results
@@ -721,6 +726,14 @@ fn requirements_reconciliation_reports_each_status_and_stays_read_only() {
     let missing_audio = by_id("boss-theme");
     assert_eq!(missing_audio.status, "missing");
     assert!(missing_audio.suggested_request.is_none());
+    let non_latin = by_id("龙雕像");
+    assert_eq!(non_latin.status, "missing");
+    let template = non_latin.suggested_request.as_ref().unwrap();
+    let engine_id = template["items"][0]["id"].as_str().unwrap();
+    assert!(engine_id.as_bytes()[0].is_ascii_alphanumeric());
+    assert!(engine_id
+        .bytes()
+        .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-'));
     // Read-only: the catalog head and all objects are untouched.
     assert_eq!(head, fs::read(root.join(PROJECT_CATALOG_RELATIVE)).unwrap());
     let mut duplicate = batch.clone();

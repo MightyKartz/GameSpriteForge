@@ -156,8 +156,10 @@ search contract and reports one of four statuses:
 - `incomplete`: revisions match but none is currently available;
 - `missing`: nothing matches.
 
-Each result carries the total match count and up to five hits with revision,
-selection, availability and review states. For a `missing` entry whose kind is
+Each result carries the evaluated match count and up to five hits with revision,
+selection, availability and review states. Matches are evaluated in search
+order and capped at 1000 per requirement; beyond that, `total` reflects the
+evaluated prefix. For a `missing` entry whose kind is
 `icon_set` or `prop_set`, `suggestedRequest` is a pre-filled local static request
 skeleton with TODO placeholders; other kinds never get an invented template.
 The command is read-only, performs no generation or Provider call, and `covered`
