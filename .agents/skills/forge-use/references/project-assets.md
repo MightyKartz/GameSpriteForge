@@ -79,6 +79,9 @@ also works with older Packs whose GIFs have alpha or disposal artifacts. Browser
 scheduling may vary; Godot remains the reference for engine blend modes.
 Other media retain their existing bytes. Unsupported/missing previews
 are reported. Choose `technical`, `visual`, `auditory` or `license` review domains;
+The response and `preview.json` carry a `media` manifest listing each revision's
+copied files with preview-relative paths, original labels and media types, so
+agents can open exact revision media without scanning the output directory.
 user assertions and their retained evidence bind to exactly one content version.
 New versions do not inherit approval. `asset status --state candidate|discarded`
 changes disposition, without deleting media or changing a consumer lock. Search

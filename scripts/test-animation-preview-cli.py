@@ -105,6 +105,10 @@ run('register', 'asset', 'register', '--project', library, '--input', root / 'sc
 head = inventory(library)
 review = run('review', 'asset', 'preview', '--project', library, '--out', root / 'review')
 assert not review['issues'] and review['mediaFiles'] == 3
+assert len(review['media']) == 1 and len(review['media'][0]['files']) == 3
+for i, file in enumerate(review['media'][0]['files']):
+    assert file['mediaType'] == 'image' and file['label'].startswith('assets/frames/')
+    assert (root / 'review' / file['file']).read_bytes() == (pack / f'assets/frames/frame_{i + 1:03}.png').read_bytes()
 page = (root / 'review/index.html').read_text(encoding='utf-8')
 script = re.search(r'<script type="text/javascript">(.*?)</script>', page, re.S)[1]
 assert base64.b64encode(hashlib.sha256(script.encode()).digest()).decode() in page

@@ -66,6 +66,26 @@ fn offline_preview_escapes_metadata_and_preserves_gif_timing_and_wav_bytes() {
     let output = temp.path().join("preview");
     let report = library::preview::create(&library, &references, &output).unwrap();
     assert_eq!(report.media_files, 3);
+    assert_eq!(report.media.len(), 3);
+    for entry in &report.media {
+        assert!(references
+            .iter()
+            .any(|reference| reference.asset_id == entry.asset_id
+                && reference.revision == entry.revision));
+        assert_eq!(entry.files.len(), 1);
+        let file = &entry.files[0];
+        assert!(file.file.starts_with("media/"));
+        assert!(output.join(&file.file).is_file());
+        let expected_type = match file.label.rsplit('.').next().unwrap() {
+            "wav" => "audio",
+            "png" | "gif" => "image",
+            other => panic!("unexpected fixture label extension: {other}"),
+        };
+        assert_eq!(file.media_type, expected_type);
+    }
+    let stored: serde_json::Value =
+        serde_json::from_slice(&fs::read(output.join("preview.json")).unwrap()).unwrap();
+    assert_eq!(stored["media"].as_array().unwrap().len(), 3);
     let html = fs::read_to_string(report.index_path).unwrap();
     assert!(html.contains("&lt;script&gt;"));
     assert!(!html.contains("<script>"));
@@ -103,6 +123,7 @@ fn offline_preview_escapes_metadata_and_preserves_gif_timing_and_wav_bytes() {
             .unwrap();
     assert_eq!(unavailable.issues.len(), 3);
     assert_eq!(unavailable.media_files, 0);
+    assert!(unavailable.media.is_empty());
 }
 
 #[test]

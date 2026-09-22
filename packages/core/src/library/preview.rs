@@ -9,6 +9,25 @@ pub struct PreviewReport {
     pub revisions: usize,
     pub media_files: usize,
     pub issues: Vec<String>,
+    pub media: Vec<PreviewMedia>,
+}
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PreviewMediaFile {
+    /// Copied media path, relative to the preview output directory.
+    pub file: String,
+    /// Original file name or Pack member path in the content inventory.
+    pub label: String,
+    /// Browser-facing category: image, audio or video.
+    pub media_type: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PreviewMedia {
+    pub asset_id: String,
+    pub revision: String,
+    pub files: Vec<PreviewMediaFile>,
 }
 
 fn escape(value: &str) -> String {
@@ -50,6 +69,7 @@ pub fn create(
         revisions: references.len(),
         media_files: 0,
         issues: vec![],
+        media: vec![],
     };
     let mut html = String::from("<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; img-src 'self' file: data:; media-src 'self' file:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; object-src 'none'\"><title>Forge resource review</title><style>body{margin:0;background:#101719;color:#e6eeeb;font:16px/1.5 system-ui}header,main{max-width:1400px;margin:auto;padding:28px}h1,h2{line-height:1.15}header p,.muted{color:#b0c5bc}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}.card{background:#1a2527;border:1px solid #39514b;border-radius:12px;padding:20px;overflow:hidden}img,video{max-width:100%;max-height:380px;object-fit:contain;background:repeating-conic-gradient(#35403e 0% 25%,#25312e 0% 50%) 50%/20px 20px}audio{width:100%}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#101719;padding:12px}code,small{overflow-wrap:anywhere}figure{margin:18px 0}figcaption{font-size:13px;color:#b0c5bc}summary{cursor:pointer}a{color:#a4e3bd}.badge{padding:3px 9px;border:1px solid #5b796b;border-radius:20px;display:inline-block;margin:2px}footer{padding:28px;color:#b0c5bc}</style><header><p>FORGE / LOCAL RESOURCE LIBRARY</p><h1>Review exact resource versions</h1><p>Offline copies of existing media. This page does not change selections or record approvals.</p></header><main class=\"grid\">");
     html = html.replace(
@@ -166,6 +186,7 @@ pub fn create(
                 };
                 let mut player_urls = std::collections::BTreeMap::new();
                 let mut copied = 0;
+                let mut manifest_files = vec![];
                 for (source, label) in files {
                     let player_frame = animation_source
                         .as_ref()
@@ -210,7 +231,12 @@ pub fn create(
                         return Err(invalid("preview media changed during copy"));
                     }
                     if player_frame {
-                        player_urls.insert(source, relative);
+                        player_urls.insert(source, relative.clone());
+                        manifest_files.push(PreviewMediaFile {
+                            file: relative,
+                            label: label.clone(),
+                            media_type: "image".into(),
+                        });
                         copied += 1;
                         continue;
                     }
@@ -224,6 +250,18 @@ pub fn create(
                             escape(&label)
                         )
                     };
+                    manifest_files.push(PreviewMediaFile {
+                        file: relative.clone(),
+                        label: label.clone(),
+                        media_type: if audio {
+                            "audio"
+                        } else if video {
+                            "video"
+                        } else {
+                            "image"
+                        }
+                        .into(),
+                    });
                     html.push_str(&format!(
                         "<figure>{element}<figcaption>{}</figcaption></figure>",
                         escape(&label)
@@ -250,6 +288,13 @@ pub fn create(
                     return Err(invalid("resource changed while preparing preview"));
                 }
                 report.media_files += copied;
+                if !manifest_files.is_empty() {
+                    report.media.push(PreviewMedia {
+                        asset_id: reference.asset_id.clone(),
+                        revision: reference.revision.clone(),
+                        files: manifest_files,
+                    });
+                }
                 if copied == 0 {
                     html.push_str("<p>No browser preview is available for this format. Use the source application's viewer.</p>");
                 }

@@ -247,6 +247,13 @@ The JSON `selection` reports total matches and the selected page. One preview
 contains at most 100 revisions. Missing sources are reported, with review/source
 metadata still available. Existing output directories are never overwritten.
 
+The report's `media` array (also in `preview.json`) gives machine callers one
+entry per revision with copied files as preview-relative paths, their original
+file or Pack-member labels and an `image`/`audio`/`video` type, so agents can
+open exact revision media without walking the output directory. The manifest
+only describes bytes this preview copied: it never derives new media, and
+missing sources stay in `issues` without fabricated entries.
+
 Review domains are `technical`, `visual`, `auditory` and `license`; verdicts are
 `approved`, `rejected`, `needs_review` and `unknown`. These are explicit human
 assertions, separate from the Pack's recorded technical checks. Evidence must be
