@@ -979,7 +979,7 @@ fn rename_new(source: &Path, target: &Path) -> std::io::Result<()> {
     }
 }
 
-#[cfg(not(any(unix, target_os = "windows")))]
+#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
 fn rename_new(_source: &Path, _target: &Path) -> std::io::Result<()> {
     Err(std::io::Error::new(
         std::io::ErrorKind::Unsupported,
@@ -1128,7 +1128,10 @@ mod guide_tests {
     }
 }
 
-#[cfg(all(test, any(unix, target_os = "windows")))]
+#[cfg(all(
+    test,
+    any(target_os = "macos", target_os = "linux", target_os = "windows")
+))]
 mod tests {
     use super::*;
     #[cfg(unix)]

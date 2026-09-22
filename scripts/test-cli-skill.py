@@ -466,13 +466,17 @@ class Harness:
     def symlinks(self):
         probe_target = self.root / "symlink-probe-target"
         probe_target.mkdir()
+        probe_link = self.root / "symlink-probe-link"
         try:
-            (self.root / "symlink-probe-link").symlink_to(probe_target, target_is_directory=True)
+            probe_link.symlink_to(probe_target, target_is_directory=True)
         except OSError:
             # Unprivileged Windows sessions cannot create symlinks; privileged
             # CI runners still exercise the protection.
             self.completed("protect_symlink_skipped_unprivileged")
+            probe_target.rmdir()
             return
+        probe_link.unlink()
+        probe_target.rmdir()
         for component in (".agents", ".agents/skills", ".agents/skills/forge-use"):
             slug = component.replace("/", "-").lstrip(".")
             project = self.project(f"symlink-{slug}")
