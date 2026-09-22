@@ -302,6 +302,8 @@ enum AssetCommand {
     Search(asset_library::SearchArgs),
     /// List the kind/tag/purpose vocabulary in use, without reading media bytes.
     Tags(asset_library::TagsArgs),
+    /// Reconcile declared asset requirements against the library, read-only.
+    CheckRequirements(asset_library::CheckRequirementsArgs),
     /// Show all known versions of a logical asset.
     History(asset_library::HistoryArgs),
     /// Create a formal shared-canvas layered Pack from local source PNGs.
@@ -1065,6 +1067,7 @@ fn run() -> Result<(), (String, String)> {
             AssetCommand::Register(args) => asset_library::register(args),
             AssetCommand::Search(args) => asset_library::search(args),
             AssetCommand::Tags(args) => asset_library::tags(args),
+            AssetCommand::CheckRequirements(args) => asset_library::check_requirements(args),
             AssetCommand::History(args) => asset_library::history(args),
             AssetCommand::PrepareLayered { input, output } => {
                 let mut request: forge_core::layered::PrepareLayeredRequest = read_request(&input)?;

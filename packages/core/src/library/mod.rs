@@ -27,6 +27,7 @@ pub mod index;
 pub mod intake;
 pub mod merge;
 pub mod preview;
+pub mod requirements;
 pub mod review;
 pub mod transfer;
 mod types;

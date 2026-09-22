@@ -139,6 +139,33 @@ The legacy `asset list/inspect` response shape remains unchanged; raw local
 revisions are available through the new search/history commands. Pack-member
 search indexes the whole Pack revision and does not enable member-only delivery.
 
+## Reconcile declared requirements
+
+```sh
+forge asset check-requirements --project ./assets --input needs.json --json
+```
+
+A requirements batch uses `schemas/asset-requirements.schema.json`: each entry
+declares a stable `id` plus optional `kind`, `tags` (all must match), `purpose`,
+`query` and a paired `reviewDomain`/`reviewVerdict`. IDs must be unique within a
+batch. The command reconciles every entry against the library with the verified
+search contract and reports one of four statuses:
+
+- `covered`: an available revision matches and satisfies the review filter;
+- `needs_review`: available revisions match but none satisfies the review filter;
+- `incomplete`: revisions match but none is currently available;
+- `missing`: nothing matches.
+
+Each result carries the evaluated match count and up to five hits with revision,
+selection, availability and review states. Matches are evaluated in search
+order and capped at 1000 per requirement; beyond that, `total` reflects the
+evaluated prefix. For a `missing` entry whose kind is
+`icon_set` or `prop_set`, `suggestedRequest` is a pre-filled local static request
+skeleton with TODO placeholders; other kinds never get an invented template.
+The command is read-only, performs no generation or Provider call, and `covered`
+describes inventory and recorded review state, not visual or license approval.
+See `examples/asset-library/requirements.json` for a batch to adapt.
+
 ## Register completed production outputs
 
 Local static, audio, animation and character requests accept this optional field:

@@ -220,6 +220,22 @@ pub fn search(args: SearchArgs) -> Result<(), (String, String)> {
 pub fn tags(args: TagsArgs) -> Result<(), (String, String)> {
     crate::success(&library::intake::vocabulary(&args.project).map_err(error)?)
 }
+#[derive(Args)]
+pub struct CheckRequirementsArgs {
+    #[arg(long)]
+    project: PathBuf,
+    #[arg(long)]
+    input: PathBuf,
+    #[command(flatten)]
+    json: crate::JsonFlag,
+}
+pub fn check_requirements(args: CheckRequirementsArgs) -> Result<(), (String, String)> {
+    let bytes = std::fs::read(args.input).map_err(crate::display_error)?;
+    let batch = serde_json::from_slice(&bytes).map_err(crate::display_error)?;
+    crate::success(
+        &library::requirements::check_requirements(&args.project, &batch).map_err(error)?,
+    )
+}
 pub fn history(args: HistoryArgs) -> Result<(), (String, String)> {
     crate::success(&library::intake::history(&args.project, &args.id).map_err(error)?)
 }

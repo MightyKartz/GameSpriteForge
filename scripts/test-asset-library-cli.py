@@ -28,6 +28,13 @@ def intake_validators():
     return [Draft202012Validator(doc, registry=registry) for doc in documents]
 
 
+def requirements_validator():
+    document = json.loads((Path(__file__).resolve().parents[1] / 'schemas' /
+                           'asset-requirements.schema.json').read_text(encoding='utf-8'))
+    Draft202012Validator.check_schema(document)
+    return Draft202012Validator(document)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--forge', type=Path, required=True)
@@ -133,6 +140,41 @@ def main():
         assert run('asset', 'search', '--project', project, '--status', 'available')['total'] == 3
         assert inventory(project) == before
 
+        # Requirement reconciliation reports inventory/review gaps read-only
+        # and suggests request skeletons only for missing icon/prop sets.
+        validator = requirements_validator()
+        needs = {'schemaVersion': '1', 'kind': 'asset_requirements', 'requirements': [
+            {'id': 'have-fixture', 'kind': 'file', 'tags': ['fixture']},
+            {'id': 'approved-fixture', 'tags': ['fixture'], 'reviewDomain': 'visual', 'reviewVerdict': 'approved'},
+            {'id': 'missing-file', 'kind': 'file', 'query': 'dragon'},
+            {'id': 'missing-icon', 'kind': 'icon_set', 'query': 'inventory'},
+        ]}
+        validator.validate(needs)
+        needs_file = root / 'needs.json'
+        needs_file.write_text(json.dumps(needs), encoding='utf-8')
+        report = run('asset', 'check-requirements', '--project', project, '--input', needs_file)
+        assert report['covered'] == 1 and report['needsReview'] == 1 and report['missing'] == 2, report
+        results = {entry['id']: entry for entry in report['results']}
+        assert results['have-fixture']['status'] == 'covered' and results['have-fixture']['total'] == 2
+        assert results['approved-fixture']['status'] == 'needs_review'
+        assert results['missing-file']['status'] == 'missing' and 'suggestedRequest' not in results['missing-file']
+        template = results['missing-icon']['suggestedRequest']
+        assert template['kind'] == 'icon_set' and template['items'][0]['path'].startswith('TODO')
+        example = json.loads((Path(__file__).resolve().parents[1] / 'examples' / 'asset-library' /
+                              'requirements.json').read_text(encoding='utf-8'))
+        validator.validate(example)
+        duplicate = {'schemaVersion': '1', 'kind': 'asset_requirements',
+                     'requirements': [{'id': 'x'}, {'id': 'x'}]}
+        assert list(validator.iter_errors(duplicate)) == []  # id uniqueness is enforced by the CLI, not the schema
+        needs_file.write_text(json.dumps(duplicate), encoding='utf-8')
+        run('asset', 'check-requirements', '--project', project, '--input', needs_file, ok=False)
+        unpaired = {'schemaVersion': '1', 'kind': 'asset_requirements',
+                    'requirements': [{'id': 'x', 'reviewDomain': 'visual'}]}
+        assert list(validator.iter_errors(unpaired))
+        needs_file.write_text(json.dumps(unpaired), encoding='utf-8')
+        run('asset', 'check-requirements', '--project', project, '--input', needs_file, ok=False)
+        assert inventory(project) == before
+
         legacy = root / 'legacy'
         (legacy / '.forge').mkdir(parents=True)
         catalog = legacy / '.forge/catalog.json'
@@ -158,12 +200,13 @@ def main():
         assert not (root / 'jobs').exists() and not (root / 'plans').exists()
         doctor = run('doctor')
         build = doctor['build']
-        for capability in ['project_asset_vocabulary', 'project_asset_metadata_search']:
+        for capability in ['project_asset_vocabulary', 'project_asset_metadata_search',
+                           'project_asset_requirements_check']:
             assert capability in doctor['capabilities'], capability
         print(json.dumps({'passed': True, 'build': build, 'legacyBinaryChecked': bool(args.legacy_forge),
                           'checks': ['local_init', 'readonly_query', 'migration_preview', 'stale_preview',
                                      'legacy_backup', 'unknown_evidence', 'scan_register_search_history', 'intake_schema_contracts',
-                                     'vocabulary_and_metadata_search', 'no_jobs_or_provider_requests']}))
+                                     'vocabulary_and_metadata_search', 'requirements_reconciliation', 'no_jobs_or_provider_requests']}))
 
 
 if __name__ == '__main__':
