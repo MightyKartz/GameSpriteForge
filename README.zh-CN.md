@@ -14,7 +14,7 @@ Codex 等 Agent 使用 Forge 加工、诊断、验证创作工具提供的图片
 
 ## 安装
 
-[v0.7.0](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.7.0) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要原生交付和预览时，另行安装 **Godot 4.6.x 或 4.7.x**。安装包尚未签名，macOS 包尚未公证。
+[v0.7.1](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.7.1) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要原生交付和预览时，另行安装 **Godot 4.6.x 或 4.7.x**。安装包尚未签名，macOS 包尚未公证。
 
 按系统选择一个下载文件：
 
@@ -60,9 +60,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\forge-windows\install-
 | **音频** | 导入 WAV 音乐、音效和环境声，进行裁剪、增益调整、淡入淡出和循环处理。 |
 | **Godot 交付** | 验证 Pack，安装原生纹理、场景、动画和音频资源；锁定选定版本、保留交付回执，并在更新失败时回滚。 |
 
-**v0.7.0 新功能：**Godot 精灵无损交付、定位到帧的诊断、多版本同步预览，以及统一的
-音频/静态/动画嵌入交付流程。Agent 可修正输入，从保留的 Pack 重试安装。
-先读取所选二进制的 `forge guide`；兼容性与验证范围见[发布说明](docs/releases/v0.7.0.md)。
+**v0.7.1 新功能：**资源库直接回答发现类问题——`forge asset tags` 列出库内在用的
+kind/tag/purpose 词表，`forge asset search --metadata-only` 跳过媒体字节核验，预览报告
+新增机器可读媒体清单，`forge asset check-requirements` 将场景素材需求与库存对账并给出
+缺口状态和请求骨架。v0.7.0 提供了 Godot 精灵无损交付、定位到帧的诊断与多版本同步预览。
+先读取所选二进制的 `forge guide`；兼容性与验证范围见[发布说明](docs/releases/v0.7.1.md)。
 真实项目效率收益尚未完成实测。
 
 **动画预览（v0.6.3）：** 平面动画 Pack 可直接播放原始 PNG，支持逐帧查看和切换背景，
@@ -126,7 +128,7 @@ Sword 是一款修仙题材的生存游戏原型。源图由 Codex 创作，Forg
 
 音乐和音效由外部应用生成。ACE-Step 和 Stable Audio 3 提供可选的源代码目录只读检测，Forge 不安装或运行其模型。在线 xAI 请求使用你的账号，可能产生费用。
 
-技术检查不能代替美术审查、试听或许可核对，使用前请在游戏中验收。已验证的版本范围见 [v0.7.0 发布说明](docs/releases/v0.7.0.md)。
+技术检查不能代替美术审查、试听或许可核对，使用前请在游戏中验收。已验证的版本范围见 [v0.7.1 发布说明](docs/releases/v0.7.1.md)。
 
 ## 文档
 
