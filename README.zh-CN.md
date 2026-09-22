@@ -50,6 +50,21 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\forge-windows\install-
 & "$env:LOCALAPPDATA\GameSpriteForge\bin\forge.cmd" doctor --json
 ```
 
+### 让 Codex 发现 Forge（推荐）
+
+Forge 通过 CLI 工作；内置的 `forge-use` skill 告诉 Codex 何时以及如何调用它，
+素材类任务会自动走 Forge 流程，无需点名。推荐把 skill 安装进游戏项目并提交，
+这样团队每个人的 Codex 都会自动发现；也可以为本地所有项目安装一次：
+
+```sh
+forge skill install --project /path/to/game   # 提交 .agents/skills/forge-use/
+forge skill install --user                    # 可选：本地所有项目
+```
+
+macOS、Linux、Windows 均支持。CLI 升级后用 `forge skill check --project .` 检查；
+过期的受管 skill 再执行一次 `install` 即可更新。skill 安装是可选项：
+`forge guide` 离线提供同样的工作流说明。
+
 ## 主要功能
 
 | 工作流 | 可以完成的事情 |
@@ -100,7 +115,7 @@ Godot 原生导入可能就足够了。项目资源库和 Provider 生成均为�
 
 > 请用 Forge 为这个 Godot 项目加工素材。先读取项目固定版本的 `forge guide`，检查预览和诊断，保留原图及项目锁。在已有授权内完成加工、安装和真实引擎验证；意图或权限缺失时再询问，保留任务要求的创意审核。报告结果、待审核项或恢复步骤，详细证据保存在文件里。
 
-内置指南支持离线读取。通过 `forge guide project-assets`、`forge guide static`、`forge guide animation`、`forge guide audio` 或 `forge guide delivery` 查看对应主题。macOS/Linux 还可选择[安装 Codex skill](docs/automation/forge-cli.md#optional-bundled-codex-skill)，让 Codex 发现它。
+内置指南支持离线读取。通过 `forge guide project-assets`、`forge guide static`、`forge guide animation`、`forge guide audio` 或 `forge guide delivery` 查看对应主题。也可选择[安装 Codex skill](docs/automation/forge-cli.md#optional-bundled-codex-skill) 让 Codex 自动发现，见[让 Codex 发现 Forge](#让-codex-发现-forge推荐)。
 
 ## 实际项目：Sword
 

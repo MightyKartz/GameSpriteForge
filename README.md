@@ -51,6 +51,23 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\forge-windows\install-
 & "$env:LOCALAPPDATA\GameSpriteForge\bin\forge.cmd" doctor --json
 ```
 
+### Let Codex discover Forge (recommended)
+
+Forge works through its CLI; the bundled `forge-use` skill tells Codex when and
+how to use it, so asset tasks route to Forge without naming it. Install the
+skill into a game project and commit it — every collaborator's Codex then
+discovers it automatically — or install it once for all your local projects:
+
+```sh
+forge skill install --project /path/to/game   # commit .agents/skills/forge-use/
+forge skill install --user                    # optional: all local projects
+```
+
+This works on macOS, Linux and Windows. Run `forge skill check --project .`
+after a CLI upgrade; outdated managed skills update with another `install`.
+Skill installation is optional: `forge guide` provides the same workflows
+offline from the executable itself.
+
 ## What you can do
 
 | Workflow | Capabilities |
@@ -107,7 +124,7 @@ Open your game project in Codex and ask:
 
 > Prepare these assets for this Godot project with Forge. Read the pinned CLI's `forge guide`, inspect the previews and diagnostics, and preserve the originals and project locks. Complete processing, installation and native verification within the authorized scope. Ask when intent or authority is missing, and retain any required creative review. Report the result, remaining review needs or recovery steps; keep detailed evidence in files.
 
-The embedded guide works offline. Read a topic with `forge guide project-assets`, `forge guide static`, `forge guide animation`, `forge guide audio` or `forge guide delivery`. An optional [Codex skill installation](docs/automation/forge-cli.md#optional-bundled-codex-skill) enables discovery on macOS/Linux.
+The embedded guide works offline. Read a topic with `forge guide project-assets`, `forge guide static`, `forge guide animation`, `forge guide audio` or `forge guide delivery`. An optional [Codex skill installation](docs/automation/forge-cli.md#optional-bundled-codex-skill) enables discovery; see [Let Codex discover Forge](#let-codex-discover-forge-recommended).
 
 ## In use: Sword
 

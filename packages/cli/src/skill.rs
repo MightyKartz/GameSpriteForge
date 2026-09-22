@@ -382,9 +382,19 @@ impl Location {
         }
         // Canonicalizing the explicit scope allows system aliases such as /tmp.
         // Every path subsequently created inside that scope is checked separately.
+        let canonical = fs::canonicalize(root).map_err(crate::io_error)?;
+        // The Windows verbatim prefix (\\?\) is a filesystem API detail;
+        // report and operate on the familiar drive-letter form.
+        #[cfg(target_os = "windows")]
+        let canonical = match canonical.as_os_str().to_string_lossy() {
+            text if text.starts_with(r"\\?\") && text.len() >= 6 && text.as_bytes()[5] == b':' => {
+                PathBuf::from(&text[4..])
+            }
+            _ => canonical.clone(),
+        };
         Ok(Self {
             scope,
-            root: fs::canonicalize(root).map_err(crate::io_error)?,
+            root: canonical,
         })
     }
 
@@ -597,7 +607,13 @@ fn inspect_entries(
         if path == Path::new(MANIFEST) {
             continue;
         }
-        let key = path.to_string_lossy();
+        // Manifest keys use '/' on every platform; never let the OS separator
+        // leak into the identity comparison.
+        let key = path
+            .components()
+            .map(|part| part.as_os_str().to_string_lossy())
+            .collect::<Vec<_>>()
+            .join("/");
         let kind = entry.file_type().map_err(crate::io_error)?;
         if kind.is_symlink() {
             issues.push(format!("symlink in installed skill: {key}"));
@@ -608,7 +624,7 @@ fn inspect_entries(
                 issues.push(format!("unmanaged directory: {key}"));
             }
         } else if kind.is_file() {
-            match manifest.files.get(key.as_ref()) {
+            match manifest.files.get(key.as_str()) {
                 Some(expected) if file_hash(&entry.path())? == *expected => {}
                 Some(_) => issues.push(format!("modified managed file: {key}")),
                 None => issues.push(format!("unmanaged file: {key}")),
@@ -945,7 +961,25 @@ fn rename_new(source: &Path, target: &Path) -> std::io::Result<()> {
     }
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "linux")))]
+/// MoveFileExW without MOVEFILE_REPLACE_EXISTING fails when the target exists
+/// at all, including an empty directory. std::fs::rename passes the replace
+/// flag on Windows, so the no-replace contract needs the explicit call.
+#[cfg(target_os = "windows")]
+fn rename_new(source: &Path, target: &Path) -> std::io::Result<()> {
+    use std::os::windows::ffi::OsStrExt;
+    let source: Vec<u16> = source.as_os_str().encode_wide().chain(Some(0)).collect();
+    let target: Vec<u16> = target.as_os_str().encode_wide().chain(Some(0)).collect();
+    let result = unsafe {
+        windows_sys::Win32::Storage::FileSystem::MoveFileExW(source.as_ptr(), target.as_ptr(), 0)
+    };
+    if result == 0 {
+        Err(std::io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
 fn rename_new(_source: &Path, _target: &Path) -> std::io::Result<()> {
     Err(std::io::Error::new(
         std::io::ErrorKind::Unsupported,
@@ -1094,10 +1128,30 @@ mod guide_tests {
     }
 }
 
-#[cfg(all(test, any(target_os = "macos", target_os = "linux")))]
+#[cfg(all(
+    test,
+    any(target_os = "macos", target_os = "linux", target_os = "windows")
+))]
 mod tests {
     use super::*;
-    use std::os::unix::fs::symlink;
+    #[cfg(unix)]
+    use std::os::unix::fs::{symlink as symlink_dir, symlink as symlink_file};
+    #[cfg(target_os = "windows")]
+    use std::os::windows::fs::{symlink_dir, symlink_file};
+
+    // Symlink creation needs Developer Mode or SeCreateSymbolicLinkPrivilege;
+    // the protection under test is platform-neutral, so probe instead of
+    // failing on unprivileged Windows sessions. CI runners are privileged.
+    fn symlinks_supported() -> bool {
+        let root = env::temp_dir().join(format!("forge-symlink-probe-{}", unique_id()));
+        fs::create_dir(&root).unwrap();
+        let target = root.join("target.txt");
+        fs::write(&target, b"probe").unwrap();
+        let link = root.join("link");
+        let ok = symlink_file(&target, &link).is_ok();
+        let _ = fs::remove_dir_all(&root);
+        ok
+    }
 
     struct Fixture {
         location: Location,
@@ -1248,6 +1302,9 @@ mod tests {
 
     #[test]
     fn unsafe_manifest_and_symlink_children_never_authorize_an_update() {
+        if !symlinks_supported() {
+            return;
+        }
         let fixture = Fixture::new();
         let old = old_bundle();
         let new = Bundle::embedded();
@@ -1271,7 +1328,7 @@ mod tests {
         let external = fixture.location.root.join("outside.txt");
         fs::write(&external, &old.files[0].content).unwrap();
         fs::remove_file(fixture.target().join("SKILL.md")).unwrap();
-        symlink(&external, fixture.target().join("SKILL.md")).unwrap();
+        symlink_file(&external, fixture.target().join("SKILL.md")).unwrap();
         assert_eq!(
             inspect(&fixture.location, &fixture.target(), &new)
                 .unwrap()
@@ -1291,6 +1348,9 @@ mod tests {
 
     #[test]
     fn symlink_parents_and_target_cannot_redirect_installation() {
+        if !symlinks_supported() {
+            return;
+        }
         for relative in [
             ".agents",
             ".agents/skills",
@@ -1302,7 +1362,7 @@ mod tests {
             fs::create_dir(&external).unwrap();
             let link = fixture.location.root.join(relative);
             fs::create_dir_all(link.parent().unwrap()).unwrap();
-            symlink(&external, &link).unwrap();
+            symlink_dir(&external, &link).unwrap();
             let failure = install(&fixture.location, &Bundle::embedded()).unwrap_err();
             assert!(
                 matches!(failure.0.as_str(), "skill_unsafe_path" | "skill_unmanaged"),
@@ -1318,7 +1378,7 @@ mod tests {
         install(&fixture.location, &old_bundle()).unwrap();
         let external = fixture.location.root.join("external");
         fs::create_dir(&external).unwrap();
-        symlink(
+        symlink_dir(
             &external,
             fixture.location.agents().join(".forge-skill-backups"),
         )
