@@ -231,7 +231,12 @@ pub fn create(
                         return Err(invalid("preview media changed during copy"));
                     }
                     if player_frame {
-                        player_urls.insert(source, relative);
+                        player_urls.insert(source, relative.clone());
+                        manifest_files.push(PreviewMediaFile {
+                            file: relative,
+                            label: label.clone(),
+                            media_type: "image".into(),
+                        });
                         copied += 1;
                         continue;
                     }
