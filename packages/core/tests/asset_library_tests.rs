@@ -744,6 +744,9 @@ fn requirements_reconciliation_reports_each_status_and_stays_read_only() {
     let mut unpaired = batch.clone();
     unpaired.requirements[0].review_verdict = Some("approved".into());
     assert!(requirements::check_requirements(&root, &unpaired).is_err());
+    let mut empty_kind = batch.clone();
+    empty_kind.requirements[0].kind = Some(" ".into());
+    assert!(requirements::check_requirements(&root, &empty_kind).is_err());
     // Tag filters require every tag.
     let filtered = RequirementsBatch {
         schema_version: "1".into(),

@@ -83,6 +83,13 @@ fn validate(batch: &RequirementsBatch) -> Result<(), CatalogError> {
         if requirement.tags.iter().any(|tag| tag.trim().is_empty()) {
             return Err(invalid("requirement tags must be non-empty"));
         }
+        for value in [&requirement.kind, &requirement.purpose, &requirement.query] {
+            if value.as_deref().is_some_and(|v| v.trim().is_empty()) {
+                return Err(invalid(
+                    "requirement kind, purpose and query must be non-empty",
+                ));
+            }
+        }
         if requirement.review_domain.is_some() != requirement.review_verdict.is_some() {
             return Err(invalid(
                 "reviewDomain and reviewVerdict must be provided together",
