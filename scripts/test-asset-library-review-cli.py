@@ -64,12 +64,22 @@ def check(forge, root):
     preview = run('asset', 'preview', '--project', library, '--out', output)
     assert preview['revisions'] == 4 and preview['mediaFiles'] == 4 and not preview['issues'], preview
     assert preview['selection']['total'] == 4
+    assert len(preview['media']) == 4
+    for entry in preview['media']:
+        assert entry['assetId'] and entry['revision'] and entry['files'], entry
+        for file in entry['files']:
+            assert (output / file['file']).is_file(), file
+            assert file['mediaType'] in {'image', 'audio', 'video'} and file['label'], file
+    stored = json.loads((output / 'preview.json').read_text(encoding='utf-8'))
+    assert stored['media'] == preview['media']
     assert head == (library / '.forge/catalog.json').read_bytes()
     html = (output / 'index.html').read_text(encoding='utf-8')
     assert '<audio controls' in html and 'visual: unknown' in html and 'visual: needs_review' in html
     assert not (root / 'jobs').exists() and not (root / 'plans').exists()
-    build = run('doctor')['build']
-    print(json.dumps({'passed': True, 'build': build, 'preview': preview, 'checks': ['image_gif_wav', 'retained_review_evidence', 'new_revision_unknown', 'search_assertions', 'readonly_preview', 'no_provider_or_job']}))
+    doctor = run('doctor')
+    assert 'project_asset_preview_media_manifest' in doctor['capabilities']
+    build = doctor['build']
+    print(json.dumps({'passed': True, 'build': build, 'preview': preview, 'checks': ['image_gif_wav', 'retained_review_evidence', 'new_revision_unknown', 'search_assertions', 'readonly_preview', 'media_manifest', 'no_provider_or_job']}))
 
 
 if __name__ == '__main__':

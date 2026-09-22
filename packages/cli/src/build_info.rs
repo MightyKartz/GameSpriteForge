@@ -44,6 +44,7 @@ pub const CAPABILITIES: &[&str] = &[
     "project_asset_output_registration",
     "project_asset_retention_delivery",
     "project_asset_preview_review",
+    "project_asset_preview_media_manifest",
     "project_asset_portability",
     "project_asset_integrity_index",
     "project_asset_metadata_merge",
