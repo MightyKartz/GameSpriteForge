@@ -25,6 +25,12 @@ forge asset search --project ./library --kind audio --tag battle --limit 20 --js
 forge asset history --project ./library --id music.battle --json
 ```
 
+Run `forge asset tags --project ./library --json` to list the kind/tag/purpose
+vocabulary already in use, with counts, before composing exact filters. For
+large libraries, `forge asset search --metadata-only --json` skips source-byte
+verification and reports `status:"unknown"`; it rejects `--status` filters and
+never reads media. Verified searches remain the default.
+
 Scan only the explicitly selected root. Review `issues` and edit the returned
 items before registering: choose stable `assetId`, name, tags and optional
 `purpose`. Keep `expectedContent` intact: registration rechecks the actual bytes.

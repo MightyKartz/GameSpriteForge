@@ -150,10 +150,20 @@ pub struct SearchArgs {
     review_domain: Option<String>,
     #[arg(long, requires = "review_domain")]
     review_verdict: Option<String>,
+    /// Skip source-byte verification and report availability as unknown.
+    #[arg(long)]
+    metadata_only: bool,
     #[arg(long, default_value_t = 0)]
     offset: usize,
     #[arg(long, default_value_t = 20)]
     limit: usize,
+    #[command(flatten)]
+    json: crate::JsonFlag,
+}
+#[derive(Args)]
+pub struct TagsArgs {
+    #[arg(long)]
+    project: PathBuf,
     #[command(flatten)]
     json: crate::JsonFlag,
 }
@@ -201,10 +211,14 @@ pub fn search(args: SearchArgs) -> Result<(), (String, String)> {
         disposition: args.disposition,
         review_domain: args.review_domain,
         review_verdict: args.review_verdict,
+        metadata_only: args.metadata_only,
         offset: args.offset,
         limit: args.limit,
     };
     crate::success(&library::intake::search(&args.project, &filter).map_err(error)?)
+}
+pub fn tags(args: TagsArgs) -> Result<(), (String, String)> {
+    crate::success(&library::intake::vocabulary(&args.project).map_err(error)?)
 }
 pub fn history(args: HistoryArgs) -> Result<(), (String, String)> {
     crate::success(&library::intake::history(&args.project, &args.id).map_err(error)?)

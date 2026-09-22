@@ -453,6 +453,9 @@ pub struct SearchFilter {
     pub status: Option<String>,
     pub review_domain: Option<String>,
     pub review_verdict: Option<String>,
+    /// Explicit opt-in: skip source-byte verification and report availability
+    /// as unknown. Metadata-only reads never touch media bytes.
+    pub metadata_only: bool,
     pub offset: usize,
     pub limit: usize,
 }
@@ -489,41 +492,51 @@ pub fn history(root: &Path, id: &str) -> Result<Vec<SearchHit>, CatalogError> {
         .revisions
         .iter()
         .rev()
-        .map(|digest| hit(root, &asset, digest))
+        .map(|digest| hit(root, &asset, digest, false))
         .collect()
 }
-fn hit(root: &Path, asset: &AssetRecord, digest: &str) -> Result<SearchHit, CatalogError> {
+fn hit(
+    root: &Path,
+    asset: &AssetRecord,
+    digest: &str,
+    metadata_only: bool,
+) -> Result<SearchHit, CatalogError> {
     let revision = read_revision(root, asset, digest)?;
     let mut members: Vec<String> = revision
         .source
         .get("members")
         .and_then(|v| serde_json::from_value(v.clone()).ok())
         .unwrap_or_default();
-    let paths = asset
-        .locations
-        .get(digest)
-        .into_iter()
-        .chain(asset.additional_locations.get(digest).into_iter().flatten());
-    let mut status = "unavailable";
-    for location in paths {
-        if let Ok(path) = resolve_location(root, location) {
-            if let Ok(actual) = content_at(&path) {
-                status = if revision.content.as_ref() == Some(&actual) {
-                    "available"
-                } else {
-                    "changed"
-                };
-                if status == "available" {
-                    if members.is_empty() && path.is_dir() {
-                        members = classify(&path)
-                            .map(|(_, members)| members)
-                            .unwrap_or_default();
+    let status = if metadata_only {
+        "unknown"
+    } else {
+        let paths = asset
+            .locations
+            .get(digest)
+            .into_iter()
+            .chain(asset.additional_locations.get(digest).into_iter().flatten());
+        let mut status = "unavailable";
+        for location in paths {
+            if let Ok(path) = resolve_location(root, location) {
+                if let Ok(actual) = content_at(&path) {
+                    status = if revision.content.as_ref() == Some(&actual) {
+                        "available"
+                    } else {
+                        "changed"
+                    };
+                    if status == "available" {
+                        if members.is_empty() && path.is_dir() {
+                            members = classify(&path)
+                                .map(|(_, members)| members)
+                                .unwrap_or_default();
+                        }
+                        break;
                     }
-                    break;
                 }
             }
         }
-    }
+        status
+    };
     let mut review_states = BTreeMap::new();
     for review in review::read_reviews(root, asset, digest)? {
         review_states.insert(review.domain, review.verdict);
@@ -554,6 +567,11 @@ fn hit(root: &Path, asset: &AssetRecord, digest: &str) -> Result<SearchHit, Cata
     })
 }
 pub fn search(root: &Path, filter: &SearchFilter) -> Result<SearchResult, CatalogError> {
+    if filter.metadata_only && filter.status.is_some() {
+        return Err(invalid(
+            "--status cannot filter an unverified metadata-only search",
+        ));
+    }
     if filter
         .disposition
         .as_deref()
@@ -607,7 +625,7 @@ pub fn search(root: &Path, filter: &SearchFilter) -> Result<SearchResult, Catalo
             {
                 continue;
             }
-            let hit = hit(root, &asset, digest)?;
+            let hit = hit(root, &asset, digest, filter.metadata_only)?;
             if let (Some(domain), Some(verdict)) = (&filter.review_domain, &filter.review_verdict) {
                 if hit
                     .review_states
@@ -661,4 +679,73 @@ pub fn disposition<'a>(asset: &'a AssetRecord, revision: &str) -> &'a str {
             .map(String::as_str)
             .unwrap_or("candidate")
     }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct VocabularyEntry {
+    pub value: String,
+    pub assets: usize,
+    pub revisions: usize,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Vocabulary {
+    pub assets: usize,
+    pub revisions: usize,
+    pub kinds: Vec<VocabularyEntry>,
+    pub tags: Vec<VocabularyEntry>,
+    pub purposes: Vec<VocabularyEntry>,
+}
+
+fn vocabulary_entry(map: &BTreeMap<String, (usize, usize)>, value: &str) -> VocabularyEntry {
+    let (assets, revisions) = map.get(value).copied().unwrap_or_default();
+    VocabularyEntry {
+        value: value.into(),
+        assets,
+        revisions,
+    }
+}
+
+fn sorted_vocabulary(map: BTreeMap<String, (usize, usize)>) -> Vec<VocabularyEntry> {
+    let mut entries: Vec<VocabularyEntry> = map
+        .keys()
+        .map(|value| vocabulary_entry(&map, value))
+        .collect();
+    entries.sort_by(|a, b| b.assets.cmp(&a.assets).then_with(|| a.value.cmp(&b.value)));
+    entries
+}
+
+/// Read-only vocabulary of the kinds, tags and purposes already in use, so
+/// callers can compose exact filters without guessing spellings. Pure metadata:
+/// media bytes are never read, and no index cache is created or repaired.
+pub fn vocabulary(root: &Path) -> Result<Vocabulary, CatalogError> {
+    let catalog = read_catalog(root)?;
+    let assets = index::assets(root, &catalog)?;
+    let mut kinds: BTreeMap<String, (usize, usize)> = BTreeMap::new();
+    let mut tags: BTreeMap<String, (usize, usize)> = BTreeMap::new();
+    let mut purposes: BTreeMap<String, (usize, usize)> = BTreeMap::new();
+    let mut revisions = 0;
+    for asset in &assets {
+        let count = asset.revisions.len();
+        revisions += count;
+        kinds.entry(asset.kind.clone()).or_default().0 += 1;
+        kinds.entry(asset.kind.clone()).or_default().1 += count;
+        for tag in &asset.tags {
+            tags.entry(tag.clone()).or_default().0 += 1;
+            tags.entry(tag.clone()).or_default().1 += count;
+        }
+        if let Some(purpose) = &asset.purpose {
+            purposes.entry(purpose.clone()).or_default().0 += 1;
+            purposes.entry(purpose.clone()).or_default().1 += count;
+        }
+    }
+    Ok(Vocabulary {
+        assets: assets.len(),
+        revisions,
+        kinds: sorted_vocabulary(kinds),
+        tags: sorted_vocabulary(tags),
+        purposes: sorted_vocabulary(purposes),
+    })
 }

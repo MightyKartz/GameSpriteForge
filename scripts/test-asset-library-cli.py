@@ -119,6 +119,20 @@ def main():
         run('asset', 'register', '--project', project, '--input', batch_file, ok=False)
         assert inventory(project) == before
 
+        # Vocabulary and metadata-only search are read-only and never verify
+        # source bytes; the status filter rejects unverified reads explicitly.
+        vocabulary = run('asset', 'tags', '--project', project)
+        assert vocabulary['assets'] == 3 and vocabulary['revisions'] == 3
+        assert {entry['value']: entry['assets'] for entry in vocabulary['kinds']} == {'file': 3}
+        assert {entry['value']: entry['assets'] for entry in vocabulary['tags']} == {'fixture': 2}
+        assert {entry['value']: entry['assets'] for entry in vocabulary['purposes']} == {'battle': 2}
+        metadata = run('asset', 'search', '--project', project, '--metadata-only', '--limit', 10)
+        assert metadata['total'] == 3
+        assert all(item['status'] == 'unknown' for item in metadata['items'])
+        run('asset', 'search', '--project', project, '--metadata-only', '--status', 'available', ok=False)
+        assert run('asset', 'search', '--project', project, '--status', 'available')['total'] == 3
+        assert inventory(project) == before
+
         legacy = root / 'legacy'
         (legacy / '.forge').mkdir(parents=True)
         catalog = legacy / '.forge/catalog.json'
@@ -142,10 +156,14 @@ def main():
         assert 'reviewedAt' not in found
         assert inventory(legacy) == before
         assert not (root / 'jobs').exists() and not (root / 'plans').exists()
-        build = run('doctor')['build']
+        doctor = run('doctor')
+        build = doctor['build']
+        for capability in ['project_asset_vocabulary', 'project_asset_metadata_search']:
+            assert capability in doctor['capabilities'], capability
         print(json.dumps({'passed': True, 'build': build, 'legacyBinaryChecked': bool(args.legacy_forge),
                           'checks': ['local_init', 'readonly_query', 'migration_preview', 'stale_preview',
-                                     'legacy_backup', 'unknown_evidence', 'scan_register_search_history', 'intake_schema_contracts', 'no_jobs_or_provider_requests']}))
+                                     'legacy_backup', 'unknown_evidence', 'scan_register_search_history', 'intake_schema_contracts',
+                                     'vocabulary_and_metadata_search', 'no_jobs_or_provider_requests']}))
 
 
 if __name__ == '__main__':
