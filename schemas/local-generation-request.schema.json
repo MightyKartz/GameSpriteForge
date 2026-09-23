@@ -1,27 +1,46 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/MightyKartz/GameSpriteForge/schemas/local-generation-request.schema.json",
-  "title": "Forge local image generation request v1",
+  "title": "Forge local media generation request v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "mediaKind", "assetId", "name", "purpose", "kind", "license", "sampling", "canvasSize"],
+  "required": ["schemaVersion", "mediaKind", "assetId", "name", "purpose", "kind", "license"],
   "oneOf": [
     {"required": ["source"], "not": {"required": ["workflowProfile"]}},
     {"required": ["workflowProfile", "prompt"], "not": {"required": ["source"]}}
   ],
+  "allOf": [{
+    "if": {"properties": {"mediaKind": {"const": "video"}}, "required": ["mediaKind"]},
+    "then": {
+      "required": ["animationName", "animationFps", "targetFrameCount", "supportAnimations"],
+      "properties": {"kind": {"const": "character"}, "supportAnimations": {"minItems": 1}},
+      "oneOf": [
+        {"required": ["source"], "not": {"required": ["referenceImage"]}},
+        {"required": ["workflowProfile", "referenceImage"], "not": {"required": ["source"]}}
+      ]
+    },
+    "else": {"properties": {"kind": {"enum": ["icon_set", "prop_set"]}}}
+  }],
   "properties": {
     "schemaVersion": {"const": "1"},
-    "mediaKind": {"const": "image"},
+    "mediaKind": {"enum": ["image", "video"]},
     "workflowProfile": {"type": "string", "minLength": 1},
-    "source": {"type": "string", "minLength": 1, "description": "Existing absolute PNG path"},
+    "source": {"type": "string", "minLength": 1, "description": "Existing absolute PNG or MP4 path"},
     "prompt": {"type": "string", "minLength": 1},
+    "referenceImage": {"type": "string", "minLength": 1, "description": "Absolute PNG used as an I2V first frame"},
     "assetId": {"type": "string", "minLength": 1},
     "name": {"type": "string", "minLength": 1},
     "purpose": {"type": "string", "minLength": 1},
-    "kind": {"enum": ["icon_set", "prop_set"]},
+    "kind": {"enum": ["icon_set", "prop_set", "character"]},
     "license": {"type": "string", "minLength": 1},
     "sampling": {"enum": ["nearest", "linear"]},
     "canvasSize": {"type": "integer", "minimum": 1},
+    "animationName": {"type": "string", "minLength": 1},
+    "animationFps": {"type": "number", "minimum": 1, "maximum": 60},
+    "targetFrameCount": {"type": "integer", "minimum": 2, "maximum": 24},
+    "loopAnimation": {"type": "boolean"},
+    "mattingMode": {"enum": ["auto_corners", "preserve_alpha"]},
+    "supportAnimations": {"type": "array", "items": {"type": "object"}, "description": "Existing CharacterAnimationRecipe entries with absolute source paths"},
     "foregroundAlphaThreshold": {"type": "integer", "minimum": 0, "maximum": 255},
     "edgePaddingPx": {"type": "integer", "minimum": 0},
     "assetProject": {

@@ -51,6 +51,14 @@ const SOURCE_FILES: &[SourceFile] = &[
     },
     SourceFile {
         resource: GuideResource {
+            topic: "comfyui-video-example",
+            path: "examples/comfyui-video.json",
+            media_type: "application/json",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/examples/comfyui-video.json"),
+    },
+    SourceFile {
+        resource: GuideResource {
             topic: "local-delivery-example",
             path: "examples/local-delivery.py",
             media_type: "text/x-python",
@@ -1038,6 +1046,11 @@ mod guide_tests {
             (
                 "comfyui-image-example",
                 "examples/comfyui-image.json",
+                "application/json",
+            ),
+            (
+                "comfyui-video-example",
+                "examples/comfyui-video.json",
                 "application/json",
             ),
             (

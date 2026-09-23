@@ -15,6 +15,7 @@ fn fixture(endpoint: &str) -> (tempfile::TempDir, WorkflowProfile) {
     let workflow = dir.path().join("workflow.json");
     fs::write(&workflow, json!({"1": {"class_type": "CLIPTextEncode", "inputs": {"text": "old"}}, "2": {"class_type": "SaveImage", "inputs": {"images": ["1", 0]}}}).to_string()).unwrap();
     let profile = WorkflowProfile {
+        reference_input: None,
         schema_version: 1,
         endpoint: endpoint.into(),
         allow_remote: false,
@@ -168,6 +169,195 @@ fn transport_checks_nodes_submits_exact_prompt_and_bounds_media() {
     assert!(matches!(
         client.download("file.png", "", "output", 4),
         Err(ComfyError::InvalidOutput(_))
+    ));
+    worker.join().unwrap();
+}
+
+#[test]
+fn h3_reference_upload_and_mp4_in_images_field_use_explicit_mapping() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let endpoint = format!("http://{}", listener.local_addr().unwrap());
+    let (dir, mut profile) = fixture(&endpoint);
+    profile.media_kind = MediaKind::Video;
+    profile.reference_input = Some(NodeInput {
+        node: "3".into(),
+        input: "image".into(),
+    });
+    fs::write(
+        &profile.workflow,
+        json!({
+            "1":{"class_type":"Text", "inputs":{"text":"old"}},
+            "2":{"class_type":"SaveVideo", "inputs":{"video":["1",0]}},
+            "3":{"class_type":"LoadImage", "inputs":{"image":"old.png"}}
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let config = dir.path().join("profile.json");
+    fs::write(&config, serde_json::to_vec(&profile).unwrap()).unwrap();
+    let stored = configure(&dir.path().join("profiles"), "h3", &config).unwrap();
+    let worker = thread::spawn(move || {
+        for index in 0..3 {
+            let (mut stream, _) = listener.accept().unwrap();
+            stream
+                .set_read_timeout(Some(std::time::Duration::from_secs(5)))
+                .unwrap();
+            let mut bytes = Vec::new();
+            let mut chunk = [0; 4096];
+            loop {
+                let n = stream.read(&mut chunk).unwrap();
+                bytes.extend_from_slice(&chunk[..n]);
+                if let Some(end) = bytes.windows(4).position(|w| w == b"\r\n\r\n") {
+                    let header = String::from_utf8_lossy(&bytes[..end]);
+                    let length = header
+                        .lines()
+                        .find_map(|line| {
+                            line.to_ascii_lowercase()
+                                .strip_prefix("content-length: ")
+                                .and_then(|s| s.trim().parse::<usize>().ok())
+                        })
+                        .unwrap_or(0);
+                    if bytes.len() >= end + 4 + length {
+                        break;
+                    }
+                }
+            }
+            let body = match index {
+                0 => json!({
+                    "Text":{"input":{"required":{"text":[]}}},
+                    "SaveVideo":{"input":{"required":{"video":[]}},"output_node":true},
+                    "LoadImage":{"input":{"required":{"image":[]}}}
+                })
+                .to_string(),
+                1 => {
+                    assert!(bytes.starts_with(b"POST /upload/image"));
+                    assert!(bytes.windows(4).any(|w| w == b"test"));
+                    json!({"name":"forge-reference.png","type":"input"}).to_string()
+                }
+                _ => {
+                    assert!(bytes.starts_with(b"POST /prompt"));
+                    let end = bytes.windows(4).position(|w| w == b"\r\n\r\n").unwrap();
+                    let posted: serde_json::Value =
+                        serde_json::from_slice(&bytes[end + 4..]).unwrap();
+                    assert_eq!(posted["prompt"]["1"]["inputs"]["text"], "robot idle");
+                    assert_eq!(
+                        posted["prompt"]["3"]["inputs"]["image"],
+                        "forge-reference.png"
+                    );
+                    json!({"prompt_id":"00000000-0000-4000-8000-000000000001"}).to_string()
+                }
+            };
+            let response = format!(
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+            stream.write_all(response.as_bytes()).unwrap();
+        }
+    });
+    let client = ComfyClient::new(&stored.profile).unwrap();
+    assert!(client.doctor(&stored).unwrap().workflow_valid);
+    let filename = client
+        .upload_image("reference.png", b"test".to_vec())
+        .unwrap();
+    client
+        .submit_with_reference(
+            &stored.profile,
+            "robot idle",
+            "00000000-0000-4000-8000-000000000001",
+            Some(&filename),
+        )
+        .unwrap();
+    let history = json!({"00000000-0000-4000-8000-000000000001": {
+        "status":{"completed":true},
+        "outputs":{"2":{"images":[{"filename":"h3.mp4","subfolder":"video","type":"output"}]}}
+    }});
+    assert!(
+        matches!(parse_history(&history, "00000000-0000-4000-8000-000000000001", &profile).unwrap(), HistoryState::Succeeded(output) if output.filename == "h3.mp4")
+    );
+    worker.join().unwrap();
+}
+
+#[test]
+fn cancellation_deletes_only_exact_pending_forge_prompt() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let endpoint = format!("http://{}", listener.local_addr().unwrap());
+    let (_dir, profile) = fixture(&endpoint);
+    let worker = thread::spawn(move || {
+        for index in 0..3 {
+            let (mut stream, _) = listener.accept().unwrap();
+            stream
+                .set_read_timeout(Some(std::time::Duration::from_secs(5)))
+                .unwrap();
+            let mut bytes = Vec::new();
+            let mut chunk = [0; 4096];
+            loop {
+                let n = stream.read(&mut chunk).unwrap();
+                bytes.extend_from_slice(&chunk[..n]);
+                if let Some(end) = bytes.windows(4).position(|w| w == b"\r\n\r\n") {
+                    let header = String::from_utf8_lossy(&bytes[..end]);
+                    let length = header
+                        .lines()
+                        .find_map(|line| {
+                            line.to_ascii_lowercase()
+                                .strip_prefix("content-length: ")
+                                .and_then(|s| s.trim().parse::<usize>().ok())
+                        })
+                        .unwrap_or(0);
+                    if bytes.len() >= end + 4 + length {
+                        break;
+                    }
+                }
+            }
+            let body = match index {
+                0 => json!({"queue_running":[],"queue_pending":[[1,"our-id",{}, {"client_id":"forge"}], [2,"other-id",{}, {"client_id":"other"}]]}).to_string(),
+                1 => {
+                    assert!(bytes.starts_with(b"POST /queue"));
+                    let end = bytes.windows(4).position(|w| w == b"\r\n\r\n").unwrap();
+                    let posted: serde_json::Value = serde_json::from_slice(&bytes[end+4..]).unwrap();
+                    assert_eq!(posted, json!({"delete":["our-id"]}));
+                    "{}".into()
+                },
+                _ => json!({"queue_running":[],"queue_pending":[[2,"other-id",{}, {"client_id":"other"}]]}).to_string(),
+            };
+            let response = format!(
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+            stream.write_all(response.as_bytes()).unwrap();
+        }
+    });
+    assert!(ComfyClient::new(&profile)
+        .unwrap()
+        .cancel_pending("our-id")
+        .unwrap());
+    worker.join().unwrap();
+}
+
+#[test]
+fn cancellation_never_interrupts_a_running_prompt() {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let endpoint = format!("http://{}", listener.local_addr().unwrap());
+    let (_dir, profile) = fixture(&endpoint);
+    let worker = thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut bytes = [0; 1024];
+        let n = stream.read(&mut bytes).unwrap();
+        assert!(bytes[..n].starts_with(b"GET /queue"));
+        let body =
+            json!({"queue_running":[[1,"our-id",{}, {"client_id":"forge"}]],"queue_pending":[]})
+                .to_string();
+        let response = format!(
+            "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+            body.len(),
+            body
+        );
+        stream.write_all(response.as_bytes()).unwrap();
+    });
+    assert!(matches!(
+        ComfyClient::new(&profile).unwrap().cancel_pending("our-id"),
+        Err(ComfyError::PromptRunning)
     ));
     worker.join().unwrap();
 }

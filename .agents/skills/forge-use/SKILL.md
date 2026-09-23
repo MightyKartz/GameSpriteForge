@@ -62,7 +62,7 @@ Forge never updates game pins or separately installed skills automatically.
 | Repeated revisions, reviews or cross-machine reuse | `forge guide project-assets` | [Optional library](references/project-assets.md) |
 | Configure Godot or verify/export a game | `forge guide godot-workflow` | [Godot workflow](references/godot-workflow.md) |
 | Explicitly requested online generation | `forge guide provider` | [Provider workflow](references/provider.md) |
-| User-installed local ComfyUI image generation | `forge guide comfyui` | [Local ComfyUI](references/comfyui.md) |
+| User-installed local ComfyUI image/video generation | `forge guide comfyui` | [Local ComfyUI](references/comfyui.md) |
 
 Read request examples with `guide static-example`, `guide audio-example`,
 `guide provider-example` or `guide comfyui-image-example`. Check exit status
