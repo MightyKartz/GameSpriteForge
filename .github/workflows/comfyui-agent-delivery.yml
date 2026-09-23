@@ -37,6 +37,7 @@ jobs:
         run: |
           cargo +1.98.1 test --locked -p providers --test comfyui_contract
           cargo +1.98.1 test --locked -p forge-cli --test local_asset_create
+          cargo +1.98.1 test --locked -p core --test anchor_tests
       - name: Install and exercise the CLI outside the source tree
         shell: bash
         run: |
