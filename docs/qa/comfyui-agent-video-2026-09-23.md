@@ -78,6 +78,14 @@ usable game animation or Godot delivery for T2V. Private probe files remain
 under `target/qa/comfyui/h3-t2v-smoke`; the ComfyUI service was stopped after
 the queue emptied.
 
+The H3 T2V guidance was then added to the bundled agent skill. Commit
+`bd026086835027cb54ccc8e9fb9a113467670051` was installed as a clean
+`x86_64-pc-windows-msvc` debug CLI with no optional features (binary SHA-256
+`d4ba287040d65169a1e314e8f91ddf870363a9c7a98cf3592400751bf936eebf`).
+The installed-binary guide/skill harness passed all 178 offline commands;
+its bundled content hash was
+`2f89c2122f063d09d6b62bc4ed0fc2adf303c7f5965dcfe329348edbffada408`.
+
 This evidence establishes live Codex and DeepSeek conversation-to-CLI-to-Godot
 paths for H3 I2V, with
 the noted revision and regression checks. It does **not** establish a shippable
