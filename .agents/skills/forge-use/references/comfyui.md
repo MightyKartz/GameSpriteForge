@@ -29,6 +29,11 @@ to `staticMatting: "auto_corners"`; inspect the derived preview before review.
    A timeout or disconnected Agent does not submit a second prompt. For H3
    I2V, the profile needs `referenceInput`, the request needs `referenceImage`,
    and the profile's `outputField` must match the actual `/history` response.
+   For H3 text-to-video, use a separate API workflow without a first-frame
+   link, omit `referenceInput` from its profile and omit `referenceImage` from
+   the request. One local T2V profile generated an MP4 and Pack, but its
+   character did not match the support action and the review rejected it;
+   successful generation alone is not approval to install.
    The tested ComfyUI `SaveVideo` node returned MP4 under `images`. Image edit
    likewise requires `referenceInput` and `referenceImage`; neither mapping is
    guessed. The user-supplied workflow and weights must match the profile.
