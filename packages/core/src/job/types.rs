@@ -9,6 +9,8 @@ use crate::quality::{QualityReport, QualityVerdict};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SourceKind {
+    ImportImage,
+    ComfyuiImage,
     ImportAudio,
     ImportVideo,
     ImportFrames,
@@ -20,6 +22,8 @@ pub enum SourceKind {
 impl SourceKind {
     pub fn from_code(value: &str) -> Self {
         match value {
+            "import_image" => SourceKind::ImportImage,
+            "comfyui_image" => SourceKind::ComfyuiImage,
             "import_audio" => SourceKind::ImportAudio,
             "import_video" => SourceKind::ImportVideo,
             "import_frames" => SourceKind::ImportFrames,
@@ -31,6 +35,8 @@ impl SourceKind {
 
     pub fn as_str(&self) -> &'static str {
         match self {
+            Self::ImportImage => "import_image",
+            Self::ComfyuiImage => "comfyui_image",
             Self::ImportAudio => "import_audio",
             Self::ImportVideo => "import_video",
             Self::ImportFrames => "import_frames",
@@ -75,6 +81,8 @@ impl<'de> Deserialize<'de> for SourceKind {
                 E: de::Error,
             {
                 Ok(match value {
+                    "import_image" => SourceKind::ImportImage,
+                    "comfyui_image" => SourceKind::ComfyuiImage,
                     "import_audio" => SourceKind::ImportAudio,
                     "import_video" => SourceKind::ImportVideo,
                     "import_frames" => SourceKind::ImportFrames,
@@ -123,6 +131,7 @@ pub enum JobOperationKind {
     LegacyPipeline,
     PrepareAsset,
     PrepareStatic,
+    LocalComfyAsset,
     PrepareAudio,
     PrepareCharacterPack,
     GenerateCharacterPack,

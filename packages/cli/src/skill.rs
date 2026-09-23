@@ -7,7 +7,7 @@ use std::path::{Component, Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use clap::{Args, Subcommand};
+use clap::{Args, Subcommand, ValueEnum};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -33,6 +33,22 @@ struct GuideResource {
 }
 
 const SOURCE_FILES: &[SourceFile] = &[
+    SourceFile {
+        resource: GuideResource {
+            topic: "comfyui",
+            path: "references/comfyui.md",
+            media_type: "text/markdown",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/references/comfyui.md"),
+    },
+    SourceFile {
+        resource: GuideResource {
+            topic: "comfyui-image-example",
+            path: "examples/comfyui-image.json",
+            media_type: "application/json",
+        },
+        content: include_str!("../../../.agents/skills/forge-use/examples/comfyui-image.json"),
+    },
     SourceFile {
         resource: GuideResource {
             topic: "local-delivery-example",
@@ -156,7 +172,7 @@ pub enum SkillCommand {
         #[arg(long)]
         json: bool,
     },
-    /// Optionally install the bundled skill for Codex discovery, preserving local changes.
+    /// Optionally install the bundled skill for Agent discovery, preserving local changes.
     Install(ScopeArgs),
     /// Inspect an installation without changing files.
     Check(ScopeArgs),
@@ -171,8 +187,18 @@ pub struct ScopeArgs {
     /// Install for this user under ~/.agents/skills/forge-use.
     #[arg(long, required_unless_present = "project", conflicts_with = "project")]
     user: bool,
+    /// Shared .agents discovery (Codex/DeepSeek) or Claude Code's .claude directory.
+    #[arg(long, value_enum, default_value_t = AgentArg::Shared)]
+    agent: AgentArg,
     #[arg(long, global = false)]
     json: bool,
+}
+
+#[derive(Clone, Copy, Debug, Default, ValueEnum)]
+enum AgentArg {
+    #[default]
+    Shared,
+    ClaudeCode,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -345,6 +371,7 @@ struct Check {
 struct Location {
     scope: &'static str,
     root: PathBuf,
+    agent_dir: &'static str,
 }
 
 impl Location {
@@ -395,11 +422,15 @@ impl Location {
         Ok(Self {
             scope,
             root: canonical,
+            agent_dir: match args.agent {
+                AgentArg::Shared => ".agents",
+                AgentArg::ClaudeCode => ".claude",
+            },
         })
     }
 
     fn agents(&self) -> PathBuf {
-        self.root.join(".agents")
+        self.root.join(self.agent_dir)
     }
     fn target(&self) -> PathBuf {
         self.agents().join("skills").join(NAME)
@@ -1003,6 +1034,12 @@ mod guide_tests {
 
         let bundle = Bundle::embedded();
         let expected = [
+            ("comfyui", "references/comfyui.md", "text/markdown"),
+            (
+                "comfyui-image-example",
+                "examples/comfyui-image.json",
+                "application/json",
+            ),
             (
                 "local-delivery-example",
                 "examples/local-delivery.py",
@@ -1165,6 +1202,7 @@ mod tests {
                 location: Location {
                     scope: "project",
                     root: root.canonicalize().unwrap(),
+                    agent_dir: ".agents",
                 },
             }
         }

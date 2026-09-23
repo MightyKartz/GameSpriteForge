@@ -25,6 +25,8 @@ import zlib
 MANIFEST = ".forge-skill-manifest.json"
 SKILL = "forge-use"
 GUIDE_RESOURCES = (
+    ("comfyui", "references/comfyui.md", "text/markdown"),
+    ("comfyui-image-example", "examples/comfyui-image.json", "application/json"),
     ("local-delivery-example", "examples/local-delivery.py", "text/x-python"),
     ("godot-workflow", "references/godot-workflow.md", "text/markdown"),
     ("project-assets", "references/project-assets.md", "text/markdown"),
@@ -323,6 +325,13 @@ class Harness:
                     f"Plain path and topic differ: {topic}")
             if media_type == "application/json":
                 request = json.loads(plain)
+                if topic == "comfyui-image-example":
+                    require(isinstance(request, dict) and request.get("schemaVersion") == "1"
+                            and request.get("mediaKind") == "image" and request.get("workflowProfile")
+                            and request.get("prompt") and request.get("kind") in ("icon_set", "prop_set"),
+                            "ComfyUI example must be a complete image generation request")
+                    examples.append(relative)
+                    continue
                 if topic == "animation-example":
                     require(isinstance(request, dict) and request.get("schemaVersion") == "2"
                             and [a["name"] for a in request.get("animations", [])] == ["idle", "walk", "attack"],
@@ -385,6 +394,21 @@ class Harness:
         self.install(project, action="unchanged")
         require(snapshot(project) == before, "Same-version reinstall changed project bytes or mtimes")
         self.completed("project_install_check_and_idempotent_reinstall")
+
+    def claude_scope(self):
+        project = self.project("claude-scope")
+        target = project / ".claude/skills" / SKILL
+        missing = self.call(["skill", "check", "--project", project, "--agent", "claude-code"])
+        self.assert_result(missing, target, "project", "missing")
+        installed = self.call(["skill", "install", "--project", project, "--agent", "claude-code"])
+        self.assert_result(installed, target, "project", "current")
+        self.assert_install(target)
+        require(not self.target(project).exists(), "Claude install unexpectedly touched shared .agents skill")
+        current = self.call(["skill", "check", "--project", project, "--agent", "claude-code"])
+        self.assert_result(current, target, "project", "current")
+        require(current["bundle"]["contentHash"] == self.bundle["contentHash"],
+                "Claude skill content differs from the embedded bundle")
+        self.completed("claude_project_installs_same_bundle_without_shared_skill")
 
         user_target = self.home / ".agents/skills" / SKILL
         missing = self.call(["skill", "check", "--user"])
@@ -699,6 +723,7 @@ class Harness:
             self.standalone_and_example()
             if not self.guide_only:
                 self.basic_scopes()
+                self.claude_scope()
                 self.modified_and_unmanaged()
                 self.symlinks()
                 self.upgrade()

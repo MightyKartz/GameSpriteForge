@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Forge local asset review v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sourceSha256", "approved", "reviewer"],
+  "properties": {
+    "schemaVersion": {"const": "1"},
+    "sourceSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "approved": {"type": "boolean"},
+    "reviewer": {"type": "string", "minLength": 1}
+  }
+}
