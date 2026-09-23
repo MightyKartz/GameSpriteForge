@@ -66,3 +66,5 @@ image/video conversation matrix or the prospective paired comparison. Claude
 login is pending; H3 reference-video weights and a second independent real game
 requirement are unavailable locally. No time/token/cost saving is inferred from
 these unmatched runs, and this workflow remains optional pending that evidence.
+The subsequent [H3 conversation and native delivery record](comfyui-agent-video-2026-09-23.md)
+documents the two live video paths and their remaining visual and comparison limits.

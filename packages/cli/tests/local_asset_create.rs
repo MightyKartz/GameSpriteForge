@@ -190,6 +190,7 @@ fn local_mp4_prepares_character_pack_and_waits_for_visual_review() {
             "assetId":"local_h3_fixture", "name":"Local video fixture", "purpose":"character QA",
             "kind":"character", "license":"test-only",
             "animationName":"motion", "animationFps":8, "targetFrameCount":8,
+            "canvasSize":256,
             "loopAnimation":false, "mattingMode":"auto_corners",
             "supportAnimations":[{"name":"idle", "fps":2, "loop":true,
                 "input":{"kind":"png_sequence", "paths":[frame,frame]},
@@ -224,7 +225,18 @@ fn local_mp4_prepares_character_pack_and_waits_for_visual_review() {
             .unwrap()
             > 0
     );
-    assert!(std::path::Path::new(result["data"]["packPath"].as_str().unwrap()).is_dir());
+    let pack = Path::new(result["data"]["packPath"].as_str().unwrap());
+    assert!(pack.is_dir());
+    let frames = pack.join("assets/frames");
+    let frame_paths: Vec<_> = fs::read_dir(frames)
+        .unwrap()
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| path.extension().is_some_and(|extension| extension == "png"))
+        .collect();
+    assert!(!frame_paths.is_empty());
+    for path in frame_paths {
+        assert_eq!(image::image_dimensions(path).unwrap(), (256, 256));
+    }
     assert!(std::path::Path::new(result["data"]["previewPath"].as_str().unwrap()).is_file());
     assert!(result["data"]["installJobId"].is_null());
 }

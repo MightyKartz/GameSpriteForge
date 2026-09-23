@@ -55,6 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             margin: 12,
             alpha_threshold: 0,
             manual_anchor: None,
+            target_canvas_size: None,
         },
     );
     fs::create_dir_all(&normalized_dir)?;

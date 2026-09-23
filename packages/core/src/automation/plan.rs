@@ -1198,6 +1198,15 @@ fn validate_local_animation_options(
     options: crate::frames::NormalizeOptions,
     rendering: Option<&crate::export::AnimationRendering>,
 ) -> Result<(), PlanStoreError> {
+    if let Some(size) = options.target_canvas_size {
+        if !matches!(size, 64 | 128 | 256 | 512)
+            || options.mode == crate::frames::CanvasMode::PreserveSource
+        {
+            return Err(PlanStoreError::InvalidRequest(
+                "targetCanvasSize must be 64, 128, 256 or 512 and cannot be used with preserve_source".into(),
+            ));
+        }
+    }
     if options.mode == crate::frames::CanvasMode::PreserveSource
         && (options.margin != 0 || options.margin_bottom != 0)
     {

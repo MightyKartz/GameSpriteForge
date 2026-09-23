@@ -1433,7 +1433,7 @@ fn prepare_video(job_id: &str, state: &mut AssetState) -> Result<()> {
             .iter()
             .map(|animation| json!(animation)),
     );
-    let request: PrepareCharacterPackRequest = serde_json::from_value(json!({
+    let mut request: PrepareCharacterPackRequest = serde_json::from_value(json!({
         "schemaVersion": "2",
         "assetProject": state.request.asset_project,
         "sourceLocks": source_locks,
@@ -1441,6 +1441,7 @@ fn prepare_video(job_id: &str, state: &mut AssetState) -> Result<()> {
         "quality": {"requireGameReady": false},
         "animations": animations
     })).map_err(super::json_error)?;
+    request.normalize.target_canvas_size = Some(state.request.canvas_size);
     let plans = super::plan_store()?;
     let plan = plans
         .prepare(AutomationOperation::PrepareCharacterPack(request))

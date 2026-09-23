@@ -2357,7 +2357,12 @@ mod tests {
         let expected = {
             let mut hasher = Sha256::new();
             hasher.update(b"forge-directory-hash-v2\0");
-            for (path, contents) in [("a.txt", b"x".as_slice()), ("sub/b.txt", b"y".as_slice())] {
+            for (path, contents) in [
+                (PathBuf::from("a.txt"), b"x".as_slice()),
+                (PathBuf::from("sub").join("b.txt"), b"y".as_slice()),
+            ] {
+                // The retained v2 producer hash uses native path separators.
+                let path = path.to_string_lossy();
                 hasher.update(b"file\0");
                 hasher.update((path.len() as u64).to_le_bytes());
                 hasher.update(path.as_bytes());

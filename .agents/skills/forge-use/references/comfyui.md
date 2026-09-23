@@ -42,7 +42,11 @@ to `staticMatting: "auto_corners"`; inspect the derived preview before review.
    new request for a revised image or video. A video character Pack also needs
    at least one existing `supportAnimations` recipe. Inspect video motion,
    identity and loop endpoints directly; technical `game_ready` is not visual
-   approval. `forge asset create --resume JOB_ID --cancel --json` can delete
+   approval. For video, `canvasSize` resizes the normalized character frames
+   to one square output canvas. Compare subject scale across the generated
+   and support animations, and check whether the ComfyUI workflow stretches
+   the reference image to its video aspect ratio; output canvas sizing cannot
+   repair source distortion. `forge asset create --resume JOB_ID --cancel --json` can delete
    only a pending Forge-owned ComfyUI prompt. A running shared-server prompt
    cannot be safely interrupted by Forge.
 

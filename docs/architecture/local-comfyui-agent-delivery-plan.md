@@ -1,6 +1,6 @@
 # 本机 ComfyUI → Forge → Godot：多 Agent 素材生成实施计划
 
-日期：2026-09-23。状态：待实施。源码基线：`d0fb39b`（main，v0.7.2）。本文所示新命令是**拟议接口**，当前发布版尚不支持。
+日期：2026-09-23。状态：实施与验收中（PR [#73](https://github.com/MightyKartz/GameSpriteForge/pull/73)–[#76](https://github.com/MightyKartz/GameSpriteForge/pull/76)）。源码基线：`d0fb39b`（main，v0.7.2）。本文所示新命令已在开发 PR 中实现；当前发布版尚不支持。真实图片与视频阶段性结果分别见 [图片/Agent 验收](../qa/comfyui-agent-discovery-2026-09-23.md)和[视频/Agent 验收](../qa/comfyui-agent-video-2026-09-23.md)。三 Agent 全矩阵、真人素材审核与真实游戏配对比较尚未完成。
 
 ## 目标与验收场景
 

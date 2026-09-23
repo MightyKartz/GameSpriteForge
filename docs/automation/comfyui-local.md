@@ -108,7 +108,11 @@ clip needs one existing support animation. The original MP4, including any
 audio track, is retained in the Job; only decoded video frames enter the
 character Pack. The audio track is not separately installed. The response
 reports the video probe, source hash, Pack and GIF preview. Inspect identity,
-motion and loop endpoints before binding a review to the source hash. The
+motion and loop endpoints before binding a review to the source hash. Video
+`canvasSize` sets the final square frame size for every animation in the Pack;
+it does not correct a ComfyUI workflow that stretches a square reference into
+wide video, nor does it ensure the subject has equal scale across animations.
+Inspect both generated and support actions before approving. The
 technical quality verdict alone cannot approve a character action. To stop a
 pending Forge-owned prompt, use `forge asset create --resume JOB_ID --cancel
 --json`; Forge refuses to interrupt a running prompt on a shared ComfyUI.
@@ -187,6 +191,9 @@ Godot 项目和安装目标，通过 `--resume JOB_ID --review ... --wait` 继�
 `outputField` 必须依据 `/history`，本机 H3 的 `SaveVideo` 实际把 MP4
 放在 `images`。Forge 保留带音轨的原 MP4，并只把视频帧交付角色 Pack；
 不会暗中把音轨安装为音频资源。审核预览时须观看身份稳定性、动作和循环接缝。
+视频请求的 `canvasSize` 会把 Pack 中所有动画帧缩放到同一个方形画布；
+它无法修复 ComfyUI 工作流把方形首帧拉伸成宽屏视频的问题，也不能保证各动作
+主体的视觉大小相同，审核时要比较生成动作与辅助动作。
 待运行的 Forge prompt 可通过 `--resume JOB_ID --cancel` 精确删除；运行中的
 任务不会调用可能打断其他人的全局 interrupt。真实测试里一段行走候选因动作
 不足被拒绝，轻微待机循环经 Agent QA 后才安装到隔离 Godot 项目。

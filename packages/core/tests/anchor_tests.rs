@@ -53,6 +53,7 @@ fn normalized_frames_share_identical_dimensions() {
             margin_bottom: 0,
             alpha_threshold: 0,
             manual_anchor: None,
+            target_canvas_size: None,
         },
     );
 
@@ -79,6 +80,7 @@ fn square_bottom_keeps_bbox_bottom_near_anchor_y() {
             margin_bottom: 3,
             alpha_threshold: 0,
             manual_anchor: None,
+            target_canvas_size: None,
         },
     );
 
@@ -99,6 +101,7 @@ fn square_bottom_can_use_manual_anchor() {
             margin_bottom: 3,
             alpha_threshold: 0,
             manual_anchor: Some(manual_anchor(12.0, 18.0)),
+            target_canvas_size: None,
         },
     );
 
@@ -107,4 +110,31 @@ fn square_bottom_can_use_manual_anchor() {
     assert_eq!(normalized[0].anchor.y, 18.0);
     assert!(normalized[0].anchor.locked_by_user);
     assert!((normalized[0].bbox.bottom_y - 18.0).abs() <= 0.5);
+}
+
+#[test]
+fn explicit_character_canvas_resizes_all_actions_to_one_size() {
+    let frames = vec![
+        frame_with_rect(512, 288, 88, 40, 424, 268),
+        frame_with_rect(256, 256, 44, 20, 212, 240),
+    ];
+    let normalized = normalize_frames(
+        &frames,
+        NormalizeOptions {
+            mode: CanvasMode::SquareBottom,
+            margin: 12,
+            margin_bottom: 16,
+            target_canvas_size: Some(256),
+            ..Default::default()
+        },
+    );
+    assert_eq!(normalized.len(), 2);
+    for frame in normalized {
+        assert_eq!(frame.image.dimensions(), (256, 256));
+        assert_eq!((frame.size.width, frame.size.height), (256, 256));
+        assert!(frame.bbox.has_foreground());
+        assert!((frame.bbox.bottom_y - frame.anchor.y).abs() <= 1.5);
+        assert_eq!(frame.anchor.x.fract(), 0.0);
+        assert_eq!(frame.anchor.y.fract(), 0.0);
+    }
 }
