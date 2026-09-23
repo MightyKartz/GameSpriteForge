@@ -6,6 +6,7 @@ on:
       - '.github/workflows/comfyui-agent-delivery.yml'
       - '.agents/skills/forge-use/**'
       - 'packages/cli/**'
+      - 'packages/core/**'
       - 'packages/providers/**'
       - 'schemas/*generation*'
       - 'schemas/comfyui-*'
