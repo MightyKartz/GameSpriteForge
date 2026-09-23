@@ -13,13 +13,17 @@
     "if": {"properties": {"mediaKind": {"const": "video"}}, "required": ["mediaKind"]},
     "then": {
       "required": ["animationName", "animationFps", "targetFrameCount", "supportAnimations"],
+      "not": {"required": ["staticMatting"]},
       "properties": {"kind": {"const": "character"}, "supportAnimations": {"minItems": 1}},
       "oneOf": [
         {"required": ["source"], "not": {"required": ["referenceImage"]}},
-        {"required": ["workflowProfile", "referenceImage"], "not": {"required": ["source"]}}
+        {"required": ["workflowProfile", "prompt"], "not": {"required": ["source"]}}
       ]
     },
-    "else": {"properties": {"kind": {"enum": ["icon_set", "prop_set"]}}}
+    "else": {
+      "properties": {"kind": {"enum": ["icon_set", "prop_set"]}},
+      "not": {"required": ["source", "referenceImage"]}
+    }
   }],
   "properties": {
     "schemaVersion": {"const": "1"},
@@ -27,14 +31,14 @@
     "workflowProfile": {"type": "string", "minLength": 1},
     "source": {"type": "string", "minLength": 1, "description": "Existing absolute PNG or MP4 path"},
     "prompt": {"type": "string", "minLength": 1},
-    "referenceImage": {"type": "string", "minLength": 1, "description": "Absolute PNG used as an I2V first frame"},
+    "referenceImage": {"type": "string", "minLength": 1, "description": "Absolute PNG mapped to a profile's explicit referenceInput; required only by workflows that need it"},
     "assetId": {"type": "string", "minLength": 1},
     "name": {"type": "string", "minLength": 1},
     "purpose": {"type": "string", "minLength": 1},
     "kind": {"enum": ["icon_set", "prop_set", "character"]},
     "license": {"type": "string", "minLength": 1},
     "sampling": {"enum": ["nearest", "linear"]},
-    "canvasSize": {"type": "integer", "minimum": 1},
+    "canvasSize": {"enum": [64, 128, 256, 512]},
     "animationName": {"type": "string", "minLength": 1},
     "animationFps": {"type": "number", "minimum": 1, "maximum": 60},
     "targetFrameCount": {"type": "integer", "minimum": 2, "maximum": 24},
@@ -43,6 +47,7 @@
     "supportAnimations": {"type": "array", "items": {"type": "object"}, "description": "Existing CharacterAnimationRecipe entries with absolute source paths"},
     "foregroundAlphaThreshold": {"type": "integer", "minimum": 0, "maximum": 255},
     "edgePaddingPx": {"type": "integer", "minimum": 0},
+    "staticMatting": {"const": "auto_corners", "description": "Explicitly remove a flat corner-colored background before static preparation; the source PNG is retained unchanged"},
     "assetProject": {
       "type": "object", "additionalProperties": false, "required": ["projectPath", "assetId"],
       "properties": {"projectPath": {"type": "string", "minLength": 1}, "assetId": {"type": "string", "minLength": 1}}

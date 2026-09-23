@@ -75,6 +75,17 @@ macOS、Linux、Windows 均支持。CLI 升级后用 `forge skill check --projec
 | **音频** | 导入 WAV 音乐、音效和环境声，进行裁剪、增益调整、淡入淡出和循环处理。 |
 | **Godot 交付** | 验证 Pack，安装原生纹理、场景、动画和音频资源；锁定选定版本、保留交付回执，并在更新失败时回滚。 |
 
+**开发预览（不包含在 v0.7.2 中）：**本机已安装 ComfyUI 的用户，可让 Codex、
+Claude Code 或 DeepSeek Harness 通过同一命令 `forge asset create --input
+request.json --wait --json` 发起生成。Forge 保留 PNG/MP4 原件、制作 Pack，
+经绑定源哈希的视觉审核后继续交付 Godot。已在本机验证 Qwen Image 2.1
+文生图与单参考图编辑、MiniMax H3 首帧生视频；实际可用模式取决于用户的
+API 格式工作流、模型权重和显式 profile 映射。配置、批量预算和 profile
+迁移见[开发指南](docs/automation/comfyui-local.md)。Codex 或兼容的
+DeepSeek Harness 项目可安装 `.agents/skills`，Claude Code 使用
+`forge skill install --agent claude-code` 安装到 `.claude/skills`。
+还需在各 Agent 对话客户端验证自然语言发现；源码测试不等于已发布的多 Agent 能力。
+
 **v0.7.2 新功能：**`forge skill install` 在 Windows 上与 macOS/Linux 同样可用，每次安装
 都可以让 Codex 发现 Forge——推荐把 `.agents/skills/forge-use/` 提交进游戏仓库，团队所有
 成员自动获得发现能力。v0.7.1 提供了资源库词表、免核验搜索、预览媒体清单和需求对账。

@@ -3,7 +3,8 @@
 This development checkout can import and diagnose a **single, explicit
 API-format workflow**, generate a transparent PNG or H3-style I2V MP4,
 prepare a static or character Pack, and resume after visual review for Godot
-installation. Image editing remains pending. The staged contract is in
+installation. A single-reference Qwen image edit is also supported with an
+explicit `referenceInput` mapping. The staged contract is in
 [the implementation plan](../architecture/local-comfyui-agent-delivery-plan.md).
 Forge does not install ComfyUI, custom nodes or model weights.
 
@@ -107,11 +108,52 @@ H3 I2V MP4 on Windows, each installed only after agent QA in an isolated Godot
 4.6.3 project. The H3 walk attempt was rejected for insufficient motion; a
 subtle idle loop passed. This is not yet a released CLI capability.
 
+For an image edit, export that **edit workflow** separately as API JSON. Map
+`referenceInput` to the node/input that receives the reference filename, then
+use `forge guide comfyui-edit-example` as a request starting point. Supply an
+absolute `referenceImage` PNG. The locally tested Qwen edit produced a usable
+red potion but an opaque purple background; without matting, Forge rejected
+static preparation. Explicit `staticMatting: "auto_corners"` makes a separate
+derived PNG while retaining the original model output and both SHA-256 hashes.
+Inspect the derived preview and alpha before approving; this mode is suitable
+only for a flat corner-colored background. A generated image can also be
+reprocessed with a new source-import request without another model run.
+
+`forge asset batch --input /absolute/batch.json --wait --json` preflights up to
+32 request files against explicit `maxRequests`, `maxTotalWaitSeconds` and
+`maxTotalOutputBytes` before starting Jobs. Paths in `requests` may be relative
+to the manifest. Each request remains an independent Job, and a partial failure
+reports completed Job IDs; inspect those Jobs before retrying. The manifest
+schema is `schemas/local-generation-batch.schema.json`. This is a reservation
+against configured maxima, not a GPU power meter or actual runtime estimate.
+
+Profiles are immutable under their ID. `forge provider export --provider
+comfyui --profile ID --output /absolute/descriptor.json --json` writes a
+portable descriptor with the endpoint, model ID, node mapping and workflow
+SHA-256, without workflow bytes, model weights or media. `forge provider import
+--provider comfyui --profile NEW_ID --descriptor /absolute/descriptor.json
+--workflow /absolute/api-workflow.json --json` requires an exact hash match.
+`forge provider upgrade-check --provider comfyui --profile ID --config
+/absolute/candidate-profile.json --json` compares a candidate without mutation;
+use a new ID to adopt a changed workflow. Check endpoint and model ID before
+sharing even this descriptor, as they may reveal machine configuration.
+
+Install the bundled skill in a game project with `forge skill install --project
+/absolute/game --json` for Codex and a DeepSeek Harness configuration that
+discovers `.agents/skills`; use `--agent claude-code` for Claude Code's
+`.claude/skills` path. Run `forge skill check` with the matching agent flag.
+Skill installation confirms files, while natural-language discovery and CLI
+selection must still be tested inside each agent client. H3 reference-to-video
+is not claimed: the tested machine lacks that profile's required weights.
+
 ## 中文说明
 
 此开发分支支持导入和诊断**明确指定的 API 格式工作流**，生成单张透明 PNG、
 制作静态 Pack，或将 H3 图生视频 MP4 提帧制作角色 Pack，并在明确审核后恢复执行
-Godot 安装。图片编辑尚未接入。
+Godot 安装。另可用单参考图的 Qwen 编辑 profile；需要在 API 工作流里明确映射
+`referenceInput`，请求填写绝对路径 `referenceImage`。本机编辑输出是不透明底色，
+直接制作被拒；显式选择 `staticMatting: "auto_corners"` 后，Forge 保留原图与
+哈希，并另存去底图供制作。必须检查去底预览，不能把该模式当成通用抠图。
 请在 ComfyUI 中使用 **Save (API Format)**
 导出；带有 `nodes` 数组和 `links` 的普通界面 JSON 不能直接提交到 `/prompt`。
 从导出的 JSON 中确认正向提示词所在的节点 ID、输入键及唯一输出节点，填入
@@ -131,3 +173,12 @@ Godot 项目和安装目标，通过 `--resume JOB_ID --review ... --wait` 继�
 待运行的 Forge prompt 可通过 `--resume JOB_ID --cancel` 精确删除；运行中的
 任务不会调用可能打断其他人的全局 interrupt。真实测试里一段行走候选因动作
 不足被拒绝，轻微待机循环经 Agent QA 后才安装到隔离 Godot 项目。
+
+批量请求使用 `forge asset batch --input /absolute/batch.json --wait --json`，
+清单显式限制请求数、等待秒数与最大输出字节数；超预算时不会启动 Job。
+部分失败须按返回的 Job ID 逐个检查。profile 可用 `provider export` 导出
+配置指纹，配合单独提供且哈希匹配的 API 工作流执行 `provider import`；
+`provider upgrade-check` 只比较差异，不改旧 profile 或 Job。
+Codex 与已启用 `.agents/skills` 发现的 DeepSeek Harness 可在项目里安装
+`forge-use`；Claude Code 使用 `forge skill install --agent claude-code`。
+三种客户端都需要实际对话验证能否发现 skill，并选择同一 `forge asset create`。

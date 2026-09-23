@@ -30,8 +30,11 @@ pub fn current() -> BuildInfo {
 // reported separately by doctor. Add new IDs only alongside their implementation.
 pub const CAPABILITIES: &[&str] = &[
     "comfyui_asset_image_create_v1",
+    "comfyui_asset_image_edit_v1",
     "comfyui_asset_video_create_v1",
+    "comfyui_asset_batch_budget_v1",
     "comfyui_workflow_profile_v1",
+    "comfyui_profile_portability_v1",
     "comfyui_http_transport_v1",
     "filesystem_write_probe",
     "godot_install_phase_diagnostics",

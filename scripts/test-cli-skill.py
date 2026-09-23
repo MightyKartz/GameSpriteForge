@@ -28,6 +28,7 @@ GUIDE_RESOURCES = (
     ("comfyui", "references/comfyui.md", "text/markdown"),
     ("comfyui-image-example", "examples/comfyui-image.json", "application/json"),
     ("comfyui-video-example", "examples/comfyui-video.json", "application/json"),
+    ("comfyui-edit-example", "examples/comfyui-edit.json", "application/json"),
     ("local-delivery-example", "examples/local-delivery.py", "text/x-python"),
     ("godot-workflow", "references/godot-workflow.md", "text/markdown"),
     ("project-assets", "references/project-assets.md", "text/markdown"),
@@ -339,6 +340,14 @@ class Harness:
                             and request.get("referenceImage") and request.get("animationName")
                             and request.get("supportAnimations"),
                             "ComfyUI example must be a complete I2V character request")
+                    examples.append(relative)
+                    continue
+                if topic == "comfyui-edit-example":
+                    require(isinstance(request, dict) and request.get("schemaVersion") == "1"
+                            and request.get("mediaKind") == "image" and request.get("workflowProfile")
+                            and request.get("prompt") and request.get("referenceImage")
+                            and request.get("staticMatting") == "auto_corners",
+                            "ComfyUI edit example must specify the reference and matting")
                     examples.append(relative)
                     continue
                 if topic == "animation-example":

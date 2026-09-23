@@ -9,6 +9,166 @@ use serde_json::{json, Value};
 use tempfile::tempdir;
 
 #[test]
+fn batch_budget_rejects_before_creating_any_job() {
+    let dir = tempdir().unwrap();
+    let source = dir.path().join("icon.png");
+    RgbaImage::from_pixel(16, 16, Rgba([10, 20, 30, 255]))
+        .save(&source)
+        .unwrap();
+    let request = dir.path().join("request.json");
+    fs::write(
+        &request,
+        json!({"schemaVersion":"1","mediaKind":"image","source":source,
+        "assetId":"budget_icon","name":"Budget icon","purpose":"QA","kind":"icon_set",
+        "license":"test-only","canvasSize":64,"maxWaitSeconds":900})
+        .to_string(),
+    )
+    .unwrap();
+    let manifest = dir.path().join("batch.json");
+    fs::write(
+        &manifest,
+        json!({"schemaVersion":"1","requests":["request.json"],
+        "maxRequests":1,"maxTotalWaitSeconds":899,"maxTotalOutputBytes":1})
+        .to_string(),
+    )
+    .unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_forge"))
+        .args([
+            "asset",
+            "batch",
+            "--input",
+            manifest.to_str().unwrap(),
+            "--json",
+        ])
+        .env("FORGE_JOB_STORE", dir.path().join("jobs"))
+        .env("FORGE_PLAN_STORE", dir.path().join("plans"))
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let result: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(result["error"]["code"], "asset_batch_budget_exceeded");
+    assert!(!dir.path().join("jobs").exists());
+}
+
+#[test]
+fn batch_starts_distinct_recoverable_jobs_within_budget() {
+    let dir = tempdir().unwrap();
+    let source = dir.path().join("icon.png");
+    let mut image = RgbaImage::new(32, 32);
+    for y in 4..28 {
+        for x in 4..28 {
+            image.put_pixel(x, y, Rgba([10, 20, 30, 255]));
+        }
+    }
+    image.save(&source).unwrap();
+    for (filename, id) in [("first.json", "first_icon"), ("second.json", "second_icon")] {
+        fs::write(
+            dir.path().join(filename),
+            json!({"schemaVersion":"1","mediaKind":"image","source":source,
+            "assetId":id,"name":id,"purpose":"QA","kind":"icon_set",
+            "license":"test-only","canvasSize":64,"maxWaitSeconds":60})
+            .to_string(),
+        )
+        .unwrap();
+    }
+    let manifest = dir.path().join("batch.json");
+    fs::write(
+        &manifest,
+        json!({"schemaVersion":"1","requests":["first.json","second.json"],
+        "maxRequests":2,"maxTotalWaitSeconds":120,
+        "maxTotalOutputBytes":fs::metadata(&source).unwrap().len()*2})
+        .to_string(),
+    )
+    .unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_forge"))
+        .args([
+            "asset",
+            "batch",
+            "--input",
+            manifest.to_str().unwrap(),
+            "--json",
+        ])
+        .env("FORGE_JOB_STORE", dir.path().join("jobs"))
+        .env("FORGE_PLAN_STORE", dir.path().join("plans"))
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+    let result: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(result["data"]["requestCount"], 2);
+    assert_eq!(result["data"]["reservedWaitSeconds"], 120);
+    let jobs = result["data"]["jobs"].as_array().unwrap();
+    assert_eq!(jobs.len(), 2);
+    assert_ne!(jobs[0]["jobId"], jobs[1]["jobId"]);
+    assert!(jobs.iter().all(|job| job["state"] == "awaiting_review"));
+    for job in jobs {
+        let id = job["jobId"].as_str().unwrap();
+        assert!(dir.path().join("jobs").join(id).exists());
+        assert!(job["sourcePath"]
+            .as_str()
+            .is_some_and(|p| std::path::Path::new(p).exists()));
+    }
+}
+
+#[test]
+fn explicit_static_matting_preserves_generated_source_and_prepares_derived_png() {
+    let dir = tempdir().unwrap();
+    let source = dir.path().join("opaque.png");
+    let mut image = RgbaImage::from_pixel(64, 64, Rgba([90, 30, 130, 255]));
+    for y in 12..52 {
+        for x in 20..44 {
+            image.put_pixel(x, y, Rgba([240, 20, 20, 255]));
+        }
+    }
+    image.save(&source).unwrap();
+    let original = fs::read(&source).unwrap();
+    let request = dir.path().join("request.json");
+    fs::write(
+        &request,
+        json!({
+            "schemaVersion":"1", "mediaKind":"image", "source":source,
+            "assetId":"matted_icon", "name":"Matted icon", "purpose":"QA icon",
+            "kind":"icon_set", "license":"test-only", "canvasSize":64,
+            "staticMatting":"auto_corners"
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_forge"))
+        .args([
+            "asset",
+            "create",
+            "--input",
+            request.to_str().unwrap(),
+            "--json",
+        ])
+        .env("FORGE_JOB_STORE", dir.path().join("jobs"))
+        .env("FORGE_PLAN_STORE", dir.path().join("plans"))
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+    let result: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(result["data"]["state"], "awaiting_review");
+    let retained = result["data"]["sourcePath"].as_str().unwrap();
+    assert_eq!(fs::read(retained).unwrap(), original);
+    let derived = result["data"]["processedSourcePath"].as_str().unwrap();
+    let decoded = image::open(derived).unwrap().to_rgba8();
+    assert_eq!(decoded.get_pixel(0, 0)[3], 0);
+    assert_eq!(decoded.get_pixel(32, 32)[3], 255);
+    assert_ne!(
+        result["data"]["processedSourceSha256"],
+        result["data"]["sourceSha256"]
+    );
+}
+
+#[test]
 #[ignore = "requires native ffmpeg/ffprobe through GAME_SPRITE_FORGE_FFMPEG_SEARCH_DIRS"]
 fn local_mp4_prepares_character_pack_and_waits_for_visual_review() {
     let dir = tempdir().unwrap();

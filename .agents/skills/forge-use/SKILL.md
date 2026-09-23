@@ -13,8 +13,9 @@ configure a Provider or migrate existing assets just to start a local delivery.
 ## Work from the user's task
 
 1. Establish the source files, intended game use and target project from available
-   context. Ask only for missing decisions that affect the result. Codex or another
-   tool creates artwork; Forge's local processing does not generate it with a model.
+   context. Ask only for missing decisions that affect the result. For a user-installed
+   ComfyUI workflow, Forge can submit image/video generation through `asset create`;
+   otherwise Codex or another tool supplies artwork for Forge's local processing.
 2. Select the pinned executable and read only the matching workflow below. The agent
    handles requests, Plans, Jobs and records; the user should see the prepared
    result, relevant choices and any actionable failure.
@@ -65,7 +66,8 @@ Forge never updates game pins or separately installed skills automatically.
 | User-installed local ComfyUI image/video generation | `forge guide comfyui` | [Local ComfyUI](references/comfyui.md) |
 
 Read request examples with `guide static-example`, `guide audio-example`,
-`guide provider-example` or `guide comfyui-image-example`. Check exit status
+`guide provider-example`, `guide comfyui-image-example`, or
+`guide comfyui-edit-example`. Check exit status
 before using redirected output.
 Plain output preserves file bytes; `--json` includes the resource index and hashes.
 Godot must be available for native delivery; inspect the selected build's supported

@@ -1,4 +1,5 @@
 //! One request contract for local ComfyUI image generation and Forge delivery.
+use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
 use std::thread;
@@ -45,6 +46,172 @@ pub struct CreateArgs {
     json: bool,
 }
 
+#[derive(Args)]
+pub struct BatchArgs {
+    /// Versioned manifest of local request files and explicit upper budgets.
+    #[arg(long)]
+    input: PathBuf,
+    /// Wait for each submitted request, within its own maxWaitSeconds.
+    #[arg(long)]
+    wait: bool,
+    #[arg(long)]
+    json: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct BatchManifest {
+    schema_version: String,
+    requests: Vec<PathBuf>,
+    max_requests: u32,
+    max_total_wait_seconds: u64,
+    max_total_output_bytes: u64,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BatchResult {
+    request_count: usize,
+    reserved_wait_seconds: u64,
+    reserved_output_bytes: u64,
+    jobs: Vec<AssetResult>,
+}
+
+pub fn batch(args: BatchArgs) -> Result<BatchResult> {
+    if fs::metadata(&args.input).map_err(super::io_error)?.len() > 1024 * 1024 {
+        return Err((
+            "asset_batch_invalid".into(),
+            "manifest exceeds 1 MiB".into(),
+        ));
+    }
+    let bytes = fs::read(&args.input).map_err(super::io_error)?;
+    if bytes.len() > 1024 * 1024 {
+        return Err((
+            "asset_batch_invalid".into(),
+            "manifest exceeds 1 MiB".into(),
+        ));
+    }
+    let manifest: BatchManifest = serde_json::from_slice(&bytes).map_err(super::json_error)?;
+    if manifest.schema_version != "1"
+        || manifest.requests.is_empty()
+        || manifest.requests.len() > 32
+        || manifest.max_requests > 32
+        || manifest.requests.len() > manifest.max_requests as usize
+        || manifest.max_total_wait_seconds == 0
+        || manifest.max_total_output_bytes == 0
+    {
+        return Err((
+            "asset_batch_invalid".into(),
+            "invalid batch schema, request count or budget".into(),
+        ));
+    }
+    let root = args.input.parent().unwrap_or(std::path::Path::new("."));
+    let mut seen = HashSet::new();
+    let mut files = Vec::new();
+    let mut reserved_wait = 0u64;
+    let mut reserved_bytes = 0u64;
+    for input in &manifest.requests {
+        let path = if input.is_absolute() {
+            input.clone()
+        } else {
+            root.join(input)
+        };
+        let path = path.canonicalize().map_err(super::io_error)?;
+        if !seen.insert(path.clone()) {
+            return Err((
+                "asset_batch_invalid".into(),
+                "duplicate request file".into(),
+            ));
+        }
+        if fs::metadata(&path).map_err(super::io_error)?.len() > 1024 * 1024 {
+            return Err(("asset_batch_invalid".into(), "request exceeds 1 MiB".into()));
+        }
+        let bytes = fs::read(&path).map_err(super::io_error)?;
+        if bytes.len() > 1024 * 1024 {
+            return Err(("asset_batch_invalid".into(), "request exceeds 1 MiB".into()));
+        }
+        let mut request: AssetRequest =
+            serde_json::from_slice(&bytes).map_err(super::json_error)?;
+        validate_request(&mut request)?;
+        let limit = if let Some(source) = &request.source {
+            fs::metadata(source).map_err(super::io_error)?.len()
+        } else {
+            let root = comfyui::profile_root().map_err(comfy_error)?;
+            let stored = comfyui::load(&root, request.workflow_profile.as_deref().unwrap())
+                .map_err(comfy_error)?;
+            if stored.profile.media_kind != request.media_kind {
+                return Err((
+                    "asset_batch_invalid".into(),
+                    "request and profile mediaKind differ".into(),
+                ));
+            }
+            stored.profile.max_output_bytes
+        };
+        reserved_wait = reserved_wait
+            .checked_add(request.max_wait_seconds)
+            .ok_or_else(|| ("asset_batch_invalid".into(), "wait budget overflow".into()))?;
+        reserved_bytes = reserved_bytes.checked_add(limit).ok_or_else(|| {
+            (
+                "asset_batch_invalid".into(),
+                "output budget overflow".into(),
+            )
+        })?;
+        files.push((path, format!("{:x}", Sha256::digest(bytes))));
+    }
+    if reserved_wait > manifest.max_total_wait_seconds
+        || reserved_bytes > manifest.max_total_output_bytes
+    {
+        return Err(("asset_batch_budget_exceeded".into(), format!("requires {reserved_wait} wait seconds and {reserved_bytes} output bytes; no Jobs started")));
+    }
+    let mut jobs = Vec::new();
+    for (path, expected_hash) in files {
+        let actual = format!(
+            "{:x}",
+            Sha256::digest(fs::read(&path).map_err(super::io_error)?)
+        );
+        if actual != expected_hash {
+            return Err((
+                "asset_batch_partial".into(),
+                format!(
+                    "request changed during batch; completed Job IDs: {}",
+                    jobs.iter()
+                        .map(|job: &AssetResult| job.job_id.as_str())
+                        .collect::<Vec<_>>()
+                        .join(",")
+                ),
+            ));
+        }
+        match create(CreateArgs {
+            input: Some(path),
+            resume: None,
+            review: None,
+            cancel: false,
+            wait: args.wait,
+            json: args.json,
+        }) {
+            Ok(job) => jobs.push(job),
+            Err((code, message)) => {
+                return Err((
+                    "asset_batch_partial".into(),
+                    format!(
+                        "{code}: {message}; completed Job IDs: {}",
+                        jobs.iter()
+                            .map(|job: &AssetResult| job.job_id.as_str())
+                            .collect::<Vec<_>>()
+                            .join(",")
+                    ),
+                ));
+            }
+        }
+    }
+    Ok(BatchResult {
+        request_count: jobs.len(),
+        reserved_wait_seconds: reserved_wait,
+        reserved_output_bytes: reserved_bytes,
+        jobs,
+    })
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct AssetRequest {
@@ -83,6 +250,8 @@ struct AssetRequest {
     foreground_alpha_threshold: u8,
     #[serde(default)]
     edge_padding_px: u32,
+    #[serde(default)]
+    static_matting: Option<String>,
     #[serde(default)]
     asset_project: Option<ProjectBinding>,
     #[serde(default)]
@@ -130,6 +299,10 @@ struct AssetState {
     #[serde(default)]
     source_sha256: Option<String>,
     #[serde(default)]
+    processed_source_path: Option<PathBuf>,
+    #[serde(default)]
+    processed_source_sha256: Option<String>,
+    #[serde(default)]
     workflow_sha256: Option<String>,
     #[serde(default)]
     model_id: Option<String>,
@@ -163,6 +336,8 @@ pub struct AssetResult {
     prompt_id: Option<String>,
     source_path: Option<PathBuf>,
     source_sha256: Option<String>,
+    processed_source_path: Option<PathBuf>,
+    processed_source_sha256: Option<String>,
     media_kind: MediaKind,
     video_probe: Option<serde_json::Value>,
     prepare_job_id: Option<String>,
@@ -225,6 +400,8 @@ pub fn create(args: CreateArgs) -> Result<AssetResult> {
             submitted: false,
             source_path: None,
             source_sha256: None,
+            processed_source_path: None,
+            processed_source_sha256: None,
             workflow_sha256: None,
             model_id: None,
             reference_sha256: None,
@@ -275,6 +452,17 @@ pub fn create(args: CreateArgs) -> Result<AssetResult> {
             ));
         }
     }
+    if let (Some(source), Some(expected)) =
+        (&state.processed_source_path, &state.processed_source_sha256)
+    {
+        let actual = super::hash_asset_file(source).map_err(super::display_error)?;
+        if &actual != expected {
+            return Err((
+                "asset_processed_source_changed".into(),
+                "processed source no longer matches the Job SHA-256".into(),
+            ));
+        }
+    }
     if let Some(path) = args.review {
         let review: Review = serde_json::from_slice(&fs::read(&path).map_err(super::io_error)?)
             .map_err(super::json_error)?;
@@ -305,7 +493,9 @@ pub fn create(args: CreateArgs) -> Result<AssetResult> {
     if state.phase == "needs_recovery" && (!args.wait || state.prompt_id.is_none()) {
         return result(&record.job_id, &state);
     }
-    advance(&record.job_id, &mut state, args.wait)?;
+    if let Err((code, message)) = advance(&record.job_id, &mut state, args.wait) {
+        return Err((code, format!("{message}; jobId={}", record.job_id)));
+    }
     result(&record.job_id, &state)
 }
 
@@ -356,7 +546,7 @@ fn validate_request(request: &mut AssetRequest) -> Result<()> {
             MediaKind::Image => matches!(request.kind.as_str(), "icon_set" | "prop_set"),
             MediaKind::Video => request.kind == "character",
         }
-        || request.canvas_size == 0
+        || !matches!(request.canvas_size, 64 | 128 | 256 | 512)
         || request.max_wait_seconds == 0
         || request.max_wait_seconds > 86400
     {
@@ -392,6 +582,12 @@ fn validate_request(request: &mut AssetRequest) -> Result<()> {
         *source = source.canonicalize().map_err(super::io_error)?;
     }
     if request.media_kind == MediaKind::Video {
+        if request.static_matting.is_some() {
+            return Err((
+                "asset_request_invalid".into(),
+                "video request cannot use staticMatting".into(),
+            ));
+        }
         if request
             .animation_name
             .as_deref()
@@ -409,10 +605,10 @@ fn validate_request(request: &mut AssetRequest) -> Result<()> {
         {
             return Err(("asset_request_invalid".into(), "video requires animationName, animationFps 1..60, targetFrameCount 2..24 and supported mattingMode".into()));
         }
-        if request.source.is_none() != request.reference_image.is_some() {
+        if request.source.is_some() && request.reference_image.is_some() {
             return Err((
                 "asset_request_invalid".into(),
-                "generated video requires referenceImage; imported video cannot set it".into(),
+                "imported video cannot set referenceImage".into(),
             ));
         }
         if request.support_animations.is_empty() {
@@ -453,14 +649,32 @@ fn validate_request(request: &mut AssetRequest) -> Result<()> {
             }
             *reference = reference.canonicalize().map_err(super::io_error)?;
         }
-    } else if request.reference_image.is_some()
-        || request.animation_name.is_some()
-        || !request.support_animations.is_empty()
-    {
-        return Err((
-            "asset_request_invalid".into(),
-            "image request cannot include video fields".into(),
-        ));
+    } else {
+        if request.animation_name.is_some() || !request.support_animations.is_empty() {
+            return Err((
+                "asset_request_invalid".into(),
+                "image request cannot include animation fields".into(),
+            ));
+        }
+        if request
+            .static_matting
+            .as_deref()
+            .is_some_and(|mode| mode != "auto_corners")
+        {
+            return Err((
+                "asset_request_invalid".into(),
+                "staticMatting currently supports auto_corners".into(),
+            ));
+        }
+        if let Some(reference) = &mut request.reference_image {
+            if request.source.is_some() || !reference.is_absolute() {
+                return Err((
+                    "asset_request_invalid".into(),
+                    "image edit requires a generated request and absolute referenceImage".into(),
+                ));
+            }
+            *reference = reference.canonicalize().map_err(super::io_error)?;
+        }
     }
     if let Some(project) = &mut request.godot_project {
         if !project.is_absolute() || request.install_target.is_none() {
@@ -478,6 +692,19 @@ fn validate_request(request: &mut AssetRequest) -> Result<()> {
     }
     if let Some(binding) = &request.asset_project {
         binding.validate().map_err(super::display_error)?;
+    }
+    if let Some(id) = &request.workflow_profile {
+        let root = comfyui::profile_root().map_err(comfy_error)?;
+        let stored = comfyui::load(&root, id).map_err(comfy_error)?;
+        if stored.profile.media_kind != request.media_kind
+            || stored.profile.reference_input.is_some() != request.reference_image.is_some()
+        {
+            return Err((
+                "asset_profile_mismatch".into(),
+                "mediaKind or referenceImage does not match the profile's mediaKind/referenceInput"
+                    .into(),
+            ));
+        }
     }
     Ok(())
 }
@@ -531,6 +758,8 @@ fn result(job_id: &str, state: &AssetState) -> Result<AssetResult> {
         prompt_id: state.prompt_id.clone(),
         source_path: state.source_path.clone(),
         source_sha256: state.source_sha256.clone(),
+        processed_source_path: state.processed_source_path.clone(),
+        processed_source_sha256: state.processed_source_sha256.clone(),
         media_kind: state.request.media_kind,
         video_probe: state.video_probe.clone(),
         prepare_job_id: state.prepare_job_id.clone(),
@@ -1068,7 +1297,71 @@ fn prepare_video(job_id: &str, state: &mut AssetState) -> Result<()> {
 }
 
 fn prepare(job_id: &str, state: &mut AssetState) -> Result<()> {
-    let source = state.source_path.as_ref().unwrap();
+    let mut source = state.source_path.clone().unwrap();
+    let mut source_sha256 = state.source_sha256.clone().unwrap();
+    if state.request.static_matting.as_deref() == Some("auto_corners") {
+        let record = super::job_store()?
+            .read_record(job_id)
+            .map_err(super::display_error)?;
+        let derived = record.job_dir.join("source").join("matted.png");
+        if state.processed_source_sha256.is_none() {
+            let output = if derived.exists() {
+                record
+                    .job_dir
+                    .join("source")
+                    .join(format!("matted-recheck-{}.png", Uuid::new_v4()))
+            } else {
+                derived.clone()
+            };
+            let report = forge_core::source_matte::matte_png(
+                &forge_core::source_matte::SourceMatteRequest {
+                    schema_version: "1".into(),
+                    input: source.clone(),
+                    output: output.clone(),
+                    parameters: forge_core::matting::ChromaParameters::default(),
+                },
+            )
+            .map_err(|e| ("asset_static_matting_failed".into(), e))?;
+            if report.source_sha256 != source_sha256 {
+                return Err((
+                    "asset_source_changed".into(),
+                    "source changed during matting".into(),
+                ));
+            }
+            if output != derived {
+                let existing = super::hash_asset_file(&derived).map_err(super::display_error)?;
+                fs::remove_file(&output).map_err(super::io_error)?;
+                if existing != report.output_sha256 {
+                    return Err((
+                        "asset_processed_source_changed".into(),
+                        "recovered matte differs from source-derived output".into(),
+                    ));
+                }
+            }
+            state.processed_source_path = Some(derived.clone());
+            state.processed_source_sha256 = Some(report.output_sha256.clone());
+            let hash = report.output_sha256;
+            super::job_store()?
+                .update_record(job_id, |record| {
+                    if !record.artifacts.iter().any(|a| a.kind == "processed_png") {
+                        record.artifacts.push(JobArtifactRecord {
+                            kind: "processed_png".into(),
+                            path: derived,
+                            sha256: Some(hash),
+                        });
+                    }
+                })
+                .map_err(super::display_error)?;
+            save(
+                job_id,
+                state,
+                JobLifecycleState::Running,
+                vec!["prepare_static".into()],
+            )?;
+        }
+        source = state.processed_source_path.clone().unwrap();
+        source_sha256 = state.processed_source_sha256.clone().unwrap();
+    }
     let request: PrepareStaticRequest = serde_json::from_value(json!({
         "assetProject": state.request.asset_project,
         "schemaVersion": "1", "kind": state.request.kind, "id": state.request.asset_id,
@@ -1076,7 +1369,7 @@ fn prepare(job_id: &str, state: &mut AssetState) -> Result<()> {
         "sampling": state.request.sampling, "canvasSize": state.request.canvas_size,
         "foregroundAlphaThreshold": state.request.foreground_alpha_threshold,
         "edgePaddingPx": state.request.edge_padding_px,
-        "sourceLocks": [{"path": source, "sha256": state.source_sha256}],
+        "sourceLocks": [{"path": source, "sha256": source_sha256}],
         "items": [{"id": state.request.asset_id, "name": state.request.name, "path": source}]
     }))
     .map_err(super::json_error)?;
