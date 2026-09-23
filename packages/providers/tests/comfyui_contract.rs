@@ -80,6 +80,10 @@ fn transport_checks_nodes_submits_exact_prompt_and_bounds_media() {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let endpoint = format!("http://{}", listener.local_addr().unwrap());
     let (dir, profile) = fixture(&endpoint);
+    let mut workflow: serde_json::Value =
+        serde_json::from_slice(&fs::read(&profile.workflow).unwrap()).unwrap();
+    workflow["2"]["inputs"]["format.bit_depth"] = json!("8-bit");
+    fs::write(&profile.workflow, workflow.to_string()).unwrap();
     let config = dir.path().join("profile.json");
     fs::write(&config, serde_json::to_vec(&profile).unwrap()).unwrap();
     let stored = configure(&dir.path().join("profiles"), "local", &config).unwrap();
