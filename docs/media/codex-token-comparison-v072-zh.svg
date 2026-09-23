@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="600" viewBox="0 0 1160 600" role="img" aria-labelledby="title desc">
+<title id="title">Codex + Forge：素材查询 Token 对比</title>
+<desc id="desc">73 条合成记录  ·  4 条需求  ·  两组结果一致. Run 1: 103290 versus 100732; run 2: 103096 versus 39982 input tokens.</desc>
+<rect width="1160" height="600" rx="26" fill="#0b1a26"/>
+<rect x="50" y="145" width="1060" height="170" rx="22" fill="#142f3e" stroke="#3b7181" stroke-width="1"/>
+<rect x="50" y="335" width="1060" height="170" rx="22" fill="#142f3e" stroke="#3b7181" stroke-width="1"/>
+<text x="58" y="70" fill="#f4f9fb" font-family="Arial, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, sans-serif" font-size="35" font-weight="700">Codex + Forge：素材查询 Token 对比</text>
+<text x="58" y="108" fill="#a9c8d4" font-family="Arial, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, sans-serif" font-size="20">73 条合成记录  ·  4 条需求  ·  两组结果一致</text>
+<text x="82" y="189" fill="#eef7fa" font-family="Arial, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, sans-serif" font-size="26" font-weight="700">第 1 轮</text>
+<text x="1024" y="189" text-anchor="end" fill="#cbf276" font-family="Arial, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, sans-serif" font-size="27" font-weight="700">本轮少 2.5%</text>
+<text x="82" y="223" fill="#e0edf1" font-family="Arial, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, sans-serif" font-size="24">普通工具组</text>
+<rect x="310" y="198" width="470" height="28" rx="14" fill="#214553"/>
+<rect x="310" y="198" width="470.00" height="28" rx="14" fill="#8ea9b7"/>
+<text x="810" y="223" fill="#f5fbfd" font-family="Arial, sans-serif" font-size="25" font-weight="700">103,290</text>
+<text x="82" y="273" fill="#e0edf1" font-family="Arial, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, sans-serif" font-size="24">配合 Forge</text>
+<rect x="310" y="248" width="470" height="28" rx="14" fill="#214553"/>
+<rect x="310" y="248" width="458.36" height="28" rx="14" fill="#4bdeed"/>
+<text x="810" y="273" fill="#f5fbfd" font-family="Arial, sans-serif" font-size="25" font-weight="700">100,732</text>
+<text x="82" y="379" fill="#eef7fa" font-family="Arial, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, sans-serif" font-size="26" font-weight="700">第 2 轮</text>
+<text x="1024" y="379" text-anchor="end" fill="#cbf276" font-family="Arial, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, sans-serif" font-size="27" font-weight="700">本轮少 61.2%</text>
+<text x="82" y="413" fill="#e0edf1" font-family="Arial, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, sans-serif" font-size="24">普通工具组</text>
+<rect x="310" y="388" width="470" height="28" rx="14" fill="#214553"/>
+<rect x="310" y="388" width="469.12" height="28" rx="14" fill="#8ea9b7"/>
+<text x="810" y="413" fill="#f5fbfd" font-family="Arial, sans-serif" font-size="25" font-weight="700">103,096</text>
+<text x="82" y="463" fill="#e0edf1" font-family="Arial, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, sans-serif" font-size="24">配合 Forge</text>
+<rect x="310" y="438" width="470" height="28" rx="14" fill="#214553"/>
+<rect x="310" y="438" width="181.93" height="28" rx="14" fill="#4bdeed"/>
+<text x="810" y="463" fill="#f5fbfd" font-family="Arial, sans-serif" font-size="25" font-weight="700">39,982</text>
+<text x="58" y="553" fill="#a8c1ca" font-family="Arial, Noto Sans CJK SC, PingFang SC, Microsoft YaHei, sans-serif" font-size="19">输入 Token 含缓存  ·  两轮探索性测试  ·  不是固定节省率</text>
+<text x="1105" y="553" text-anchor="end" fill="#6dddec" font-family="Arial, sans-serif" font-size="18">Forge CLI v0.7.2</text>
+</svg>

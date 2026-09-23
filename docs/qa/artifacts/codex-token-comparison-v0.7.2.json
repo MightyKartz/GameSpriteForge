@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-23",
+  "sourceCommit": "d0fb39b3d26a3a6d383306c7fa4359d2fe545b9e",
+  "releasedForgeBinary": {
+    "version": "0.7.2",
+    "target": "aarch64-apple-darwin",
+    "profile": "release",
+    "features": [],
+    "sha256": "f6c7a238b072adfd7c23e5f01b3d02daab3b5c668f19275e10e1a0e14ac4d888"
+  },
+  "codex": {
+    "cliVersion": "0.155.0-alpha.9.2",
+    "model": "gpt-6-astra",
+    "reasoningEffort": "low",
+    "session": "independent ephemeral read-only sessions"
+  },
+  "fixture": {
+    "fixture": "synthetic, publicly available source artwork; not a real user game",
+    "assetCount": 73,
+    "sourceFiles": {
+      "docs/media/showcase/sprites/potion.png": "7bf1df866e1bf3909f1d35ab40cce5d0bdd77229552bc4565dfcf78186a6e09d",
+      "docs/media/showcase/sprites/pouch.png": "5405154240de035c41b3645291ab26692b1b3e322e0de50093a301c573cc1b42",
+      "docs/media/showcase/sprites/key.png": "20c82f96c6d8f885ef24cc420cd723f7463fc31fa780608e4e22e8985661dd0e",
+      "docs/media/showcase/sprites/campfire.png": "f0e1d790660e13b6ec09be9c665de01c58323d5e7108a98ae3bc1dce17bfdd21",
+      "docs/media/showcase/sprites/crate.png": "c6d844e3d7b1d479184750e4851b7056152ce1a445cd508c75fb8f6acdef65fa",
+      "docs/media/showcase/sprites/crystal.png": "db48209218c64e39e70977e6228d003c8507c70380be02b5dd69faf6ec7d7dd5",
+      "docs/media/showcase/sprites/signpost.png": "2d42c5716c61a809afb94dad49e06239c8bd88a855412e47c1b3bfe8f3f422ce",
+      "docs/media/showcase/sprites/barrel.png": "d1b3a68c8dfeb201b4779174a47cfcee2500eedb1749fb10bdccc2a6104c68f0",
+      "docs/media/showcase/thunder/sources/lightning-clean.png": "0770296bd4595aa8e23af1ce529ff2d38fde54531df5be11916011f93b8bf0b1"
+    },
+    "requirements": [
+      {
+        "id": "enemy",
+        "status": "needs_review",
+        "total": 12
+      },
+      {
+        "id": "attack-effect",
+        "status": "covered",
+        "total": 12
+      },
+      {
+        "id": "bgm",
+        "status": "covered",
+        "total": 1
+      },
+      {
+        "id": "fire-sfx",
+        "status": "missing",
+        "total": 0
+      }
+    ]
+  },
+  "task": "For the same synthetic library, classify four asset requirements and return id, status and match count. Both arms had the requirements file. The ordinary arm had the inventory and local tools; the Forge arm had the project library and forge asset check-requirements.",
+  "runs": [
+    {
+      "number": 1,
+      "arms": [
+        {
+          "arm": "ordinary_codex_tools",
+          "inputTokens": 103290,
+          "cachedInputTokens": 73984,
+          "outputTokens": 962,
+          "elapsedSeconds": 110.31,
+          "answer": [
+            {
+              "id": "enemy",
+              "status": "needs_review",
+              "total": 12
+            },
+            {
+              "id": "attack-effect",
+              "status": "covered",
+              "total": 12
+            },
+            {
+              "id": "bgm",
+              "status": "covered",
+              "total": 1
+            },
+            {
+              "id": "fire-sfx",
+              "status": "missing",
+              "total": 0
+            }
+          ]
+        },
+        {
+          "arm": "codex_with_forge",
+          "inputTokens": 100732,
+          "cachedInputTokens": 78208,
+          "outputTokens": 363,
+          "elapsedSeconds": 103.07,
+          "answer": [
+            {
+              "id": "enemy",
+              "status": "needs_review",
+              "total": 12
+            },
+            {
+              "id": "attack-effect",
+              "status": "covered",
+              "total": 12
+            },
+            {
+              "id": "bgm",
+              "status": "covered",
+              "total": 1
+            },
+            {
+              "id": "fire-sfx",
+              "status": "missing",
+              "total": 0
+            }
+          ]
+        }
+      ],
+      "observedInputTokenDifference": 2558,
+      "observedInputTokenDifferencePercent": 2.48
+    },
+    {
+      "number": 2,
+      "arms": [
+        {
+          "arm": "ordinary_codex_tools",
+          "inputTokens": 103096,
+          "cachedInputTokens": 58368,
+          "outputTokens": 1062,
+          "elapsedSeconds": 131.87,
+          "answer": [
+            {
+              "id": "enemy",
+              "status": "needs_review",
+              "total": 12
+            },
+            {
+              "id": "attack-effect",
+              "status": "covered",
+              "total": 12
+            },
+            {
+              "id": "bgm",
+              "status": "covered",
+              "total": 1
+            },
+            {
+              "id": "fire-sfx",
+              "status": "missing",
+              "total": 0
+            }
+          ]
+        },
+        {
+          "arm": "codex_with_forge",
+          "inputTokens": 39982,
+          "cachedInputTokens": 18944,
+          "outputTokens": 195,
+          "elapsedSeconds": 68.97,
+          "answer": [
+            {
+              "id": "enemy",
+              "status": "needs_review",
+              "total": 12
+            },
+            {
+              "id": "attack-effect",
+              "status": "covered",
+              "total": 12
+            },
+            {
+              "id": "bgm",
+              "status": "covered",
+              "total": 1
+            },
+            {
+              "id": "fire-sfx",
+              "status": "missing",
+              "total": 0
+            }
+          ]
+        }
+      ],
+      "observedInputTokenDifference": 63114,
+      "observedInputTokenDifferencePercent": 61.22
+    }
+  ],
+  "limitations": [
+    "Exploratory two-run synthetic lookup, not a real-game productivity benchmark.",
+    "Round 1 ordinary arm encountered a local Python/Xcode shim issue, though its final answer was correct.",
+    "Round 2 revised prompts: the ordinary arm received an explicit Python interpreter, and the Forge arm received the exact requirements command.",
+    "Prompt/tool guidance and cached-input amounts differed between arms and runs, so these differences are not a causal savings estimate.",
+    "Input tokens include cached input and do not directly represent billed cost. Asset generation, processing and Godot delivery were not measured."
+  ]
+}
