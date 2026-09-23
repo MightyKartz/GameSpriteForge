@@ -47,6 +47,18 @@ SHA-256 `f63fe74b237acc8fdaafb79337a22542a0e5a3fce4838dd0baf7f7760a059164`.
 Godot 4.6.3 independently loaded the installed 128×128 `Texture2D`; the
 installed CLI then verified the retained receipt and installation with
 `--expected-sha256` (`installationVerified: true`, `visualReview: accepted`).
+The same installed binary also imported the previously accepted H3 idle MP4
+(source SHA-256
+`b09549bff50a05aa6acbb56628fa392a7730a522ce9f1c20119d9f68103d5af2`)
+without rerunning generation. Parent Job
+`6de98fce-f919-48f3-8a07-abce67caeb3f` prepared a character Pack and GIF,
+then paused for the source-bound review. Install Job
+`028f5ea1-75cd-404d-8636-59fb4e10130a` delivered it to another isolated
+Godot 4.6.3 project. An independent scene script instantiated the sprite,
+verified 12 `idle_breathe` frames and loop settings, and started playback.
+The installed CLI verified automatic receipt SHA-256
+`b71fb78e633e5a6729db9c2906b5f8f4d5b826146dc61a3ecebe34dd7cfffee6`
+after Godot imported the scene (`installationVerified: true`).
 
 This establishes two live skill-discovery paths, a shared CLI protocol, and
 recovery of the Godot/receipt defect. It does not satisfy the planned three-agent
