@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MightyKartz/GameSpriteForge/schemas/comfyui-profile-descriptor.schema.json",
+  "title": "Portable ComfyUI profile fingerprint v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "endpoint", "allowRemote", "mediaKind", "modelId", "promptInput", "referenceInput", "outputNode", "outputField", "maxOutputBytes", "timeoutSeconds", "workflowSha256"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "endpoint": {"type": "string", "format": "uri"},
+    "allowRemote": {"type": "boolean"},
+    "mediaKind": {"enum": ["image", "video"]},
+    "modelId": {"type": "string", "minLength": 1},
+    "promptInput": {"$ref": "#/$defs/nodeInput"},
+    "referenceInput": {"oneOf": [{"$ref": "#/$defs/nodeInput"}, {"type": "null"}]},
+    "outputNode": {"type": "string", "minLength": 1},
+    "outputField": {"enum": ["images", "gifs", "videos"]},
+    "maxOutputBytes": {"type": "integer", "minimum": 1, "maximum": 536870912},
+    "timeoutSeconds": {"type": "integer", "minimum": 1, "maximum": 86400},
+    "workflowSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "nodeInput": {
+      "type": "object", "additionalProperties": false, "required": ["node", "input"],
+      "properties": {"node": {"type": "string", "minLength": 1}, "input": {"type": "string", "minLength": 1}}
+    }
+  }
+}

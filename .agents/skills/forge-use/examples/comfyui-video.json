@@ -8,6 +8,7 @@
   "name": "Hero idle",
   "purpose": "Character idle animation",
   "kind": "character",
+  "canvasSize": 256,
   "license": "user-declared; verify before shipping",
   "animationName": "idle_breathe",
   "animationFps": 12,

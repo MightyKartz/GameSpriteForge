@@ -1,0 +1,49 @@
+name: Local ComfyUI agent delivery contract
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/comfyui-agent-delivery.yml'
+      - '.agents/skills/forge-use/**'
+      - 'packages/cli/**'
+      - 'packages/core/**'
+      - 'packages/providers/**'
+      - 'schemas/*generation*'
+      - 'schemas/comfyui-*'
+      - 'scripts/test-cli-skill.py'
+      - 'Cargo.*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-contract:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Use pinned Rust toolchain
+        shell: bash
+        run: rustup toolchain install 1.98.1 --profile minimal
+      - name: Test synthetic ComfyUI and Forge request contracts
+        shell: bash
+        run: |
+          cargo +1.98.1 test --locked -p providers --test comfyui_contract
+          cargo +1.98.1 test --locked -p forge-cli --test local_asset_create
+          cargo +1.98.1 test --locked -p core --test anchor_tests
+      - name: Install and exercise the CLI outside the source tree
+        shell: bash
+        run: |
+          cargo +1.98.1 install --locked --path packages/cli --root "$RUNNER_TEMP/forge-cli" --no-default-features
+          forge_bin="$RUNNER_TEMP/forge-cli/bin/forge"
+          if [[ "$RUNNER_OS" == "Windows" ]]; then forge_bin="${forge_bin}.exe"; fi
+          python scripts/test-cli-skill.py --forge "$forge_bin" --output "$RUNNER_TEMP/forge-comfyui-skill-qa"
+          "$forge_bin" doctor --json

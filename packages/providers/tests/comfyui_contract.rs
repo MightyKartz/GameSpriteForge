@@ -4,8 +4,8 @@ use std::net::TcpListener;
 use std::thread;
 
 use forge_providers::comfyui::{
-    configure, load, parse_history, ComfyClient, ComfyError, HistoryState, MediaKind, NodeInput,
-    OutputField, WorkflowProfile,
+    check_upgrade, configure, export_descriptor, import_descriptor, load, parse_history,
+    ComfyClient, ComfyError, HistoryState, MediaKind, NodeInput, OutputField, WorkflowProfile,
 };
 use serde_json::json;
 use tempfile::tempdir;
@@ -55,6 +55,54 @@ fn profile_import_is_explicit_immutable_and_rejects_ui_workflow() {
         load(&root, "local"),
         Err(ComfyError::InvalidProfile(_))
     ));
+}
+
+#[test]
+fn portable_descriptor_requires_matching_workflow_and_upgrade_is_read_only() {
+    let (dir, profile) = fixture("http://127.0.0.1:8188");
+    let config = dir.path().join("profile.json");
+    fs::write(&config, serde_json::to_vec(&profile).unwrap()).unwrap();
+    let root = dir.path().join("profiles");
+    let original = configure(&root, "local", &config).unwrap();
+    let export = dir.path().join("descriptor.json");
+    let descriptor = export_descriptor(&root, "local", &export).unwrap();
+    let text = fs::read_to_string(&export).unwrap();
+    assert!(!text.contains("workflow.json"));
+    assert!(!text.contains("class_type"));
+    assert_eq!(descriptor.workflow_sha256, original.workflow_sha256);
+    let second_root = dir.path().join("second");
+    assert_eq!(
+        import_descriptor(&second_root, "copy", &export, &profile.workflow)
+            .unwrap()
+            .workflow_sha256,
+        original.workflow_sha256
+    );
+    let altered = dir.path().join("altered.json");
+    fs::write(
+        &altered,
+        json!({
+            "1":{"class_type":"CLIPTextEncode", "inputs":{"text":"changed"}},
+            "2":{"class_type":"SaveImage", "inputs":{"images":["1",0]}}
+        })
+        .to_string(),
+    )
+    .unwrap();
+    assert!(matches!(
+        import_descriptor(&second_root, "bad", &export, &altered),
+        Err(ComfyError::WorkflowChanged)
+    ));
+    assert!(!second_root.join("bad.json").exists());
+    let mut candidate = profile;
+    candidate.workflow = altered;
+    let candidate_config = dir.path().join("candidate.json");
+    fs::write(&candidate_config, serde_json::to_vec(&candidate).unwrap()).unwrap();
+    let check = check_upgrade(&root, "local", &candidate_config).unwrap();
+    assert!(check.requires_new_profile_id);
+    assert_eq!(check.changed_fields, ["workflowSha256"]);
+    assert_eq!(
+        load(&root, "local").unwrap().workflow_sha256,
+        original.workflow_sha256
+    );
 }
 
 #[test]

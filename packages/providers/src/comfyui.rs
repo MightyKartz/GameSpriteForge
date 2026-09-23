@@ -1,6 +1,6 @@
 //! Explicit, local ComfyUI workflow profiles and bounded HTTP transport.
 use std::fs;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -62,6 +62,35 @@ pub struct StoredProfile {
     pub profile_id: String,
     pub profile: WorkflowProfile,
     pub workflow_sha256: String,
+}
+
+/// Portable configuration fingerprint. Workflow bytes, media, model weights and credentials
+/// are deliberately excluded; import requires the recipient to select the workflow file.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ProfileDescriptor {
+    pub schema_version: u32,
+    pub endpoint: String,
+    pub allow_remote: bool,
+    pub media_kind: MediaKind,
+    pub model_id: String,
+    pub prompt_input: NodeInput,
+    pub reference_input: Option<NodeInput>,
+    pub output_node: String,
+    pub output_field: OutputField,
+    pub max_output_bytes: u64,
+    pub timeout_seconds: u64,
+    pub workflow_sha256: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpgradeCheck {
+    pub profile_id: String,
+    pub configured_workflow_sha256: String,
+    pub candidate_workflow_sha256: String,
+    pub changed_fields: Vec<&'static str>,
+    pub requires_new_profile_id: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -206,12 +235,16 @@ pub fn profile_root() -> Result<PathBuf, ComfyError> {
 }
 
 pub fn configure(root: &Path, id: &str, path: &Path) -> Result<StoredProfile, ComfyError> {
-    if !valid_id(id) {
-        return Err(ComfyError::InvalidProfile(
-            "profile ID must use 1-64 ASCII letters, digits, _ or -".into(),
-        ));
+    let profile = read_candidate(path)?;
+    store_profile(root, id, profile)
+}
+
+fn read_candidate(path: &Path) -> Result<WorkflowProfile, ComfyError> {
+    let bytes = fs::read(path)?;
+    if bytes.len() as u64 > JSON_LIMIT {
+        return Err(ComfyError::InvalidProfile("profile exceeds 8 MiB".into()));
     }
-    let mut profile: WorkflowProfile = serde_json::from_slice(&fs::read(path)?)?;
+    let mut profile: WorkflowProfile = serde_json::from_slice(&bytes)?;
     if profile.workflow.is_relative() {
         profile.workflow = path
             .parent()
@@ -219,6 +252,19 @@ pub fn configure(root: &Path, id: &str, path: &Path) -> Result<StoredProfile, Co
             .join(&profile.workflow);
     }
     profile.workflow = profile.workflow.canonicalize()?;
+    Ok(profile)
+}
+
+fn store_profile(
+    root: &Path,
+    id: &str,
+    profile: WorkflowProfile,
+) -> Result<StoredProfile, ComfyError> {
+    if !valid_id(id) {
+        return Err(ComfyError::InvalidProfile(
+            "profile ID must use 1-64 ASCII letters, digits, _ or -".into(),
+        ));
+    }
     let (hash, _) = validate_profile(&profile)?;
     let stored = StoredProfile {
         profile_id: id.into(),
@@ -239,9 +285,128 @@ pub fn configure(root: &Path, id: &str, path: &Path) -> Result<StoredProfile, Co
         .write(true)
         .create_new(true)
         .open(&target)?;
-    use std::io::Write;
     file.write_all(&bytes)?;
     Ok(stored)
+}
+
+pub fn export_descriptor(
+    root: &Path,
+    id: &str,
+    output: &Path,
+) -> Result<ProfileDescriptor, ComfyError> {
+    let stored = load(root, id)?;
+    let p = stored.profile;
+    let descriptor = ProfileDescriptor {
+        schema_version: 1,
+        endpoint: p.endpoint,
+        allow_remote: p.allow_remote,
+        media_kind: p.media_kind,
+        model_id: p.model_id,
+        prompt_input: p.prompt_input,
+        reference_input: p.reference_input,
+        output_node: p.output_node,
+        output_field: p.output_field,
+        max_output_bytes: p.max_output_bytes,
+        timeout_seconds: p.timeout_seconds,
+        workflow_sha256: stored.workflow_sha256,
+    };
+    let bytes = serde_json::to_vec_pretty(&descriptor)?;
+    fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(output)?
+        .write_all(&bytes)?;
+    Ok(descriptor)
+}
+
+pub fn import_descriptor(
+    root: &Path,
+    id: &str,
+    descriptor: &Path,
+    workflow: &Path,
+) -> Result<StoredProfile, ComfyError> {
+    let bytes = fs::read(descriptor)?;
+    if bytes.len() as u64 > JSON_LIMIT {
+        return Err(ComfyError::InvalidProfile(
+            "descriptor exceeds 8 MiB".into(),
+        ));
+    }
+    let descriptor: ProfileDescriptor = serde_json::from_slice(&bytes)?;
+    if descriptor.schema_version != 1
+        || descriptor.workflow_sha256.len() != 64
+        || !descriptor
+            .workflow_sha256
+            .bytes()
+            .all(|b| b.is_ascii_hexdigit())
+    {
+        return Err(ComfyError::InvalidProfile(
+            "invalid descriptor schema or workflow hash".into(),
+        ));
+    }
+    let profile = WorkflowProfile {
+        schema_version: 1,
+        endpoint: descriptor.endpoint,
+        allow_remote: descriptor.allow_remote,
+        media_kind: descriptor.media_kind,
+        model_id: descriptor.model_id,
+        workflow: workflow.canonicalize()?,
+        prompt_input: descriptor.prompt_input,
+        reference_input: descriptor.reference_input,
+        output_node: descriptor.output_node,
+        output_field: descriptor.output_field,
+        max_output_bytes: descriptor.max_output_bytes,
+        timeout_seconds: descriptor.timeout_seconds,
+    };
+    let (hash, _) = validate_profile(&profile)?;
+    if hash != descriptor.workflow_sha256 {
+        return Err(ComfyError::WorkflowChanged);
+    }
+    store_profile(root, id, profile)
+}
+
+pub fn check_upgrade(root: &Path, id: &str, candidate: &Path) -> Result<UpgradeCheck, ComfyError> {
+    let current = load(root, id)?;
+    let next = read_candidate(candidate)?;
+    let (hash, _) = validate_profile(&next)?;
+    let old = &current.profile;
+    let mut changed = Vec::new();
+    if old.endpoint != next.endpoint || old.allow_remote != next.allow_remote {
+        changed.push("endpoint");
+    }
+    if old.media_kind != next.media_kind {
+        changed.push("mediaKind");
+    }
+    if old.model_id != next.model_id {
+        changed.push("modelId");
+    }
+    if old.prompt_input.node != next.prompt_input.node
+        || old.prompt_input.input != next.prompt_input.input
+    {
+        changed.push("promptInput");
+    }
+    if serde_json::to_value(&old.reference_input)? != serde_json::to_value(&next.reference_input)? {
+        changed.push("referenceInput");
+    }
+    if old.output_node != next.output_node {
+        changed.push("outputNode");
+    }
+    if serde_json::to_value(old.output_field)? != serde_json::to_value(next.output_field)? {
+        changed.push("outputField");
+    }
+    if old.max_output_bytes != next.max_output_bytes || old.timeout_seconds != next.timeout_seconds
+    {
+        changed.push("limits");
+    }
+    if current.workflow_sha256 != hash {
+        changed.push("workflowSha256");
+    }
+    Ok(UpgradeCheck {
+        profile_id: id.into(),
+        configured_workflow_sha256: current.workflow_sha256,
+        candidate_workflow_sha256: hash,
+        requires_new_profile_id: !changed.is_empty(),
+        changed_fields: changed,
+    })
 }
 
 pub fn load(root: &Path, id: &str) -> Result<StoredProfile, ComfyError> {

@@ -277,8 +277,10 @@ enum SourceCommand {
 
 #[derive(Subcommand)]
 enum AssetCommand {
-    /// Generate or import one image, prepare a Pack, and resume after review.
+    /// Generate or import one image/video, prepare a Pack, and resume after review.
     Create(local_asset::CreateArgs),
+    /// Preflight explicit count, wait and output budgets before starting local Jobs.
+    Batch(local_asset::BatchArgs),
     /// Mark a revision as a candidate or discarded without deleting media.
     Status(asset_library::DispositionArgs),
     /// Create a read-only offline media gallery with exact revision comparisons.
@@ -805,6 +807,41 @@ enum ProviderCommand {
         #[command(flatten)]
         json: JsonFlag,
     },
+    /// Export a portable ComfyUI profile fingerprint without workflow bytes or media.
+    Export {
+        #[arg(long)]
+        provider: String,
+        #[arg(long)]
+        profile: String,
+        #[arg(long)]
+        output: PathBuf,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
+    /// Import a portable descriptor against a separately selected API workflow.
+    Import {
+        #[arg(long)]
+        provider: String,
+        #[arg(long)]
+        profile: String,
+        #[arg(long)]
+        descriptor: PathBuf,
+        #[arg(long)]
+        workflow: PathBuf,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
+    /// Compare an existing profile with a candidate config without modifying either.
+    UpgradeCheck {
+        #[arg(long)]
+        provider: String,
+        #[arg(long)]
+        profile: String,
+        #[arg(long)]
+        config: PathBuf,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
     Login {
         #[arg(long)]
         provider: String,
@@ -1070,6 +1107,7 @@ fn run() -> Result<(), (String, String)> {
         }
         Command::Asset { command } => match command {
             AssetCommand::Create(args) => success(&local_asset::create(args)?),
+            AssetCommand::Batch(args) => success(&local_asset::batch(args)?),
             AssetCommand::Status(args) => asset_library::disposition(args),
             AssetCommand::Preview(args) => asset_library::preview(args),
             AssetCommand::Review(args) => asset_library::review(args),
@@ -1836,6 +1874,58 @@ fn run() -> Result<(), (String, String)> {
                 let stored = comfyui::configure(&root, &profile, &config)
                     .map_err(|e| (e.code().into(), e.to_string()))?;
                 success(&stored)
+            }
+            ProviderCommand::Export {
+                provider,
+                profile,
+                output,
+                ..
+            } => {
+                if provider != COMFYUI_PROVIDER_ID {
+                    return Err((
+                        "unsupported_provider".into(),
+                        "export currently supports comfyui".into(),
+                    ));
+                }
+                let root = comfyui::profile_root().map_err(|e| (e.code().into(), e.to_string()))?;
+                let descriptor = comfyui::export_descriptor(&root, &profile, &output)
+                    .map_err(|e| (e.code().into(), e.to_string()))?;
+                success(&serde_json::json!({"output": output, "descriptor": descriptor}))
+            }
+            ProviderCommand::Import {
+                provider,
+                profile,
+                descriptor,
+                workflow,
+                ..
+            } => {
+                if provider != COMFYUI_PROVIDER_ID {
+                    return Err((
+                        "unsupported_provider".into(),
+                        "import currently supports comfyui".into(),
+                    ));
+                }
+                let root = comfyui::profile_root().map_err(|e| (e.code().into(), e.to_string()))?;
+                let stored = comfyui::import_descriptor(&root, &profile, &descriptor, &workflow)
+                    .map_err(|e| (e.code().into(), e.to_string()))?;
+                success(&stored)
+            }
+            ProviderCommand::UpgradeCheck {
+                provider,
+                profile,
+                config,
+                ..
+            } => {
+                if provider != COMFYUI_PROVIDER_ID {
+                    return Err((
+                        "unsupported_provider".into(),
+                        "upgrade-check currently supports comfyui".into(),
+                    ));
+                }
+                let root = comfyui::profile_root().map_err(|e| (e.code().into(), e.to_string()))?;
+                let check = comfyui::check_upgrade(&root, &profile, &config)
+                    .map_err(|e| (e.code().into(), e.to_string()))?;
+                success(&check)
             }
             ProviderCommand::Login {
                 provider,
@@ -3529,19 +3619,52 @@ fn asset_records(record: JobRecord) -> Vec<AssetRecord> {
 }
 
 fn job_store() -> Result<JobStore, (String, String)> {
-    if let Some(root) = env::var_os("FORGE_JOB_STORE") {
+    let store = if let Some(root) = env::var_os("FORGE_JOB_STORE") {
         JobStore::new(root).map_err(display_error)
     } else {
         JobStore::default_app_store().map_err(display_error)
-    }
+    }?;
+    protect_store_from_godot_scan(store.root())?;
+    Ok(store)
 }
 
 fn plan_store() -> Result<PlanStore, (String, String)> {
-    if let Some(root) = env::var_os("FORGE_PLAN_STORE") {
+    let store = if let Some(root) = env::var_os("FORGE_PLAN_STORE") {
         PlanStore::new(root).map_err(display_error)
     } else {
         PlanStore::default_app_store().map_err(display_error)
+    }?;
+    protect_store_from_godot_scan(store.root())?;
+    Ok(store)
+}
+
+fn protect_store_from_godot_scan(root: &Path) -> Result<(), (String, String)> {
+    let root = root.canonicalize().map_err(io_error)?;
+    if root.join("project.godot").is_file() {
+        return Err((
+            "store_invalid".into(),
+            "a Forge Job/Plan store cannot be the Godot project root".into(),
+        ));
     }
+    if root
+        .ancestors()
+        .skip(1)
+        .any(|ancestor| ancestor.join("project.godot").is_file())
+    {
+        // Godot writes .import sidecars while scanning. Inside a retained Pack,
+        // those sidecars change its hash and break later receipt verification.
+        let marker = root.join(".gdignore");
+        match fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&marker)
+        {
+            Ok(_) => {}
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists && marker.is_file() => {}
+            Err(error) => return Err(io_error(error)),
+        }
+    }
+    Ok(())
 }
 
 fn locate_godot() -> Option<PathBuf> {

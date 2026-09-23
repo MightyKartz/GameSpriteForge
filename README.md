@@ -78,6 +78,22 @@ offline from the executable itself.
 | **Audio** | Import WAV music, sound effects and ambience; trim, adjust gain, add fades and prepare loops. |
 | **Godot delivery** | Validate Packs and install native textures, scenes, animations and audio streams. Lock chosen versions, retain delivery receipts and roll back failed updates. |
 
+**Development preview (not in v0.7.2):** a user-installed local ComfyUI can be
+called through the same `forge asset create --input request.json --wait --json`
+command from Codex, Claude Code or DeepSeek Harness. Forge retains the generated
+PNG/MP4, prepares a Pack and resumes Godot delivery after source-bound visual
+review. Verified local workflows include Qwen Image 2.1 T2I and single-reference
+edit, plus MiniMax H3 I2V and text-to-video source creation. The T2V QA sample
+was rejected for a character mismatch and was not installed. Supported modes
+depend on the user's API-format workflow, installed weights and explicit profile
+mapping. The [development guide](docs/automation/comfyui-local.md) covers
+setup, batch budgets, profile portability and limits. Install `forge-use` into
+`.agents/skills` for Codex or a
+compatible DeepSeek Harness setup, or into `.claude/skills` with
+`forge skill install --agent claude-code`. Discovery still requires testing in
+each agent client; this source-tree validation does not establish a released
+multi-agent workflow.
+
 **New in v0.7.2:** `forge skill install` now works on Windows alongside macOS
 and Linux, so every install can let Codex discover Forge — the recommended setup
 commits `.agents/skills/forge-use/` into the game repository, giving every

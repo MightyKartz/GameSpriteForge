@@ -7,6 +7,7 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+#[cfg(unix)]
 use std::process::Command;
 use std::sync::Mutex;
 
@@ -17,10 +18,13 @@ use forge_core::automation::{
     run_operation_with_provider, stage_plan_job, AutomationOperation, BuildProjectRequestV1,
     CreateStyleLockRequest, PlanStore,
 };
-use forge_core::catalog::{read_project_catalog, PROJECT_CATALOG_RELATIVE};
+use forge_core::catalog::read_project_catalog;
+#[cfg(unix)]
+use forge_core::catalog::PROJECT_CATALOG_RELATIVE;
+#[cfg(unix)]
+use forge_core::game_art::reconcile_interrupted_builds;
 use forge_core::game_art::{
-    reconcile_interrupted_builds, run_build_project, BuildResultStatusV1, BUILD_STATE_FILE,
-    PROJECT_BUILD_REPORT_FILE,
+    run_build_project, BuildResultStatusV1, BUILD_STATE_FILE, PROJECT_BUILD_REPORT_FILE,
 };
 use forge_core::job::{JobLifecycleState, JobOperationKind, JobStore, SourceKind};
 use forge_core::provider::{
@@ -1137,6 +1141,9 @@ fn build_project_cancel_flag_skips_all_children_cooperatively() {
 // (f) Crash recovery: worker reconciliation + build-state resume
 // ---------------------------------------------------------------------------
 
+// Worker liveness probing is implemented on Unix; other platforms deliberately
+// assume a recorded PID is alive, so dead-worker reconciliation cannot run there.
+#[cfg(unix)]
 #[test]
 fn reconcile_marks_dead_workers_and_resume_skips_completed_assets() {
     let temp = tempdir().unwrap();

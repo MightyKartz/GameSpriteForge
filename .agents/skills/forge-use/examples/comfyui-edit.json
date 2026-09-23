@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1",
+  "mediaKind": "image",
+  "workflowProfile": "local-qwen-edit",
+  "prompt": "Change the blue potion in <image1> to red. Preserve its silhouette and centered icon layout. No text.",
+  "referenceImage": "C:/game/assets/blue-potion.png",
+  "assetId": "red_potion",
+  "name": "Red potion",
+  "purpose": "HUD inventory icon",
+  "kind": "icon_set",
+  "license": "private",
+  "sampling": "nearest",
+  "canvasSize": 128,
+  "staticMatting": "auto_corners",
+  "foregroundAlphaThreshold": 32,
+  "maxWaitSeconds": 900
+}

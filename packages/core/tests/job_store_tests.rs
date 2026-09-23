@@ -37,19 +37,16 @@ fn legacy_job_json_defaults_automation_fields() {
     let record = store.create_job(SourceKind::ImportFrames).unwrap();
     fs::write(
         record.job_dir.join("job.json"),
-        format!(
-            r#"{{
-  "job_id": "{}",
-  "source_kind": "import_frames",
-  "state": "created",
-  "created_at": "2026-01-01T00:00:00Z",
-  "updated_at": "2026-01-01T00:00:00Z",
-  "job_dir": "{}",
-  "error_summary": null
-}}"#,
-            record.job_id,
-            record.job_dir.display()
-        ),
+        serde_json::to_vec_pretty(&serde_json::json!({
+            "job_id": record.job_id,
+            "source_kind": "import_frames",
+            "state": "created",
+            "created_at": "2026-01-01T00:00:00Z",
+            "updated_at": "2026-01-01T00:00:00Z",
+            "job_dir": record.job_dir,
+            "error_summary": null
+        }))
+        .unwrap(),
     )
     .unwrap();
 

@@ -128,7 +128,11 @@ fn watched_paths(root: &Path) -> BTreeSet<PathBuf> {
     }
     for argument in ["--absolute-git-dir", "--git-common-dir"] {
         if let Some(directory) = git_text(root, &["rev-parse", argument]) {
-            let directory = root.join(directory);
+            // Git may emit forward slashes on Windows. Canonicalize before
+            // recording paths so the same file has one native PathBuf identity.
+            let Ok(directory) = fs::canonicalize(root.join(directory)) else {
+                continue;
+            };
             for name in ["HEAD", "index", "commondir", "packed-refs", "refs"] {
                 add_existing(&mut paths, directory.join(name));
             }

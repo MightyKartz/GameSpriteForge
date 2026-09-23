@@ -227,13 +227,31 @@ pub fn setup(args: SetupArgs) -> Result<Value> {
         )?;
         install_templates(release)?;
     }
-    let config = environment::save(&engine)?;
+    let config = setup_file_operation("save Godot configuration", || environment::save(&engine))?;
     Ok(
         json!({"engine":engine,"configPath":config,"templates":template_status(&engine),"environmentModified":false,"next":"forge godot check --project PATH --json"}),
     )
 }
 
 const DEFAULT_GODOT_VERSION: &str = "4.7.2";
+
+/// Windows scanners can hold a newly extracted executable or template file for
+/// a moment. Retry only that OS error; retain the stage in all failures.
+fn setup_file_operation<T>(stage: &str, mut operation: impl FnMut() -> Result<T>) -> Result<T> {
+    let attempts = if cfg!(windows) { 6 } else { 1 };
+    for attempt in 0..attempts {
+        match operation() {
+            Ok(value) => return Ok(value),
+            Err(error)
+                if cfg!(windows) && error.contains("os error 5") && attempt + 1 < attempts =>
+            {
+                thread::sleep(Duration::from_millis(100u64 << attempt));
+            }
+            Err(error) => return Err(format!("{stage}: {error}")),
+        }
+    }
+    unreachable!("the last attempt returns its result")
+}
 
 struct ManagedRelease {
     version: &'static str,
@@ -280,8 +298,12 @@ fn download_extract(
     checksum: &str,
     parent: &Path,
 ) -> Result<tempfile::TempDir> {
-    fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    let temp = tempfile::tempdir_in(parent).map_err(|e| e.to_string())?;
+    setup_file_operation("create Godot download directory", || {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())
+    })?;
+    let temp = setup_file_operation("create Godot download workspace", || {
+        tempfile::tempdir_in(parent).map_err(|e| e.to_string())
+    })?;
     let archive = temp.path().join("download.zip");
     let url = format!(
         "https://github.com/godotengine/godot-builds/releases/download/{}-stable/{name}",
@@ -312,11 +334,15 @@ fn download_extract(
             evidence.display()
         ));
     }
-    let mut file = fs::File::open(&archive).map_err(|e| e.to_string())?;
+    let mut file = setup_file_operation("open downloaded Godot archive", || {
+        fs::File::open(&archive).map_err(|e| e.to_string())
+    })?;
     let mut hash = Sha512::new();
     let mut buffer = [0u8; 65536];
     loop {
-        let n = file.read(&mut buffer).map_err(|e| e.to_string())?;
+        let n = setup_file_operation("hash downloaded Godot archive", || {
+            file.read(&mut buffer).map_err(|e| e.to_string())
+        })?;
         if n == 0 {
             break;
         }
@@ -378,10 +404,13 @@ fn install_engine(release: &ManagedRelease) -> Result<Engine> {
     let root = environment::config_root()?.join("tools");
     let target = root.join(format!("godot-{version}-standard"));
     if target.exists() {
-        let engine = environment::probe(&target.join(&relative))?;
-        let saved: Engine = serde_json::from_slice(
-            &fs::read(target.join("forge-engine.json")).map_err(|e| e.to_string())?,
-        )
+        let engine = setup_file_operation("probe installed Godot", || {
+            environment::probe(&target.join(&relative))
+        })?;
+        let saved: Engine = serde_json::from_slice(&setup_file_operation(
+            "read installed Godot manifest",
+            || fs::read(target.join("forge-engine.json")).map_err(|e| e.to_string()),
+        )?)
         .map_err(|e| e.to_string())?;
         if saved.sha256 != engine.sha256
             || saved.companion_sha256 != engine.companion_sha256
@@ -395,13 +424,21 @@ fn install_engine(release: &ManagedRelease) -> Result<Engine> {
         return Ok(engine);
     }
     let temp = download_extract(release, &archive, checksum, &root)?;
-    let unpacked = environment::probe(&temp.path().join("unpacked").join(&relative))?;
+    let unpacked = setup_file_operation("probe extracted Godot", || {
+        environment::probe(&temp.path().join("unpacked").join(&relative))
+    })?;
     if !release.matches(&unpacked) {
         return Err("Downloaded engine does not match the selected release".into());
     }
-    fs::rename(temp.path().join("unpacked"), &target).map_err(|e| e.to_string())?;
-    let engine = environment::probe(&target.join(&relative))?;
-    environment::write_json(&target.join("forge-engine.json"), &engine, false)?;
+    setup_file_operation("publish extracted Godot", || {
+        fs::rename(temp.path().join("unpacked"), &target).map_err(|e| e.to_string())
+    })?;
+    let engine = setup_file_operation("probe published Godot", || {
+        environment::probe(&target.join(&relative))
+    })?;
+    setup_file_operation("write Godot manifest", || {
+        environment::write_json(&target.join("forge-engine.json"), &engine, false)
+    })?;
     Ok(engine)
 }
 
@@ -417,9 +454,10 @@ fn install_templates(release: &ManagedRelease) -> Result<()> {
         .iter()
         .all(|name| target.join(name).is_file())
             && target.join("version.txt").is_file()
-            && fs::read_to_string(target.join("version.txt"))
-                .map_err(|e| e.to_string())?
-                .trim()
+            && setup_file_operation("read installed template version", || {
+                fs::read_to_string(target.join("version.txt")).map_err(|e| e.to_string())
+            })?
+            .trim()
                 == version
         {
             return Ok(());
@@ -436,14 +474,17 @@ fn install_templates(release: &ManagedRelease) -> Result<()> {
         target.parent().ok_or("Invalid templates path")?,
     )?;
     let source = temp.path().join("unpacked/templates");
-    if fs::read_to_string(source.join("version.txt"))
-        .map_err(|e| e.to_string())?
-        .trim()
+    if setup_file_operation("read extracted template version", || {
+        fs::read_to_string(source.join("version.txt")).map_err(|e| e.to_string())
+    })?
+    .trim()
         != version
     {
         return Err("Unexpected export template version".into());
     }
-    fs::rename(source, target).map_err(|e| e.to_string())?;
+    setup_file_operation("publish Godot templates", || {
+        fs::rename(&source, &target).map_err(|e| e.to_string())
+    })?;
     Ok(())
 }
 

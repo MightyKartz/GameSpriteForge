@@ -1,4 +1,4 @@
-use image::{Rgba, RgbaImage};
+use image::{imageops::FilterType, Rgba, RgbaImage};
 use serde::{Deserialize, Serialize};
 
 use super::anchor::{default_foot_anchor, FootAnchor};
@@ -25,6 +25,10 @@ pub struct NormalizeOptions {
     pub alpha_threshold: u8,
     #[serde(default)]
     pub manual_anchor: Option<FootAnchor>,
+    /// Optional final square canvas for workflows that explicitly request one.
+    /// All frames in the same normalization batch use the same resize ratio.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_canvas_size: Option<u32>,
 }
 
 impl Default for NormalizeOptions {
@@ -35,6 +39,7 @@ impl Default for NormalizeOptions {
             margin: 0,
             alpha_threshold: 0,
             manual_anchor: None,
+            target_canvas_size: None,
         }
     }
 }
@@ -75,7 +80,28 @@ pub fn normalize_frames(frames: &[RgbaImage], options: NormalizeOptions) -> Vec<
     frames
         .iter()
         .zip(source_bboxes)
-        .map(|(frame, source_bbox)| normalize_one(frame, source_bbox, size, anchor, options))
+        .map(|(frame, source_bbox)| {
+            let mut normalized = normalize_one(frame, source_bbox, size, anchor, options);
+            if let Some(target) = options.target_canvas_size {
+                if target != size.width || target != size.height {
+                    let scale_x = target as f32 / size.width as f32;
+                    let scale_y = target as f32 / size.height as f32;
+                    normalized.image = image::imageops::resize(
+                        &normalized.image,
+                        target,
+                        target,
+                        FilterType::Nearest,
+                    );
+                    normalized.bbox = bbox_from_image(&normalized.image, options.alpha_threshold);
+                    normalized.size = FrameSize::new(target, target);
+                    normalized.anchor.x = (normalized.anchor.x * scale_x).round();
+                    normalized.anchor.y = (normalized.anchor.y * scale_y).round();
+                    normalized.offset_x = (normalized.offset_x as f32 * scale_x).round() as i32;
+                    normalized.offset_y = (normalized.offset_y as f32 * scale_y).round() as i32;
+                }
+            }
+            normalized
+        })
         .collect()
 }
 
