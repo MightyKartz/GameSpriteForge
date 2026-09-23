@@ -1,5 +1,12 @@
 # Forge Provider generation
 
+For an installed local ComfyUI, this development build can import an explicit
+API-format workflow and run `forge provider doctor --provider comfyui`. Export
+with ComfyUI's Save (API Format), then set the exact prompt input and output node
+in the profile. This is diagnostics only; it cannot yet run `forge asset create`.
+A pinned release may not have this command. Do not treat a successful profile
+check as generated or delivered media.
+
 Use this route when the requested work calls for generation by a Forge Provider.
 For Codex-generated or existing PNGs, use [local preparation](local-static.md)
 (`"$FORGE_BIN" guide static`) without Provider login or a Style Lock. Apply the
