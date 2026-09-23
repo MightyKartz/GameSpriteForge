@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1",
+  "mediaKind": "video",
+  "workflowProfile": "local-h3-i2v",
+  "prompt": "integrated_multimodal_description: The character in the first frame performs a subtle looping idle motion. Fixed game camera, stable silhouette, plain background.\n\noverall_soundscape: N/A\n\nnon_diegetic_music: N/A",
+  "referenceImage": "C:/game/assets/hero-reference.png",
+  "assetId": "hero_idle",
+  "name": "Hero idle",
+  "purpose": "Character idle animation",
+  "kind": "character",
+  "license": "user-declared; verify before shipping",
+  "animationName": "idle_breathe",
+  "animationFps": 12,
+  "targetFrameCount": 12,
+  "loopAnimation": true,
+  "mattingMode": "auto_corners",
+  "supportAnimations": [
+    {
+      "name": "idle",
+      "fps": 2,
+      "loop": true,
+      "input": {"kind": "png_sequence", "paths": ["C:/game/assets/idle-0.png", "C:/game/assets/idle-1.png"]},
+      "matting": {"mode": "preserve_alpha"}
+    }
+  ],
+  "maxWaitSeconds": 3600
+}

@@ -11,6 +11,7 @@ use crate::quality::{QualityReport, QualityVerdict};
 pub enum SourceKind {
     ImportImage,
     ComfyuiImage,
+    ComfyuiVideo,
     ImportAudio,
     ImportVideo,
     ImportFrames,
@@ -24,6 +25,7 @@ impl SourceKind {
         match value {
             "import_image" => SourceKind::ImportImage,
             "comfyui_image" => SourceKind::ComfyuiImage,
+            "comfyui_video" => SourceKind::ComfyuiVideo,
             "import_audio" => SourceKind::ImportAudio,
             "import_video" => SourceKind::ImportVideo,
             "import_frames" => SourceKind::ImportFrames,
@@ -37,6 +39,7 @@ impl SourceKind {
         match self {
             Self::ImportImage => "import_image",
             Self::ComfyuiImage => "comfyui_image",
+            Self::ComfyuiVideo => "comfyui_video",
             Self::ImportAudio => "import_audio",
             Self::ImportVideo => "import_video",
             Self::ImportFrames => "import_frames",
@@ -83,6 +86,7 @@ impl<'de> Deserialize<'de> for SourceKind {
                 Ok(match value {
                     "import_image" => SourceKind::ImportImage,
                     "comfyui_image" => SourceKind::ComfyuiImage,
+                    "comfyui_video" => SourceKind::ComfyuiVideo,
                     "import_audio" => SourceKind::ImportAudio,
                     "import_video" => SourceKind::ImportVideo,
                     "import_frames" => SourceKind::ImportFrames,

@@ -27,6 +27,7 @@ SKILL = "forge-use"
 GUIDE_RESOURCES = (
     ("comfyui", "references/comfyui.md", "text/markdown"),
     ("comfyui-image-example", "examples/comfyui-image.json", "application/json"),
+    ("comfyui-video-example", "examples/comfyui-video.json", "application/json"),
     ("local-delivery-example", "examples/local-delivery.py", "text/x-python"),
     ("godot-workflow", "references/godot-workflow.md", "text/markdown"),
     ("project-assets", "references/project-assets.md", "text/markdown"),
@@ -330,6 +331,14 @@ class Harness:
                             and request.get("mediaKind") == "image" and request.get("workflowProfile")
                             and request.get("prompt") and request.get("kind") in ("icon_set", "prop_set"),
                             "ComfyUI example must be a complete image generation request")
+                    examples.append(relative)
+                    continue
+                if topic == "comfyui-video-example":
+                    require(isinstance(request, dict) and request.get("schemaVersion") == "1"
+                            and request.get("mediaKind") == "video" and request.get("workflowProfile")
+                            and request.get("referenceImage") and request.get("animationName")
+                            and request.get("supportAnimations"),
+                            "ComfyUI example must be a complete I2V character request")
                     examples.append(relative)
                     continue
                 if topic == "animation-example":

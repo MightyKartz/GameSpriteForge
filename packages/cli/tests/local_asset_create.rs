@@ -9,6 +9,66 @@ use serde_json::{json, Value};
 use tempfile::tempdir;
 
 #[test]
+#[ignore = "requires native ffmpeg/ffprobe through GAME_SPRITE_FORGE_FFMPEG_SEARCH_DIRS"]
+fn local_mp4_prepares_character_pack_and_waits_for_visual_review() {
+    let dir = tempdir().unwrap();
+    let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let source = repo
+        .join("docs/media/showcase/thunder/godot-demo.mp4")
+        .canonicalize()
+        .unwrap();
+    let frame = repo
+        .join("docs/qa/artifacts/forge-character-v2-real-20260804/run-3/sample-idle-frame-00.png")
+        .canonicalize()
+        .unwrap();
+    let request = dir.path().join("request.json");
+    fs::write(
+        &request,
+        json!({
+            "schemaVersion":"1", "mediaKind":"video", "source":source,
+            "assetId":"local_h3_fixture", "name":"Local video fixture", "purpose":"character QA",
+            "kind":"character", "license":"test-only",
+            "animationName":"motion", "animationFps":8, "targetFrameCount":8,
+            "loopAnimation":false, "mattingMode":"auto_corners",
+            "supportAnimations":[{"name":"idle", "fps":2, "loop":true,
+                "input":{"kind":"png_sequence", "paths":[frame,frame]},
+                "matting":{"mode":"preserve_alpha"}}]
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_forge"))
+        .args([
+            "asset",
+            "create",
+            "--input",
+            request.to_str().unwrap(),
+            "--json",
+        ])
+        .env("FORGE_JOB_STORE", dir.path().join("jobs"))
+        .env("FORGE_PLAN_STORE", dir.path().join("plans"))
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stdout)
+    );
+    let result: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(result["data"]["state"], "awaiting_review");
+    assert_eq!(result["data"]["mediaKind"], "video");
+    assert!(
+        result["data"]["videoProbe"]["frameCountEstimate"]
+            .as_u64()
+            .unwrap()
+            > 0
+    );
+    assert!(std::path::Path::new(result["data"]["packPath"].as_str().unwrap()).is_dir());
+    assert!(std::path::Path::new(result["data"]["previewPath"].as_str().unwrap()).is_file());
+    assert!(result["data"]["installJobId"].is_null());
+}
+
+#[test]
 fn local_png_uses_same_job_and_review_contract_without_regeneration() {
     let dir = tempdir().unwrap();
     let source = dir.path().join("input.png");

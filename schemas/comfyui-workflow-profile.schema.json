@@ -16,6 +16,10 @@
       "type": "object", "additionalProperties": false, "required": ["node", "input"],
       "properties": {"node": {"type": "string", "minLength": 1}, "input": {"type": "string", "minLength": 1}}
     },
+    "referenceInput": {
+      "type": "object", "additionalProperties": false, "required": ["node", "input"],
+      "properties": {"node": {"type": "string", "minLength": 1}, "input": {"type": "string", "minLength": 1}}
+    },
     "outputNode": {"type": "string", "minLength": 1},
     "outputField": {"enum": ["images", "gifs", "videos"]},
     "maxOutputBytes": {"type": "integer", "minimum": 1, "maximum": 536870912},
