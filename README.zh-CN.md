@@ -81,6 +81,18 @@ macOS、Linux、Windows 均支持。CLI 升级后用 `forge skill check --projec
 先读取所选二进制的 `forge guide`；兼容性与验证范围见[发布说明](docs/releases/v0.7.2.md)。
 真实项目效率收益尚未完成实测。
 
+### Codex + Forge：探索性 Token 对比
+
+Codex 查找已有游戏素材时，可以让 Forge 回答项目资源库的需求对账，而不必逐项阅读
+完整清单。在同一份包含 73 条素材记录、4 条需求的合成素材库上进行了两轮只读对比，
+两种方式都得出正确答案。配合 Forge 的两轮分别记录了**少 2.5% 和 61.2% 的输入 Token**。
+
+![两轮合成素材查询中，Codex 普通工具组与配合 Forge 组的输入 Token 对比](docs/media/codex-token-comparison-v072-zh.svg)
+
+*输入 Token 包含缓存输入。两轮的提示和工具路径存在差异，第一轮普通工具组还遇到本机
+Python 路径问题。这只是合成查询的小样本观测，不代表固定节省率、账单折扣或已验证的
+真实游戏开发提效。[查看测试方法、限制与证据](docs/qa/codex-token-comparison-v0.7.2.md)。*
+
 **动画预览（v0.6.3）：** 平面动画 Pack 可直接播放原始 PNG，支持逐帧查看和切换背景，
 也可按需导出 H.264 MP4。Windows 包已包含 Media Foundation H.264 编码支持；请通过
 `doctor --json` 检查 `pack_mp4_preview` 能力。

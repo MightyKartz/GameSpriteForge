@@ -87,6 +87,21 @@ guide` from the selected executable. [Release notes](docs/releases/v0.7.2.md)
 explain compatibility and validation; real-project productivity remains
 unmeasured.
 
+### Codex + Forge: an exploratory token comparison
+
+When Codex needs to find existing game assets, Forge can answer a project-library
+requirements query instead of having Codex inspect a full inventory. In two
+read-only runs on the same synthetic library of 73 asset records and four requirements,
+both approaches returned the correct answers. The Forge-guided runs recorded
+**2.5% and 61.2% fewer input tokens**, respectively.
+
+![Input tokens for Codex with ordinary tools versus Codex with Forge across two synthetic resource lookups](docs/media/codex-token-comparison-v072-en.svg)
+
+*Input tokens include cached input. Prompts and tool paths varied, and the first
+ordinary-tool run hit a local Python path issue. These are observations from a
+small synthetic lookup, not a fixed saving, a billing comparison or a measured
+real-game productivity gain. [Method, limitations and evidence](docs/qa/codex-token-comparison-v0.7.2.md).*
+
 **Animation previews (v0.6.3):** flat animation Packs can be reviewed from
 original PNGs with frame stepping and background selection, or exported on demand
 as H.264 MP4. Windows packages include Media Foundation H.264 encoding. Check
