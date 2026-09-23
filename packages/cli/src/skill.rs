@@ -1062,6 +1062,11 @@ mod guide_tests {
                 "application/json",
             ),
             (
+                "comfyui-edit-example",
+                "examples/comfyui-edit.json",
+                "application/json",
+            ),
+            (
                 "local-delivery-example",
                 "examples/local-delivery.py",
                 "text/x-python",
