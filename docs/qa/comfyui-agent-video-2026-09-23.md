@@ -41,6 +41,24 @@ The original square reference had been stretched to a wide H3 input, and the
 generated subject scale did not match the support action. Canvas normalization
 does not repair those visual composition defects.
 
+After the fix, commit `9598196d63281776656bf27659dcae7040d8aa2c` was
+installed cleanly as an MSVC debug CLI with no optional features (SHA-256
+`0bf71cb9f364d1b0e0bedf15c1ee53b159bbddfd3d8e2a44a031a2b5cdd1f7df`).
+Its offline installed-binary guide/skill harness passed all 178 commands. In a
+fresh isolated Godot project, that executable replayed the same MP4 without
+ComfyUI, produced fourteen 256×256 Pack frames and installed them through
+parent Job `037ce077-4fe7-4851-9000-a4a57698bb6b`, prepare Job
+`ea671c28-8739-4ba7-8e7e-3486571b3b50`, and install Job
+`cc6b3081-e0eb-45da-b47b-ac74f1f116ee`. Pack SHA-256 was
+`bb02054e84585500d58f7fe3540fce0ba24bd62d07847ce947b12309b2c8568b`;
+receipt SHA-256 was
+`7bb53442d26751e31b2d7631a609c658d887dc7d9cd1a248e5b066981c84288d`.
+An independent Godot 4.6.3 script loaded the installed scene, checked 12
+`idle_breathe` frames at 256×256, and played the animation. A separate
+read-only receipt verification returned `verified: true` and
+`installationVerified: true`. The recorded agent review is isolated technical
+QA; it is not human approval for shipping art.
+
 The ComfyUI service was stopped after these runs. This evidence establishes
 live Codex and DeepSeek conversation-to-CLI-to-Godot paths for H3 I2V, with
 the noted revision and regression checks. It does **not** establish a shippable
