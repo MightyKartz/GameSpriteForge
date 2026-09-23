@@ -34,6 +34,20 @@ used a source-tree development executable (SHA-256
 `e1817c3eafe1c8969f76a05c696414108c17cab93cb946b3e20f289b464c18e2`),
 not the installed CLI used for initial agent discovery.
 
+The corrected commit `46ab896c704dab8fc57581d1f3586adb33b1b366` was also
+installed outside the source tree on Windows (`x86_64-pc-windows-msvc`, debug,
+no optional features, SHA-256
+`8b01ac57e888b6ea2a132eacd8dd4cb8b774930a894ab04ebde12f39314284b4`).
+The offline installed-binary harness passed all 178 commands, including Claude
+skill installation. In a fresh isolated Godot project, the installed executable
+reused the same green-potion source under parent Job
+`631506c9-302e-4c94-a338-d51ce3a112d2`, installed via Job
+`1be4e63c-4103-4338-8fde-9fedb699800a`, and returned automatic receipt
+SHA-256 `f63fe74b237acc8fdaafb79337a22542a0e5a3fce4838dd0baf7f7760a059164`.
+Godot 4.6.3 independently loaded the installed 128×128 `Texture2D`; the
+installed CLI then verified the retained receipt and installation with
+`--expected-sha256` (`installationVerified: true`, `visualReview: accepted`).
+
 This establishes two live skill-discovery paths, a shared CLI protocol, and
 recovery of the Godot/receipt defect. It does not satisfy the planned three-agent
 image/video conversation matrix or the prospective paired comparison. Claude
