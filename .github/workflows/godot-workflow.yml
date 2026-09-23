@@ -96,7 +96,10 @@ jobs:
         run: cargo test --locked -p core --test animation_preview_tests native_mp4 -- --ignored
       - name: Verify official managed download and templates
         run: |
-          "$FORGE_BIN" setup godot --download --version "$GODOT_VERSION" --templates --json > target/setup.json
+          if ! "$FORGE_BIN" setup godot --download --version "$GODOT_VERSION" --templates --json > target/setup.json; then
+            cat target/setup.json
+            exit 1
+          fi
           "$FORGE_BIN" setup godot --download --version "$GODOT_VERSION" --templates --json > target/setup-repeat.json
           if [ "$GODOT_VERSION" = '4.7.2' ]; then
             "$FORGE_BIN" setup godot --download --json > target/setup-default.json
