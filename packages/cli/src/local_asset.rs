@@ -438,7 +438,67 @@ pub fn create(args: CreateArgs) -> Result<AssetResult> {
     let record = store
         .read_record(&record.job_id)
         .map_err(super::display_error)?;
+    // A second agent call may resume while the original --wait process is
+    // still polling ComfyUI. Serialize the whole parent transition so it
+    // cannot create a second preparation or install child from stale state.
+    // This lock is distinct from JobStore's short-lived .job.lock: save()
+    // needs to acquire that record lock while this one is held.
+    let run_lock_path = record.job_dir.join(".asset-create.lock");
+    let run_lock = fs::OpenOptions::new()
+        .create(true)
+        .read(true)
+        .write(true)
+        .truncate(false)
+        .open(&run_lock_path)
+        .map_err(super::io_error)?;
+    match run_lock.try_lock() {
+        Ok(()) => {}
+        Err(fs::TryLockError::WouldBlock) => {
+            if args.review.is_some() {
+                return Err((
+                    "asset_busy".into(),
+                    format!(
+                        "Job {} is active in another forge asset create call; retry review after it returns",
+                        record.job_id
+                    ),
+                ));
+            }
+            let current = store
+                .read_record(&record.job_id)
+                .map_err(super::display_error)?;
+            let state = read_state(&current)?;
+            if args.cancel {
+                if !matches!(
+                    state.phase.as_str(),
+                    "created" | "submitting" | "generating"
+                ) {
+                    return Err((
+                        "asset_busy".into(),
+                        "Job is already processing or installing; retry cancellation after the active call returns".into(),
+                    ));
+                }
+                store
+                    .request_cancellation(&record.job_id)
+                    .map_err(super::display_error)?;
+            }
+            let mut snapshot = result(&record.job_id, &state)?;
+            if args.cancel {
+                snapshot.next_actions = vec!["wait_for_cancellation".into()];
+            } else if !matches!(
+                state.phase.as_str(),
+                "succeeded" | "failed" | "rejected" | "cancelled"
+            ) {
+                snapshot.next_actions = vec!["wait_for_active_call".into()];
+            }
+            return Ok(snapshot);
+        }
+        Err(fs::TryLockError::Error(error)) => return Err(super::io_error(error)),
+    }
+    let _run_lock = run_lock;
     let mut state = read_state(&record)?;
+    if process_requested_cancellation(&record.job_id, &mut state)? {
+        return result(&record.job_id, &state);
+    }
     if args.cancel {
         return cancel(&record.job_id, &mut state);
     }
@@ -537,6 +597,22 @@ fn cancel(job_id: &str, state: &mut AssetState) -> Result<AssetResult> {
         vec!["new_request_if_needed".into()],
     )?;
     result(job_id, state)
+}
+
+fn process_requested_cancellation(job_id: &str, state: &mut AssetState) -> Result<bool> {
+    let store = super::job_store()?;
+    if !store
+        .read_record(job_id)
+        .map_err(super::display_error)?
+        .cancellation_requested
+    {
+        return Ok(false);
+    }
+    store
+        .update_record(job_id, |record| record.cancellation_requested = false)
+        .map_err(super::display_error)?;
+    cancel(job_id, state)?;
+    Ok(true)
 }
 
 fn validate_request(request: &mut AssetRequest) -> Result<()> {
@@ -781,6 +857,9 @@ fn result(job_id: &str, state: &AssetState) -> Result<AssetResult> {
 }
 
 fn advance(job_id: &str, state: &mut AssetState, wait: bool) -> Result<()> {
+    if process_requested_cancellation(job_id, state)? {
+        return Ok(());
+    }
     if state.source_path.is_none() {
         if let Some(source) = &state.request.source {
             let limit = if state.request.media_kind == MediaKind::Image {
@@ -847,6 +926,9 @@ fn advance(job_id: &str, state: &mut AssetState, wait: bool) -> Result<()> {
         }
     }
     if state.pack_path.is_none() {
+        if process_requested_cancellation(job_id, state)? {
+            return Ok(());
+        }
         match state.request.media_kind {
             MediaKind::Image => prepare(job_id, state)?,
             MediaKind::Video => prepare_video(job_id, state)?,
@@ -873,6 +955,9 @@ fn advance(job_id: &str, state: &mut AssetState, wait: bool) -> Result<()> {
         return Ok(());
     }
     if state.request.godot_project.is_some() {
+        if process_requested_cancellation(job_id, state)? {
+            return Ok(());
+        }
         if let Some(child_id) = &state.install_job_id {
             let child = super::job_store()?
                 .read_record(child_id)
@@ -1134,6 +1219,9 @@ fn generate(job_id: &str, state: &mut AssetState, wait: bool) -> Result<()> {
     }
     let deadline = Instant::now() + Duration::from_secs(state.request.max_wait_seconds);
     loop {
+        if process_requested_cancellation(job_id, state)? {
+            return Ok(());
+        }
         let history = client
             .history(state.prompt_id.as_deref().unwrap())
             .map_err(comfy_error)?;

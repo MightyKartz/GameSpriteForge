@@ -91,6 +91,11 @@ native verification artifacts. A successful installed result also returns
 --expected-sha256 RECEIPT_SHA256 --json` after Godot imports the asset. If the
 Forge Job or Plan store sits inside the Godot project, Forge places `.gdignore`
 at the store root so Godot cannot add `.import` files to retained Packs.
+If an original `--wait` call is still active, a concurrent `--resume` returns
+the current Job snapshot with `wait_for_active_call`; poll the same Job after
+that call finishes. A concurrent cancellation of a pending generation is
+recorded for the active call to handle; concurrent review waits until the
+active call returns.
 Rejected artwork remains traceable but is not
 installed; a revision uses a new request.
 
@@ -172,6 +177,9 @@ Godot 项目和安装目标，通过 `--resume JOB_ID --review ... --wait` 继�
 `forge receipt verify --path 回执路径 --expected-sha256 回执哈希 --json`
 复核。若 Job 或 Plan 存储目录位于 Godot 项目内，Forge 会在目录根部建立
 `.gdignore`，防止 Godot 在保留的 Pack 中写入 `.import` 文件。
+如果原来的 `--wait` 调用还在运行，并发 `--resume` 只返回当前 Job 快照及
+`wait_for_active_call`，待原调用结束后再查询同一 Job。并发取消待生成任务会
+交由正在运行的调用处理；并发审核须等该调用结束。
 
 视频请求可由 `forge guide comfyui-video-example` 取得：显式指定 H3 profile、
 首帧 PNG、提示词，以及至少一个已有的 `supportAnimations`，因为角色 Pack

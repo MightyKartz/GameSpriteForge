@@ -348,6 +348,252 @@ fn local_png_uses_same_job_and_review_contract_without_regeneration() {
 }
 
 #[test]
+fn concurrent_resume_observes_active_job_without_reprocessing() {
+    let dir = tempdir().unwrap();
+    let source = dir.path().join("icon.png");
+    let mut image = RgbaImage::new(32, 32);
+    for y in 4..28 {
+        for x in 4..28 {
+            image.put_pixel(x, y, Rgba([20, 160, 210, 255]));
+        }
+    }
+    image.save(&source).unwrap();
+    let request = dir.path().join("request.json");
+    fs::write(
+        &request,
+        json!({"schemaVersion":"1","mediaKind":"image","source":source,
+        "assetId":"locked_icon","name":"Locked icon","purpose":"QA","kind":"icon_set",
+        "license":"test-only","canvasSize":64})
+        .to_string(),
+    )
+    .unwrap();
+    let run = |args: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_forge"))
+            .args(args)
+            .env("FORGE_JOB_STORE", dir.path().join("jobs"))
+            .env("FORGE_PLAN_STORE", dir.path().join("plans"))
+            .output()
+            .unwrap()
+    };
+    let first = run(&[
+        "asset",
+        "create",
+        "--input",
+        request.to_str().unwrap(),
+        "--json",
+    ]);
+    assert!(first.status.success());
+    let first: Value = serde_json::from_slice(&first.stdout).unwrap();
+    let job_id = first["data"]["jobId"].as_str().unwrap();
+    let prepare_id = first["data"]["prepareJobId"].clone();
+    let lock = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(
+            dir.path()
+                .join("jobs")
+                .join(job_id)
+                .join(".asset-create.lock"),
+        )
+        .unwrap();
+    lock.lock().unwrap();
+    let concurrent = run(&["asset", "create", "--resume", job_id, "--wait", "--json"]);
+    assert!(concurrent.status.success());
+    let concurrent: Value = serde_json::from_slice(&concurrent.stdout).unwrap();
+    assert_eq!(concurrent["data"]["prepareJobId"], prepare_id);
+    assert_eq!(concurrent["data"]["nextActions"][0], "wait_for_active_call");
+    let review = dir.path().join("review.json");
+    fs::write(
+        &review,
+        json!({"schemaVersion":"1","sourceSha256":first["data"]["sourceSha256"],
+        "approved":true,"reviewer":"QA"})
+        .to_string(),
+    )
+    .unwrap();
+    let busy_review = run(&[
+        "asset",
+        "create",
+        "--resume",
+        job_id,
+        "--review",
+        review.to_str().unwrap(),
+        "--json",
+    ]);
+    assert!(!busy_review.status.success());
+    let busy_review: Value = serde_json::from_slice(&busy_review.stdout).unwrap();
+    assert_eq!(busy_review["error"]["code"], "asset_busy");
+    drop(lock);
+    let resumed = run(&["asset", "create", "--resume", job_id, "--json"]);
+    assert!(resumed.status.success());
+    let resumed: Value = serde_json::from_slice(&resumed.stdout).unwrap();
+    assert_eq!(resumed["data"]["prepareJobId"], prepare_id);
+    assert_eq!(resumed["data"]["state"], "awaiting_review");
+}
+
+#[test]
+fn cancellation_requested_during_active_generation_is_served_by_owner() {
+    let dir = tempdir().unwrap();
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let endpoint = format!("http://{}", listener.local_addr().unwrap());
+    let workflow = dir.path().join("workflow.json");
+    fs::write(
+        &workflow,
+        json!({"1":{"class_type":"CLIPTextEncode","inputs":{"text":"old"}},
+        "2":{"class_type":"SaveImage","inputs":{"images":["1",0]}}})
+        .to_string(),
+    )
+    .unwrap();
+    let profile = dir.path().join("profile.json");
+    fs::write(
+        &profile,
+        json!({"schemaVersion":1,"endpoint":endpoint,"mediaKind":"image",
+        "modelId":"fixture","workflow":workflow,"promptInput":{"node":"1","input":"text"},
+        "outputNode":"2","outputField":"images","maxOutputBytes":1000000,"timeoutSeconds":5})
+        .to_string(),
+    )
+    .unwrap();
+    let profile_root = dir.path().join("profiles");
+    let configured = Command::new(env!("CARGO_BIN_EXE_forge"))
+        .args([
+            "provider",
+            "configure",
+            "--provider",
+            "comfyui",
+            "--profile",
+            "pending",
+            "--config",
+            profile.to_str().unwrap(),
+            "--json",
+        ])
+        .env("FORGE_COMFYUI_PROFILE_DIR", &profile_root)
+        .output()
+        .unwrap();
+    assert!(configured.status.success());
+    let worker = thread::spawn(move || {
+        let mut prompt_id = String::new();
+        for index in 0..5 {
+            let (mut stream, _) = listener.accept().unwrap();
+            stream
+                .set_read_timeout(Some(std::time::Duration::from_secs(10)))
+                .unwrap();
+            let mut request = Vec::new();
+            let mut chunk = [0u8; 4096];
+            loop {
+                let n = stream.read(&mut chunk).unwrap();
+                request.extend_from_slice(&chunk[..n]);
+                let end = request.windows(4).position(|w| w == b"\r\n\r\n");
+                if let Some(end) = end {
+                    let header = String::from_utf8_lossy(&request[..end]);
+                    let length = header
+                        .lines()
+                        .find_map(|line| {
+                            line.to_ascii_lowercase()
+                                .strip_prefix("content-length: ")
+                                .and_then(|value| value.trim().parse::<usize>().ok())
+                        })
+                        .unwrap_or(0);
+                    if request.len() >= end + 4 + length {
+                        break;
+                    }
+                }
+            }
+            let text = String::from_utf8_lossy(&request);
+            let body = match index {
+                0 => {
+                    assert!(text.starts_with("GET /object_info"));
+                    json!({"CLIPTextEncode":{"input":{"required":{"text":[]}}},
+                    "SaveImage":{"input":{"required":{"images":[]}},"output_node":true}})
+                }
+                1 => {
+                    assert!(text.starts_with("POST /prompt"));
+                    let end = request.windows(4).position(|w| w == b"\r\n\r\n").unwrap();
+                    let posted: Value = serde_json::from_slice(&request[end + 4..]).unwrap();
+                    prompt_id = posted["prompt_id"].as_str().unwrap().into();
+                    json!({"prompt_id":prompt_id})
+                }
+                2 => {
+                    assert!(text.starts_with("GET /queue"));
+                    json!({"queue_running":[],"queue_pending":[[0,prompt_id,{},
+                        {"client_id":"forge"}]]})
+                }
+                3 => {
+                    assert!(text.starts_with("POST /queue"));
+                    let end = request.windows(4).position(|w| w == b"\r\n\r\n").unwrap();
+                    let posted: Value = serde_json::from_slice(&request[end + 4..]).unwrap();
+                    assert_eq!(posted["delete"][0], prompt_id);
+                    json!({})
+                }
+                _ => {
+                    assert!(text.starts_with("GET /queue"));
+                    json!({"queue_running":[],"queue_pending":[]})
+                }
+            }
+            .to_string();
+            stream
+                .write_all(
+                    format!(
+                        "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                        body.len()
+                    )
+                    .as_bytes(),
+                )
+                .unwrap();
+            stream.write_all(body.as_bytes()).unwrap();
+        }
+    });
+    let request = dir.path().join("request.json");
+    fs::write(
+        &request,
+        json!({"schemaVersion":"1","mediaKind":"image","workflowProfile":"pending",
+        "prompt":"blue icon","assetId":"pending_icon","name":"Pending icon",
+        "purpose":"QA","kind":"icon_set","license":"test-only","canvasSize":64})
+        .to_string(),
+    )
+    .unwrap();
+    let run = |args: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_forge"))
+            .args(args)
+            .env("FORGE_COMFYUI_PROFILE_DIR", &profile_root)
+            .env("FORGE_JOB_STORE", dir.path().join("jobs"))
+            .env("FORGE_PLAN_STORE", dir.path().join("plans"))
+            .output()
+            .unwrap()
+    };
+    let first = run(&[
+        "asset",
+        "create",
+        "--input",
+        request.to_str().unwrap(),
+        "--json",
+    ]);
+    assert!(first.status.success());
+    let first: Value = serde_json::from_slice(&first.stdout).unwrap();
+    assert_eq!(first["data"]["phase"], "generating");
+    let id = first["data"]["jobId"].as_str().unwrap();
+    let lock = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(dir.path().join("jobs").join(id).join(".asset-create.lock"))
+        .unwrap();
+    lock.lock().unwrap();
+    let queued = run(&["asset", "create", "--resume", id, "--cancel", "--json"]);
+    assert!(queued.status.success());
+    let queued: Value = serde_json::from_slice(&queued.stdout).unwrap();
+    assert_eq!(queued["data"]["nextActions"][0], "wait_for_cancellation");
+    drop(lock);
+    let cancelled = run(&["asset", "create", "--resume", id, "--wait", "--json"]);
+    worker.join().unwrap();
+    assert!(
+        cancelled.status.success(),
+        "{}",
+        String::from_utf8_lossy(&cancelled.stdout)
+    );
+    let cancelled: Value = serde_json::from_slice(&cancelled.stdout).unwrap();
+    assert_eq!(cancelled["data"]["state"], "cancelled");
+    assert!(cancelled["data"]["prepareJobId"].is_null());
+}
+
+#[test]
 fn comfy_image_request_uses_one_prompt_and_prepares_source() {
     let dir = tempdir().unwrap();
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
