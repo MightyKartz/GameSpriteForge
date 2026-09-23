@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "mediaKind": "image",
+  "workflowProfile": "local-qwen",
+  "prompt": "One transparent pixel-art blue potion icon, centered, clean silhouette, no text",
+  "assetId": "blue_potion",
+  "name": "Blue potion",
+  "purpose": "HUD inventory icon",
+  "kind": "icon_set",
+  "license": "private",
+  "sampling": "nearest",
+  "canvasSize": 128,
+  "maxWaitSeconds": 900
+}

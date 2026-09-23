@@ -72,6 +72,7 @@ mod asset_library;
 mod audio_tools;
 mod build_info;
 mod godot_workflow;
+mod local_asset;
 mod preview;
 mod receipt;
 mod skill;
@@ -83,7 +84,7 @@ const JSON_SCHEMA_VERSION: &str = "1";
     name = "forge",
     version,
     about = "Agent-first game asset generation and Godot delivery",
-    after_help = "Start with `forge guide`, then read a topic with `forge guide static`,\n`forge guide provider`, or `forge guide animation`. No skill installation is needed.\nUse `forge guide --json` to discover all resources and examples.\n`forge skill install` is optional for Codex skill discovery."
+    after_help = "Start with `forge guide`, then read a topic with `forge guide static`,\n`forge guide comfyui`, `forge guide provider`, or `forge guide animation`.\nUse `forge guide --json` to discover all resources and examples.\n`forge skill install` is optional for Agent skill discovery."
 )]
 struct Cli {
     #[command(subcommand)]
@@ -120,7 +121,7 @@ enum Command {
     },
     /// Read the embedded usage guide or a topic without installing a skill.
     Guide(skill::GuideArgs),
-    /// Inspect the bundled forge-use skill or optionally install it for Codex.
+    /// Inspect the bundled forge-use skill or install it for a supported Agent.
     Skill {
         #[command(subcommand)]
         command: skill::SkillCommand,
@@ -276,6 +277,8 @@ enum SourceCommand {
 
 #[derive(Subcommand)]
 enum AssetCommand {
+    /// Generate or import one image, prepare a Pack, and resume after review.
+    Create(local_asset::CreateArgs),
     /// Mark a revision as a candidate or discarded without deleting media.
     Status(asset_library::DispositionArgs),
     /// Create a read-only offline media gallery with exact revision comparisons.
@@ -1066,6 +1069,7 @@ fn run() -> Result<(), (String, String)> {
             })
         }
         Command::Asset { command } => match command {
+            AssetCommand::Create(args) => success(&local_asset::create(args)?),
             AssetCommand::Status(args) => asset_library::disposition(args),
             AssetCommand::Preview(args) => asset_library::preview(args),
             AssetCommand::Review(args) => asset_library::review(args),

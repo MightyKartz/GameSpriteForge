@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MightyKartz/GameSpriteForge/schemas/local-generation-request.schema.json",
+  "title": "Forge local image generation request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "mediaKind", "assetId", "name", "purpose", "kind", "license", "sampling", "canvasSize"],
+  "oneOf": [
+    {"required": ["source"], "not": {"required": ["workflowProfile"]}},
+    {"required": ["workflowProfile", "prompt"], "not": {"required": ["source"]}}
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1"},
+    "mediaKind": {"const": "image"},
+    "workflowProfile": {"type": "string", "minLength": 1},
+    "source": {"type": "string", "minLength": 1, "description": "Existing absolute PNG path"},
+    "prompt": {"type": "string", "minLength": 1},
+    "assetId": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "purpose": {"type": "string", "minLength": 1},
+    "kind": {"enum": ["icon_set", "prop_set"]},
+    "license": {"type": "string", "minLength": 1},
+    "sampling": {"enum": ["nearest", "linear"]},
+    "canvasSize": {"type": "integer", "minimum": 1},
+    "foregroundAlphaThreshold": {"type": "integer", "minimum": 0, "maximum": 255},
+    "edgePaddingPx": {"type": "integer", "minimum": 0},
+    "assetProject": {
+      "type": "object", "additionalProperties": false, "required": ["projectPath", "assetId"],
+      "properties": {"projectPath": {"type": "string", "minLength": 1}, "assetId": {"type": "string", "minLength": 1}}
+    },
+    "godotProject": {"type": "string", "minLength": 1},
+    "installTarget": {"type": "string", "minLength": 1},
+    "assetKey": {"type": "string", "minLength": 1},
+    "maxWaitSeconds": {"type": "integer", "minimum": 1, "maximum": 86400}
+  }
+}
