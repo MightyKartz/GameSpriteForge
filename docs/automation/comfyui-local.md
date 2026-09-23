@@ -86,7 +86,12 @@ approved result, write `review.json` with this exact source hash:
 Then run `forge asset create --resume JOB_ID --review /absolute/review.json
 --wait --json`. Godot installation happens only when the original request
 contained its target and the review is approved. Inspect `installJobId` and its
-native verification artifacts. Rejected artwork remains traceable but is not
+native verification artifacts. A successful installed result also returns
+`receiptPath` and `receiptSha256`; run `forge receipt verify --path RECEIPT_PATH
+--expected-sha256 RECEIPT_SHA256 --json` after Godot imports the asset. If the
+Forge Job or Plan store sits inside the Godot project, Forge places `.gdignore`
+at the store root so Godot cannot add `.import` files to retained Packs.
+Rejected artwork remains traceable but is not
 installed; a revision uses a new request.
 
 For a local H3 I2V character, copy `forge guide comfyui-video-example` and
@@ -163,6 +168,10 @@ Godot 安装。另可用单参考图的 Qwen 编辑 profile；需要在 API 工�
 需要人工或 Agent 明确检查；审核 JSON 必须绑定该哈希。若首次请求已写入
 Godot 项目和安装目标，通过 `--resume JOB_ID --review ... --wait` 继续原有
 安装事务，并检查安装 Job 的原生验证。拒绝的图不得安装，修改使用新请求。
+安装成功的返回值还包含 `receiptPath` 与 `receiptSha256`；Godot 导入后可用
+`forge receipt verify --path 回执路径 --expected-sha256 回执哈希 --json`
+复核。若 Job 或 Plan 存储目录位于 Godot 项目内，Forge 会在目录根部建立
+`.gdignore`，防止 Godot 在保留的 Pack 中写入 `.import` 文件。
 
 视频请求可由 `forge guide comfyui-video-example` 取得：显式指定 H3 profile、
 首帧 PNG、提示词，以及至少一个已有的 `supportAnimations`，因为角色 Pack

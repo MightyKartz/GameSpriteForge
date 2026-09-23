@@ -323,6 +323,10 @@ struct AssetState {
     #[serde(default)]
     install_job_id: Option<String>,
     #[serde(default)]
+    receipt_path: Option<PathBuf>,
+    #[serde(default)]
+    receipt_sha256: Option<String>,
+    #[serde(default)]
     review: Option<Review>,
     phase: String,
 }
@@ -344,6 +348,8 @@ pub struct AssetResult {
     pack_path: Option<PathBuf>,
     preview_path: Option<PathBuf>,
     install_job_id: Option<String>,
+    receipt_path: Option<PathBuf>,
+    receipt_sha256: Option<String>,
     next_actions: Vec<String>,
 }
 
@@ -412,6 +418,8 @@ pub fn create(args: CreateArgs) -> Result<AssetResult> {
             pack_path: None,
             preview_path: None,
             install_job_id: None,
+            receipt_path: None,
+            receipt_sha256: None,
             review: None,
             phase: "created".into(),
         };
@@ -766,6 +774,8 @@ fn result(job_id: &str, state: &AssetState) -> Result<AssetResult> {
         pack_path: state.pack_path.clone(),
         preview_path: state.preview_path.clone(),
         install_job_id: state.install_job_id.clone(),
+        receipt_path: state.receipt_path.clone(),
+        receipt_sha256: state.receipt_sha256.clone(),
         next_actions: record.next_actions,
     })
 }
@@ -880,12 +890,113 @@ fn advance(job_id: &str, state: &mut AssetState, wait: bool) -> Result<()> {
         } else {
             install(job_id, state)?;
         }
+        retain_delivery_receipt(job_id, state)?;
     }
     state.phase = "succeeded".into();
     save(
         job_id,
         state,
         JobLifecycleState::Succeeded,
+        vec![if state.receipt_path.is_some() {
+            "inspect_receipt".into()
+        } else {
+            "inspect_pack".into()
+        }],
+    )
+}
+
+fn retain_delivery_receipt(job_id: &str, state: &mut AssetState) -> Result<()> {
+    let store = super::job_store()?;
+    let parent = store.read_record(job_id).map_err(super::display_error)?;
+    let prepare_id = state.prepare_job_id.as_deref().unwrap();
+    let prepare = store
+        .read_record(prepare_id)
+        .map_err(super::display_error)?;
+    let pack_sha = prepare
+        .artifacts
+        .iter()
+        .find(|artifact| artifact.kind == "gsfpack")
+        .and_then(|artifact| artifact.sha256.as_deref())
+        .ok_or_else(|| {
+            (
+                "asset_receipt_invalid".into(),
+                "prepared Pack has no recorded hash".into(),
+            )
+        })?;
+    let review = state.review.as_ref().unwrap();
+    let review_path = parent.job_dir.join("delivery-review.json");
+    let review_doc = json!({
+        "schemaVersion": "1", "packSha256": pack_sha, "sourceSha256": review.source_sha256,
+        "status": "accepted", "reviewer": review.reviewer,
+        "notes": "Source-hash-bound review supplied to forge asset create"
+    });
+    let review_bytes = serde_json::to_vec_pretty(&review_doc).map_err(super::json_error)?;
+    match fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&review_path)
+    {
+        Ok(mut file) => {
+            use std::io::Write;
+            file.write_all(&review_bytes).map_err(super::io_error)?;
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+            if fs::read(&review_path).map_err(super::io_error)? != review_bytes {
+                return Err((
+                    "asset_receipt_invalid".into(),
+                    "retained delivery review differs from the Job review".into(),
+                ));
+            }
+        }
+        Err(error) => return Err(super::io_error(error)),
+    }
+    let receipt_path = parent.job_dir.join("delivery-receipt.json");
+    let receipt = if receipt_path.exists() {
+        super::receipt::verify(
+            &receipt_path,
+            state.pack_path.as_deref(),
+            state.request.godot_project.as_deref(),
+            state.receipt_sha256.as_deref(),
+        )?
+    } else {
+        super::receipt::export(
+            prepare_id,
+            state.install_job_id.as_deref(),
+            &receipt_path,
+            Some(&review_path),
+        )?
+    };
+    let hash = receipt["sha256"]
+        .as_str()
+        .or_else(|| receipt["receiptSha256"].as_str())
+        .ok_or_else(|| {
+            (
+                "asset_receipt_invalid".into(),
+                "receipt has no SHA-256".into(),
+            )
+        })?
+        .to_string();
+    state.receipt_path = Some(receipt_path.clone());
+    state.receipt_sha256 = Some(hash.clone());
+    store
+        .update_record(job_id, |record| {
+            if !record
+                .artifacts
+                .iter()
+                .any(|artifact| artifact.kind == "delivery_receipt")
+            {
+                record.artifacts.push(JobArtifactRecord {
+                    kind: "delivery_receipt".into(),
+                    path: receipt_path,
+                    sha256: Some(hash),
+                });
+            }
+        })
+        .map_err(super::display_error)?;
+    save(
+        job_id,
+        state,
+        JobLifecycleState::Running,
         vec!["inspect_receipt".into()],
     )
 }

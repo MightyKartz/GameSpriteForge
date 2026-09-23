@@ -3619,19 +3619,52 @@ fn asset_records(record: JobRecord) -> Vec<AssetRecord> {
 }
 
 fn job_store() -> Result<JobStore, (String, String)> {
-    if let Some(root) = env::var_os("FORGE_JOB_STORE") {
+    let store = if let Some(root) = env::var_os("FORGE_JOB_STORE") {
         JobStore::new(root).map_err(display_error)
     } else {
         JobStore::default_app_store().map_err(display_error)
-    }
+    }?;
+    protect_store_from_godot_scan(store.root())?;
+    Ok(store)
 }
 
 fn plan_store() -> Result<PlanStore, (String, String)> {
-    if let Some(root) = env::var_os("FORGE_PLAN_STORE") {
+    let store = if let Some(root) = env::var_os("FORGE_PLAN_STORE") {
         PlanStore::new(root).map_err(display_error)
     } else {
         PlanStore::default_app_store().map_err(display_error)
+    }?;
+    protect_store_from_godot_scan(store.root())?;
+    Ok(store)
+}
+
+fn protect_store_from_godot_scan(root: &Path) -> Result<(), (String, String)> {
+    let root = root.canonicalize().map_err(io_error)?;
+    if root.join("project.godot").is_file() {
+        return Err((
+            "store_invalid".into(),
+            "a Forge Job/Plan store cannot be the Godot project root".into(),
+        ));
     }
+    if root
+        .ancestors()
+        .skip(1)
+        .any(|ancestor| ancestor.join("project.godot").is_file())
+    {
+        // Godot writes .import sidecars while scanning. Inside a retained Pack,
+        // those sidecars change its hash and break later receipt verification.
+        let marker = root.join(".gdignore");
+        match fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&marker)
+        {
+            Ok(_) => {}
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists && marker.is_file() => {}
+            Err(error) => return Err(io_error(error)),
+        }
+    }
+    Ok(())
 }
 
 fn locate_godot() -> Option<PathBuf> {

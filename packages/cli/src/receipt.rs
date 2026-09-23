@@ -199,7 +199,7 @@ fn evidence(store: &JobStore, id: &str) -> Result<JobEvidence> {
     Ok(evidence)
 }
 
-fn export(
+pub(crate) fn export(
     job_id: &str,
     install_id: Option<&str>,
     out: &Path,
@@ -319,7 +319,7 @@ fn export_from_store(
     )
 }
 
-fn verify(
+pub(crate) fn verify(
     path: &Path,
     pack_override: Option<&Path>,
     project_override: Option<&Path>,

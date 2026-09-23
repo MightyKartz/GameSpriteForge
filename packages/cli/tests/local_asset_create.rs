@@ -1,6 +1,7 @@
 use std::fs;
 use std::io::{Read, Write};
 use std::net::TcpListener;
+use std::path::Path;
 use std::process::Command;
 use std::thread;
 
@@ -543,8 +544,8 @@ fn reviewed_image_installs_and_loads_in_native_godot() {
     let run = |args: &[&str]| -> Value {
         let output = Command::new(env!("CARGO_BIN_EXE_forge"))
             .args(args)
-            .env("FORGE_JOB_STORE", dir.path().join("jobs"))
-            .env("FORGE_PLAN_STORE", dir.path().join("plans"))
+            .env("FORGE_JOB_STORE", game.join("jobs"))
+            .env("FORGE_PLAN_STORE", game.join("plans"))
             .env("FORGE_GODOT_PATH", &godot)
             .output()
             .unwrap();
@@ -584,6 +585,12 @@ fn reviewed_image_installs_and_loads_in_native_godot() {
     ]);
     assert_eq!(second["data"]["state"], "succeeded");
     assert!(second["data"]["installJobId"].as_str().is_some());
+    let automatic_receipt = second["data"]["receiptPath"].as_str().unwrap();
+    let automatic_hash = second["data"]["receiptSha256"].as_str().unwrap();
+    assert!(Path::new(automatic_receipt).is_file());
+    assert_eq!(automatic_hash.len(), 64);
+    assert!(game.join("jobs/.gdignore").is_file());
+    assert!(game.join("plans/.gdignore").is_file());
     let script = game.join("verify.gd");
     fs::write(&script, "extends SceneTree\nfunc _initialize() -> void:\n\tassert(load(\"res://addons/forge_assets/native_icon/items/native_icon.png\") is Texture2D)\n\tprint(\"PASS local asset create native Godot\")\n\tquit(0)\n").unwrap();
     let checked = Command::new(&godot)
@@ -606,4 +613,46 @@ fn reviewed_image_installs_and_loads_in_native_godot() {
     assert!(
         String::from_utf8_lossy(&checked.stdout).contains("PASS local asset create native Godot")
     );
+    let verified = run(&[
+        "godot",
+        "verify-install",
+        "--project",
+        game.to_str().unwrap(),
+        "--asset-key",
+        "native_icon",
+        "--json",
+    ]);
+    assert_eq!(verified["data"]["verifiedTextures"], 1);
+    let automatic_verified = run(&[
+        "receipt",
+        "verify",
+        "--path",
+        automatic_receipt,
+        "--expected-sha256",
+        automatic_hash,
+        "--json",
+    ]);
+    assert_eq!(automatic_verified["data"]["verified"], true);
+    assert_eq!(automatic_verified["data"]["installationVerified"], true);
+    let receipt = dir.path().join("receipt.json");
+    let exported = run(&[
+        "receipt",
+        "export",
+        "--job",
+        second["data"]["prepareJobId"].as_str().unwrap(),
+        "--install-job",
+        second["data"]["installJobId"].as_str().unwrap(),
+        "--out",
+        receipt.to_str().unwrap(),
+        "--json",
+    ]);
+    assert_eq!(exported["ok"], true);
+    let checked_receipt = run(&[
+        "receipt",
+        "verify",
+        "--path",
+        receipt.to_str().unwrap(),
+        "--json",
+    ]);
+    assert_eq!(checked_receipt["data"]["verified"], true);
 }
