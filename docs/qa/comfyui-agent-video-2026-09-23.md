@@ -59,8 +59,27 @@ read-only receipt verification returned `verified: true` and
 `installationVerified: true`. The recorded agent review is isolated technical
 QA; it is not human approval for shipping art.
 
-The ComfyUI service was stopped after these runs. This evidence establishes
-live Codex and DeepSeek conversation-to-CLI-to-Godot paths for H3 I2V, with
+The same installed binary also ran one live H3 **text-to-video** probe against
+ComfyUI 0.37.0 with the same configured weight. A distinct profile omitted
+`referenceInput`; its API workflow removed the optional first-frame link from
+the H3 conditioning node (workflow SHA-256
+`d885df54b6ccfc65f6bd61afe71542718230025470d45e38a906efa0adb9576f`).
+`provider doctor` reported a reachable, valid workflow with no missing nodes
+or inputs. One prompt `e69a811c-3c16-459f-80b3-77f7703c7e24` produced a
+512×288 H.264 MP4 at 24 fps, source SHA-256
+`4d5254f09455a4dc0217fe091d6c6418898f7755eb833a9df6f6960f6b161d90`.
+Parent Job `c227f08d-aea2-46fd-b1dd-c194b1e5cabb` prepared a Pack under
+Job `b74da9f6-cfc9-4ed5-a5b8-376d3ee11737`, including fourteen 256×256
+PNG frames, and paused at `awaiting_review`. Comparing generated and support
+frames showed a different robot design. A source-bound negative review moved
+the same parent to `rejected` with no install Job or receipt; no second prompt
+was submitted. This proves local T2V source creation and the review gate, not
+usable game animation or Godot delivery for T2V. Private probe files remain
+under `target/qa/comfyui/h3-t2v-smoke`; the ComfyUI service was stopped after
+the queue emptied.
+
+This evidence establishes live Codex and DeepSeek conversation-to-CLI-to-Godot
+paths for H3 I2V, with
 the noted revision and regression checks. It does **not** establish a shippable
 character animation, human visual/rights approval, three-agent coverage,
 H3 reference-video capability, or a fair time/token saving. Claude Code

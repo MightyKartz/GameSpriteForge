@@ -120,7 +120,12 @@ pending Forge-owned prompt, use `forge asset create --resume JOB_ID --cancel
 This development branch has been verified with one local Qwen PNG and a local
 H3 I2V MP4 on Windows, each installed only after agent QA in an isolated Godot
 4.6.3 project. The H3 walk attempt was rejected for insufficient motion; a
-subtle idle loop passed. This is not yet a released CLI capability.
+subtle idle loop passed. A separate H3 text-to-video profile also generated
+an MP4 without `referenceImage`: its API workflow used the optional-first-frame
+H3 conditioning node without a first-frame link, and its profile omitted
+`referenceInput`. That sample was rejected because the generated robot differed
+from the support action, so no Godot install was attempted. This is not yet a
+released CLI capability.
 
 For an image edit, export that **edit workflow** separately as API JSON. Map
 `referenceInput` to the node/input that receives the reference filename, then
@@ -197,6 +202,9 @@ Godot 项目和安装目标，通过 `--resume JOB_ID --review ... --wait` 继�
 待运行的 Forge prompt 可通过 `--resume JOB_ID --cancel` 精确删除；运行中的
 任务不会调用可能打断其他人的全局 interrupt。真实测试里一段行走候选因动作
 不足被拒绝，轻微待机循环经 Agent QA 后才安装到隔离 Godot 项目。
+另一个 H3 文生视频 profile 在 API 工作流里不连接首帧，且不声明
+`referenceInput`；请求不填写 `referenceImage`。本机已生成 MP4 并制作 Pack，
+但生成角色与辅助动作外观不一致，审核结果为拒绝，未安装到 Godot。
 
 批量请求使用 `forge asset batch --input /absolute/batch.json --wait --json`，
 清单显式限制请求数、等待秒数与最大输出字节数；超预算时不会启动 Job。

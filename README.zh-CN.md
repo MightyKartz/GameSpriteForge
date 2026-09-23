@@ -79,7 +79,8 @@ macOS、Linux、Windows 均支持。CLI 升级后用 `forge skill check --projec
 Claude Code 或 DeepSeek Harness 通过同一命令 `forge asset create --input
 request.json --wait --json` 发起生成。Forge 保留 PNG/MP4 原件、制作 Pack，
 经绑定源哈希的视觉审核后继续交付 Godot。已在本机验证 Qwen Image 2.1
-文生图与单参考图编辑、MiniMax H3 首帧生视频；实际可用模式取决于用户的
+文生图与单参考图编辑、MiniMax H3 首帧生视频和文生视频原件生成。文生视频
+测试素材因角色不一致被拒绝，未安装进 Godot；实际可用模式取决于用户的
 API 格式工作流、模型权重和显式 profile 映射。配置、批量预算和 profile
 迁移见[开发指南](docs/automation/comfyui-local.md)。Codex 或兼容的
 DeepSeek Harness 项目可安装 `.agents/skills`，Claude Code 使用
