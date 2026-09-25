@@ -16,9 +16,11 @@ with `embedded_usage_guide`; installed links work with older pinned executables.
 
 For a side-view character whose generated sprite sheet has implausible joint motion,
 a reviewed motion video can supply the frame sequence. An image model may provide
-one stable character reference; a video tool supplies the motion. Forge does not
-generate or decode that video in this local animation workflow. Use an external
-decoder to create PNGs before `plan prepare-asset` or `plan prepare-character`.
+one stable character reference; a video tool supplies the motion. This local
+workflow makes no video-generation request. Forge also accepts `video_clip`
+input and samples a requested number of frames from a time range. To preserve
+the exact reviewed frame selection and source cadence, use an external decoder
+to create PNGs before `plan prepare-asset` or `plan prepare-character`.
 For a short source clip intended as a run loop, request one sustained run rather
 than spending its duration on standing, walking, accelerating and stopping.
 
@@ -52,7 +54,7 @@ not silently change an already accepted source.
 
 Review the Pack in Godot at normal speed, slow speed and across repeated loop
 boundaries, with an actual moving character node when movement is the goal. Check
-timing and alternating leg/arm support separately from character identity, fixed
+timing, alternating leg support and opposing arm swing separately from character identity, fixed
 weapon hand, grip, costume colors and matte quality. A high loop-match score or a
 successful import cannot establish those visual properties; an unresolved weapon
 swap remains an explicit candidate limitation.

@@ -70,8 +70,9 @@ Godot must be available for native delivery; inspect the selected build's suppor
 versions. Local images/audio need no Provider credentials or Style Lock. Online
 Provider generation uses the user's account and can incur charges. Character
 animation remains experimental; unrelated still images are not animation frames.
-Forge accepts reviewed frame files, not the source video; decode and review any
-video outside Forge before preparing an animation.
+For the reviewed-frame workflow below, decode and select video frames outside
+Forge, then import PNGs with explicit timing. Forge also supports `video_clip`
+input; its sampled frames do not substitute for a reviewed cycle selection.
 
 ## Three shortest task paths
 
