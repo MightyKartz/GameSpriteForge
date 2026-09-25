@@ -34,9 +34,12 @@ the missing motion through frame delays.
 Retain the video hash, decoder settings, source frame numbers or timestamps, frame
 order and PNG hashes. Use the source timestamps for `frameDurationsMs` when they
 vary; keep the original cadence for constant-rate video rather than stretching a
-short interval to match a longer clip. Check that the exported durations sum to
-the intended cycle and that Godot preserves them. Do not set a universal frame
-count or FPS from one successful example.
+short interval to match a longer clip. When frame boundaries fall between whole
+milliseconds, round cumulative elapsed time at each boundary and subtract
+successive rounded values; retain the first excluded frame's timestamp to derive
+the last frame's duration. Check that the exported durations sum to the intended
+cycle and that Godot preserves them. Do not set a universal frame count or FPS
+from one successful example.
 
 Inspect transparent frames on light and dark backgrounds, especially boots,
 weapon edges and any watermark overlap. If the video contains unwanted horizontal
