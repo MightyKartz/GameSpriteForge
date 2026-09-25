@@ -12,6 +12,53 @@ fields. Respect the [toolchain and Job checks](../SKILL.md)
 (`"$FORGE_BIN" guide overview`). These `guide` commands require a verified CLI
 with `embedded_usage_guide`; installed links work with older pinned executables.
 
+## Select a continuous run from a source video
+
+For a side-view character whose generated sprite sheet has implausible joint motion,
+a reviewed motion video can supply the frame sequence. An image model may provide
+one stable character reference; a video tool supplies the motion. This local
+workflow makes no video-generation request. Forge also accepts `video_clip`
+input and samples a requested number of frames from a time range. To preserve
+the exact reviewed frame selection and source cadence, use an external decoder
+to create PNGs before `plan prepare-asset` or `plan prepare-character`.
+For a short source clip intended as a run loop, request one sustained run rather
+than spending its duration on standing, walking, accelerating and stopping.
+
+Review the entire video at normal and slow speed before extraction. For a looping
+run, identify a **contiguous** interval that includes both left- and right-leg
+support, plus their transitions. Compare the first frame with the frame *after*
+the selected interval to locate the phase boundary; exclude that repeated boundary
+frame from the loop. Scattered attractive poses are useful for reference but can
+produce repeated steps and long holds when played as one animation. If the source
+lacks a usable full cycle, keep it as a failed candidate rather than manufacturing
+the missing motion through frame delays.
+
+Retain the video hash, decoder settings, source frame numbers or timestamps, frame
+order and PNG hashes. Use the source timestamps for `frameDurationsMs` when they
+vary; keep the original cadence for constant-rate video rather than stretching a
+short interval to match a longer clip. When frame boundaries fall between whole
+milliseconds, round cumulative elapsed time at each boundary and subtract
+successive rounded values; retain the first excluded frame's timestamp to derive
+the last frame's duration. Check that the exported durations sum to the intended
+cycle and that Godot preserves them. Do not set a universal frame count or FPS
+from one successful example.
+
+Inspect transparent frames on light and dark backgrounds, especially boots,
+weapon edges and any watermark overlap. If the video contains unwanted horizontal
+screen drift **and** the game moves the character node in world space, a new
+candidate may translate each *whole* RGBA figure horizontally before locking its
+PNG sources. Compare before/after playback and record each offset; preserve the
+natural vertical rise and do not separately align the head, hands or feet. This
+optional authoring step is distinct from Forge's `preserve_source` import and must
+not silently change an already accepted source.
+
+Review the Pack in Godot at normal speed, slow speed and across repeated loop
+boundaries, with an actual moving character node when movement is the goal. Check
+timing, alternating leg support and opposing arm swing separately from character identity, fixed
+weapon hand, grip, costume colors and matte quality. A high loop-match score or a
+successful import cannot establish those visual properties; an unresolved weapon
+swap remains an explicit candidate limitation.
+
 ## Preserve intentional drawing coordinates
 
 Before cropping a sheet into separate files, inspect the entire cleaned sheet

@@ -56,7 +56,7 @@ Forge never updates game pins or separately installed skills automatically.
 | Task | Bundled guide | Installed reference |
 | --- | --- | --- |
 | Prepare local icons, props or backgrounds | `forge guide static` | [Static PNGs](references/local-static.md) |
-| Preserve existing animation coordinates and timing | `forge guide animation` | [Animation](references/animation.md) |
+| Prepare reviewed animation PNGs, including frames extracted from a video | `forge guide animation` | [Animation](references/animation.md) |
 | Prepare local WAV audio | `forge guide audio` | [Audio](references/audio.md) |
 | Diagnose delivery, verify sources/receipts, recover | `forge guide delivery` | [Delivery](references/delivery.md) |
 | Repeated revisions, reviews or cross-machine reuse | `forge guide project-assets` | [Optional library](references/project-assets.md) |
@@ -70,6 +70,9 @@ Godot must be available for native delivery; inspect the selected build's suppor
 versions. Local images/audio need no Provider credentials or Style Lock. Online
 Provider generation uses the user's account and can incur charges. Character
 animation remains experimental; unrelated still images are not animation frames.
+For the reviewed-frame workflow below, decode and select video frames outside
+Forge, then import PNGs with explicit timing. Forge also supports `video_clip`
+input; its sampled frames do not substitute for a reviewed cycle selection.
 
 ## Three shortest task paths
 
