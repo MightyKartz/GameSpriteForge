@@ -1,5 +1,5 @@
 {
-  "status": "one_direction_review_prototype_delivered",
+  "status": "source_action_rejected_running_animation_incomplete",
   "source_generation": {
     "tool": "Codex built-in image generation",
     "count": 1,
@@ -70,8 +70,8 @@
     "install_verified": true
   },
   "visual_review": {
-    "agent": "Full-clip contact sampling, consecutive selected frames, whole-figure stabilization comparison, dark/light mattes and native Godot recording samples inspected. Remaining source boot color shimmer/soft edges and loop seam require user review.",
-    "user": "pending"
+    "agent": "Reinspection of chronological frames shows slow stepping/walking-like motion. Prior 2x playback and Godot translation do not establish a valid running action.",
+    "user": "rejected: original Vidu video does not run"
   },
   "runtime_texture_sha256": {
     "right": "3af464c6653ece36861eca3087d057287dbb18a1c8bc2d1d924b130d022c4fda",
@@ -122,7 +122,7 @@
     "reason": "Boots are cropped at the source bottom edge during repeated running poses; no complete usable sprite cycle accepted."
   },
   "video": {
-    "status": "processed_review_prototype",
+    "status": "rejected_for_requested_running_action",
     "provider": "Vidu",
     "model": "Q2",
     "mode": "image-to-video",
@@ -194,7 +194,8 @@
     "normal_report_sha256": "3b1b40973ee66076f8902a75effbfe877859393b799be3780d8f4528565ee492",
     "slow_report_sha256": "82cefe3eadf14f4cea614e7cd4352bfdc72eea7a41ad9fcaba6bce4503fc301f",
     "ticks_per_test": 786,
-    "all_checks_passed": true
+    "all_checks_passed": true,
+    "test_scope": "Technical playback and turning checks only; source running action rejected by user."
   },
   "animation_processing": {
     "manifest": "cycle-manifest.json",
@@ -222,7 +223,7 @@
     "x_translation": "whole figure only; every offset recorded in manifest",
     "quality_verdict": "prototype_usable",
     "production_eligible": false,
-    "visual_approval": "pending"
+    "visual_approval": "rejected"
   },
   "animation_forge": {
     "prepare_game_ready_attempt_job": "cd3a1810-395e-421d-ac4d-5ab806b4bc40",

@@ -1,6 +1,13 @@
 # Three-view movement review — 2026-09-26
 
-Status: **one-direction movement review prototype delivered; visual approval pending**.
+Status: **source action rejected by user; requested running animation incomplete**.
+
+The user reported that the original Vidu video does not run. Reinspection of
+chronological frames supports a slow stepping/walking-like action rather than
+convincing sustained running. The previous 2× playback and Godot translation
+cannot establish source gait quality. Keep the candidate and passing technical
+tests as evidence only; select a new source at original playback speed before
+preparing another run animation. No additional generation was submitted.
 
 The [runnable example](../../examples/three-view-run-pilot/README.md) contains one
 new character's side/back/front references from one built-in image-generation

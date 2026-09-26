@@ -1,14 +1,15 @@
 # Forest Courier: three views and one-direction movement
 
-One generated three-view character, one usable side-movement video candidate,
-and a runnable Godot turning review are included. **This is a review prototype,
-not a GameReady or visually approved animation.** Right uses the video-derived
+One generated three-view character, a rejected movement candidate, and a runnable
+Godot turning test are included. **The user rejected the source action: it does
+not read as sustained running.** The retained prototype is technical evidence,
+not a completed run animation. Right uses the video-derived
 `move_right` clip; left mirrors it without resetting phase. Up/down still use
 standing reference images and are not animated.
 
-已完成三视图、一段可提帧的侧向移动视频、单方向动画及 Godot 转向测试。
+已完成三视图与 Godot 转向技术测试；用户指出原视频没有跑动起来，当前动作候选已拒绝，单方向跑动动画尚未完成。
 右方向播放视频提取的动画，左方向镜像并保留动画进度；上下方向仍为站姿参考。
-当前是待审阅原型，尚未达到 GameReady，也未获得用户的动作与边缘质量认可。
+原片动作更接近缓慢迈步；两倍播放与引擎平移不能证明跑步动作合格。当前资源仅保留作失败候选和技术测试证据。
 
 ![Three views](three-view-preview.png)
 
