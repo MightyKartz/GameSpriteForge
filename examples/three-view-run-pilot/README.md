@@ -1,24 +1,15 @@
 # Forest Courier: three views and one-direction movement
 
-One generated three-view character, a rejected movement candidate, and a runnable
-Godot turning test are included. **The user rejected the source action: it does
-not read as sustained running.** The retained prototype is technical evidence,
-not a completed run animation. Right uses the video-derived
-`move_right` clip; left mirrors it without resetting phase. Up/down still use
-standing reference images and are not animated.
+The current Godot example plays a **29-frame running review prototype** extracted
+from the late part of Vidu candidate v3. The user confirmed that this part runs
+and requested processing. Right uses the original sequence; left mirrors it
+without restarting the animation. Up/down remain standing references.
 
-已完成三视图与 Godot 转向技术测试；用户指出原视频没有跑动起来，当前动作候选已拒绝，单方向跑动动画尚未完成。
-右方向播放视频提取的动画，左方向镜像并保留动画进度；上下方向仍为站姿参考。
-原片动作更接近缓慢迈步；两倍播放与引擎平移不能证明跑步动作合格。当前资源仅保留作失败候选和技术测试证据。
+当前示例已换成最新视频后半段的 29 帧跑动循环，保持原速。左右方向共用动画，
+向左时镜像；上下方向仍为站姿参考。用户认可原视频后半段跑起来并授权处理，
+处理后的边缘、循环接缝与游戏内脚步接触仍待审阅，并非正式品质批准。
 
 ![Three views](three-view-preview.png)
-
-The latest Q2 retry now shows running after an initial standing segment, but
-its torso view shifts between front-oblique and rear-oblique angles. It has not
-replaced the retained Godot prototype; see the latest QA source review.
-
-新一轮原视频已出现跑步，但身体朝向在偏正面与偏背面之间变化，尚未作为
-合格的侧向循环替换 Godot 资源。
 
 ## Run
 
@@ -29,14 +20,15 @@ godot --path examples/three-view-run-pilot/godot --editor --import --quit
 godot --path examples/three-view-run-pilot/godot
 ```
 
-Arrow keys / WASD move. Space toggles automatic turning. Hold Shift for half
-speed. The scene shows the shared foot origin and collision circle. A stopped
-lateral actor freezes its current frame; no idle animation was generated.
+Arrow keys / WASD move; Space toggles the automatic turn test. Hold Shift for
+half speed. A stopped actor freezes the lateral frame; no idle animation is
+claimed. The visual parent mirrors around the shared pivot while the collision
+shape remains unchanged.
 
-The automated review visits right/left repeatedly and up/down once. It runs for
-786 physics ticks (13.1 seconds), checking all 54 frames, exact installed timing,
-cycle completion, actual velocity, stable anchors/collision and retained phase
-at every turn:
+The automated test runs 786 physics ticks (13.1 seconds), visiting left/right
+repeatedly and up/down once. It checks all 29 frames, exact installed durations,
+complete cycles, measured velocity, pivot/collision stability and preserved
+animation progress through turns:
 
 ```sh
 godot --headless --path examples/three-view-run-pilot/godot -- \
@@ -45,58 +37,54 @@ godot --headless --path examples/three-view-run-pilot/godot -- \
   --test --slow --report=/absolute/new-slow-report.json
 ```
 
-Use fresh report paths. For native recording, omit `--headless` and add
+For native recording, omit `--headless` and add
 `--write-movie /absolute/new-preview.avi --fixed-fps 60` before `--`.
-The saved [QA evidence](../../docs/qa/three-view-run-pilot-20260926.md) includes
-native recording samples, measured reports and a clean-copy test.
+Normal/half-speed native recording and a clean-copy import/runtime check passed.
+See [QA evidence](../../docs/qa/three-view-run-pilot-20260926.md).
 
-## Source and preparation
+## Current source and processing
 
-A single Codex image-generation call produced right/back/front standing views.
-Forge prepared the three static references. The complete original image and
-videos remain in local task storage; this example contains selected derived
-media and portable installed resources.
+One Codex image-generation call created right/back/front standing views. The
+existing padded side reference drove Vidu Q2 candidate v3 with the
+[short video prompt](video-prompt-v3.txt). The user authorized its 10-credit
+submission (11 → 1) and subsequently requested processing its late running part.
+This local processing iteration made no additional generation request.
 
-The first Q2 Pro subject-reference candidate cost 0 credits and earned the
-20-credit subject-task reward (balance 1 → 21). It was rejected because boots
-were cropped at the video boundary. Its evidence is retained in the QA record.
+Source frames **91–119 inclusive**, at 24 fps, form the selected consecutive
+cycle. Frame 120 is the same-phase boundary comparison and is excluded. The
+standing lead-in is discarded; no interior frames are omitted. The native cycle
+lasts 1208.333 ms, represented as 1208 ms through cumulative timestamp rounding
+into 41/42 ms frame durations. Playback is **1× source speed**, not the rejected
+previous candidate's 2× playback.
 
-For the second candidate, the existing side crop was reduced and placed on a
-1536×1024 magenta canvas with generous head/foot margins. The user approved one
-Q2 image-to-video request at 10 credits (21 → 11). The exact submitted prompt is
-[video-prompt-margin-v2.txt](video-prompt-margin-v2.txt). The generated video is
-1764×1176, 24 fps, 122 frames, approximately 5.083 seconds.
+All frames use crop `[550,160,800,800]` and a common 0.5 scale to 400×400 RGBA.
+Forge removes the sampled magenta background; the crop excludes the remote
+watermark without painting on the character. No per-frame translation, warping,
+bone animation or limb edits are applied. The original torso view variation is
+retained. [Frame hashes, source indices and timing](../../docs/qa/artifacts/three-view-run-pilot-20260926/run-v3-cycle-manifest.json).
 
-The selected interval is source frames **47–100 inclusive**. Frame 101 supplies
-a same-phase comparison and is excluded from the loop. Every intermediate frame
-is retained. Shared crop `[480,160,800,800]` excludes the distant watermark and
-keeps the complete character; no foreground watermark repainting was needed.
-Forge `source matte` removes the sampled magenta background. A documented
-whole-figure horizontal translation removes video drift; Y and all joint
-relationships remain unchanged. A common 0.5 scale produces 400×400 RGBA frames.
+Forge 0.6.3 prepared and installed an explicitly labelled review prototype at
+`addons/forge_assets/courier_run_v3`. Pack validation and installation verification
+passed with zero Forge Provider requests. Its quality verdict is
+`prototype_usable`: loop-match 0.511799, bottom variation 20 px, center-X variation
+27.5 px. These diagnostics do not grant artistic approval. The scene uses a
+shared pivot (200,360), scale 0.7, horizontal speed 140 px/s and collision radius
+16. Half-speed mode slows both animation and movement.
 
-The source interval is 2.25 seconds. The review plays it at 2× speed, yielding a
-1.125-second, 54-frame loop with explicit 20/21 ms durations. Half-speed mode
-restores the original source cadence. All source indices, hashes, translations
-and durations are in the [cycle manifest](../../docs/qa/artifacts/three-view-run-pilot-20260926/cycle-manifest.json).
-There is no skeleton, per-limb repositioning or synthetic pose generation.
+## Review limits and retained attempts
 
-Forge's strict GameReady export stopped at `prototype_usable`: bottom drift
-9 px, bounding-box center-X variation 64.5 px, loop-match score 0.89246.
-A separate review-only request exported the unchanged sequence; the stricter
-failure remains recorded. Pack validation and Godot install verification passed
-with zero Forge Provider requests. Vidu generated motion; Forge processed it.
+Review the source torso rotation, boot-color shimmer, soft/key-colored edges,
+loop seam and foot contact in the native previews. The user accepted continued
+work on the late source motion, not every property of the final sprite. Up/down
+locomotion is not implemented. The reference projection is nearly eye-level;
+this is not verified overhead movement. Horizontal mirroring is appropriate to
+this authorized empty-handed character, not a rule for asymmetric designs.
 
-## Review limits
+Earlier attempts remain documented in QA: the free Q2 Pro clip cropped boots;
+the next Q2 clip was rejected for slow stepping rather than running. Its old
+installed target remains for provenance but is not used by the current scene.
 
-Normal and half-speed native tests passed, including all frames, repeated turns
-and exact timing. These are technical checks, not proof of natural foot contact
-or artistic approval. Some source boot-color shimmer/soft edges and the loop
-seam remain review items. Vertical views are nearly eye-level, not a verified
-orthographic overhead projection. Mirroring is authorized for this empty-handed
-character; it is not a rule for asymmetric or weapon-bearing characters.
-
-The committed resources are a portable snapshot of Forge installation. Private
-ownership records, stores and caches are excluded. For a new managed install,
-use the retained Pack and receipts in a fresh project rather than treating this
-snapshot as a registered installation on another machine.
+Only selected derived media and portable installed resources are committed.
+Original video, full-resolution input, Job/Plan stores, private ownership files
+and `.godot` caches remain local. The committed project is a runnable snapshot;
+use the retained Pack in a fresh project for a new Forge-managed installation.

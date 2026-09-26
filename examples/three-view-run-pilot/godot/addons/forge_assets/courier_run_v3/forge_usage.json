@@ -1,0 +1,70 @@
+{
+  "anchor": {
+    "type": "custom",
+    "x": 200.0,
+    "y": 360.0
+  },
+  "animations": [
+    {
+      "fps": 24.0,
+      "frameCount": 29,
+      "frameDurationsMs": [
+        42,
+        41,
+        42,
+        42,
+        41,
+        42,
+        42,
+        41,
+        42,
+        42,
+        41,
+        42,
+        42,
+        41,
+        42,
+        42,
+        41,
+        42,
+        42,
+        41,
+        42,
+        42,
+        41,
+        42,
+        42,
+        41,
+        42,
+        42,
+        41
+      ],
+      "loop": true,
+      "name": "move_right"
+    }
+  ],
+  "assetId": "2bf9cb56-020c-4021-83af-a2b58a154f7a",
+  "assetKey": "courier_run_v3",
+  "defaultAnimation": "move_right",
+  "directionalPlayback": null,
+  "frameHeight": 400,
+  "frameWidth": 400,
+  "gameplayControllerIncluded": false,
+  "items": [],
+  "kind": "animation",
+  "loopSelection": null,
+  "nodeType": "AnimatedSprite2D",
+  "packSha256": "199de91815b505b491149930e78a7b92bbdd6769714f6268adc645a19ed17af5",
+  "providerProvenance": [],
+  "providerRetryMethods": {},
+  "rendering": {
+    "mirrorPolicy": "auto",
+    "pixelSnap": false,
+    "profile": "godot-sprite-rendering@1.0.0",
+    "textureFilter": "linear"
+  },
+  "scenePath": "res://addons/forge_assets/courier_run_v3/forge_animated_sprite.tscn",
+  "schemaVersion": "1",
+  "spriteFramesPath": "res://addons/forge_assets/courier_run_v3/forge_sprite_frames.tres",
+  "worldGeneration": null
+}

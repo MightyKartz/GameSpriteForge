@@ -1,5 +1,5 @@
 {
-  "status": "new_video_generated_directional_animation_still_incomplete",
+  "status": "run_v3_installed_review_prototype",
   "source_generation": {
     "tool": "Codex built-in image generation",
     "count": 1,
@@ -70,8 +70,9 @@
     "install_verified": true
   },
   "visual_review": {
-    "agent": "Reinspection of chronological frames shows slow stepping/walking-like motion. Prior 2x playback and Godot translation do not establish a valid running action.",
-    "user": "rejected: original Vidu video does not run"
+    "user_source_feedback": "好的，前面确实有点小问题，但后面确实跑起来了，请继续实施",
+    "processed_result": "pending",
+    "agent": "Consecutive late-cycle frames, 91/120 boundary comparison, light/dark matte samples and native screenshot inspected; source pose and timing retained."
   },
   "runtime_texture_sha256": {
     "right": "3af464c6653ece36861eca3087d057287dbb18a1c8bc2d1d924b130d022c4fda",
@@ -175,29 +176,20 @@
     "report_sha256": "a5aa9c1b53fcc4ba10d3fda34ba40caacb1eedd93d09de68873bffebf084c21c",
     "run_animation_tested": false
   },
-  "godot": {
-    "version": "4.7.2.stable.official.ed1daf0bf",
-    "run_animation_tested": true,
-    "up_down_animation_tested": false,
-    "frame_count": 54,
-    "cycle_ms": 1125,
-    "horizontal_speed": 180,
-    "vertical_speed": 45,
-    "visual_scale": 0.7,
-    "pivot": [
-      200,
-      360
-    ],
-    "collision_radius": 16,
-    "normal_preview_sha256": "a2ce50541bbc2395af7d9e9f4bfa3421bea0ff6c91b7646116c3e3549a43b898",
-    "slow_preview_sha256": "c8a712856392db0feb84dbafc82e42fb0665d3bd26bb7af28caf5956116199b1",
-    "normal_report_sha256": "3b1b40973ee66076f8902a75effbfe877859393b799be3780d8f4528565ee492",
-    "slow_report_sha256": "82cefe3eadf14f4cea614e7cd4352bfdc72eea7a41ad9fcaba6bce4503fc301f",
-    "ticks_per_test": 786,
-    "all_checks_passed": true,
-    "test_scope": "Technical playback and turning checks only; source running action rejected by user."
+  "latest_video_candidate": {
+    "provider": "Vidu",
+    "model": "Q2",
+    "creation_id": "3483055293209439",
+    "source_sha256": "145d101a3ed8f8c6fc49a6e5c33b1ce9fba3cf96f66950c0279a255a44530ca1",
+    "cost_credits": 10,
+    "credits_before": 11,
+    "credits_after": 1,
+    "status": "late_running_segment_authorized_and_processed",
+    "review": "run-v3-review.json",
+    "godot_replaced": true,
+    "delivery": "run-v3-delivery.json"
   },
-  "animation_processing": {
+  "prior_animation_processing": {
     "manifest": "cycle-manifest.json",
     "source_interval_zero_based": [
       47,
@@ -225,7 +217,7 @@
     "production_eligible": false,
     "visual_approval": "rejected"
   },
-  "animation_forge": {
+  "prior_animation_forge": {
     "prepare_game_ready_attempt_job": "cd3a1810-395e-421d-ac4d-5ab806b4bc40",
     "game_ready_attempt_state": "awaiting_review",
     "review_prepare_job": "d5bfc886-3876-42fa-bbf9-2d919f630f02",
@@ -243,16 +235,61 @@
     },
     "notes": "The strict GameReady export was blocked; a distinct explicitly labelled review-prototype request exported unchanged frames. No GameReady or visual approval is claimed."
   },
-  "latest_video_candidate": {
-    "provider": "Vidu",
-    "model": "Q2",
-    "creation_id": "3483055293209439",
-    "source_sha256": "145d101a3ed8f8c6fc49a6e5c33b1ce9fba3cf96f66950c0279a255a44530ca1",
-    "cost_credits": 10,
-    "credits_before": 11,
-    "credits_after": 1,
-    "status": "generated_directional_source_review_not_accepted",
-    "review": "run-v3-review.json",
-    "godot_replaced": false
+  "prior_godot": {
+    "version": "4.7.2.stable.official.ed1daf0bf",
+    "run_animation_tested": true,
+    "up_down_animation_tested": false,
+    "frame_count": 54,
+    "cycle_ms": 1125,
+    "horizontal_speed": 180,
+    "vertical_speed": 45,
+    "visual_scale": 0.7,
+    "pivot": [
+      200,
+      360
+    ],
+    "collision_radius": 16,
+    "normal_preview_sha256": "a2ce50541bbc2395af7d9e9f4bfa3421bea0ff6c91b7646116c3e3549a43b898",
+    "slow_preview_sha256": "c8a712856392db0feb84dbafc82e42fb0665d3bd26bb7af28caf5956116199b1",
+    "normal_report_sha256": "3b1b40973ee66076f8902a75effbfe877859393b799be3780d8f4528565ee492",
+    "slow_report_sha256": "82cefe3eadf14f4cea614e7cd4352bfdc72eea7a41ad9fcaba6bce4503fc301f",
+    "ticks_per_test": 786,
+    "all_checks_passed": true,
+    "test_scope": "Technical playback and turning checks only; source running action rejected by user."
+  },
+  "animation_processing": {
+    "frame_count": 29,
+    "cycle_ms": 1208,
+    "speed_multiplier": 1,
+    "canvas": [
+      400,
+      400
+    ],
+    "pivot": [
+      200,
+      360
+    ],
+    "per_frame_transforms": false,
+    "final_visual_approval": "pending"
+  },
+  "animation_forge": {
+    "prepare_job": "7c681944-4a25-4dba-bfd4-27a0ed0e8228",
+    "install_job": "39ee6636-b1a4-477b-90f1-9467f1e1d2ff",
+    "pack_sha256": "199de91815b505b491149930e78a7b92bbdd6769714f6268adc645a19ed17af5",
+    "pack_validated": true,
+    "install_verified": true
+  },
+  "godot": {
+    "normal_passed": true,
+    "slow_passed": true,
+    "normal_cycles_seen": 9,
+    "slow_cycles_seen": 4,
+    "ticks_per_test": 786,
+    "speed_px_per_second": 140,
+    "scale": 0.7,
+    "collision_radius": 16,
+    "normal_sha256": "c37626054257d0a9aa489c68d38c88cb9e4cf34a676f0f1347588bb642cb5a58",
+    "slow_sha256": "423b8813240d2ce9dcd2bb855bb03b9956f5ff75c4890713e7e5c9d73481ef36",
+    "clean_copy_passed": true
   }
 }

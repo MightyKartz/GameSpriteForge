@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://addons/forge_assets/courier_run_v3/forge_player.gd" id="1_l4sgs"]
+[ext_resource type="SpriteFrames" path="res://addons/forge_assets/courier_run_v3/forge_sprite_frames.tres" id="2_bo04l"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_su4ek"]
+
+[node name="ForgeAnimatedSprite" type="Node2D" unique_id=2117269058]
+script = ExtResource("1_l4sgs")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2085258349]
+texture_filter = 2
+texture_repeat = 1
+material = SubResource("CanvasItemMaterial_su4ek")
+position = Vector2(0, -160)
+sprite_frames = ExtResource("2_bo04l")
+animation = &"move_right"

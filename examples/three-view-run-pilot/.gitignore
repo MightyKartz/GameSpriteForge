@@ -3,3 +3,5 @@ godot/.forge/
 godot/addons/forge_assets/courier_views/.forge-*.json
 
 godot/addons/forge_assets/courier_move_right/.forge-*.json
+
+/godot/addons/forge_assets/courier_run_v3/.forge-*.json

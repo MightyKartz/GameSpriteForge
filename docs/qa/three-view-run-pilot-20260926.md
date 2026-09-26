@@ -1,6 +1,10 @@
 # Three-view movement review — 2026-09-26
 
-Status: **source action rejected by user; requested running animation incomplete**.
+Status: **v3 late running segment processed and installed; final visual review pending**.
+
+Current delivery uses 29 source-speed frames from candidate v3. The earlier
+rejected source and its test evidence below remain historical; see the final
+section for current installation and runtime results.
 
 The user reported that the original Vidu video does not run. Reinspection of
 chronological frames supports a slow stepping/walking-like action rather than
@@ -142,3 +146,47 @@ No further paid request was submitted.
 [Generation and review record](artifacts/three-view-run-pilot-20260926/run-v3-review.json).
 
 ![Source viewpoint comparison](artifacts/three-view-run-pilot-20260926/run-v3-viewpoint-review.jpg)
+
+## V3 late-running delivery after user feedback
+
+The user confirmed “好的，前面确实有点小问题，但后面确实跑起来了，请继续实施”.
+This authorizes processing the late source action; it is not blanket approval of
+matting, loop seam, pivot, collision or production readiness. The initial v3
+review record is retained unchanged.
+
+Selected source frames 91–119 inclusive, with frame 120 used only for boundary
+comparison. Both step phases and every intermediate frame are retained. The
+29-frame cycle uses original 24 fps cadence (1208 ms after cumulative rounding),
+without acceleration or per-frame translations. Shared crop [550,160,800,800]
+and scale 0.5 produce 400×400 RGBA images. Matting comparisons at thresholds
+100 and 120 selected 120/softness 50 with zero despill and edge recovery. Source
+boot-color variation and torso view changes remain visible.
+
+[Cycle manifest](artifacts/three-view-run-pilot-20260926/run-v3-cycle-manifest.json)
+records frame hashes, timings and the boundary source hash.
+[Matte comparison](artifacts/three-view-run-pilot-20260926/run-v3-matte-review.jpg)
+shows light/dark backgrounds and boot details.
+
+Preparation Job `7c681944-4a25-4dba-bfd4-27a0ed0e8228` and installation Job
+`39ee6636-b1a4-477b-90f1-9467f1e1d2ff` succeeded. Pack validation passed;
+installation verification checked 10 files, 2 textures and 4 cache files.
+The deliberately review-only request returned `prototype_usable` (loop-match
+0.511799, bottom variation 20 px, center-X variation 27.5 px). No thresholds
+were lowered to claim GameReady. All processing used the existing pinned Forge
+0.6.3 identity recorded above and made zero Provider requests.
+
+The current scene loads `courier_run_v3`, at 140 px/s, scale 0.7, pivot (200,360)
+and collision radius 16. Normal and half-speed native Godot recordings each ran
+786 ticks, covering all 29 frames and repeated phase-preserving left/right turns.
+Up/down remain static. Technical checks passed:
+
+- [Normal report](artifacts/three-view-run-pilot-20260926/run-v3-godot-normal.json).
+- [Half-speed report](artifacts/three-view-run-pilot-20260926/run-v3-godot-slow.json).
+- [Fresh-copy import/runtime check](artifacts/three-view-run-pilot-20260926/run-v3-clean-copy.json).
+- [Delivery summary and preview hashes](artifacts/three-view-run-pilot-20260926/run-v3-delivery.json).
+
+![V3 native Godot review](artifacts/three-view-run-pilot-20260926/run-v3-godot-normal.png)
+
+The final sprite is a review prototype. Existing source feedback is not a claim
+that the processed loop, edges or foot contact have been approved. No new Vidu
+request or credit spending occurred during processing.

@@ -1,0 +1,63 @@
+{
+  "status": "installed_review_prototype",
+  "user_source_feedback": "好的，前面确实有点小问题，但后面确实跑起来了，请继续实施",
+  "source_acceptance_scope": "Permission to process the late running segment, not blanket final visual approval.",
+  "creation_id": "3483055293209439",
+  "source_sha256": "145d101a3ed8f8c6fc49a6e5c33b1ce9fba3cf96f66950c0279a255a44530ca1",
+  "source_interval": [
+    91,
+    119
+  ],
+  "excluded_boundary": 120,
+  "frame_count": 29,
+  "cycle_ms": 1208,
+  "speed_multiplier": 1,
+  "canvas": [
+    400,
+    400
+  ],
+  "pivot": [
+    200,
+    360
+  ],
+  "per_frame_transforms": false,
+  "prepare_job": "7c681944-4a25-4dba-bfd4-27a0ed0e8228",
+  "install_job": "39ee6636-b1a4-477b-90f1-9467f1e1d2ff",
+  "pack_sha256": "199de91815b505b491149930e78a7b92bbdd6769714f6268adc645a19ed17af5",
+  "pack_validated": true,
+  "install_verified": true,
+  "provider_requests_this_processing_turn": 0,
+  "quality": {
+    "verdict": "prototype_usable",
+    "metrics": {
+      "bboxBottomDriftPx": 20.0,
+      "bboxCenterXDriftPx": 27.5,
+      "bboxCenterYDriftPx": 21.0,
+      "bboxWidthVariationPx": 125.0,
+      "alphaCoverageAvg": 0.115682766,
+      "loopMatchScore": 0.511799,
+      "frameCount": 29,
+      "frameSizeConsistent": true,
+      "cellBoundarySafe": true
+    }
+  },
+  "godot": {
+    "normal_passed": true,
+    "slow_passed": true,
+    "normal_cycles_seen": 9,
+    "slow_cycles_seen": 4,
+    "ticks_per_test": 786,
+    "speed_px_per_second": 140,
+    "scale": 0.7,
+    "collision_radius": 16,
+    "normal_sha256": "c37626054257d0a9aa489c68d38c88cb9e4cf34a676f0f1347588bb642cb5a58",
+    "slow_sha256": "423b8813240d2ce9dcd2bb855bb03b9956f5ff75c4890713e7e5c9d73481ef36",
+    "clean_copy_passed": true
+  },
+  "remaining_review": [
+    "torso view variation retained from source",
+    "boot color shimmer and soft matte edges",
+    "loop seam and foot contact"
+  ],
+  "final_visual_approval": "pending"
+}

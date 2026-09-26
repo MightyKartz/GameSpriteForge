@@ -1,10 +1,10 @@
 extends Node2D
 
 # One video-derived lateral movement candidate; up/down remain still references.
-const MOVE_SCENE = preload("res://addons/forge_assets/courier_move_right/forge_animated_sprite.tscn")
+const MOVE_SCENE = preload("res://addons/forge_assets/courier_run_v3/forge_animated_sprite.tscn")
 const MOVE_PIVOT := Vector2(200, 360)
 const MOVE_SCALE := 0.7
-const FRAME_DURATIONS_MS := [21, 21, 20, 21, 21, 21, 21, 21, 21, 20, 21, 21, 21, 21, 20, 21, 21, 21, 21, 21, 21, 20, 21, 21, 21, 21, 20, 21, 21, 21, 21, 21, 21, 20, 21, 21, 21, 21, 20, 21, 21, 21, 21, 21, 21, 20, 21, 21, 21, 21, 20, 21, 21, 21]
+const FRAME_DURATIONS_MS := [42, 41, 42, 42, 41, 42, 42, 41, 42, 42, 41, 42, 42, 41, 42, 42, 41, 42, 42, 41, 42, 42, 41, 42, 42, 41, 42, 42, 41]
 const SEGMENTS := [{"direction":"right","ticks":135},{"direction":"left","ticks":99},{"direction":"right","ticks":99},{"direction":"up","ticks":60},{"direction":"down","ticks":60},{"direction":"left","ticks":135},{"direction":"right","ticks":99},{"direction":"left","ticks":99}]
 const TEXTURES := {
 	"right": preload("res://addons/forge_assets/courier_views/items/right.png"),
@@ -18,7 +18,7 @@ const PIVOTS := {
 }
 const DIRECTIONS := ["right", "up", "left", "down"]
 const VECTORS := [Vector2.RIGHT, Vector2.UP, Vector2.LEFT, Vector2.DOWN]
-const SPEED := 180.0
+const SPEED := 140.0
 const VERTICAL_SPEED := 45.0
 const TEST_TICKS := 786
 const DISPLAY_SCALE := 0.5
@@ -78,8 +78,8 @@ func _ready() -> void:
 	label_at("One video-derived lateral cycle / mirrored left-right movement", Vector2(60, 83), 19)
 	label_at("REVIEW PROTOTYPE — UP / DOWN USE STILL REFERENCES", Vector2(60, 123), 16, Color("f0be72"))
 	label_at("Arrow keys / WASD: move     Space: automatic turn test", Vector2(60, 158), 16)
-	label_at("54 frames / 1.125 s cycle / Space: demo / Shift: half speed", Vector2(60, 190), 15)
-	label_at("Whole-figure X stabilized; natural source Y retained. Visual approval pending.", Vector2(60, 217), 15)
+	label_at("29 frames / 1.208 s cycle (source speed) / Space: demo / Shift: half speed", Vector2(60, 190), 15)
+	label_at("Source motion and timing retained. Processed result pending visual review.", Vector2(60, 217), 15)
 	for index in range(3):
 		var direction: String = ["right", "up", "down"][index]
 		var thumb := Sprite2D.new()
@@ -176,7 +176,7 @@ func _physics_process(delta: float) -> void:
 		max_velocity_error = maxf(max_velocity_error, ((actor.position - before) / delta - actor.velocity).length())
 	if not testing:
 		actor.position = actor.position.clamp(Vector2(180, 580), Vector2(960, 655))
-	status.text = "Facing: %s   %s   %s   frame %02d / 54" % [facing.to_upper(), "AUTO" if demo else "MANUAL", "MOVE LOOP" if move_player.visible else "STILL", move_sprite.frame + 1]
+	status.text = "Facing: %s   %s   %s   frame %02d / 29" % [facing.to_upper(), "AUTO" if demo else "MANUAL", "MOVE LOOP" if move_player.visible else "STILL", move_sprite.frame + 1]
 	ticks += 1
 	if demo:
 		segment_ticks += 1
@@ -192,7 +192,7 @@ func finish_test() -> void:
 		failures.append("not all four directions visited")
 	if max_velocity_error > 0.1:
 		failures.append("measured velocity differs from requested velocity")
-	if cycles_seen < 2 or frames_seen.size() != 54:
+	if cycles_seen < 2 or frames_seen.size() != FRAME_DURATIONS_MS.size():
 		failures.append("insufficient complete cycles or missing rendered frames")
 	var output := FileAccess.open(report_path, FileAccess.WRITE)
 	if output == null:
@@ -205,7 +205,7 @@ func finish_test() -> void:
 		"ticks": ticks, "directions": visited.keys(), "turn_checks": checks,
 		"max_velocity_error_px_per_second": max_velocity_error,
 		"speed_px_per_second": SPEED, "vertical_speed_px_per_second": VERTICAL_SPEED, "visual_scale": MOVE_SCALE,
-		"timing_valid": timing_valid, "frame_count": 54, "frame_durations_ms": FRAME_DURATIONS_MS, "cycle_ms": 1125, "cycles_seen": cycles_seen, "unique_frames_seen": frames_seen.size(), "slow": slow,
+		"timing_valid": timing_valid, "frame_count": FRAME_DURATIONS_MS.size(), "frame_durations_ms": FRAME_DURATIONS_MS, "cycle_ms": 1208, "cycles_seen": cycles_seen, "unique_frames_seen": frames_seen.size(), "slow": slow,
 		"collision_radius": 16, "failures": failures, "passed": failures.is_empty(),
 		"video_generated": true, "run_animation_tested": true, "up_down_animation_tested": false, "quality_verdict": "prototype_usable", "visual_approval": "pending",
 	}, "\t"))
