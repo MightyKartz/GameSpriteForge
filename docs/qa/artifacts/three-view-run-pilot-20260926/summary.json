@@ -1,0 +1,295 @@
+{
+  "status": "run_v3_installed_review_prototype",
+  "source_generation": {
+    "tool": "Codex built-in image generation",
+    "count": 1,
+    "original_size": [
+      1536,
+      1024
+    ],
+    "original_sha256": "ba197dd488847f2b34ae6abd0f834cc32a565507f76392900acb72063e76f959",
+    "image_prompt_sha256": "a6205a51b91e65a4123e4e9605a9dde53b9abe211403e3fa3535858087523df7",
+    "three_views": [
+      "right",
+      "up",
+      "down"
+    ]
+  },
+  "derivation": {
+    "crop_rectangles": {
+      "right": [
+        0,
+        0,
+        512,
+        1024
+      ],
+      "up": [
+        512,
+        0,
+        1024,
+        1024
+      ],
+      "down": [
+        1024,
+        0,
+        1536,
+        1024
+      ]
+    },
+    "common_runtime_scale": 0.5,
+    "runtime_canvas": [
+      256,
+      512
+    ],
+    "matting": {
+      "keyMode": "manual",
+      "manualKeyColor": "#FF00FF",
+      "threshold": 120,
+      "softness": 40,
+      "despillStrength": 0.0,
+      "haloPixels": 0,
+      "edgeColorRecovery": true
+    },
+    "per_frame_motion_authored": false,
+    "mirroring": "right reference mirrored at visual parent about foot pivot; collision is separate"
+  },
+  "forge": {
+    "version": "0.6.3",
+    "build": {
+      "gitCommit": "546bcefaf145b32f6d5f27b1e509a93b071037f8",
+      "dirty": false,
+      "target": "aarch64-apple-darwin",
+      "profile": "release",
+      "features": []
+    },
+    "binary_sha256": "618cdad7ef1981cf046852baad1a34c5e435847ab2ab2356a6eeb51cf5a5e342",
+    "provider_requests": 0,
+    "prepare_job": "2824bb5b-bcad-4884-b5e6-b6fc58ea456d",
+    "install_job": "52508e0f-c24c-41d7-bed8-4c52e71e7712",
+    "pack_validated": true,
+    "install_verified": true
+  },
+  "visual_review": {
+    "user_source_feedback": "好的，前面确实有点小问题，但后面确实跑起来了，请继续实施",
+    "processed_result": "pending",
+    "agent": "Consecutive late-cycle frames, 91/120 boundary comparison, light/dark matte samples and native screenshot inspected; source pose and timing retained."
+  },
+  "runtime_texture_sha256": {
+    "right": "3af464c6653ece36861eca3087d057287dbb18a1c8bc2d1d924b130d022c4fda",
+    "up": "c5a6c3f41a53febcfed36f563f535cfa91ba4ede24ff96e485b5654dff23ba9c",
+    "down": "fcb28f5e58c764509d4c295858918834b08f5591ce650f597fc0faa67cf43b7b"
+  },
+  "initial_video_form": {
+    "provider": "Vidu",
+    "model": "Q2",
+    "mode": "image-to-video",
+    "duration_seconds": 5,
+    "resolution": "1080p",
+    "codec": "H265",
+    "generation_mode": "闪电出片",
+    "count": 1,
+    "source": "reference-right-video.png",
+    "status": "blocked_insufficient_credits",
+    "credits_observed": 1,
+    "requests_submitted": 0,
+    "cost": "not displayed; submit button shows insufficient credits",
+    "video_generated": false
+  },
+  "prior_video_candidate": {
+    "provider": "Vidu",
+    "model": "Q2 Pro",
+    "mode": "subject-reference-to-video",
+    "subject": "林间信使",
+    "references": [
+      "front",
+      "right",
+      "back"
+    ],
+    "duration_seconds": 5,
+    "resolution": "1080p",
+    "codec": "H265",
+    "count": 1,
+    "requests_submitted": 1,
+    "automatic_retries": 0,
+    "submission_cost_credits": 0,
+    "reward_received_credits": 20,
+    "credits_before": 1,
+    "credits_after": 21,
+    "video_generated": true,
+    "task_id": "3482790844721311",
+    "creation_id": "3482790851026363",
+    "status": "rejected_for_sprite_extraction",
+    "review": "q2-pro-review.json",
+    "reason": "Boots are cropped at the source bottom edge during repeated running poses; no complete usable sprite cycle accepted."
+  },
+  "video": {
+    "status": "rejected_for_requested_running_action",
+    "provider": "Vidu",
+    "model": "Q2",
+    "mode": "image-to-video",
+    "duration_seconds": 5,
+    "resolution": "1080p",
+    "codec": "H265",
+    "generation_mode": "闪电出片",
+    "count": 1,
+    "cost_credits": 10,
+    "balance_before": 21,
+    "expected_balance_after": 11,
+    "requests_submitted": 1,
+    "automatic_retries": 0,
+    "input": "reference-right-video-margin-v2.png",
+    "input_sha256": "cb2127cd88f2a303f0371f338a9529736e8f5c0d57492a9d67b5493507cfe61d",
+    "prompt": "video-prompt-margin-v2.txt",
+    "prompt_sha256": "9b300232917c2870276d1a3074398390f1f596fe4444b8f4306b8f77ef1ca2f7",
+    "derivation": {
+      "source": "reference-right.png",
+      "scaled_size": [
+        308,
+        614
+      ],
+      "canvas": [
+        1536,
+        1024
+      ],
+      "paste_position": [
+        614,
+        190
+      ],
+      "joint_or_pose_edits": false
+    },
+    "balance_after": 11,
+    "provider_task_id": "3482958885594851",
+    "creation_id": "3482958893141977",
+    "source_sha256": "83d97cac12618a24e252f6f51172e33fc9ee99109a06d5ee51c52a02dd963798",
+    "video_generated": true,
+    "actual_dimensions": [
+      1764,
+      1176
+    ],
+    "actual_frame_count": 122,
+    "actual_fps": 24
+  },
+  "static_godot_preflight": {
+    "version": "4.7.2.stable.official.ed1daf0bf",
+    "native_render": "direction-preflight-v2.mp4",
+    "native_render_sha256": "32bc8caddbf48de4014d5cb686c006a2d646d65e979b41f3d1444e561e08d81b",
+    "report_sha256": "a5aa9c1b53fcc4ba10d3fda34ba40caacb1eedd93d09de68873bffebf084c21c",
+    "run_animation_tested": false
+  },
+  "latest_video_candidate": {
+    "provider": "Vidu",
+    "model": "Q2",
+    "creation_id": "3483055293209439",
+    "source_sha256": "145d101a3ed8f8c6fc49a6e5c33b1ce9fba3cf96f66950c0279a255a44530ca1",
+    "cost_credits": 10,
+    "credits_before": 11,
+    "credits_after": 1,
+    "status": "late_running_segment_authorized_and_processed",
+    "review": "run-v3-review.json",
+    "godot_replaced": true,
+    "delivery": "run-v3-delivery.json"
+  },
+  "prior_animation_processing": {
+    "manifest": "cycle-manifest.json",
+    "source_interval_zero_based": [
+      47,
+      100
+    ],
+    "excluded_repeated_boundary": 101,
+    "common_crop": [
+      480,
+      160,
+      800,
+      800
+    ],
+    "common_scale": 0.5,
+    "canvas": [
+      400,
+      400
+    ],
+    "playback_speed_vs_source": 2,
+    "source_cycle_ms": 2250,
+    "runtime_cycle_ms": 1125,
+    "interior_frame_omissions": 0,
+    "y_translation": 0,
+    "x_translation": "whole figure only; every offset recorded in manifest",
+    "quality_verdict": "prototype_usable",
+    "production_eligible": false,
+    "visual_approval": "rejected"
+  },
+  "prior_animation_forge": {
+    "prepare_game_ready_attempt_job": "cd3a1810-395e-421d-ac4d-5ab806b4bc40",
+    "game_ready_attempt_state": "awaiting_review",
+    "review_prepare_job": "d5bfc886-3876-42fa-bbf9-2d919f630f02",
+    "review_prepare_state": "succeeded",
+    "install_job": "58567e91-abad-451d-bd52-ec9bbe324ecf",
+    "install_state": "succeeded",
+    "provider_requests": 0,
+    "pack_validated": true,
+    "install_verified": true,
+    "quality_metrics": {
+      "bboxBottomDriftPx": 9,
+      "bboxCenterXDriftPx": 64.5,
+      "bboxCenterYDriftPx": 11,
+      "loopMatchScore": 0.89246273
+    },
+    "notes": "The strict GameReady export was blocked; a distinct explicitly labelled review-prototype request exported unchanged frames. No GameReady or visual approval is claimed."
+  },
+  "prior_godot": {
+    "version": "4.7.2.stable.official.ed1daf0bf",
+    "run_animation_tested": true,
+    "up_down_animation_tested": false,
+    "frame_count": 54,
+    "cycle_ms": 1125,
+    "horizontal_speed": 180,
+    "vertical_speed": 45,
+    "visual_scale": 0.7,
+    "pivot": [
+      200,
+      360
+    ],
+    "collision_radius": 16,
+    "normal_preview_sha256": "a2ce50541bbc2395af7d9e9f4bfa3421bea0ff6c91b7646116c3e3549a43b898",
+    "slow_preview_sha256": "c8a712856392db0feb84dbafc82e42fb0665d3bd26bb7af28caf5956116199b1",
+    "normal_report_sha256": "3b1b40973ee66076f8902a75effbfe877859393b799be3780d8f4528565ee492",
+    "slow_report_sha256": "82cefe3eadf14f4cea614e7cd4352bfdc72eea7a41ad9fcaba6bce4503fc301f",
+    "ticks_per_test": 786,
+    "all_checks_passed": true,
+    "test_scope": "Technical playback and turning checks only; source running action rejected by user."
+  },
+  "animation_processing": {
+    "frame_count": 29,
+    "cycle_ms": 1208,
+    "speed_multiplier": 1,
+    "canvas": [
+      400,
+      400
+    ],
+    "pivot": [
+      200,
+      360
+    ],
+    "per_frame_transforms": false,
+    "final_visual_approval": "pending"
+  },
+  "animation_forge": {
+    "prepare_job": "7c681944-4a25-4dba-bfd4-27a0ed0e8228",
+    "install_job": "39ee6636-b1a4-477b-90f1-9467f1e1d2ff",
+    "pack_sha256": "199de91815b505b491149930e78a7b92bbdd6769714f6268adc645a19ed17af5",
+    "pack_validated": true,
+    "install_verified": true
+  },
+  "godot": {
+    "normal_passed": true,
+    "slow_passed": true,
+    "normal_cycles_seen": 9,
+    "slow_cycles_seen": 4,
+    "ticks_per_test": 786,
+    "speed_px_per_second": 140,
+    "scale": 0.7,
+    "collision_radius": 16,
+    "normal_sha256": "c37626054257d0a9aa489c68d38c88cb9e4cf34a676f0f1347588bb642cb5a58",
+    "slow_sha256": "423b8813240d2ce9dcd2bb855bb03b9956f5ff75c4890713e7e5c9d73481ef36",
+    "clean_copy_passed": true
+  }
+}

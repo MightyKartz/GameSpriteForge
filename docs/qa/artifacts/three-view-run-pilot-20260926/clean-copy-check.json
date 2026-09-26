@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "copied_files": 18,
+  "scope": "only staged example files; no .godot cache, private Pack or ownership metadata",
+  "godot_version": "4.7.2-stable (official)",
+  "run_animation_tested": false,
+  "directions": [
+    "right",
+    "up",
+    "left",
+    "down"
+  ],
+  "failures": []
+}
