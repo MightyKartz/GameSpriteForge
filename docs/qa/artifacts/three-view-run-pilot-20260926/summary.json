@@ -1,5 +1,5 @@
 {
-  "status": "partial_blocked_on_vidu_credits",
+  "status": "partial_first_video_rejected_for_cropped_feet",
   "source_generation": {
     "tool": "Codex built-in image generation",
     "count": 1,
@@ -53,22 +53,6 @@
     "per_frame_motion_authored": false,
     "mirroring": "right reference mirrored at visual parent about foot pivot; collision is separate"
   },
-  "video": {
-    "provider": "Vidu",
-    "model": "Q2",
-    "mode": "image-to-video",
-    "duration_seconds": 5,
-    "resolution": "1080p",
-    "codec": "H265",
-    "generation_mode": "闪电出片",
-    "count": 1,
-    "source": "reference-right-video.png",
-    "status": "blocked_insufficient_credits",
-    "credits_observed": 1,
-    "requests_submitted": 0,
-    "cost": "not displayed; submit button shows insufficient credits",
-    "video_generated": false
-  },
   "forge": {
     "version": "0.6.3",
     "build": {
@@ -100,5 +84,48 @@
     "right": "3af464c6653ece36861eca3087d057287dbb18a1c8bc2d1d924b130d022c4fda",
     "up": "c5a6c3f41a53febcfed36f563f535cfa91ba4ede24ff96e485b5654dff23ba9c",
     "down": "fcb28f5e58c764509d4c295858918834b08f5591ce650f597fc0faa67cf43b7b"
+  },
+  "initial_video_form": {
+    "provider": "Vidu",
+    "model": "Q2",
+    "mode": "image-to-video",
+    "duration_seconds": 5,
+    "resolution": "1080p",
+    "codec": "H265",
+    "generation_mode": "闪电出片",
+    "count": 1,
+    "source": "reference-right-video.png",
+    "status": "blocked_insufficient_credits",
+    "credits_observed": 1,
+    "requests_submitted": 0,
+    "cost": "not displayed; submit button shows insufficient credits",
+    "video_generated": false
+  },
+  "video": {
+    "provider": "Vidu",
+    "model": "Q2 Pro",
+    "mode": "subject-reference-to-video",
+    "subject": "林间信使",
+    "references": [
+      "front",
+      "right",
+      "back"
+    ],
+    "duration_seconds": 5,
+    "resolution": "1080p",
+    "codec": "H265",
+    "count": 1,
+    "requests_submitted": 1,
+    "automatic_retries": 0,
+    "submission_cost_credits": 0,
+    "reward_received_credits": 20,
+    "credits_before": 1,
+    "credits_after": 21,
+    "video_generated": true,
+    "task_id": "3482790844721311",
+    "creation_id": "3482790851026363",
+    "status": "rejected_for_sprite_extraction",
+    "review": "q2-pro-review.json",
+    "reason": "Boots are cropped at the source bottom edge during repeated running poses; no complete usable sprite cycle accepted."
   }
 }

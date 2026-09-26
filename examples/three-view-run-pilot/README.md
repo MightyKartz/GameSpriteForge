@@ -1,13 +1,14 @@
 # Three-view character pilot / 三视图角色试验
 
-**Draft: the reference sheet and static direction preflight are complete; the
-requested run video and animated cycle are not generated yet.** Vidu Q2
-image-to-video showed insufficient credits with an observed balance of 1.
-No video request was submitted and no credits were spent in this pilot.
+**Draft: three views and static direction preflight are complete.** One Q2 Pro
+subject-reference video was generated using its free trial (0 credits). The
+20-credit subject task reward was claimed; the observed balance changed from
+1 to 21. The video is retained but rejected for sprite extraction because boots
+are cropped at the source bottom edge during running poses.
 
-**草稿：三视图与静态转向预检已完成，跑动视频和跑动循环尚未生成。**
-Vidu 图生视频页面提示积分不足。本例的站姿移动只用于检查朝向切换与锚点，
-不能作为步态自然、跑动连贯或四方向动画已完成的证据。
+**草稿：三视图与静态转向预检已完成，已免费生成一段 Q2 Pro 主体参考视频。**
+主体任务奖励 20 积分已领取，余额从 1 变为 21。视频部分跑动姿势的靴子被
+画面下沿裁切，尚未获得可交付的完整跑动循环；Godot 当前仍是静态转向预检。
 
 ![Selected three-view preview](three-view-preview.png)
 
@@ -60,10 +61,11 @@ weapon-bearing or asymmetric character may be mirrored without changes.
 
 ## Complete the one-direction animation
 
-1. Resume the prepared Vidu Q2 image-to-video request using the right-view crop
-   on an expanded magenta canvas and [video-prompt.txt](video-prompt.txt).
-   Verify the live cost and obtain any required spending authorization; do not
-   substitute a text-only video or an older character's animation.
+1. Retain the first Q2 Pro candidate and its [review](../../docs/qa/artifacts/three-view-run-pilot-20260926/q2-pro-review.json).
+   Its exact subject-reference prompt is [video-prompt-q2-pro.txt](video-prompt-q2-pro.txt).
+   A later authorized candidate should leave clear head/foot margins and make the
+   character smaller in the frame. Verify the live cost before another submission;
+   the one free request is used. No automatic paid retry was made.
 2. Inspect the complete generated video, select a full run cycle, and retain
    source timestamps, frame indices, hashes and any reviewed timing edits.
 3. Matte the selected sequence, preserve natural motion and compare normal/slow
