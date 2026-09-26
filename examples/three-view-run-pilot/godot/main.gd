@@ -1,6 +1,11 @@
 extends Node2D
 
-# Direction preflight only. These are still references, not a generated run loop.
+# One video-derived lateral movement candidate; up/down remain still references.
+const MOVE_SCENE = preload("res://addons/forge_assets/courier_move_right/forge_animated_sprite.tscn")
+const MOVE_PIVOT := Vector2(200, 360)
+const MOVE_SCALE := 0.7
+const FRAME_DURATIONS_MS := [21, 21, 20, 21, 21, 21, 21, 21, 21, 20, 21, 21, 21, 21, 20, 21, 21, 21, 21, 21, 21, 20, 21, 21, 21, 21, 20, 21, 21, 21, 21, 21, 21, 20, 21, 21, 21, 21, 20, 21, 21, 21, 21, 21, 21, 20, 21, 21, 21, 21, 20, 21, 21, 21]
+const SEGMENTS := [{"direction":"right","ticks":135},{"direction":"left","ticks":99},{"direction":"right","ticks":99},{"direction":"up","ticks":60},{"direction":"down","ticks":60},{"direction":"left","ticks":135},{"direction":"right","ticks":99},{"direction":"left","ticks":99}]
 const TEXTURES := {
 	"right": preload("res://addons/forge_assets/courier_views/items/right.png"),
 	"up": preload("res://addons/forge_assets/courier_views/items/up.png"),
@@ -13,13 +18,24 @@ const PIVOTS := {
 }
 const DIRECTIONS := ["right", "up", "left", "down"]
 const VECTORS := [Vector2.RIGHT, Vector2.UP, Vector2.LEFT, Vector2.DOWN]
-const SPEED := 60.0
+const SPEED := 180.0
+const VERTICAL_SPEED := 45.0
+const TEST_TICKS := 786
 const DISPLAY_SCALE := 0.5
 
 var actor := CharacterBody2D.new()
 var visual := Node2D.new()
 var sprite := Sprite2D.new()
 var collider := CollisionShape2D.new()
+var move_player: Node2D
+var move_sprite: AnimatedSprite2D
+var segment_index := 0
+var segment_ticks := 0
+var cycles_seen := 0
+var previous_phase := 0.0
+var frames_seen: Dictionary = {}
+var timing_valid := false
+var slow := false
 var status := Label.new()
 var facing := "right"
 var testing := false
@@ -36,13 +52,21 @@ func _ready() -> void:
 		if arg == "--test":
 			testing = true
 			demo = true
+		elif arg == "--slow":
+			slow = true
 		elif arg.begins_with("--report="):
 			report_path = arg.trim_prefix("--report=")
 	actor.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
-	actor.position = Vector2(480, 650)
+	actor.position = Vector2(500, 625)
 	add_child(actor)
 	actor.add_child(visual)
 	visual.add_child(sprite)
+	move_player = MOVE_SCENE.instantiate()
+	visual.add_child(move_player)
+	move_player.set_process(false)
+	move_sprite = move_player.get_node("AnimatedSprite2D")
+	move_player.play("move_right")
+	validate_timing()
 	sprite.centered = false
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	var shape := CircleShape2D.new()
@@ -51,11 +75,11 @@ func _ready() -> void:
 	actor.add_child(collider)
 	set_facing("right")
 	label_at("FOREST COURIER", Vector2(60, 36), 32, Color("dce7d4"))
-	label_at("Three views from one image  /  direction preflight", Vector2(60, 83), 19)
-	label_at("STILL REFERENCES — RUN VIDEO PENDING", Vector2(60, 123), 16, Color("f0be72"))
+	label_at("One video-derived lateral cycle / mirrored left-right movement", Vector2(60, 83), 19)
+	label_at("REVIEW PROTOTYPE — UP / DOWN USE STILL REFERENCES", Vector2(60, 123), 16, Color("f0be72"))
 	label_at("Arrow keys / WASD: move     Space: automatic turn test", Vector2(60, 158), 16)
-	label_at("Left uses the right reference mirrored about the foot pivot.", Vector2(60, 190), 15)
-	label_at("This verifies turning and placement, not gait or animation quality.", Vector2(60, 217), 15)
+	label_at("54 frames / 1.125 s cycle / Space: demo / Shift: half speed", Vector2(60, 190), 15)
+	label_at("Whole-figure X stabilized; natural source Y retained. Visual approval pending.", Vector2(60, 217), 15)
 	for index in range(3):
 		var direction: String = ["right", "up", "down"][index]
 		var thumb := Sprite2D.new()
@@ -79,36 +103,54 @@ func label_at(text: String, point: Vector2, size: int, color := Color("aab8bf"))
 	label.modulate = color
 	add_child(label)
 
+func validate_timing() -> void:
+	var frames := move_sprite.sprite_frames
+	timing_valid = frames.has_animation("move_right") and frames.get_frame_count("move_right") == FRAME_DURATIONS_MS.size()
+	if timing_valid:
+		for i in range(FRAME_DURATIONS_MS.size()):
+			var milliseconds := frames.get_frame_duration("move_right", i) / frames.get_animation_speed("move_right") * 1000.0
+			timing_valid = timing_valid and absf(milliseconds - FRAME_DURATIONS_MS[i]) < 0.001
+	if not timing_valid:
+		failures.append("installed SpriteFrames timing mismatch")
+
 func set_facing(direction: String) -> void:
 	var before := actor.global_position
 	var collision_before := collider.global_transform
+	var frame_before := move_sprite.frame
+	var progress_before := move_sprite.frame_progress
 	facing = direction
+	var lateral := direction == "left" or direction == "right"
 	var source := "right" if direction == "left" else direction
 	sprite.texture = TEXTURES[source]
 	sprite.position = -PIVOTS[source]
-	visual.scale = Vector2(-DISPLAY_SCALE if direction == "left" else DISPLAY_SCALE, DISPLAY_SCALE)
-	# Mirror the visual parent, so the foot origin stays fixed and the collider is not mirrored.
-	var anchor_world := sprite.to_global(PIVOTS[source])
+	sprite.visible = not lateral
+	move_player.visible = lateral
+	var scale_value := MOVE_SCALE if lateral else DISPLAY_SCALE
+	visual.scale = Vector2(-scale_value if direction == "left" else scale_value, scale_value)
+	# Changing facing only mirrors the visual; it never restarts the animation clock.
+	var anchor_world := move_sprite.to_global(MOVE_PIVOT - Vector2(200, 200)) if lateral else sprite.to_global(PIVOTS[source])
 	var okay := anchor_world.distance_to(actor.global_position) < 0.001
 	okay = okay and actor.global_position == before and collider.global_transform == collision_before
-	okay = okay and sprite.texture == TEXTURES[source]
-	checks.append({"direction": direction, "source": source, "mirrored": direction == "left", "anchor_and_collision_stable": okay})
-	if not okay:
-		failures.append("turn registration failed: " + direction)
+	var phase_okay := move_sprite.frame == frame_before and move_sprite.frame_progress == progress_before
+	checks.append({"direction": direction, "source": "move_right" if lateral else source, "mirrored": direction == "left", "anchor_and_collision_stable": okay, "phase_preserved": phase_okay, "frame_before": frame_before, "frame_after": move_sprite.frame})
+	if not okay or not phase_okay:
+		failures.append("turn registration or phase failed: " + direction)
 	visited[direction] = true
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE:
 		demo = not demo
 		ticks = 0
+		segment_index = 0
+		segment_ticks = 0
 
 func _physics_process(delta: float) -> void:
 	var direction := Vector2.ZERO
 	if demo:
-		var index := int(ticks / 60) % 4
-		direction = VECTORS[index]
-		if facing != DIRECTIONS[index]:
-			set_facing(DIRECTIONS[index])
+		var selected: String = SEGMENTS[segment_index].direction
+		direction = VECTORS[DIRECTIONS.find(selected)]
+		if facing != selected:
+			set_facing(selected)
 	else:
 		direction.x = float(Input.is_physical_key_pressed(KEY_D) or Input.is_action_pressed("ui_right")) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_action_pressed("ui_left"))
 		direction.y = float(Input.is_physical_key_pressed(KEY_S) or Input.is_action_pressed("ui_down")) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_action_pressed("ui_up"))
@@ -120,16 +162,29 @@ func _physics_process(delta: float) -> void:
 				set_facing(next)
 		direction = direction.normalized()
 	var before := actor.position
-	actor.velocity = direction * SPEED
+	var rate := 0.5 if slow or Input.is_physical_key_pressed(KEY_SHIFT) else 1.0
+	actor.velocity = Vector2(direction.x * SPEED, direction.y * VERTICAL_SPEED) * rate
+	if direction != Vector2.ZERO and move_player.visible:
+		move_player.advance(delta * rate)
+		frames_seen[move_sprite.frame] = true
+		var phase: float = move_player.position_seconds
+		if phase < previous_phase:
+			cycles_seen += 1
+		previous_phase = phase
 	actor.move_and_slide()
 	if testing and delta > 0:
 		max_velocity_error = maxf(max_velocity_error, ((actor.position - before) / delta - actor.velocity).length())
 	if not testing:
-		actor.position = actor.position.clamp(Vector2(110, 590), Vector2(1040, 660))
-	status.text = "Facing: %s     %s     source: static reference" % [facing.to_upper(), "AUTO" if demo else "MANUAL"]
+		actor.position = actor.position.clamp(Vector2(180, 580), Vector2(960, 655))
+	status.text = "Facing: %s   %s   %s   frame %02d / 54" % [facing.to_upper(), "AUTO" if demo else "MANUAL", "MOVE LOOP" if move_player.visible else "STILL", move_sprite.frame + 1]
 	ticks += 1
+	if demo:
+		segment_ticks += 1
+		if segment_ticks >= SEGMENTS[segment_index].ticks:
+			segment_ticks = 0
+			segment_index = (segment_index + 1) % SEGMENTS.size()
 	queue_redraw()
-	if testing and ticks == 480:
+	if testing and ticks == TEST_TICKS:
 		finish_test()
 
 func finish_test() -> void:
@@ -137,19 +192,22 @@ func finish_test() -> void:
 		failures.append("not all four directions visited")
 	if max_velocity_error > 0.1:
 		failures.append("measured velocity differs from requested velocity")
+	if cycles_seen < 2 or frames_seen.size() != 54:
+		failures.append("insufficient complete cycles or missing rendered frames")
 	var output := FileAccess.open(report_path, FileAccess.WRITE)
 	if output == null:
 		push_error("Cannot write test report: " + report_path)
 		get_tree().quit(1)
 		return
 	output.store_string(JSON.stringify({
-		"scope": "static reference direction preflight; no run animation",
+		"scope": "video-derived lateral movement review; up/down are static references",
 		"godot_version": Engine.get_version_info().string,
 		"ticks": ticks, "directions": visited.keys(), "turn_checks": checks,
 		"max_velocity_error_px_per_second": max_velocity_error,
-		"speed_px_per_second": SPEED, "visual_scale": DISPLAY_SCALE,
+		"speed_px_per_second": SPEED, "vertical_speed_px_per_second": VERTICAL_SPEED, "visual_scale": MOVE_SCALE,
+		"timing_valid": timing_valid, "frame_count": 54, "frame_durations_ms": FRAME_DURATIONS_MS, "cycle_ms": 1125, "cycles_seen": cycles_seen, "unique_frames_seen": frames_seen.size(), "slow": slow,
 		"collision_radius": 16, "failures": failures, "passed": failures.is_empty(),
-		"video_generated": false, "run_animation_tested": false,
+		"video_generated": true, "run_animation_tested": true, "up_down_animation_tested": false, "quality_verdict": "prototype_usable", "visual_approval": "pending",
 	}, "\t"))
 	output.close()
 	get_tree().quit(0 if failures.is_empty() else 1)

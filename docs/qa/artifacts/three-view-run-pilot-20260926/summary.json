@@ -1,5 +1,5 @@
 {
-  "status": "partial_first_video_rejected_for_cropped_feet",
+  "status": "one_direction_review_prototype_delivered",
   "source_generation": {
     "tool": "Codex built-in image generation",
     "count": 1,
@@ -69,15 +69,8 @@
     "pack_validated": true,
     "install_verified": true
   },
-  "godot": {
-    "version": "4.7.2.stable.official.ed1daf0bf",
-    "native_render": "direction-preflight-v2.mp4",
-    "native_render_sha256": "32bc8caddbf48de4014d5cb686c006a2d646d65e979b41f3d1444e561e08d81b",
-    "report_sha256": "a5aa9c1b53fcc4ba10d3fda34ba40caacb1eedd93d09de68873bffebf084c21c",
-    "run_animation_tested": false
-  },
   "visual_review": {
-    "agent": "three-view identity and light/dark matte inspected; some fine hair-edge color remains; side is nearly eye-level, not verified overhead perspective",
+    "agent": "Full-clip contact sampling, consecutive selected frames, whole-figure stabilization comparison, dark/light mattes and native Godot recording samples inspected. Remaining source boot color shimmer/soft edges and loop seam require user review.",
     "user": "pending"
   },
   "runtime_texture_sha256": {
@@ -101,7 +94,7 @@
     "cost": "not displayed; submit button shows insufficient credits",
     "video_generated": false
   },
-  "video": {
+  "prior_video_candidate": {
     "provider": "Vidu",
     "model": "Q2 Pro",
     "mode": "subject-reference-to-video",
@@ -127,5 +120,126 @@
     "status": "rejected_for_sprite_extraction",
     "review": "q2-pro-review.json",
     "reason": "Boots are cropped at the source bottom edge during repeated running poses; no complete usable sprite cycle accepted."
+  },
+  "video": {
+    "status": "processed_review_prototype",
+    "provider": "Vidu",
+    "model": "Q2",
+    "mode": "image-to-video",
+    "duration_seconds": 5,
+    "resolution": "1080p",
+    "codec": "H265",
+    "generation_mode": "闪电出片",
+    "count": 1,
+    "cost_credits": 10,
+    "balance_before": 21,
+    "expected_balance_after": 11,
+    "requests_submitted": 1,
+    "automatic_retries": 0,
+    "input": "reference-right-video-margin-v2.png",
+    "input_sha256": "cb2127cd88f2a303f0371f338a9529736e8f5c0d57492a9d67b5493507cfe61d",
+    "prompt": "video-prompt-margin-v2.txt",
+    "prompt_sha256": "9b300232917c2870276d1a3074398390f1f596fe4444b8f4306b8f77ef1ca2f7",
+    "derivation": {
+      "source": "reference-right.png",
+      "scaled_size": [
+        308,
+        614
+      ],
+      "canvas": [
+        1536,
+        1024
+      ],
+      "paste_position": [
+        614,
+        190
+      ],
+      "joint_or_pose_edits": false
+    },
+    "balance_after": 11,
+    "provider_task_id": "3482958885594851",
+    "creation_id": "3482958893141977",
+    "source_sha256": "83d97cac12618a24e252f6f51172e33fc9ee99109a06d5ee51c52a02dd963798",
+    "video_generated": true,
+    "actual_dimensions": [
+      1764,
+      1176
+    ],
+    "actual_frame_count": 122,
+    "actual_fps": 24
+  },
+  "static_godot_preflight": {
+    "version": "4.7.2.stable.official.ed1daf0bf",
+    "native_render": "direction-preflight-v2.mp4",
+    "native_render_sha256": "32bc8caddbf48de4014d5cb686c006a2d646d65e979b41f3d1444e561e08d81b",
+    "report_sha256": "a5aa9c1b53fcc4ba10d3fda34ba40caacb1eedd93d09de68873bffebf084c21c",
+    "run_animation_tested": false
+  },
+  "godot": {
+    "version": "4.7.2.stable.official.ed1daf0bf",
+    "run_animation_tested": true,
+    "up_down_animation_tested": false,
+    "frame_count": 54,
+    "cycle_ms": 1125,
+    "horizontal_speed": 180,
+    "vertical_speed": 45,
+    "visual_scale": 0.7,
+    "pivot": [
+      200,
+      360
+    ],
+    "collision_radius": 16,
+    "normal_preview_sha256": "a2ce50541bbc2395af7d9e9f4bfa3421bea0ff6c91b7646116c3e3549a43b898",
+    "slow_preview_sha256": "c8a712856392db0feb84dbafc82e42fb0665d3bd26bb7af28caf5956116199b1",
+    "normal_report_sha256": "3b1b40973ee66076f8902a75effbfe877859393b799be3780d8f4528565ee492",
+    "slow_report_sha256": "82cefe3eadf14f4cea614e7cd4352bfdc72eea7a41ad9fcaba6bce4503fc301f",
+    "ticks_per_test": 786,
+    "all_checks_passed": true
+  },
+  "animation_processing": {
+    "manifest": "cycle-manifest.json",
+    "source_interval_zero_based": [
+      47,
+      100
+    ],
+    "excluded_repeated_boundary": 101,
+    "common_crop": [
+      480,
+      160,
+      800,
+      800
+    ],
+    "common_scale": 0.5,
+    "canvas": [
+      400,
+      400
+    ],
+    "playback_speed_vs_source": 2,
+    "source_cycle_ms": 2250,
+    "runtime_cycle_ms": 1125,
+    "interior_frame_omissions": 0,
+    "y_translation": 0,
+    "x_translation": "whole figure only; every offset recorded in manifest",
+    "quality_verdict": "prototype_usable",
+    "production_eligible": false,
+    "visual_approval": "pending"
+  },
+  "animation_forge": {
+    "prepare_game_ready_attempt_job": "cd3a1810-395e-421d-ac4d-5ab806b4bc40",
+    "game_ready_attempt_state": "awaiting_review",
+    "review_prepare_job": "d5bfc886-3876-42fa-bbf9-2d919f630f02",
+    "review_prepare_state": "succeeded",
+    "install_job": "58567e91-abad-451d-bd52-ec9bbe324ecf",
+    "install_state": "succeeded",
+    "provider_requests": 0,
+    "pack_validated": true,
+    "install_verified": true,
+    "quality_metrics": {
+      "bboxBottomDriftPx": 9,
+      "bboxCenterXDriftPx": 64.5,
+      "bboxCenterYDriftPx": 11,
+      "loopMatchScore": 0.89246273
+    },
+    "notes": "The strict GameReady export was blocked; a distinct explicitly labelled review-prototype request exported unchanged frames. No GameReady or visual approval is claimed."
   }
 }

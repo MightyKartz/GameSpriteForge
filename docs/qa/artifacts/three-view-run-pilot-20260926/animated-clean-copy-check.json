@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "import_exit": 0,
+  "runtime_exit": 0,
+  "source": "portable Godot files only, excluding caches and local ownership records",
+  "frames": 54,
+  "cycles": 9
+}
