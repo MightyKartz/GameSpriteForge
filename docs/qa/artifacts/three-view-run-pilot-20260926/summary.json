@@ -1,0 +1,104 @@
+{
+  "status": "partial_blocked_on_vidu_credits",
+  "source_generation": {
+    "tool": "Codex built-in image generation",
+    "count": 1,
+    "original_size": [
+      1536,
+      1024
+    ],
+    "original_sha256": "ba197dd488847f2b34ae6abd0f834cc32a565507f76392900acb72063e76f959",
+    "image_prompt_sha256": "a6205a51b91e65a4123e4e9605a9dde53b9abe211403e3fa3535858087523df7",
+    "three_views": [
+      "right",
+      "up",
+      "down"
+    ]
+  },
+  "derivation": {
+    "crop_rectangles": {
+      "right": [
+        0,
+        0,
+        512,
+        1024
+      ],
+      "up": [
+        512,
+        0,
+        1024,
+        1024
+      ],
+      "down": [
+        1024,
+        0,
+        1536,
+        1024
+      ]
+    },
+    "common_runtime_scale": 0.5,
+    "runtime_canvas": [
+      256,
+      512
+    ],
+    "matting": {
+      "keyMode": "manual",
+      "manualKeyColor": "#FF00FF",
+      "threshold": 120,
+      "softness": 40,
+      "despillStrength": 0.0,
+      "haloPixels": 0,
+      "edgeColorRecovery": true
+    },
+    "per_frame_motion_authored": false,
+    "mirroring": "right reference mirrored at visual parent about foot pivot; collision is separate"
+  },
+  "video": {
+    "provider": "Vidu",
+    "model": "Q2",
+    "mode": "image-to-video",
+    "duration_seconds": 5,
+    "resolution": "1080p",
+    "codec": "H265",
+    "generation_mode": "闪电出片",
+    "count": 1,
+    "source": "reference-right-video.png",
+    "status": "blocked_insufficient_credits",
+    "credits_observed": 1,
+    "requests_submitted": 0,
+    "cost": "not displayed; submit button shows insufficient credits",
+    "video_generated": false
+  },
+  "forge": {
+    "version": "0.6.3",
+    "build": {
+      "gitCommit": "546bcefaf145b32f6d5f27b1e509a93b071037f8",
+      "dirty": false,
+      "target": "aarch64-apple-darwin",
+      "profile": "release",
+      "features": []
+    },
+    "binary_sha256": "618cdad7ef1981cf046852baad1a34c5e435847ab2ab2356a6eeb51cf5a5e342",
+    "provider_requests": 0,
+    "prepare_job": "2824bb5b-bcad-4884-b5e6-b6fc58ea456d",
+    "install_job": "52508e0f-c24c-41d7-bed8-4c52e71e7712",
+    "pack_validated": true,
+    "install_verified": true
+  },
+  "godot": {
+    "version": "4.7.2.stable.official.ed1daf0bf",
+    "native_render": "direction-preflight-v2.mp4",
+    "native_render_sha256": "32bc8caddbf48de4014d5cb686c006a2d646d65e979b41f3d1444e561e08d81b",
+    "report_sha256": "a5aa9c1b53fcc4ba10d3fda34ba40caacb1eedd93d09de68873bffebf084c21c",
+    "run_animation_tested": false
+  },
+  "visual_review": {
+    "agent": "three-view identity and light/dark matte inspected; some fine hair-edge color remains; side is nearly eye-level, not verified overhead perspective",
+    "user": "pending"
+  },
+  "runtime_texture_sha256": {
+    "right": "3af464c6653ece36861eca3087d057287dbb18a1c8bc2d1d924b130d022c4fda",
+    "up": "c5a6c3f41a53febcfed36f563f535cfa91ba4ede24ff96e485b5654dff23ba9c",
+    "down": "fcb28f5e58c764509d4c295858918834b08f5591ce650f597fc0faa67cf43b7b"
+  }
+}

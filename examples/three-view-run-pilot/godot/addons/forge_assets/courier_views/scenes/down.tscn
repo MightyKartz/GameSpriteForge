@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://addons/forge_assets/courier_views/items/down.png" id="1_emfrw"]
+
+[node name="ForgeProp" type="Node2D" unique_id=1821057188]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1077536767]
+texture_filter = 2
+texture_repeat = 1
+texture = ExtResource("1_emfrw")
+centered = false

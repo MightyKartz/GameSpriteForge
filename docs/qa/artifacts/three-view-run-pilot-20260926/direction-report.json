@@ -1,0 +1,69 @@
+{
+	"collision_radius": 16,
+	"directions": [
+		"right",
+		"up",
+		"left",
+		"down"
+	],
+	"failures": [],
+	"godot_version": "4.7.2-stable (official)",
+	"max_velocity_error_px_per_second": 0.000003814697265625,
+	"passed": true,
+	"run_animation_tested": false,
+	"scope": "static reference direction preflight; no run animation",
+	"speed_px_per_second": 60.0,
+	"ticks": 480,
+	"turn_checks": [
+		{
+			"anchor_and_collision_stable": true,
+			"direction": "right",
+			"mirrored": false,
+			"source": "right"
+		},
+		{
+			"anchor_and_collision_stable": true,
+			"direction": "up",
+			"mirrored": false,
+			"source": "up"
+		},
+		{
+			"anchor_and_collision_stable": true,
+			"direction": "left",
+			"mirrored": true,
+			"source": "right"
+		},
+		{
+			"anchor_and_collision_stable": true,
+			"direction": "down",
+			"mirrored": false,
+			"source": "down"
+		},
+		{
+			"anchor_and_collision_stable": true,
+			"direction": "right",
+			"mirrored": false,
+			"source": "right"
+		},
+		{
+			"anchor_and_collision_stable": true,
+			"direction": "up",
+			"mirrored": false,
+			"source": "up"
+		},
+		{
+			"anchor_and_collision_stable": true,
+			"direction": "left",
+			"mirrored": true,
+			"source": "right"
+		},
+		{
+			"anchor_and_collision_stable": true,
+			"direction": "down",
+			"mirrored": false,
+			"source": "down"
+		}
+	],
+	"video_generated": false,
+	"visual_scale": 0.5
+}
