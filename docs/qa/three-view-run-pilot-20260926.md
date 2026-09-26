@@ -124,3 +124,21 @@ boot-color shimmer, fine edges, loop seam and foot contact remain review items.
 There is no front/back locomotion or production-quality claim. The original
 high-resolution media, full Pack/Job stores and local ownership/cache files stay
 outside Git; only selected derived media and portable resources are committed.
+
+## Third source candidate: original-speed running, direction review unresolved
+
+Following explicit approval, one Q2 5-second image-to-video request used the
+[simplified prompt](../../examples/three-view-run-pilot/video-prompt-v3.txt) and
+the same padded side reference. It cost 10 credits (11 → 1). Creation
+`3483055293209439` produced 122 frames at 24 fps, 1764×1176.
+
+Chronological frames show standing for approximately the first 1.2 seconds,
+then visible running action. However, the torso varies substantially between
+front-oblique and rear-oblique views; a stable lateral full cycle is not accepted.
+No acceleration, limb modification, sprite-cycle preparation or replacement of
+the Godot assets followed. The local 1.5–5.0 s preview retains original cadence.
+No further paid request was submitted.
+
+[Generation and review record](artifacts/three-view-run-pilot-20260926/run-v3-review.json).
+
+![Source viewpoint comparison](artifacts/three-view-run-pilot-20260926/run-v3-viewpoint-review.jpg)

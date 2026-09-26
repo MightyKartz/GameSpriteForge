@@ -13,6 +13,13 @@ standing reference images and are not animated.
 
 ![Three views](three-view-preview.png)
 
+The latest Q2 retry now shows running after an initial standing segment, but
+its torso view shifts between front-oblique and rear-oblique angles. It has not
+replaced the retained Godot prototype; see the latest QA source review.
+
+新一轮原视频已出现跑步，但身体朝向在偏正面与偏背面之间变化，尚未作为
+合格的侧向循环替换 Godot 资源。
+
 ## Run
 
 Open `godot/project.godot` in Godot 4.7.2, or from the repository root:

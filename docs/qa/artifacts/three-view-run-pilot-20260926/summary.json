@@ -1,5 +1,5 @@
 {
-  "status": "source_action_rejected_running_animation_incomplete",
+  "status": "new_video_generated_directional_animation_still_incomplete",
   "source_generation": {
     "tool": "Codex built-in image generation",
     "count": 1,
@@ -242,5 +242,17 @@
       "loopMatchScore": 0.89246273
     },
     "notes": "The strict GameReady export was blocked; a distinct explicitly labelled review-prototype request exported unchanged frames. No GameReady or visual approval is claimed."
+  },
+  "latest_video_candidate": {
+    "provider": "Vidu",
+    "model": "Q2",
+    "creation_id": "3483055293209439",
+    "source_sha256": "145d101a3ed8f8c6fc49a6e5c33b1ce9fba3cf96f66950c0279a255a44530ca1",
+    "cost_credits": 10,
+    "credits_before": 11,
+    "credits_after": 1,
+    "status": "generated_directional_source_review_not_accepted",
+    "review": "run-v3-review.json",
+    "godot_replaced": false
   }
 }
