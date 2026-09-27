@@ -1,13 +1,13 @@
 # Forest Courier: three views and one-direction movement
 
 The current Godot example plays a **29-frame running review prototype** extracted
-from the late part of Vidu candidate v3. The user confirmed that this part runs
-and requested processing. Right uses the original sequence; left mirrors it
+from the late part of Vidu candidate v3. The user accepted the delivered visual result on 2026-09-27 and authorized
+merging this example. See the [acceptance record](../../docs/qa/artifacts/three-view-run-pilot-20260926/run-v3-acceptance-20260927.json). Right uses the original sequence; left mirrors it
 without restarting the animation. Up/down remain standing references.
 
 当前示例已换成最新视频后半段的 29 帧跑动循环，保持原速。左右方向共用动画，
-向左时镜像；上下方向仍为站姿参考。用户认可原视频后半段跑起来并授权处理，
-处理后的边缘、循环接缝与游戏内脚步接触仍待审阅，并非正式品质批准。
+向左时镜像；上下方向仍为站姿参考。用户已认可当前交付的动画效果，并授权审核合并；技术评分仍为 prototype_usable，
+没有将整体效果认可扩大为各项碰撞、脚步接触验证或正式素材包晋级。
 
 ![Three views](three-view-preview.png)
 
@@ -74,8 +74,9 @@ shared pivot (200,360), scale 0.7, horizontal speed 140 px/s and collision radiu
 ## Review limits and retained attempts
 
 Review the source torso rotation, boot-color shimmer, soft/key-colored edges,
-loop seam and foot contact in the native previews. The user accepted continued
-work on the late source motion, not every property of the final sprite. Up/down
+loop seam and foot contact in the native previews. The user accepted the current overall visual result. Component-level technical
+limits remain documented; the original pending reports/UI are retained as
+review-time snapshots and superseded by the separate acceptance record. Up/down
 locomotion is not implemented. The reference projection is nearly eye-level;
 this is not verified overhead movement. Horizontal mirroring is appropriate to
 this authorized empty-handed character, not a rule for asymmetric designs.

@@ -1,6 +1,6 @@
 # Three-view movement review — 2026-09-26
 
-Status: **v3 late running segment processed and installed; final visual review pending**.
+Status: **v3 delivered visual result accepted by user on 2026-09-27; reviewed for merge**.
 
 Current delivery uses 29 source-speed frames from candidate v3. The earlier
 rejected source and its test evidence below remain historical; see the final
@@ -190,3 +190,48 @@ Up/down remain static. Technical checks passed:
 The final sprite is a review prototype. Existing source feedback is not a claim
 that the processed loop, edges or foot contact have been approved. No new Vidu
 request or credit spending occurred during processing.
+
+## Closeout review and user acceptance — 2026-09-27
+
+The user reviewed the delivered result and said:
+
+> 非常好，克服了视频生成的瑕疵，你努力调整到了正确的结果
+
+They explicitly requested review and merge of PR #78. The append-only
+[acceptance record](artifacts/three-view-run-pilot-20260926/run-v3-acceptance-20260927.json)
+binds that feedback to source/preview hashes, the 91–119 frame range, boundary
+120, original 24 fps cadence, exact delivered timing and runtime file hashes.
+The previous pending reports and UI remain unchanged historical snapshots.
+Overall visual acceptance does not change `prototype_usable`, independently
+approve every collision/contact property, or promote a production Pack.
+
+Review found no blocking issue in the example's documented scope: external
+resource loading, 29-frame timing, preserved playback on mirror turns, static
+up/down behavior and provenance agree with the delivered evidence. The reviewed
+runtime commit is `a6a9be7b0b6e47cba98c50c2977961b155dfa846`. Its macOS quality,
+Windows CLI and both macOS/Windows resource-exchange CI jobs passed. Those CI
+checks are not a Windows visual test of this character example. Native Godot
+normal/slow recordings and clean-copy checks were performed on macOS.
+
+This closeout changes only documentation and acceptance metadata; runtime and
+media hashes were rechecked unchanged. All 29 atlas regions were compared pixel
+for pixel with the reviewed source PNGs, and installed durations match the
+manifest. Original source, native previews, frame
+sequence, processing request/receipts and Pack are retained locally, with an
+additional hash-verified comparison archive. Private source media is not added
+to Git. No generation request, credit spending or toolchain upgrade occurred.
+
+Two existing personal skills were updated in place: `2d-character-motion-authoring`
+and `forge-character-animation` (entry point, local-video guidance and observed
+case study). The personal skills remain outside this repository; before/after
+hashes are included in the acceptance record and originals are backed up locally.
+Both skill validators passed. Review of their wording confirms three decisions:
+
+- Inspect the whole video and select a complete useful late interval despite a
+  poor opening; do not reject a user-accepted segment from isolated bad poses.
+- Keep original speed as the baseline. Speeding up walking or translating the
+  actor does not establish a running gait.
+- Judge actual normal/slow playback and seams alongside source hashes, timing,
+  matting and Godot evidence; preserve technical failures and scoped acceptance.
+
+These are selection criteria, not a new fixed 29-frame or matting preset.

@@ -1,0 +1,99 @@
+{
+  "recorded_date": "2026-09-27",
+  "reviewed_commit": "a6a9be7b0b6e47cba98c50c2977961b155dfa846",
+  "user_feedback": "非常好，克服了视频生成的瑕疵，你努力调整到了正确的结果",
+  "merge_authorized": true,
+  "visual_result": "accepted_by_user",
+  "scope": "Current delivered lateral running result; individual technical/production approval is not inferred.",
+  "production_promotion": false,
+  "technical_verdict_unchanged": "prototype_usable",
+  "source_sha256": "145d101a3ed8f8c6fc49a6e5c33b1ce9fba3cf96f66950c0279a255a44530ca1",
+  "source_indices_inclusive": [
+    91,
+    119
+  ],
+  "excluded_boundary": 120,
+  "source_fps": 24,
+  "source_duration_ms": 1208.3333333333333,
+  "runtime_duration_ms": 1208,
+  "speed_multiplier": 1,
+  "crop": [
+    550,
+    160,
+    800,
+    800
+  ],
+  "scale": 0.5,
+  "per_frame_transform": false,
+  "cycle_manifest_sha256": "b683604dcfe5dcdf17be22ad1cf4fbfe00750448bb406aac53fa470c033ed61e",
+  "normal_preview_sha256": "c37626054257d0a9aa489c68d38c88cb9e4cf34a676f0f1347588bb642cb5a58",
+  "slow_preview_sha256": "423b8813240d2ce9dcd2bb855bb03b9956f5ff75c4890713e7e5c9d73481ef36",
+  "pack_sha256": "199de91815b505b491149930e78a7b92bbdd6769714f6268adc645a19ed17af5",
+  "matte_parameters": {
+    "threshold": 120,
+    "softness": 50,
+    "despillStrength": 0,
+    "haloPixels": 0,
+    "edgeColorRecovery": true,
+    "keyColor": "per-frame top-border median"
+  },
+  "runtime_files": {
+    "main.tscn": "0953bd8a0056b6758e17dcf2a3805206b8a651efb54604d05f1dc5a169e58eab",
+    "main.gd": "73abaf9f2a7d8baa1cc4a607e0d432ce2d6ca3461d97f465e0b5200acda91db8",
+    "main.gd.uid": "c3ccfecfa986afa987f1049a389756146b7d0e79185f401153f297d9254ade76",
+    "project.godot": "8930f8f0beedec9111526614150c984c8954f3e7d6e12e6279a1ff5929459095",
+    "addons/forge_assets/courier_run_v3/forge_usage.json": "8f7009fbbeae958e5c437e5822708ee1324a9d9e78fefcf3567571eb30db7c0c",
+    "addons/forge_assets/courier_run_v3/forge_alpha_multiply.gdshader.uid": "5e89db14e721300646e617174f6499387fcbadc915da88cb596621123a5c317c",
+    "addons/forge_assets/courier_run_v3/sprite_sheet_002.png.import": "1a64e9ae36f9d6a1535521633259ccaf1687903a3dc328406728ebdcc45dfbe0",
+    "addons/forge_assets/courier_run_v3/forge_player.gd": "416efc9d837fd8f8695e90c7dc84fa4062387cd8c9e18edd9c2068e37c59ca3d",
+    "addons/forge_assets/courier_run_v3/forge_animated_sprite.tscn": "6d1aa1580e2d8607c3bc688746bb3fc1d75785189d7e45cee2c77a0c4ae04cba",
+    "addons/forge_assets/courier_run_v3/forge_alpha_multiply.gdshader": "2d0f14a450ab1415c648d617be42f2c295ef9d7ab44cb27f582a1f334e83ce6e",
+    "addons/forge_assets/courier_run_v3/sprite_sheet_002.png": "1748a413a2ca5da5423f684c46d7baee3a7543373965e01d6e3f3e29b35ea099",
+    "addons/forge_assets/courier_run_v3/forge_sprite_frames.tres": "f5c65779ec35343fb04ce4eb300f0cdcda07f53327c19ba723abde356d56aead",
+    "addons/forge_assets/courier_run_v3/sprite_sheet.png.import": "bb3928aa5b7e3df537c17426183b7f0e78f76e499713fb02c14f919e158fcd44",
+    "addons/forge_assets/courier_run_v3/forge_player.gd.uid": "71120544d9ce77ac19cc64e1c1c89afee04e6a2c9173ec5ac9af98061737ddb7",
+    "addons/forge_assets/courier_run_v3/sprite_sheet.png": "27e3409569c316f3adb0a3fcd254eb1a7b28ebc243f5ca691b2b700d76a77a5d",
+    "addons/forge_assets/courier_move_right/forge_usage.json": "80e17ef0afad0fd8a4f7874ad99c6b87aa0e398461368891c36e39f0ecd07766",
+    "addons/forge_assets/courier_move_right/forge_alpha_multiply.gdshader.uid": "bc61f9cc58c80f3e2a35245e6d770205c513d532de8b8595879996909454084b",
+    "addons/forge_assets/courier_move_right/sprite_sheet_002.png.import": "4360f8a640aee55155a6101521d1817c65aa6f6455c21d544d55dd0eb3a1ac38",
+    "addons/forge_assets/courier_move_right/forge_player.gd": "416efc9d837fd8f8695e90c7dc84fa4062387cd8c9e18edd9c2068e37c59ca3d",
+    "addons/forge_assets/courier_move_right/forge_animated_sprite.tscn": "814bf2bbaca6d3256a71a6595d1f96f76102643423dfaaccb96caa5b18215ed4",
+    "addons/forge_assets/courier_move_right/forge_alpha_multiply.gdshader": "2d0f14a450ab1415c648d617be42f2c295ef9d7ab44cb27f582a1f334e83ce6e",
+    "addons/forge_assets/courier_move_right/sprite_sheet_002.png": "3352c38482e6fbe26e793514262467871d12d6d8dabbdf38161a61e19e1e5db7",
+    "addons/forge_assets/courier_move_right/sprite_sheet_003.png": "effe3354a8dc8cb6d8de975d26c8e7b6dbb768ac9161cc123c34124b312fada3",
+    "addons/forge_assets/courier_move_right/forge_sprite_frames.tres": "7cf06f992c88cde420207c83b2ce70022cf110ce2d2f994a063b7a737eb12ccf",
+    "addons/forge_assets/courier_move_right/sprite_sheet_003.png.import": "5baeab78714707468a607ded23c507beca230ae2c369154c08e9518d4dc445a8",
+    "addons/forge_assets/courier_move_right/sprite_sheet.png.import": "8dccf638c62760e872d30bb2a3c53af4803b185a08e6138ec5107344b0f9c8d5",
+    "addons/forge_assets/courier_move_right/forge_player.gd.uid": "0bf019bdc7db222efede30fb91aaf15b65b90bfe03ec082d2886031bbfcee093",
+    "addons/forge_assets/courier_move_right/sprite_sheet.png": "cf5910cf35c3821a375eb490793666b649912e7bdb960299a6cc8d4cf9f7c537",
+    "addons/forge_assets/courier_views/forge_usage.json": "7985e42f6f4e6dcd32e5d9beedebf4387f0cd6fe8e393b0a414e135e4c9d4811",
+    "addons/forge_assets/courier_views/scenes/down.tscn": "4bd29ffc307e09a1938fb7cfdf29a3420f753e0c73dd16a44b41afb42af02557",
+    "addons/forge_assets/courier_views/scenes/up.tscn": "c6c5b121a5838c21fd9dd012ee65908960e540f241d90404742e5081a91adc5d",
+    "addons/forge_assets/courier_views/scenes/right.tscn": "6a914877e7b4bb16903cfecee9ab5bb23a32a42cecdc0861ba954b2381d3bc88",
+    "addons/forge_assets/courier_views/items/up.png.import": "574517ce837ef952c5f65a0cce842611098ecf193c0a4e67209aa87e6db195aa",
+    "addons/forge_assets/courier_views/items/down.png.import": "52638d65c9135e76cd01382d09ae9ab2b58e56e660bf060b1ac95389183e282e",
+    "addons/forge_assets/courier_views/items/up.png": "c5a6c3f41a53febcfed36f563f535cfa91ba4ede24ff96e485b5654dff23ba9c",
+    "addons/forge_assets/courier_views/items/down.png": "fcb28f5e58c764509d4c295858918834b08f5591ce650f597fc0faa67cf43b7b",
+    "addons/forge_assets/courier_views/items/right.png.import": "5e8a74d2e3048cd121cbfe6ace5e92bd97859f9440556a46b52eaac12bce310b",
+    "addons/forge_assets/courier_views/items/right.png": "3af464c6653ece36861eca3087d057287dbb18a1c8bc2d1d924b130d022c4fda"
+  },
+  "personal_skill_updates": {
+    "2d-character-motion-authoring/SKILL.md": {
+      "before": "3cbea5b5ca2bfb0b1b1c39037072e475d0236502a994eb8850ac09a0be546889",
+      "after": "f4a8292822047d46ad54ec4825d5bfc8316dd4ff34b6f0ca9108798fca03605b"
+    },
+    "forge-character-animation/SKILL.md": {
+      "before": "9da662d83a363ad79e27aae912b1d35f268ef9740191b35f7541eb7b50ce3ed0",
+      "after": "d351fcc8581b37b2a67cae9c9be9653bf26cdf02e6dcb9d3de3bc0e4bcc14b91"
+    },
+    "forge-character-animation/references/local-video.md": {
+      "before": "e55db8b61ec04ed288c75e5ee9e47641abba94218e36548ebb718b487c0d24f6",
+      "after": "af8073dc03dd66b388f7414f4d95a756d825cbe13e40ac72eed200888bda7e5d"
+    },
+    "forge-character-animation/references/side-run-case-study.md": {
+      "before": "6aa11f0184f6062cfde1ad45bd6774fded79e13b33575449f5a9e7085983328b",
+      "after": "3a304edcff62446369977d577f7260edab8aeefd7e823b512de35ce186b25b09"
+    }
+  },
+  "retention": "Original source video, native previews, frame sequence, processing request and candidate Pack remain local; selected derived resources and hash-bound evidence are in Git."
+}
