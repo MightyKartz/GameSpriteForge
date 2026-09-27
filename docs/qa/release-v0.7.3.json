@@ -1,0 +1,233 @@
+{
+  "version": "0.7.3",
+  "commit": "f0efaf5a2fe5465b4c14a333535d416d632381b7",
+  "releaseUrl": "https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.7.3",
+  "publishedAt": "2026-09-27T04:26:24Z",
+  "workflow": {
+    "url": "https://github.com/MightyKartz/GameSpriteForge/actions/runs/36292968662",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "release-macos-arm64",
+        "conclusion": "success"
+      },
+      {
+        "name": "release-windows / windows-portable",
+        "conclusion": "success"
+      },
+      {
+        "name": "assemble-release",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "macos": {
+    "archiveSha256": "88f68e6e778b7e39b0515e62c9966b6a66a74f4ae8f3ad32ab0b3be03a3d5509",
+    "binarySha256": "c3425fda968c5471da1a0aaf2a9bd9da258c510e9f6f7e2494d5e23402aa0d85",
+    "buildInfo": {
+      "version": "0.7.3",
+      "commit": "f0efaf5a2fe5465b4c14a333535d416d632381b7",
+      "target": "aarch64-apple-darwin",
+      "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)",
+      "appleSigned": false,
+      "notarized": false
+    }
+  },
+  "macosInstalledDoctor": {
+    "ok": true,
+    "cliVersion": "0.7.3",
+    "build": {
+      "gitCommit": "f0efaf5a2fe5465b4c14a333535d416d632381b7",
+      "dirty": false,
+      "target": "aarch64-apple-darwin",
+      "profile": "release",
+      "features": []
+    },
+    "capabilities": [
+      "filesystem_write_probe",
+      "godot_install_phase_diagnostics",
+      "static_canvas_group_diagnostics",
+      "godot_environment_setup",
+      "godot_version_selection",
+      "godot_project_toolchain_lock",
+      "godot_project_acceptance",
+      "godot_desktop_export_verification",
+      "project_asset_catalog_v3",
+      "project_asset_intake_search",
+      "project_asset_vocabulary",
+      "project_asset_metadata_search",
+      "project_asset_requirements_check",
+      "project_asset_output_registration",
+      "project_asset_retention_delivery",
+      "project_asset_preview_review",
+      "project_asset_preview_media_manifest",
+      "project_asset_portability",
+      "project_asset_integrity_index",
+      "project_asset_metadata_merge",
+      "project_asset_catalog_migration",
+      "local_audio_import",
+      "audio_pack_validation",
+      "audio_godot_delivery",
+      "optional_audio_tool_discovery",
+      "local_static_import",
+      "static_preserve_source_canvas",
+      "single_png_chroma_matting",
+      "connected_background_matting",
+      "edge_color_recovery",
+      "layered_pack_v1",
+      "layered_transform_opacity_tracks",
+      "godot_unified_playback",
+      "godot_native_preview",
+      "effect_blend_modes",
+      "local_animation_import",
+      "preserve_source_coordinates",
+      "local_animation_timing",
+      "whole_sheet_source_transform",
+      "pack_validation",
+      "godot_install",
+      "bundled_forge_use_skill",
+      "embedded_usage_guide",
+      "reviewed_source_hashes",
+      "local_request_relative_paths",
+      "source_png_inspection",
+      "project_image_contract_verification",
+      "effect_quality_profile",
+      "preview_timing_diagnostics",
+      "pack_mp4_preview",
+      "project_asset_png_animation_preview",
+      "delivery_receipts",
+      "godot_install_verification",
+      "transactional_godot_install",
+      "godot_import_cache_integrity",
+      "godot_lossless_sprite_import",
+      "animation_frame_issues",
+      "synchronized_animation_review"
+    ],
+    "packagedPayloadChecked": true
+  },
+  "windows": {
+    "archiveSha256": "ed0bd7057f6862e93e0a6323262adb571ed14c1b0ddb32384ad282318b800bb2",
+    "binarySha256": "7fcc45f13f8f34e82655cce4fdb01ffd2d1f95835aa09248df85aa3a7a4deb66",
+    "buildInfo": {
+      "schemaVersion": "1",
+      "version": "0.7.3",
+      "commit": "f0efaf5a2fe5465b4c14a333535d416d632381b7",
+      "target": "x86_64-pc-windows-msvc",
+      "build": {
+        "gitCommit": "f0efaf5a2fe5465b4c14a333535d416d632381b7",
+        "dirty": false,
+        "target": "x86_64-pc-windows-msvc",
+        "profile": "release",
+        "features": []
+      },
+      "capabilities": [
+        "filesystem_write_probe",
+        "godot_install_phase_diagnostics",
+        "static_canvas_group_diagnostics",
+        "godot_environment_setup",
+        "godot_version_selection",
+        "godot_project_toolchain_lock",
+        "godot_project_acceptance",
+        "godot_desktop_export_verification",
+        "project_asset_catalog_v3",
+        "project_asset_intake_search",
+        "project_asset_vocabulary",
+        "project_asset_metadata_search",
+        "project_asset_requirements_check",
+        "project_asset_output_registration",
+        "project_asset_retention_delivery",
+        "project_asset_preview_review",
+        "project_asset_preview_media_manifest",
+        "project_asset_portability",
+        "project_asset_integrity_index",
+        "project_asset_metadata_merge",
+        "project_asset_catalog_migration",
+        "local_audio_import",
+        "audio_pack_validation",
+        "audio_godot_delivery",
+        "optional_audio_tool_discovery",
+        "local_static_import",
+        "static_preserve_source_canvas",
+        "single_png_chroma_matting",
+        "connected_background_matting",
+        "edge_color_recovery",
+        "layered_pack_v1",
+        "layered_transform_opacity_tracks",
+        "godot_unified_playback",
+        "godot_native_preview",
+        "effect_blend_modes",
+        "local_animation_import",
+        "preserve_source_coordinates",
+        "local_animation_timing",
+        "whole_sheet_source_transform",
+        "pack_validation",
+        "godot_install",
+        "bundled_forge_use_skill",
+        "embedded_usage_guide",
+        "reviewed_source_hashes",
+        "local_request_relative_paths",
+        "source_png_inspection",
+        "project_image_contract_verification",
+        "effect_quality_profile",
+        "preview_timing_diagnostics",
+        "pack_mp4_preview",
+        "project_asset_png_animation_preview",
+        "delivery_receipts",
+        "godot_install_verification",
+        "transactional_godot_install",
+        "godot_import_cache_integrity",
+        "godot_lossless_sprite_import",
+        "animation_frame_issues",
+        "synchronized_animation_review"
+      ],
+      "binarySha256": "7fcc45f13f8f34e82655cce4fdb01ffd2d1f95835aa09248df85aa3a7a4deb66",
+      "distributionStatus": "experimental-unsigned",
+      "authenticodeSigned": false,
+      "ffmpegVersion": "8.1.2",
+      "zlibVersion": "1.3.2",
+      "helperBuild": "FFMPEG_BUILD.json"
+    }
+  },
+  "publishedAssets": [
+    {
+      "name": "forge-aarch64-apple-darwin.zip",
+      "size": 28965663,
+      "digest": "sha256:88f68e6e778b7e39b0515e62c9966b6a66a74f4ae8f3ad32ab0b3be03a3d5509"
+    },
+    {
+      "name": "forge-aarch64-apple-darwin.zip.sha256",
+      "size": 97,
+      "digest": "sha256:e6de9981d4f9a19054dce495585d1d81f3520e6d4641a6aff7fe4a58e7369f61"
+    },
+    {
+      "name": "forge-installer.sh",
+      "size": 6664,
+      "digest": "sha256:b600a8921f8a4608ccffcf1364828025aca5b06501bc379824da3825ccd2856a"
+    },
+    {
+      "name": "forge-source-and-notices.zip",
+      "size": 13119317,
+      "digest": "sha256:e485f0fe0e77ae98cf59bb1f13d5dc832096454f81e52cf2ff00de0621f094f9"
+    },
+    {
+      "name": "forge-windows-installer.zip",
+      "size": 47811656,
+      "digest": "sha256:b29df80608c53244e87f14f14d1021e04322916b7571a5f89d8a48e7e9930cea"
+    },
+    {
+      "name": "forge-windows-installer.zip.sha256",
+      "size": 94,
+      "digest": "sha256:7fadd82b408b5c9738122a7c1d7565eb9b511e40ef4d32fb510e924af8e51aec"
+    },
+    {
+      "name": "forge-x86_64-pc-windows-msvc.zip",
+      "size": 47830966,
+      "digest": "sha256:ed0bd7057f6862e93e0a6323262adb571ed14c1b0ddb32384ad282318b800bb2"
+    },
+    {
+      "name": "forge-x86_64-pc-windows-msvc.zip.sha256",
+      "size": 99,
+      "digest": "sha256:b04bf428dc2b72e6c117b66b56f23ee70eb14f3d5ba02208d0d50e336519d8f9"
+    }
+  ]
+}
