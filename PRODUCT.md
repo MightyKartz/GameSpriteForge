@@ -9,6 +9,35 @@ Design commands, reports and guidance for agents to discover and complete tasks
 with little bespoke scripting or intervention. Developers need not learn Forge
 protocols; human review and delivery authority follow the actual task.
 
+## Free Forge and Forge PRO
+
+Forge continues as the free MIT CLI. Existing processing, animation-frame import,
+resource management, Godot delivery, published guides and examples remain here,
+including the accepted workflow in PR #78. Character assets can still be prepared
+with free Forge; no existing feature is being moved behind a paywall.
+
+Forge PRO is a separate private project intended for a future paid offering. It
+builds character-production workflows on a pinned Forge CLI: review source video,
+select complete motion cycles, review matting and timing, preview and deliver.
+Inputs can come from any locally decodable video source, including local generation,
+rendering, filming or downloaded services; Vidu is one optional source. This does
+not claim native integration with every provider. Pricing and commercial release
+terms are not yet established; third-party generation charges remain separate.
+
+Shared processing fixes belong in Forge. Pro-specific orchestration belongs in
+its own repository; the projects do not maintain duplicated Rust implementations.
+Existing open feature PRs remain subject to their normal scope and compatibility
+review; this boundary does not automatically relocate or close them.
+
+**中文：**Forge 继续免费并保持 MIT 许可。现有加工、动画帧导入、资源管理、Godot
+交付、公开指导及案例（含 PR #78）继续保留；角色素材仍可用免费 Forge 处理。Forge PRO
+是独立私有项目，计划提供收费的角色制作流程，复用固定版本的 Forge CLI，负责源视频
+审阅、完整动作周期选择、抠图与节奏复核、预览和交付编排。支持以本地可解码视频作为
+输入，包括本机生成、渲染、拍摄及在线服务下载的视频；Vidu 只是可选来源，不代表已
+对接全部平台 API。定价和商业发行条款尚未确定，第三方生成费用另计。通用底层修复
+继续进入 Forge，Pro 编排单独维护，不复制两份 Rust 核心。既有开放 PR 按原流程审核，
+此次不自动搬迁或关闭。
+
 ## Current investment priorities
 
 Develop the smallest reusable tool that saves work in real game projects. Codex
