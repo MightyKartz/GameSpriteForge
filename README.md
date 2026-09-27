@@ -14,7 +14,7 @@ Codex and other agents use Forge to prepare, diagnose, validate and deliver imag
 
 ## Install
 
-[v0.7.2](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.7.2) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
+[v0.7.3](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.7.3) supports **macOS Apple Silicon** and offers an **experimental Windows x64 portable package**. Install **Godot 4.6.x or 4.7.x** separately for native delivery and preview. Packages are unsigned; the macOS package is not notarized.
 
 Choose one download for your system:
 
@@ -78,12 +78,17 @@ offline from the executable itself.
 | **Audio** | Import WAV music, sound effects and ambience; trim, adjust gain, add fades and prepare loops. |
 | **Godot delivery** | Validate Packs and install native textures, scenes, animations and audio streams. Lock chosen versions, retain delivery receipts and roll back failed updates. |
 
-**New in v0.7.2:** `forge skill install` now works on Windows alongside macOS
+**New in v0.7.3:** an updated offline guide for video-derived character motion,
+plus the accepted side-running and Godot turn example. Preserve a reviewed
+continuous cycle and its original timing; generation remains external.
+Forge remains free under MIT, with Forge PRO maintained separately.
+
+**Since v0.7.2:** `forge skill install` now works on Windows alongside macOS
 and Linux, so every install can let Codex discover Forge — the recommended setup
 commits `.agents/skills/forge-use/` into the game repository, giving every
 collaborator automatic discovery. v0.7.1 added library vocabulary, metadata-only
 search, preview media manifests and requirements reconciliation. Read `forge
-guide` from the selected executable. [Release notes](docs/releases/v0.7.2.md)
+guide` from the selected executable. [Release notes](docs/releases/v0.7.3.md)
 explain compatibility and validation; real-project productivity remains
 unmeasured.
 
@@ -173,7 +178,7 @@ Character animation remains experimental; advanced character and world-asset com
 
 Music and sound effects are generated in external applications. ACE-Step and Stable Audio 3 have optional read-only source-directory detection; Forge does not install or run their models. Online xAI requests use your own account and may incur charges.
 
-Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.7.2 release notes](docs/releases/v0.7.2.md) for the verified release scope.
+Technical validation does not replace visual review, listening or license checks. Review assets in your game before use. See the [v0.7.3 release notes](docs/releases/v0.7.3.md) for the verified release scope.
 
 ## Documentation
 
