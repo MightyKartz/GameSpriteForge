@@ -1,0 +1,75 @@
+{
+  "anchor": {
+    "type": "custom",
+    "x": 0.0,
+    "y": 0.0
+  },
+  "animations": [
+    {
+      "fps": 1.0,
+      "frameCount": 1,
+      "loop": false,
+      "name": "right"
+    },
+    {
+      "fps": 1.0,
+      "frameCount": 1,
+      "loop": false,
+      "name": "up"
+    },
+    {
+      "fps": 1.0,
+      "frameCount": 1,
+      "loop": false,
+      "name": "down"
+    }
+  ],
+  "assetId": "courier_views",
+  "assetKey": "courier_views",
+  "defaultAnimation": "right",
+  "directionalPlayback": null,
+  "frameHeight": 512,
+  "frameWidth": 256,
+  "gameplayControllerIncluded": false,
+  "items": [
+    {
+      "frame": 0,
+      "id": "right",
+      "name": "right",
+      "texture": "assets/items/right.png"
+    },
+    {
+      "frame": 1,
+      "id": "up",
+      "name": "up",
+      "texture": "assets/items/up.png"
+    },
+    {
+      "frame": 2,
+      "id": "down",
+      "name": "down",
+      "texture": "assets/items/down.png"
+    }
+  ],
+  "kind": "prop_set",
+  "loopSelection": null,
+  "nodeType": "Sprite2D",
+  "packSha256": "a3fafed26b91a006042c8b6ab55d044dae31f1bc9a2d428b12c1a5b57e25e069",
+  "providerProvenance": [],
+  "providerRetryMethods": {},
+  "rendering": {
+    "mirrorPolicy": "auto",
+    "pixelSnap": false,
+    "profile": "godot-sprite-rendering@1.0.0",
+    "textureFilter": "linear"
+  },
+  "scenePath": "res://addons/forge_assets/courier_views/scenes",
+  "schemaVersion": "1",
+  "spriteFramesPath": "res://addons/forge_assets/courier_views/items",
+  "texturePaths": {
+    "down": "res://addons/forge_assets/courier_views/items/down.png",
+    "right": "res://addons/forge_assets/courier_views/items/right.png",
+    "up": "res://addons/forge_assets/courier_views/items/up.png"
+  },
+  "worldGeneration": null
+}

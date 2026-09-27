@@ -1,0 +1,43 @@
+{
+  "status": "generated_directional_source_review_not_accepted",
+  "provider": "Vidu",
+  "model": "Q2",
+  "mode": "image-to-video",
+  "duration_seconds": 5,
+  "resolution": "1080p",
+  "codec": "H265",
+  "generation_mode": "闪电出片",
+  "count": 1,
+  "cost_credits": 10,
+  "credits_before": 11,
+  "expected_credits_after": 1,
+  "requests_submitted": 1,
+  "automatic_retries": 0,
+  "prompt": "参考图中的短棕发、绿色短外套女冒险者自然地向右奔跑，正常速度，流畅的手绘游戏动画。侧面全身跟拍，人物完整入镜，纯洋红色背景。",
+  "prompt_sha256": "575549acfa237d9c0b34fafde4d0971d28ac873b10cdc8c14d77192e21176efb",
+  "reference": "reference-right-video-margin-v2.png",
+  "reference_sha256": "cb2127cd88f2a303f0371f338a9529736e8f5c0d57492a9d67b5493507cfe61d",
+  "acceptance": "Review original-speed source for sustained running before any sprite preparation. No time acceleration to claim a valid gait.",
+  "credits_after": 1,
+  "submitted_at": "2026-09-26T20:27:27.820690+08:00",
+  "creation_id": "3483055293209439",
+  "source_sha256": "145d101a3ed8f8c6fc49a6e5c33b1ce9fba3cf96f66950c0279a255a44530ca1",
+  "source_probe": {
+    "width": 1764,
+    "height": 1176,
+    "fps": 24,
+    "frame_count": 122,
+    "duration_seconds": 5.083333333333333,
+    "codec": "hevc"
+  },
+  "review": {
+    "source_timing_preserved": true,
+    "running_observed": "Visible running action after about 1.2 seconds, unlike the previous slow-stepping candidate.",
+    "directional_issue": "Consecutive source frames show pronounced changes between front-oblique and rear-oblique torso views (e.g. frames 58/72 versus 84/114). Stable lateral viewpoint and a complete identity-consistent loop are not accepted.",
+    "user_approval": "pending",
+    "sprite_cycle_selected": false,
+    "forge_processing_submitted": false,
+    "godot_replaced": false,
+    "automatic_retry_submitted": false
+  }
+}
