@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1",
+  "kind": "prop_set",
+  "id": "forest_background",
+  "name": "Forest background",
+  "license": "private",
+  "sampling": "linear",
+  "canvasPolicy": "preserve_source",
+  "foregroundAlphaThreshold": 1,
+  "edgePaddingPx": 0,
+  "items": [
+    { "id": "forest", "name": "Forest clearing", "path": "../sources/forest.png" }
+  ]
+}
