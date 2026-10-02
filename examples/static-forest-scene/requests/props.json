@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1",
+  "kind": "prop_set",
+  "id": "forest_props",
+  "name": "Forest props",
+  "license": "private",
+  "sampling": "linear",
+  "canvasSize": 256,
+  "foregroundAlphaThreshold": 8,
+  "edgePaddingPx": 0,
+  "items": [
+    { "id": "chest", "name": "Chest", "path": "../sources/chest.png" },
+    { "id": "lantern", "name": "Lantern", "path": "../sources/lantern.png" }
+  ]
+}
