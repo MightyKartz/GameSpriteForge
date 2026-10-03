@@ -190,6 +190,14 @@ Technical validation does not replace visual review, listening or license checks
 - [Example specifications](examples/cli) — starting points for asset requests.
 - [Contributing](CONTRIBUTING.md) — source builds and development checks.
 
+## Community and support
+
+Join **Forge PRO 用户交流与反馈群** on Feishu for usage questions, feedback and community discussion. A Feishu account/app is required: [open the group invitation](https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=e38m51cb-be50-4d3e-940d-142769d9a08a&qr_code=true) or scan the QR code below with Feishu. The supplied QR code is marked as permanently valid.
+
+Joining the group does not grant a license to paid software. Forge's MIT license and any separately purchased Forge PRO license remain unchanged. Please continue to use [GitHub Issues](https://github.com/MightyKartz/GameSpriteForge/issues) for reproducible bugs and feature requests.
+
+<img src="docs/media/community/feishu-group-qr.png" alt="Feishu invitation QR code for the Forge PRO user feedback group" width="360" />
+
 ## License
 
 [MIT](LICENSE). Bundled FFmpeg tools have separate LGPL notices and source distributions; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
