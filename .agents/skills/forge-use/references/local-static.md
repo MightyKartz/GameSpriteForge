@@ -83,6 +83,16 @@ dimension and 32 MiB per file. Canvas sizes are 64, 128, 256 or 512.
 edges. The threshold is not an alpha cutoff: pixels inside the crop retain their
 alpha before resampling. Inspect the normalized result on light and dark grounds.
 
+Compare the multi-threshold bounds in the `source inspect` report before
+choosing. Generated transparent PNGs often carry faint stray pixels: when the
+threshold-1 bounds are much larger than the threshold-8 or threshold-32 bounds,
+the difference is usually residue, glow or shadow outside the real subject.
+Review the light/dark previews together with the measured bounds, then set
+`foregroundAlphaThreshold` to the lowest threshold whose bounds match the
+reviewed subject. The threshold selects the crop; it does not erase residue
+inside the crop and is not automatic denoising. Keep the original source
+unchanged and record the chosen threshold with the request.
+
 ```bash
 export FORGE_JOB_STORE="/absolute/asset-work/jobs"
 export FORGE_PLAN_STORE="/absolute/asset-work/plans"
@@ -213,6 +223,16 @@ scene tree before binding game scripts. Icon texture consumers must apply the
 declared filter on their own Godot nodes. Use wrapper
 scenes for game-specific scale, offsets and behavior so subsequent Forge installs
 can continue managing the generated resources.
+
+Canvas size is not world size. Two props normalized to the same 256 canvas can
+still need different in-game scales; record each instance's expected size,
+ground position and scale in the game scene or its wrapper, and review props
+together at gameplay size. Replacing artwork with a new Pack that keeps the
+same set/item IDs, asset key and target updates the Forge-owned resources in
+place while game-owned layout stays untouched. A receipt exported before the
+update then reports `installation baseline differs from receipt`: that is the
+intended signal that the installation moved to a newer Pack. Export a fresh
+receipt after each accepted update and keep the old one; never rewrite it.
 
 ## Keep an import receipt
 
