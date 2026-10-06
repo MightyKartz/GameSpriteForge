@@ -175,6 +175,8 @@ Sword 是一款修仙题材的生存游戏原型。源图由 Codex 创作，Forg
 
 ## 社区与支持
 
+[爱发电主页（商品筹备中）](https://afdian.com/a/forgepro)。
+
 欢迎加入 **Forge PRO 用户交流与反馈群**，交流使用问题、反馈建议与使用经验。需要飞书账号及应用：可[打开入群邀请](https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=e38m51cb-be50-4d3e-940d-142769d9a08a&qr_code=true)，或使用飞书扫描下方二维码。此二维码图片标注为永久有效。
 
 入群不授予付费软件许可；Forge 的 MIT 许可及单独购买的 Forge PRO 许可保持不变。可复现的问题与功能建议仍请提交到 [GitHub Issues](https://github.com/MightyKartz/GameSpriteForge/issues)。

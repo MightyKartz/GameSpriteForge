@@ -192,6 +192,8 @@ Technical validation does not replace visual review, listening or license checks
 
 ## Community and support
 
+[Afdian homepage (product in preparation)](https://afdian.com/a/forgepro).
+
 Join **Forge PRO 用户交流与反馈群** on Feishu for usage questions, feedback and community discussion. A Feishu account/app is required: [open the group invitation](https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=e38m51cb-be50-4d3e-940d-142769d9a08a&qr_code=true) or scan the QR code below with Feishu. The supplied QR code is marked as permanently valid.
 
 Joining the group does not grant a license to paid software. Forge's MIT license and any separately purchased Forge PRO license remain unchanged. Please continue to use [GitHub Issues](https://github.com/MightyKartz/GameSpriteForge/issues) for reproducible bugs and feature requests.
