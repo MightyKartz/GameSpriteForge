@@ -234,6 +234,33 @@ update then reports `installation baseline differs from receipt`: that is the
 intended signal that the installation moved to a newer Pack. Export a fresh
 receipt after each accepted update and keep the old one; never rewrite it.
 
+## Hand UI artwork to native Godot controls
+
+For UI illustration, title backgrounds, foreground overlays and nine-patch skins,
+use separate item IDs for parts that need independent movement, visibility or
+replacement. Keep text, counters and focus states as native Godot controls. A
+plain button can use `StyleBoxFlat`; it does not require generated PNG layers.
+
+Choose `preserve_source` for reviewed rectangular art or authored nine-patch
+coordinates. Keep sources of different dimensions in separate Packs. Read each
+installed `forge_usage.json` for the exact texture path and sampling policy, then
+reference it from a game-owned `TextureRect`, `NinePatchRect` or Theme wrapper.
+Nine-patch margins require explicit source-pixel measurements and stretch review;
+Forge does not infer the skin's corner bands or split a flattened UI screenshot.
+
+Godot `CanvasLayer` can separate world, interface and modal presentation. Use
+`AnimationPlayer` for authored entrance sequences and interruptible `Tween`s for
+hover/focus feedback. Animate a visual child inside a stable hit/layout control so
+feedback does not move the pointer target. Test keyboard focus, skipped entrances,
+rapid pointer changes, resized layouts and reduced motion in the consumer game.
+These are game-owned behaviors, outside Forge's texture-install transaction.
+
+The separately maintained Forge PRO beta.4 provides a `prepare-ui` authoring
+workflow that creates new editable native UI/title templates. Free Forge supplies
+PNG processing, Packs and verified texture delivery; it does not add a menu system
+to existing games. Preserve the consumer's Forge/Godot pins and receipts when
+trying either workflow. Artwork generation and rights review remain separate.
+
 ## Keep an import receipt
 
 Retain the source originals/hashes, generation or derivation history, actual
