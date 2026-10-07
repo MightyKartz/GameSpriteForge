@@ -158,12 +158,12 @@ Sword is a cultivation-themed survival game prototype. Codex created its source 
 ## Scope
 
 Forge remains **free and MIT-licensed**, including existing animation-frame
-processing and public examples. Forge PRO is a separate project for planned paid
-character-production workflows. Future image- and video-driven authoring guidance,
-reference workflows and candidate review orchestration are developed in Pro,
-reusing Forge's existing processing and delivery. Existing free features and
-published guidance remain available. Pro is not commercially
-released yet. See the [free/Pro boundary](PRODUCT.md#free-forge-and-forge-pro).
+processing and public examples. Forge PRO is maintained separately with private
+implementation and its own character/UI authoring workflows, reusing Forge's
+processing and delivery. Existing free features and published guidance remain
+available. Beta customer access, pricing and update rights follow the applicable
+[storefront terms](PRODUCT.md#free-forge-and-forge-pro); repository preview access
+is separate from a customer license.
 
 Current development prioritizes reliable asset delivery and simpler agent usage.
 Existing features remain available; wider platform expansion waits for measured

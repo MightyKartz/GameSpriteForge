@@ -13,9 +13,9 @@ Codex 等 Agent 使用 Forge 加工、诊断、验证创作工具提供的图片
 *Codex 创作素材，Forge 加工、管理并交付到 Godot。[观看回放](docs/media/showcase/thunder/godot-demo.mp4) · [原始图集与制作说明](docs/media/showcase/thunder/README.zh-CN.md)。*
 
 Forge 继续**免费并保持 MIT 许可**，现有动画帧加工功能和公开案例保留。Forge PRO
-是独立维护、计划收费的角色制作流程产品。后续新增的图片及视频驱动角色创作经验、
-动作参考流程和候选复核编排进入 Pro，复用 Forge 的加工与交付能力；已有免费功能及
-公开指导保留。目前尚未商业发行。[免费版与 Pro 边界](PRODUCT.md#free-forge-and-forge-pro)。
+独立维护私有实现与角色/UI 制作流程，复用 Forge 的加工与交付；已有免费功能和公开
+指导保留。测试版客户访问、价格与更新权益按各店铺条款提供，仓库预览访问不等于
+客户授权。[免费版与 Pro 边界及店铺](PRODUCT.md#free-forge-and-forge-pro)。
 
 ## 安装
 
