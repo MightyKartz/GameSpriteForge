@@ -107,6 +107,51 @@ or license verification. Source locks can bind the exact reviewed files: when
 present, cover every distinct local source with its actual SHA-256. See
 [delivery evidence](delivery.md) (`forge guide delivery`) for that contract.
 
+## Scene music and one-shot cues
+
+Keep the accepted composition and source renders unchanged when checking a new
+delivery or player. A later loudness/report correction does not require rerendering
+an accepted track. Record measurements from the final delivered audio, with the
+measurement tool/settings; a normalization pass's predicted loudness is not the
+final file's measured loudness. Forge's technical report is not an aesthetic score.
+
+This optional request separates two scene loops from a victory cue. It expects
+reviewed 44100 Hz stereo WAVs under `sources/`, with the request in `asset-specs/`.
+Use measured source formats and actual paths/hashes for your files. Forge delivers
+PCM16 WAV even when the retained original is 24-bit or floating point; sample-rate
+and channel preservation do not mean byte-identical delivered audio.
+
+```json
+{
+  "schemaVersion": "1", "id": "scene_music", "name": "Scene music",
+  "sampleRate": 44100, "channels": 2,
+  "items": [
+    {"id": "battle", "path": "../sources/battle-loop.wav",
+     "role": "music", "loop": true},
+    {"id": "camp", "path": "../sources/camp-loop.wav",
+     "role": "music", "loop": true},
+    {"id": "victory", "path": "../sources/victory.wav",
+     "role": "music", "loop": false}
+  ]
+}
+```
+
+Listen to loops across repeated joins and ensure the one-shot stops. In a review
+page, select looping only for the loop copy and stop the previous player before
+switching candidates. An HTML player's behavior does not prove Godot's imported
+loop state; verify native playback separately. Actual scene transitions, cue
+priority, mixing and playback buses belong to the game. Do not layer an older
+tension track onto a new composition without checking their musical compatibility.
+
+Shared instrumentation or style does not require every scene to use the same
+melody. Composition and listening remain separate external work; an optional
+score/sampling skill can supply WAVs without becoming a bundled Forge generator.
+Keep reference-learning audio separate from deliverable original/licensed tracks.
+
+**中文：**场景循环曲与胜利短句应分别声明 `loop`，并在 Godot 中验证循环与停止。
+测量最终交付文件，保留已认可的原谱和音频，不因报告或播放器修正重做配乐。
+统一曲风不等于复用同一旋律；作曲、音源、试听和游戏混音分别复核，Forge 不代替听感验收。
+
 ## Plan, import and review
 
 Use dedicated work stores and review the Plan before consuming its token:

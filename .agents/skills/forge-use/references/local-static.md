@@ -19,6 +19,12 @@ dimension group when rejecting a mixed set. Choose separate Packs explicitly;
 only choose normalization if resampling fits the intended use.
 
 Compare results at their intended game display size as well as source size.
+For long weapons, banners or other extended silhouettes, inspect the complete
+tip and outline before treating an edge warning as a padding problem. Adding
+transparent canvas can retain existing pixels but cannot recover artwork already
+cut off in the source. Source reconstruction is a new artwork revision; keep the
+previous image and review the revision before importing it. A detailed source
+image may still lose its silhouette at the game's display size.
 Linear engine filtering alone does not establish quality under heavy minification.
 For icons, compare an explicitly normalized 128/256 canvas against preserved
 source pixels and review the actual UI. Keep both outputs and their recipes;

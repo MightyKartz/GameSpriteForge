@@ -132,6 +132,65 @@ result. `requireGameReady:false` is appropriate only for an explicitly intended
 prototype and cannot waive a blocked result. Preserve the prototype decision and
 review status; do not disable a failed gate to label the result successful.
 
+## One-shot effects at a game event
+
+Use the same local frame route for a reviewed impact, flame, dust or splash.
+Keep each effect separate from character art, terrain, text and damage numbers.
+For a sheet, inspect actual cell boundaries before cutting; retain the complete
+source and derivation settings. Preserve faint alpha and one shared coordinate
+system. If padding is added to every frame, shift the authored pivot by the same
+amount once. Padding does not restore clipped artwork or prove that cells contain
+complete effect phases.
+
+This example expects four already reviewed 64×64 RGBA frames next to an
+`asset-specs/` directory. Its 430 ms cadence and center pivot illustrate one
+impact, not defaults for all effects. Replace the paths, pivot, timings and
+sampling with the inspected source contract; bind the actual reviewed bytes with
+`sourceLocks` as described in [delivery](delivery.md).
+
+```json
+{
+  "schemaVersion": "1",
+  "input": {
+    "kind": "png_sequence",
+    "paths": ["../sources/impact-0.png", "../sources/impact-1.png",
+              "../sources/impact-2.png", "../sources/impact-3.png"]
+  },
+  "metadata": {
+    "name": "Reviewed impact", "animation": "impact", "fps": 10,
+    "loop": false, "frameDurationsMs": [60, 90, 120, 160]
+  },
+  "matting": {"mode": "preserve_alpha"},
+  "normalize": {
+    "mode": "preserve_source", "margin": 0, "marginBottom": 0,
+    "alphaThreshold": 0,
+    "manualAnchor": {"x": 32, "y": 32, "lockedByUser": true}
+  },
+  "rendering": {"textureFilter": "linear", "pixelSnap": false},
+  "quality": {"profile": "effect", "requireGameReady": true}
+}
+```
+
+Prepare with `plan prepare-asset` and follow the existing plan/report/Pack/install
+checks above. `loop:false` expresses one-shot playback; cleanup after completion
+belongs to the consumer. Inspect the installed SpriteFrames for the authored
+durations and non-looping state; check the anchor in delivered usage metadata
+and the installed scene offset, then play them at the actual game scale.
+
+Game code chooses the real release/hit event and world position. If it draws
+textures itself, read the delivered usage/anchor data and apply the anchor once;
+do not also apply a second offset already carried by an installed scene. Check
+that the effect finishes once, remains synchronized during slow motion or hit
+pause, and leaves no stale instances after restarting. The game owns its clock,
+combat rules and target selection; Forge does not infer hits from the animation.
+Separate native resource checks, directed runtime captures and actual visual
+acceptance. A generated battle illustration is a concept, not an engine capture.
+
+**中文：**非循环刀光、火焰、尘土与水花复用已有帧加工入口。保留原图、统一坐标、柔边和
+显式时长；补边后锚点只平移一次，补边无法恢复原图已截断的内容。命中位置、释放事件、
+暂停同步与重开清理由游戏维护。示例的四帧与 430 ms 不是通用参数，技术通过不等于
+美术验收，概念图也不能代替 Godot 实机证据。
+
 ## Three-action task
 
 On builds whose guide index includes `animation-example`, retrieve the
