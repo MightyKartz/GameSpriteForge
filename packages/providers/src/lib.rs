@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod comfyui;
 pub mod fixture;
 pub mod xai;
 
@@ -14,6 +15,7 @@ use crate::xai::XaiProvider;
 
 pub const XAI_PROVIDER_ID: &str = "xai";
 pub const FIXTURE_PROVIDER_ID: &str = "fixture";
+pub const COMFYUI_PROVIDER_ID: &str = "comfyui";
 
 pub fn resolve_image_model(
     provider_id: &str,
@@ -82,6 +84,15 @@ pub fn list_provider_health_noninteractive() -> Vec<ProviderHealth> {
             }),
         },
         FixtureProvider::default().health_check(),
+        ProviderHealth {
+            provider_id: COMFYUI_PROVIDER_ID.into(),
+            available: true,
+            authenticated: false,
+            auth_kind: CredentialKind::None,
+            capabilities: vec![],
+            constraints: None,
+            message: Some("local workflow profile required; run `forge provider configure --provider comfyui` then `forge provider doctor --provider comfyui`".into()),
+        },
     ]
 }
 

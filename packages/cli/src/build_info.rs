@@ -29,6 +29,8 @@ pub fn current() -> BuildInfo {
 // Stable IDs describe compiled CLI entry points; runtime tool availability is
 // reported separately by doctor. Add new IDs only alongside their implementation.
 pub const CAPABILITIES: &[&str] = &[
+    "comfyui_workflow_profile_v1",
+    "comfyui_http_transport_v1",
     "filesystem_write_probe",
     "godot_install_phase_diagnostics",
     "static_canvas_group_diagnostics",

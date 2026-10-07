@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/MightyKartz/GameSpriteForge/schemas/comfyui-workflow-profile.schema.json",
+  "title": "Forge ComfyUI workflow profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "endpoint", "mediaKind", "modelId", "workflow", "promptInput", "outputNode", "outputField", "maxOutputBytes", "timeoutSeconds"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "endpoint": {"type": "string", "format": "uri", "description": "HTTP origin, loopback unless allowRemote is true"},
+    "allowRemote": {"type": "boolean", "default": false},
+    "mediaKind": {"enum": ["image", "video"]},
+    "modelId": {"type": "string", "minLength": 1},
+    "workflow": {"type": "string", "minLength": 1, "description": "Path to API-format workflow JSON, relative to this profile or absolute"},
+    "promptInput": {
+      "type": "object", "additionalProperties": false, "required": ["node", "input"],
+      "properties": {"node": {"type": "string", "minLength": 1}, "input": {"type": "string", "minLength": 1}}
+    },
+    "outputNode": {"type": "string", "minLength": 1},
+    "outputField": {"enum": ["images", "gifs", "videos"]},
+    "maxOutputBytes": {"type": "integer", "minimum": 1, "maximum": 536870912},
+    "timeoutSeconds": {"type": "integer", "minimum": 1, "maximum": 86400}
+  }
+}

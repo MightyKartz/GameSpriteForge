@@ -60,9 +60,11 @@ use forge_providers::auth::{
     login_xai_device_code, logout_xai_profile, save_xai_auth_preference, CredentialStorageKind,
     CredentialStore, XaiAuthMethod,
 };
+use forge_providers::comfyui::{self, ComfyClient};
 use forge_providers::{
     list_provider_health_noninteractive, resolve_image_model as resolve_provider_image_model,
-    resolve_provider, resolve_video_model as resolve_provider_video_model, XAI_PROVIDER_ID,
+    resolve_provider, resolve_video_model as resolve_provider_video_model, COMFYUI_PROVIDER_ID,
+    XAI_PROVIDER_ID,
 };
 use serde::Serialize;
 
@@ -789,6 +791,17 @@ enum ProfileCommand {
 #[derive(Subcommand)]
 enum ProviderCommand {
     List(JsonFlag),
+    /// Import an explicit API-format ComfyUI workflow profile.
+    Configure {
+        #[arg(long)]
+        provider: String,
+        #[arg(long)]
+        profile: String,
+        #[arg(long)]
+        config: PathBuf,
+        #[command(flatten)]
+        json: JsonFlag,
+    },
     Login {
         #[arg(long)]
         provider: String,
@@ -1803,6 +1816,23 @@ fn run() -> Result<(), (String, String)> {
         },
         Command::Provider { command } => match command {
             ProviderCommand::List(_) => success(&list_provider_health_noninteractive()),
+            ProviderCommand::Configure {
+                provider,
+                profile,
+                config,
+                ..
+            } => {
+                if provider != COMFYUI_PROVIDER_ID {
+                    return Err((
+                        "unsupported_provider".into(),
+                        "configure currently supports comfyui".into(),
+                    ));
+                }
+                let root = comfyui::profile_root().map_err(|e| (e.code().into(), e.to_string()))?;
+                let stored = comfyui::configure(&root, &profile, &config)
+                    .map_err(|e| (e.code().into(), e.to_string()))?;
+                success(&stored)
+            }
             ProviderCommand::Login {
                 provider,
                 method,
@@ -1886,7 +1916,22 @@ fn run() -> Result<(), (String, String)> {
             }
             ProviderCommand::Doctor {
                 provider, profile, ..
-            } => success(&provider_health(&provider, &profile)),
+            } => {
+                if provider == COMFYUI_PROVIDER_ID {
+                    let root =
+                        comfyui::profile_root().map_err(|e| (e.code().into(), e.to_string()))?;
+                    let stored = comfyui::load(&root, &profile)
+                        .map_err(|e| (e.code().into(), e.to_string()))?;
+                    let client = ComfyClient::new(&stored.profile)
+                        .map_err(|e| (e.code().into(), e.to_string()))?;
+                    let report = client
+                        .doctor(&stored)
+                        .map_err(|e| (e.code().into(), e.to_string()))?;
+                    success(&report)
+                } else {
+                    success(&provider_health(&provider, &profile))
+                }
+            }
         },
         Command::Repair { command } => match command {
             RepairCommand::Analyze { job, .. } => {
