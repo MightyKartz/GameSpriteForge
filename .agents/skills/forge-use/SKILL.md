@@ -56,7 +56,7 @@ Forge never updates game pins or separately installed skills automatically.
 | Task | Bundled guide | Installed reference |
 | --- | --- | --- |
 | Prepare local icons, props or backgrounds | `forge guide static` | [Static PNGs](references/local-static.md) |
-| Prepare reviewed animation PNGs, including frames extracted from a video | `forge guide animation` | [Animation](references/animation.md) |
+| Prepare reviewed animation PNGs or one-shot effects, including frames extracted from a video | `forge guide animation` | [Animation and effects](references/animation.md) |
 | Prepare local WAV audio | `forge guide audio` | [Audio](references/audio.md) |
 | Diagnose delivery, verify sources/receipts, recover | `forge guide delivery` | [Delivery](references/delivery.md) |
 | Repeated revisions, reviews or cross-machine reuse | `forge guide project-assets` | [Optional library](references/project-assets.md) |
@@ -122,6 +122,10 @@ and inspect `job report`; an existing Pack does not prove success.
 
 Validate the retained Pack and final installed resources. Preserve old receipts;
 new imports create new evidence. Keep stores until required evidence is saved.
+Name artwork creation, orchestration and processing tools separately in the report.
+A direct `forge` execution is not a `forge-pro` execution; record Pro only when
+its command actually ran. Keep unknown model names and artistic decisions unknown.
+
 Technical results (`game_ready`, `technical_pass`, `prototype_usable`) do not grant
 visual, listening, gameplay or license approval. Keep review status explicit and
 never weaken a quality gate to make a delivery appear successful.

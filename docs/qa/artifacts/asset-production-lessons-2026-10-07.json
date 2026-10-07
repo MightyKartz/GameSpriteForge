@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-07",
+  "scope": "Guidance and examples only; no processing API/Pack/runtime change or release/pin upgrade",
+  "sourceExampleBuild": {
+    "sourceCommit": "2c04f8e94b3ef111676b245b9293c80317994287",
+    "dirty": true,
+    "forgeVersion": "0.7.5",
+    "forgeBuild": {
+      "gitCommit": "2c04f8e94b3ef111676b245b9293c80317994287",
+      "dirty": true,
+      "target": "aarch64-apple-darwin",
+      "profile": "debug",
+      "features": []
+    },
+    "forgeSha256": "d99b308a9bd223a3f931582f5eafadd9ff30b4c7975c1e347f833d0a8df27676",
+    "godotVersion": "4.7.2.stable.official.ed1daf0bf",
+    "godotSha256": "c7cccbf8fb143e34e02fd6521e09be2c2b974f0d5db080b19071c9c570718ccf"
+  },
+  "finalEmbeddedGuideBuild": {
+    "binarySha256": "aa76e5fed5ce70483720214c90a77c133bd1f415933ee3ed34b928e1800912fb",
+    "build": {
+      "dirty": true,
+      "features": [],
+      "gitCommit": "2c04f8e94b3ef111676b245b9293c80317994287",
+      "profile": "debug",
+      "target": "aarch64-apple-darwin"
+    },
+    "contentHash": "0ac95d2df210ed60f247dcb305edf4ab2e3eb66a4a387724c1593cf88347176f",
+    "sourceBytesMatch": true
+  },
+  "checks": {
+    "guideUnitTests": 3,
+    "guideIntegrationCommands": 167,
+    "guideCases": 33,
+    "guideProviderRequests": 0,
+    "oneShot": {
+      "frames": 4,
+      "durationsMs": [
+        60,
+        90,
+        120,
+        160
+      ],
+      "loop": false,
+      "pivot": [
+        32,
+        32
+      ],
+      "packValidated": true,
+      "nativeInstallVerified": true,
+      "nativeCompletionCount": 1
+    },
+    "sceneAudio": {
+      "items": [
+        "battle",
+        "camp",
+        "victory"
+      ],
+      "loop": [
+        true,
+        true,
+        false
+      ],
+      "format": "PCM16 WAV; 44100 Hz stereo",
+      "packValidated": true,
+      "nativeInstallVerified": true,
+      "nativeResourcesLoaded": true
+    },
+    "providerRequests": 0,
+    "skillValidation": "passed"
+  },
+  "review": {
+    "visual": "not_assessed",
+    "listening": "not_assessed",
+    "device": "not_run",
+    "nativeWindows": "not_run"
+  },
+  "limitations": [
+    "Synthetic geometry and 440 Hz WAV tones only; no model execution, private media or music quality claim",
+    "One-shot native playback and saved audio loop flags checked; consumer combat/pause/reset and audible audio playback not certified",
+    "First anchor probe assumed an uncentered scene; corrected to effective draw origin, retained failed probe as local diagnostic evidence",
+    "Source example binary preceded a SpriteFrames/pivot wording correction; processing code unchanged; final rebuilt guide bytes verified"
+  ],
+  "localEvidenceDirectory": "release-candidates/asset-production-lessons-20261007"
+}
