@@ -488,7 +488,10 @@ fn matte_pixel(pixel: Rgba<u8>, key: [u8; 3], parameters: &ChromaParameters) -> 
 
     if alpha > 0 && parameters.edge_color_recovery {
         recover_edge_color(&mut output, key, alpha_factor);
-    } else if alpha > 0 && parameters.despill_strength > 0.0 {
+    }
+    // Recovery and despill are independent controls. Apply spill suppression to
+    // the recovered RGB, including opaque pixels where recovery does nothing.
+    if alpha > 0 && parameters.despill_strength > 0.0 {
         despill(&mut output, key, parameters.despill_strength, alpha_factor);
     }
 

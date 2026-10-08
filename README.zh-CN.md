@@ -19,7 +19,7 @@ Forge 继续**免费并保持 MIT 许可**，现有动画帧加工功能和公�
 
 ## 安装
 
-[v0.7.6](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.7.6) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要原生交付和预览时，另行安装 **Godot 4.6.x 或 4.7.x**。安装包尚未签名，macOS 包尚未公证。
+[v0.7.7](https://github.com/MightyKartz/GameSpriteForge/releases/tag/v0.7.7) 支持 **macOS Apple Silicon**，并提供**实验性 Windows x64 便携包**。需要原生交付和预览时，另行安装 **Godot 4.6.x 或 4.7.x**。安装包尚未签名，macOS 包尚未公证。
 
 按系统选择一个下载文件：
 
@@ -80,14 +80,14 @@ macOS、Linux、Windows 均支持。CLI 升级后用 `forge skill check --projec
 | **音频** | 导入 WAV 音乐、音效和环境声，进行裁剪、增益调整、淡入淡出和循环处理。 |
 | **Godot 交付** | 验证 Pack，安装原生纹理、场景、动画和音频资源；锁定选定版本、保留交付回执，并在更新失败时回滚。 |
 
-**v0.7.6 更新：**内置离线指南增加可运行的单次特效与场景音频示例、完整武器轮廓
-和目标显示比例检查，并分别记录素材生成、加工与游戏接入验证。已有 UI 指导保留；
-处理 API 与 Pack 格式未改变。
+**v0.7.7 更新：**抠图的边缘颜色恢复与去色溢现在可以同时生效，先恢复颜色，
+再执行去色溢；颜色恢复不处理的完全不透明像素也会去色溢。参数默认值、JSON 合同
+和 Pack 格式不变。残余描边仍需视觉审阅，见[狐狸对比](docs/qa/chroma-recovery-despill-20261008.md)。
 
 **自 v0.7.2 起：**`forge skill install` 在 Windows 上与 macOS/Linux 同样可用，每次安装
 都可以让 Codex 发现 Forge——推荐把 `.agents/skills/forge-use/` 提交进游戏仓库，团队所有
 成员自动获得发现能力。v0.7.1 提供了资源库词表、免核验搜索、预览媒体清单和需求对账。
-先读取所选二进制的 `forge guide`；兼容性与验证范围见[发布说明](docs/releases/v0.7.6.md)。
+先读取所选二进制的 `forge guide`；兼容性与验证范围见[发布说明](docs/releases/v0.7.7.md)。
 真实项目效率收益尚未完成实测。
 
 ### Codex + Forge：探索性 Token 对比
@@ -163,7 +163,7 @@ Sword 是一款修仙题材的生存游戏原型。源图由 Codex 创作，Forg
 
 音乐和音效由外部应用生成。ACE-Step 和 Stable Audio 3 提供可选的源代码目录只读检测，Forge 不安装或运行其模型。在线 xAI 请求使用你的账号，可能产生费用。
 
-技术检查不能代替美术审查、试听或许可核对，使用前请在游戏中验收。已验证的版本范围见 [v0.7.6 发布说明](docs/releases/v0.7.6.md)。
+技术检查不能代替美术审查、试听或许可核对，使用前请在游戏中验收。已验证的版本范围见 [v0.7.7 发布说明](docs/releases/v0.7.7.md)。
 
 ## 文档
 
