@@ -149,3 +149,63 @@ fn edge_color_recovery_reconstructs_a_blended_foreground_edge() {
     assert!(edge[1] > 247, "{edge:?}");
     assert_eq!(edge[2], 255);
 }
+
+#[test]
+fn recovery_and_despill_compose_without_changing_alpha() {
+    let image = RgbaImage::from_fn(4, 1, |x, _| {
+        Rgba(match x {
+            0 => [0, 255, 0, 255],   // Removed background.
+            1 => [50, 190, 50, 255], // Soft edge, still green after recovery.
+            2 => [24, 80, 20, 255],  // Opaque spill: recovery is a no-op.
+            _ => [200, 80, 40, 128], // Non-key foreground with source alpha.
+        })
+    });
+    let mut params = base_params();
+    params.key_mode = ChromaKeyMode::Manual;
+    params.background_scope = ChromaBackgroundScope::Global;
+    params.threshold = 40;
+    params.softness = 100;
+    params.edge_color_recovery = true;
+    let recovery_only = apply_chroma_key(&image, &params).unwrap();
+
+    params.despill_strength = 1.0;
+    let combined = apply_chroma_key(&image, &params).unwrap();
+    for (recovered, corrected) in recovery_only.pixels().zip(combined.pixels()) {
+        assert_eq!(recovered[3], corrected[3]);
+        assert_eq!(recovered[0], corrected[0]);
+        assert_eq!(recovered[2], corrected[2]);
+    }
+    let soft_edge = combined.get_pixel(1, 0);
+    assert!(soft_edge[3] > 0 && soft_edge[3] < 255);
+    assert!(soft_edge[1] < recovery_only.get_pixel(1, 0)[1]);
+    // Despill acts on recovered RGB, rather than replacing the recovered result.
+    assert_eq!(&soft_edge.0[..3], &[89, 103, 89]);
+    assert_eq!(combined.get_pixel(2, 0), &Rgba([24, 52, 20, 255]));
+    assert_eq!(combined.get_pixel(3, 0), image.get_pixel(3, 0));
+    assert_eq!(combined.get_pixel(0, 0)[3], 0);
+
+    params.edge_color_recovery = false;
+    let despill_only = apply_chroma_key(&image, &params).unwrap();
+    assert_eq!(combined.get_pixel(2, 0), despill_only.get_pixel(2, 0));
+    assert_ne!(combined.get_pixel(1, 0), despill_only.get_pixel(1, 0));
+}
+
+#[test]
+fn combined_recovery_and_despill_preserve_border_scope_exclusions() {
+    let mut image = RgbaImage::from_pixel(5, 5, Rgba([0, 255, 0, 255]));
+    for y in 1..4 {
+        for x in 1..4 {
+            image.put_pixel(x, y, Rgba([24, 80, 20, 255]));
+        }
+    }
+    image.put_pixel(2, 2, Rgba([0, 255, 0, 255]));
+    let mut params = base_params();
+    params.key_mode = ChromaKeyMode::Manual;
+    params.background_scope = ChromaBackgroundScope::BorderConnected;
+    params.edge_color_recovery = true;
+    params.despill_strength = 1.0;
+    let processed = apply_chroma_key(&image, &params).unwrap();
+    assert_eq!(processed.get_pixel(0, 0)[3], 0);
+    assert_eq!(processed.get_pixel(1, 1), image.get_pixel(1, 1));
+    assert_eq!(processed.get_pixel(2, 2), image.get_pixel(2, 2));
+}
