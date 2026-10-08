@@ -78,6 +78,21 @@ pixels. This is a remaining algorithm/parameter limitation, separate from the
 now-fixed control-flow bug; no new matting implementation was added to PRO.
 Intentional key-hued art also needs palette review before enabling despill.
 
+### Additional existing-parameter experiment
+
+On the same fixed binary, changed **only** `despillStrength` from 1.0 to 2.0
+(already supported by the existing 0–2 range), retaining recovery true and the
+other settings. Ran a new `prepare-images --preview-timing` and `check-run`.
+All six frames have zero KEY_RESIDUE pixels and zero KEY_FRINGE hits; summary:
+zero errors, zero warnings, one timing information entry. Alpha channels remain
+byte-identical to the strength-1.0 candidate, and run/Pack hashes verify.
+Dark/light contact sheets no longer show the prior green outline; no obvious
+new holes or silhouette loss were observed. These are visual observations and
+heuristic results, not artistic approval. Stronger suppression can alter intended
+key-hued colors or overcorrect soft-edge RGB on other inputs; it is not a universal
+default. PRO's starting values and consumer lock remain unchanged. Evidence is
+under `strength-2/` within the comparison directory below.
+
 Local evidence is retained in Forge PRO's ignored
 `.forge-pro/handoff/forge-combined-recovery/`: `comparison.json`,
 `check-combined.json`, candidate lock/doctor and the preview's
@@ -110,6 +125,12 @@ Alpha、默认参数、背景范围、去光晕与 JSON/Pack 合同不变；关�
 报警**，从约 40–42% 降到约 31–32%，仅略好于 A 的约 32–33%。深浅背景联络表仍
 可见暗绿描边，不能宣称彻底修好。原去色溢公式在不透明像素上令 strength 1.0
 仅消除一半主通道超出量，属于后续参数/算法限制，不等于本次组合开关缺陷未修复。
+
+另用原有参数范围做一次补充实验，仅把修复版本的 `despillStrength` 从 1.0 改为
+2.0：六帧 KEY_RESIDUE 与 KEY_FRINGE 均为 0，Alpha 逐字节不变，检查汇总为
+0 错误 / 0 警告 / 1 时长信息。深浅背景图未再见此前的绿描边，也未见明显新增
+缺口或轮廓损失。这不等于美术验收；较强去色溢可能改变其他素材的原生同色细节，
+或对软边 RGB 过度校正，不能作为通用默认。Pro 参数与锁仍未改变。
 
 本次真实验证用带明确 SHA 与 dirty 身份的本地 Forge 开发构建及独立候选锁，
 不代表已发布安装包。没有新生图、Provider 请求或美术验收；候选没有交付。

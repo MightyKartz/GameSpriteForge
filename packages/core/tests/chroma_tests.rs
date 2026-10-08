@@ -184,6 +184,14 @@ fn recovery_and_despill_compose_without_changing_alpha() {
     assert_eq!(combined.get_pixel(3, 0), image.get_pixel(3, 0));
     assert_eq!(combined.get_pixel(0, 0)[3], 0);
 
+    params.despill_strength = 2.0;
+    let stronger = apply_chroma_key(&image, &params).unwrap();
+    assert_eq!(stronger.get_pixel(2, 0), &Rgba([24, 24, 20, 255]));
+    for (normal, strong) in combined.pixels().zip(stronger.pixels()) {
+        assert_eq!(normal[3], strong[3]);
+    }
+
+    params.despill_strength = 1.0;
     params.edge_color_recovery = false;
     let despill_only = apply_chroma_key(&image, &params).unwrap();
     assert_eq!(combined.get_pixel(2, 0), despill_only.get_pixel(2, 0));
