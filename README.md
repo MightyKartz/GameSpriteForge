@@ -8,6 +8,10 @@ Codex and other agents use Forge to prepare, diagnose, validate and deliver imag
 
 [Latest release](https://github.com/MightyKartz/GameSpriteForge/releases/latest) · [Install](#install) · [Features](#what-you-can-do) · [CLI guide](docs/automation/forge-cli.md)
 
+I am **Kartz ([MightyKartz on GitHub](https://github.com/MightyKartz))**, the developer and maintainer of **Forge and Forge PRO**. My official Afdian page is **[afdian.com/a/forgepro](https://afdian.com/a/forgepro)**.
+
+Forge remains free and MIT-licensed. Forge PRO is a separate paid product; access and update rights follow the [applicable storefront terms](PRODUCT.md#free-forge-and-forge-pro). The Afdian subscription is in preparation and is not open for purchase yet.
+
 ![Thunder spirits and lightning playing in Godot](docs/media/showcase/thunder/godot-demo.gif)
 
 *Created with Codex, prepared and managed with Forge, delivered to Godot. [Watch the replay](docs/media/showcase/thunder/godot-demo.mp4) · [Source sheets and production notes](docs/media/showcase/thunder/README.md).*
@@ -193,7 +197,7 @@ Technical validation does not replace visual review, listening or license checks
 
 ## Community and support
 
-[Afdian homepage (product in preparation)](https://afdian.com/a/forgepro).
+[Official Afdian homepage (Forge PRO subscription in preparation)](https://afdian.com/a/forgepro).
 
 Join **Forge PRO 用户交流与反馈群** on Feishu for usage questions, feedback and community discussion. A Feishu account/app is required: [open the group invitation](https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=e38m51cb-be50-4d3e-940d-142769d9a08a&qr_code=true) or scan the QR code below with Feishu. The supplied QR code is marked as permanently valid.
 

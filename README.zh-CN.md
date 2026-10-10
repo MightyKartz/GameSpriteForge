@@ -8,6 +8,10 @@ Codex 等 Agent 使用 Forge 加工、诊断、验证创作工具提供的图片
 
 [最新发布](https://github.com/MightyKartz/GameSpriteForge/releases/latest) · [安装](#安装) · [主要功能](#主要功能) · [CLI 指南](docs/automation/forge-cli.md)
 
+我是 **Kartz（GitHub：[MightyKartz](https://github.com/MightyKartz)）**，负责 **Forge 与 Forge PRO** 的开发和维护。我的官方爱发电主页是 **[afdian.com/a/forgepro](https://afdian.com/a/forgepro)**。
+
+Forge 继续免费并保持 MIT 许可。Forge PRO 是独立付费产品，访问和更新权益以[各店铺条款](PRODUCT.md#free-forge-and-forge-pro)为准。爱发电订阅仍在筹备中，尚未开放购买。
+
 ![雷灵与雷击在 Godot 中的实际回放](docs/media/showcase/thunder/godot-demo.gif)
 
 *Codex 创作素材，Forge 加工、管理并交付到 Godot。[观看回放](docs/media/showcase/thunder/godot-demo.mp4) · [原始图集与制作说明](docs/media/showcase/thunder/README.zh-CN.md)。*
@@ -175,7 +179,7 @@ Sword 是一款修仙题材的生存游戏原型。源图由 Codex 创作，Forg
 
 ## 社区与支持
 
-[爱发电主页（商品筹备中）](https://afdian.com/a/forgepro)。
+[官方爱发电主页（Forge PRO 订阅筹备中）](https://afdian.com/a/forgepro)。
 
 欢迎加入 **Forge PRO 用户交流与反馈群**，交流使用问题、反馈建议与使用经验。需要飞书账号及应用：可[打开入群邀请](https://applink.feishu.cn/client/chat/chatter/add_by_link?link_token=e38m51cb-be50-4d3e-940d-142769d9a08a&qr_code=true)，或使用飞书扫描下方二维码。此二维码图片标注为永久有效。
 
